@@ -25,6 +25,10 @@ Planned features
 
 Serialize target point, descent profile, etc, in save file, so that they are correctly restored when loading the game, and also when switching vessels
 
+Use maneuver nodes to predict trajectories of the flight plan, instead of just predicting the current trajectory
+
+Predict trajectory by taking the maximum vessel acceleration into account. That is, if you have a maneuver node where you'll accelerate in a direction, KSP just assumes the velocity change will be instantaneous. This is not true of course, and with low acceleration vessels (electric or nuclear propulsion), it can make a big change
+
 Ray trace to find actual ground intersection (in particular, should detect collision with mountains even if the impact with sea level is way farther)
 
 Refactor GUI so that everything is in a single window. Allow to toggle the window visible/hidden, and to move it on the screen.
