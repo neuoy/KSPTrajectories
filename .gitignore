@@ -1,0 +1,7 @@
+/Plugin/*.user
+
+/Plugin/*.suo
+
+/Plugin/bin
+
+/Plugin/obj
