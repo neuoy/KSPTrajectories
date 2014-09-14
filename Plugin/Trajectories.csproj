@@ -28,15 +28,19 @@
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
-    <OutputPath>..\..\0.24.2_dev\GameData\Trajectories\Plugin\</OutputPath>
+    <OutputPath>bin\Release\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Assembly-CSharp">
       <HintPath>..\..\0.24.2_dev\KSP_Data\Managed\Assembly-CSharp.dll</HintPath>
       <Private>False</Private>
+    </Reference>
+    <Reference Include="Assembly-CSharp-firstpass">
+      <HintPath>..\..\0.24.2_dev\KSP_Data\Managed\Assembly-CSharp-firstpass.dll</HintPath>
     </Reference>
     <Reference Include="FerramAerospaceResearch">
       <HintPath>3rdParty\FerramAerospaceResearch.dll</HintPath>
@@ -56,9 +60,11 @@
   <ItemGroup>
     <Compile Include="DebugFastStart.cs" />
     <Compile Include="DescentProfile.cs" />
+    <Compile Include="MapGUI.cs" />
     <Compile Include="MapOverlay.cs" />
     <Compile Include="NavBallOverlay.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Settings.cs" />
     <Compile Include="Trajectory.cs" />
     <Compile Include="Util.cs" />
     <Compile Include="VesselAerodynamicModel.cs" />

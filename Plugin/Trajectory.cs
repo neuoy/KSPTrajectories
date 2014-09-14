@@ -80,11 +80,6 @@ namespace Trajectories
         public Vector3? targetPosition { get { return targetPosition_.HasValue ? (Vector3?)targetBody_.transform.TransformDirection(targetPosition_.Value) : null; } }
         public CelestialBody targetBody { get { return targetBody_; } }
 
-        public void SetAutoUpdateAerodynamicModel(bool autoUpdate)
-        {
-            aerodynamicModel_.AutoUpdateModel = autoUpdate;
-        }
-
         public void InvalidateAerodynamicModel()
         {
             aerodynamicModel_.Invalidate();

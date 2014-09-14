@@ -18,6 +18,7 @@ namespace Trajectories
     {
         struct Node
         {
+            public string name;
             public double angle; // in radians
             public bool horizon; // if true, angle is relative to horizon, otherwise it's relative to velocity (i.e. angle of attack)
 
@@ -29,10 +30,11 @@ namespace Trajectories
                 return Math.Acos(Vector3d.Dot(position, velocity) / (position.magnitude * velocity.magnitude)) - Math.PI * 0.5 + angle;
             }
 
-            public void OnGUI()
+            public void DoGUI()
             {
                 float maxAngle = 30.0f / 180.0f * Mathf.PI;
                 GUILayout.BeginHorizontal();
+                GUILayout.Label(name, GUILayout.Width(50));
                 horizon = GUILayout.Toggle(horizon, horizon ? "Horiz" : "AoA", GUILayout.Width(50));
                 angle = (double)GUILayout.HorizontalSlider((float)angle, -maxAngle, maxAngle, GUILayout.Width(90));
                 GUILayout.Label(Math.Floor(angle * 180.0 / Math.PI).ToString() + "°", GUILayout.Width(30));
@@ -40,12 +42,10 @@ namespace Trajectories
             }
         }
 
-        private Node entry;
-        private Node highAltitude;
-        private Node lowAltitude;
-        private Node finalApproach;
-
-        private static readonly int GUIId = 934924;
+        private Node entry = new Node { name = "Entry" };
+        private Node highAltitude = new Node { name = "High" };
+        private Node lowAltitude = new Node { name = "Low" };
+        private Node finalApproach = new Node { name = "Ground" };
 
         private static DescentProfile fetch_;
         public static DescentProfile fetch { get { return fetch_; } }
@@ -55,24 +55,12 @@ namespace Trajectories
             fetch_ = this;
         }
 
-        public void OnGUI()
+        public void DoGUI()
         {
-            if (HighLogic.LoadedScene != GameScenes.FLIGHT && HighLogic.LoadedScene != GameScenes.TRACKSTATION)
-                return;
-
-            if (!MapView.MapIsEnabled || MapView.MapCamera == null)
-                return;
-
-            var position = new Rect(200, 60, 200, 120);
-            GUILayout.Window(GUIId + 1, position, MainWindow, "Descent profile");
-        }
-
-        private void MainWindow(int id)
-        {
-            entry.OnGUI();
-            highAltitude.OnGUI();
-            lowAltitude.OnGUI();
-            finalApproach.OnGUI();
+            entry.DoGUI();
+            highAltitude.DoGUI();
+            lowAltitude.DoGUI();
+            finalApproach.DoGUI();
         }
 
         // Computes the angle of attack to follow the current profile if the aircraft is at the specified position (in world frame, but relative to the body) with the specified velocity (relative to the air, so it takes the body rotation into account)

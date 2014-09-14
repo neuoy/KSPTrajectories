@@ -32,7 +32,6 @@ namespace Trajectories
         private bool farInitialized = false;
         private bool useStockModel;
         private double referenceDrag = 0;
-        public bool AutoUpdateModel = true;
         private DateTime nextAllowedAutomaticUpdate = DateTime.Now;
 
         public VesselAerodynamicModel(Vessel vessel)
@@ -66,7 +65,7 @@ namespace Trajectories
             if (vessel != vessel_)
                 return false;
 
-            if (!useStockModel && AutoUpdateModel)
+            if (!useStockModel && Settings.fetch.AutoUpdateAerodynamicModel)
             {
                 double newRefDrag = computeFARReferenceDrag();
                 if (referenceDrag == 0)

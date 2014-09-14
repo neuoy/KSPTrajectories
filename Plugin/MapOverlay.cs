@@ -19,13 +19,9 @@ namespace Trajectories
     {
         private List<GameObject> meshes = new List<GameObject>();
         private bool displayEnabled = false;
-        private static readonly int GUIId = 934824;
 
-        private bool displayTrajectory = true;
         private Material lineMaterial;
         private float lineWidth = 0.002f;
-
-        private bool autoUpdateModel = true;
 
         public void LateUpdate()
         {
@@ -39,48 +35,9 @@ namespace Trajectories
             refreshMesh();
         }
 
-        public void OnGUI()
-        {
-            if (HighLogic.LoadedScene != GameScenes.FLIGHT && HighLogic.LoadedScene != GameScenes.TRACKSTATION)
-                return;
-
-            if (!MapView.MapIsEnabled || MapView.MapCamera == null)
-                return;
-
-            var position = new Rect(0, 60, 200, 60);
-            GUILayout.Window(GUIId + 1, position, MainWindow, "Trajectories");
-        }
-
-        private void MainWindow(int id)
-        {
-            displayTrajectory = GUILayout.Toggle(displayTrajectory, "Display trajectory");
-
-            if (Trajectory.fetch.targetPosition.HasValue)
-            {
-                if (GUILayout.Button("Unset target"))
-                    Trajectory.SetTarget();
-            }
-
-            var patch = Trajectory.fetch.patches.LastOrDefault();
-            if (patch != null && patch.impactPosition.HasValue)
-            {
-                if (GUILayout.Button("Set current impact as target"))
-                {
-                    Trajectory.SetTarget(patch.startingState.referenceBody, patch.impactPosition);                    
-                }
-            }
-
-            GUILayout.BeginHorizontal();
-            autoUpdateModel = GUILayout.Toggle(autoUpdateModel, "Auto update");
-            Trajectory.fetch.SetAutoUpdateAerodynamicModel(autoUpdateModel);
-            if (GUILayout.Button("Update now"))
-                Trajectory.fetch.InvalidateAerodynamicModel();
-            GUILayout.EndHorizontal();
-        }
-
         private void setDisplayEnabled(bool enabled)
         {
-            enabled = enabled && displayTrajectory;
+            enabled = enabled && Settings.fetch.DisplayTrajectories;
 
             if (displayEnabled == enabled)
                 return;
