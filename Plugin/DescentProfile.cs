@@ -19,6 +19,7 @@ namespace Trajectories
         struct Node
         {
             public string name;
+            public string description;
             public double angle; // in radians
             public bool horizon; // if true, angle is relative to horizon, otherwise it's relative to velocity (i.e. angle of attack)
 
@@ -34,18 +35,18 @@ namespace Trajectories
             {
                 float maxAngle = 30.0f / 180.0f * Mathf.PI;
                 GUILayout.BeginHorizontal();
-                GUILayout.Label(name, GUILayout.Width(50));
-                horizon = GUILayout.Toggle(horizon, horizon ? "Horiz" : "AoA", GUILayout.Width(50));
+                GUILayout.Label(new GUIContent(name, description), GUILayout.Width(50));
+                horizon = GUILayout.Toggle(horizon, new GUIContent(horizon ? "Horiz" : "AoA", "AoA = Angle of Attack = angle relatively to the velocity vector.\nHoriz = angle relatively to the horizon."), GUILayout.Width(50));
                 angle = (double)GUILayout.HorizontalSlider((float)angle, -maxAngle, maxAngle, GUILayout.Width(90));
                 GUILayout.Label(Math.Floor(angle * 180.0 / Math.PI).ToString() + "°", GUILayout.Width(30));
                 GUILayout.EndHorizontal();
             }
         }
 
-        private Node entry = new Node { name = "Entry" };
-        private Node highAltitude = new Node { name = "High" };
-        private Node lowAltitude = new Node { name = "Low" };
-        private Node finalApproach = new Node { name = "Ground" };
+        private Node entry = new Node { name = "Entry", description = "Spacecraft angle when entering the atmosphere" };
+        private Node highAltitude = new Node { name = "High", description = "Spacecraft angle at 50% of atmosphere height" };
+        private Node lowAltitude = new Node { name = "Low", description = "Spacecraft angle at 25% of atmosphere height" };
+        private Node finalApproach = new Node { name = "Ground", description = "Spacecraft angle near the ground" };
 
         private static DescentProfile fetch_;
         public static DescentProfile fetch { get { return fetch_; } }

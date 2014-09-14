@@ -272,5 +272,10 @@ namespace Trajectories
             mesh.colors = colors;
             mesh.RecalculateBounds();
         }
+
+        public void OnDestroy()
+        {
+            Settings.fetch.Save();
+        }
     }
 }

@@ -12,11 +12,12 @@ namespace Trajectories
         private static readonly int GUIId = 934824;
 
         private ApplicationLauncherButton GUIToggleButton = null;
-        private bool GUIEnabled = false;
+
+        private string tooltip = String.Empty;
 
         public void OnGUI()
         {
-            if(!GUIEnabled)
+            if(!Settings.fetch.GUIEnabled)
                 return;
 
             if (HighLogic.LoadedScene != GameScenes.FLIGHT)
@@ -26,6 +27,17 @@ namespace Trajectories
                 return;
 
             Settings.fetch.MapGUIWindowPos = ClampToScreen( GUILayout.Window(GUIId + 1, Settings.fetch.MapGUIWindowPos, MainWindow, "Trajectories") );
+
+            if (tooltip != "")
+            {
+                Vector3 mousePos = Input.mousePosition;
+                mousePos.y = Screen.height - mousePos.y;
+                int tooltipWidth = 400;
+                int tooltipHeight = 80;
+                Rect tooltipRect = new Rect(mousePos.x - 50, mousePos.y + 10, tooltipWidth, tooltipHeight);
+
+                GUILayout.Window(GUIId + 2, ClampToScreen(tooltipRect), TooltipWindow, "");
+            }
         }
 
         private void MainWindow(int id)
@@ -46,7 +58,7 @@ namespace Trajectories
             GUI.enabled = true;
 
             GUILayout.BeginHorizontal();
-            Settings.fetch.AutoUpdateAerodynamicModel = GUILayout.Toggle(Settings.fetch.AutoUpdateAerodynamicModel, "Auto update");
+            Settings.fetch.AutoUpdateAerodynamicModel = GUILayout.Toggle(Settings.fetch.AutoUpdateAerodynamicModel, new GUIContent("Auto update", "Auto-update of the aerodynamic model. For example if a part is decoupled, the model needs to be updated. This is independent from trajectory update."));
             if (GUILayout.Button("Update now"))
                 Trajectory.fetch.InvalidateAerodynamicModel();
             GUILayout.EndHorizontal();
@@ -55,7 +67,18 @@ namespace Trajectories
             GUILayout.Label("Descent profile");
             DescentProfile.fetch.DoGUI();
 
+            tooltip = GUI.tooltip;
+
             GUI.DragWindow();
+        }
+
+        private void TooltipWindow(int id)
+        {
+            GUIStyle toolTipStyle = new GUIStyle(GUI.skin.label);
+            toolTipStyle.hover = toolTipStyle.active = toolTipStyle.normal;
+            toolTipStyle.normal.textColor = toolTipStyle.active.textColor = toolTipStyle.hover.textColor = toolTipStyle.focused.textColor = toolTipStyle.onNormal.textColor = toolTipStyle.onHover.textColor = toolTipStyle.onActive.textColor = toolTipStyle.onFocused.textColor = new Color(1, 0.75f, 0);
+            toolTipStyle.wordWrap = true;
+            GUILayout.Label(tooltip, toolTipStyle);
         }
 
         public void Awake()
@@ -76,6 +99,9 @@ namespace Trajectories
                     DummyVoid,
                     ApplicationLauncher.AppScenes.MAPVIEW,
                     (Texture)GameDatabase.Instance.GetTexture("Trajectories/Textures/icon", false));
+
+                if(Settings.fetch.GUIEnabled)
+                    GUIToggleButton.SetTrue(false);
             }
         }
 
@@ -83,12 +109,12 @@ namespace Trajectories
 
         void OnToggleOn()
         {
-            GUIEnabled = true;
+            Settings.fetch.GUIEnabled = true;
         }
 
         void OnToggleOff()
         {
-            GUIEnabled = false;
+            Settings.fetch.GUIEnabled = false;
         }
 
         void OnDestroy()
@@ -100,7 +126,6 @@ namespace Trajectories
 
         private static Rect ClampToScreen(Rect window)
         {
-            Util.PostSingleScreenMessage("tmp", window.x.ToString());
             return new Rect(Mathf.Clamp(window.x, 0, Screen.width - window.width), Mathf.Clamp(window.y, 0, Screen.height - window.height), window.width, window.height);
         }
     }

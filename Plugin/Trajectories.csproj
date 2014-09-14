@@ -41,6 +41,7 @@
     </Reference>
     <Reference Include="Assembly-CSharp-firstpass">
       <HintPath>..\..\0.24.2_dev\KSP_Data\Managed\Assembly-CSharp-firstpass.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="FerramAerospaceResearch">
       <HintPath>3rdParty\FerramAerospaceResearch.dll</HintPath>
