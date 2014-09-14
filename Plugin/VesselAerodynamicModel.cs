@@ -122,10 +122,14 @@ namespace Trajectories
 
         private Vector2 getCachedFARForce(int v, int a)
         {
+            //if (v < 0 || v >= cachedFARForces.GetLength(0))
+            //    Util.PostSingleScreenMessage("v out of range", "Out of range: v = " + v);
+            //if (a < 0 || a >= cachedFARForces.GetLength(1))
+            //    Util.PostSingleScreenMessage("a out of range", "Out of range: a = " + a);
             Vector2 f = cachedFARForces[v,a];
 
             double vel = maxFARVelocity * (double)v / (double)(cachedFARForces.GetLength(0) - 1);
-            double v2 = vel * vel;
+            double v2 = Math.Max(1.0, vel * vel);
 
             if(float.IsNaN(f.x))
             {
@@ -157,6 +161,7 @@ namespace Trajectories
 
         private Vector2 getFARForce(double velocity, double rho, double angleOfAttack)
         {
+            //Util.PostSingleScreenMessage("getFARForce velocity", "velocity = " + velocity);
             float vFrac = (float)(velocity / maxFARVelocity * (double)(cachedFARForces.GetLength(0)-1));
             int vFloor = Math.Min(cachedFARForces.GetLength(0)-2, (int)vFrac);
             vFrac = Math.Min(1.0f, vFrac - (float)vFloor);
@@ -273,12 +278,32 @@ namespace Trajectories
                 }
             }
 
+            //if (Double.IsNaN(totalForce.x) || Double.IsNaN(totalForce.y) || Double.IsNaN(totalForce.z))
+            //    throw new Exception("totalForce is NAN");
+
             // convert the force computed by FAR (depends on the current vessel orientation, which is irrelevant for the prediction) to the predicted vessel orientation (which depends on the predicted velocity)
             Vector3d localForce = new Vector3d(Vector3d.Dot(vesselRight, totalForce), Vector3d.Dot(vesselUp, totalForce), Vector3d.Dot(vesselBackward, totalForce));
 
+            //if (Double.IsNaN(localForce.x) || Double.IsNaN(localForce.y) || Double.IsNaN(localForce.z))
+            //    throw new Exception("localForce is NAN");
+
             Vector3d velForward = airVelocity.normalized;
             Vector3d velBackward = -velForward;
-            Vector3d velRight = Vector3d.Cross(vup, velBackward).normalized;
+            Vector3d velRight = Vector3d.Cross(vup, velBackward);
+            if (velRight.sqrMagnitude < 0.001)
+            {
+                velRight = Vector3d.Cross(vesselUp, velBackward);
+                if (velRight.sqrMagnitude < 0.001)
+                {
+                    velRight = Vector3d.Cross(vesselBackward, velBackward).normalized;
+                }
+                else
+                {
+                    velRight = velRight.normalized;
+                }
+            }
+            else
+                velRight = velRight.normalized;
             Vector3d velUp = Vector3d.Cross(velBackward, velRight).normalized;
 
             Vector3d predictedVesselForward = velForward * Math.Cos(angleOfAttack) + velUp * Math.Sin(angleOfAttack);
@@ -286,7 +311,10 @@ namespace Trajectories
             Vector3d predictedVesselRight = velRight;
             Vector3d predictedVesselUp = Vector3d.Cross(predictedVesselBackward, predictedVesselRight).normalized;
 
-            return predictedVesselRight * localForce.x + predictedVesselUp * localForce.y + predictedVesselBackward * localForce.z;
+            Vector3d res = predictedVesselRight * localForce.x + predictedVesselUp * localForce.y + predictedVesselBackward * localForce.z;
+            //if (Double.IsNaN(res.x) || Double.IsNaN(res.y) || Double.IsNaN(res.z))
+            //    throw new Exception("res is NAN");
+            return res;
         }
 
         private Vector3d computeForces_FAR(CelestialBody body, Vector3d bodySpacePosition, Vector3d airVelocity, double angleOfAttack, double dt)
@@ -300,7 +328,12 @@ namespace Trajectories
             // uncomment the next line to bypass the cache system (for debugging, in case you suspect a bug or inaccuracy related to the cache system)
             //return computeForces_FAR(rho, machNumber, airVelocity, bodySpacePosition, angleOfAttack, dt);
 
+            //Util.PostSingleScreenMessage("airVelocity", "airVelocity = " + airVelocity);
             Vector2 force = getFARForce(airVelocity.magnitude, rho, angleOfAttack);
+            //if (float.IsNaN(force.x) || float.IsNaN(force.y))
+            //{
+            //    throw new Exception("force is NAN: bodySpacePosition = " + bodySpacePosition + ", airVelocity=" + airVelocity + ", angleOfAttack=" + angleOfAttack + ", dt=" + dt);
+            //}
 
             Vector3d forward = airVelocity.normalized;
             Vector3d right = Vector3d.Cross(forward, bodySpacePosition).normalized;

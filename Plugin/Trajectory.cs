@@ -234,6 +234,7 @@ namespace Trajectories
                     
                     Vector3d pos = patch.spaceOrbit.getRelativePositionAtUT(entryTime);
                     Vector3d vel = patch.spaceOrbit.getOrbitalVelocityAtUT(entryTime);
+                    //Util.PostSingleScreenMessage("initial vel", "initial vel = " + vel);
                     double currentTime = entryTime;
                     double lastPositionStored = 0;
                     int iteration = 0;
@@ -314,6 +315,7 @@ namespace Trajectories
 
                         Vector3d gravityAccel = pos * (-G * body.Mass / (R * R * R));
                         vel += gravityAccel * dt;
+                        //Util.PostSingleScreenMessage("prediction vel", "prediction vel = " + vel);
                         Vector3d airVelocity = vel - body.getRFrmVel(body.position + pos);
                         double angleOfAttack = DescentProfile.fetch.GetAngleOfAttack(body, pos, airVelocity);
                         vel += aerodynamicModel_.computeForces(body, pos, airVelocity, angleOfAttack, dt) * (dt / aerodynamicModel_.mass);
