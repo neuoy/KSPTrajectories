@@ -124,14 +124,17 @@ namespace Trajectories
         // relativePosition is in world frame, but relative to the body
         private double GetGroundAltitude(CelestialBody body, Vector3 relativePosition)
         {
-            if (body.pqsController == null)
-                return body.Radius;
+			if (body.pqsController == null)
+				return 0;
 
-            double lat = body.GetLatitude(relativePosition + body.position) / 180.0 * Math.PI;
-            double lon = body.GetLongitude(relativePosition + body.position) / 180.0 * Math.PI;
-            Vector3d rad = new Vector3d(Math.Cos(lat) * Math.Cos(lon), Math.Sin(lat), Math.Cos(lat) * Math.Sin(lon));
-            double elevation = body.pqsController.GetSurfaceHeight(rad) - body.Radius;
-            return Math.Max(elevation, 0.0);
+			double lat = body.GetLatitude(relativePosition + body.position) / 180.0 * Math.PI;
+			double lon = body.GetLongitude(relativePosition + body.position) / 180.0 * Math.PI;
+			Vector3d rad = new Vector3d(Math.Cos(lat) * Math.Cos(lon), Math.Sin(lat), Math.Cos(lat) * Math.Sin(lon));
+			double elevation = body.pqsController.GetSurfaceHeight(rad) - body.Radius;
+			if (body.ocean)
+				elevation = Math.Max(elevation, 0.0);
+
+			return elevation;
         }
 
         private VesselState AddPatch(VesselState startingState)
