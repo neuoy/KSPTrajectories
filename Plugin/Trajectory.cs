@@ -221,7 +221,6 @@ namespace Trajectories
 
                     patch.isAtmospheric = true;
 
-                    double G = 6.674E-11;
                     double dt = 0.15; // lower dt would be more accurate, but a tradeoff has to be found between performances and accuracy
 
                     int maxIterations = (int)(30.0 * 60.0 / dt); // some shallow entries can result in very long flight, for performances reasons, we limit the prediction duration
@@ -313,7 +312,7 @@ namespace Trajectories
                             }
                         }
 
-                        Vector3d gravityAccel = pos * (-G * body.Mass / (R * R * R));
+                        Vector3d gravityAccel = pos * (-body.gravParameter / (R * R * R));
                         vel += gravityAccel * dt;
                         //Util.PostSingleScreenMessage("prediction vel", "prediction vel = " + vel);
                         Vector3d airVelocity = vel - body.getRFrmVel(body.position + pos);
