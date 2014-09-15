@@ -149,6 +149,9 @@ namespace Trajectories
                 double time = startTime + duration * (double)i / (double)steps;
 
                 Vector3 curMeshPos = orbit.getRelativePositionAtUT(time);
+                if (Settings.fetch.BodyFixedMode) {
+                    curMeshPos = Trajectory.predictImpactPosition(orbit.referenceBody, curMeshPos, time);
+                }
 
                 // compute an "up" vector that is orthogonal to the trajectory orientation and to the camera vector (used to correctly orient quads to always face the camera)
                 Vector3 up = Vector3.Cross(curMeshPos - prevMeshPos, camPos - curMeshPos).normalized * (lineWidth * Vector3.Distance(camPos, curMeshPos));
@@ -193,6 +196,7 @@ namespace Trajectories
             for(int i = 0; i < trajectory.Length; ++i)
             {
                 Vector3 curMeshPos = trajectory[i];
+                // the fixed-body rotation transformation has already been applied in AddPatch.
 
                 // compute an "up" vector that is orthogonal to the trajectory orientation and to the camera vector (used to correctly orient quads to always face the camera)
                 Vector3 up = Vector3.Cross(curMeshPos - prevMeshPos, camPos - curMeshPos).normalized * (lineWidth * Vector3.Distance(camPos, curMeshPos));

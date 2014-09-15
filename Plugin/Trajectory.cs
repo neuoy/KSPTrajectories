@@ -270,7 +270,12 @@ namespace Trajectories
                                     pos = buffer.Last()[nextPosIdx - 1];
                                 }
 
-                                patch.impactPosition = predictImpactPosition(body, pos, currentTime);
+                                if (Settings.fetch.BodyFixedMode) {
+                                    //if we do fixed-mode calculations, pos is already rotated
+                                    patch.impactPosition = pos;
+                                } else {
+                                    patch.impactPosition = predictImpactPosition(body, pos, currentTime);
+                                }
                                 patch.impactVelocity = vel;
                             }
 
@@ -332,7 +337,11 @@ namespace Trajectories
                                 buffer.Add(new Vector3[chunkSize]);
                                 nextPosIdx = 0;
                             }
-                            buffer.Last()[nextPosIdx++] = pos;
+                            Vector3d nextPos = pos;
+                            if (Settings.fetch.BodyFixedMode) {
+                                nextPos = predictImpactPosition(body, nextPos, currentTime);
+                            }
+                            buffer.Last()[nextPosIdx++] = nextPos;
                         }
                     }
                 }
@@ -346,7 +355,7 @@ namespace Trajectories
         }
 
         // TODO : double check this function, I suspect it is not accurate
-        private static Vector3 predictImpactPosition(CelestialBody body, Vector3 relativePosition, double time)
+        public static Vector3 predictImpactPosition(CelestialBody body, Vector3 relativePosition, double time)
         {
             float angle = (float)(-(time - Planetarium.GetUniversalTime()) * body.angularVelocity.magnitude / Math.PI * 180.0);
             Quaternion bodyRotation = Quaternion.AngleAxis(angle, body.angularVelocity.normalized);
