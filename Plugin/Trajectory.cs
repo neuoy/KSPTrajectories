@@ -59,6 +59,8 @@ namespace Trajectories
         public List<Patch> patches { get { return patches_; } }
         private readonly int MaxPatchCount = 3;
 
+        public float maxaccel;
+
         private Vector3? targetPosition_;
         private double targetSetTime_;
         private CelestialBody targetBody_;
@@ -101,6 +103,7 @@ namespace Trajectories
         public void ComputeTrajectory(Vessel vessel)
         {
             patches_.Clear();
+            maxaccel = 0;
 
             vessel_ = vessel;
 
@@ -318,9 +321,11 @@ namespace Trajectories
                         //Util.PostSingleScreenMessage("prediction vel", "prediction vel = " + vel);
                         Vector3d airVelocity = vel - body.getRFrmVel(body.position + pos);
                         double angleOfAttack = DescentProfile.fetch.GetAngleOfAttack(body, pos, airVelocity);
-                        vel += aerodynamicModel_.computeForces(body, pos, airVelocity, angleOfAttack, dt) * (dt / aerodynamicModel_.mass);
-                        pos += vel * dt;
+                        Vector3d acceleration = aerodynamicModel_.computeForces(body, pos, airVelocity, angleOfAttack, dt) / aerodynamicModel_.mass;
+                        maxaccel = Math.Max((float) acceleration.magnitude, maxaccel);
 
+                        vel += acceleration * dt;
+                        pos += vel * dt;
                         currentTime += dt;
 
                         double interval = altitude < 15000.0 ? trajectoryInterval * 0.1 : trajectoryInterval;

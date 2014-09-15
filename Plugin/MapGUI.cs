@@ -67,6 +67,8 @@ namespace Trajectories
             GUILayout.Label("Descent profile");
             DescentProfile.fetch.DoGUI();
 
+            GUILayout.Label ("Expected g loading: " + (Trajectory.fetch.maxaccel / 9.81).ToString("0.00"));
+
             tooltip = GUI.tooltip;
 
             GUI.DragWindow();
