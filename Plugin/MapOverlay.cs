@@ -150,7 +150,7 @@ namespace Trajectories
 
                 Vector3 curMeshPos = orbit.getRelativePositionAtUT(time);
                 if (Settings.fetch.BodyFixedMode) {
-                    curMeshPos = Trajectory.predictImpactPosition(orbit.referenceBody, curMeshPos, time);
+                    curMeshPos = Trajectory.calculateRotatedPosition(orbit.referenceBody, curMeshPos, time);
                 }
 
                 // compute an "up" vector that is orthogonal to the trajectory orientation and to the camera vector (used to correctly orient quads to always face the camera)
