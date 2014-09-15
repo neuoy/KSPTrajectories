@@ -19,6 +19,9 @@ namespace Trajectories
         [Persistent(Default: true)]
         public bool DisplayTrajectories { get; set; }
 
+        [Persistent(Default: false)]
+        public bool BodyFixedMode { get; set; }
+
         [Persistent(Default: true)]
         public bool AutoUpdateAerodynamicModel { get; set; }
 
