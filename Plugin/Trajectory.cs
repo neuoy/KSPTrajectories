@@ -207,14 +207,14 @@ namespace Trajectories
                         // the body has no atmosphere, so what we actually computed is the impact on the body surface
                         // now, go back in time until the impact point is above the ground to take ground height in account
                         // we assume the ground is horizontal around the impact position
-                        double groundAltitude = GetGroundAltitude(body, predictImpactPosition(body, patch.spaceOrbit.getRelativePositionAtUT(entryTime), entryTime)) + body.Radius;
+                        double groundAltitude = GetGroundAltitude(body, calculateRotatedPosition(body, patch.spaceOrbit.getRelativePositionAtUT(entryTime), entryTime)) + body.Radius;
 
                         double iterationSize = 1.0;
                         while (entryTime > startingState.time + iterationSize && patch.spaceOrbit.getRelativePositionAtUT(entryTime).magnitude < groundAltitude)
                             entryTime -= iterationSize;
 
                         patch.endTime = entryTime;
-                        patch.impactPosition = predictImpactPosition(body, patch.spaceOrbit.getRelativePositionAtUT(entryTime), entryTime);
+                        patch.impactPosition = calculateRotatedPosition(body, patch.spaceOrbit.getRelativePositionAtUT(entryTime), entryTime);
                         patch.impactVelocity = patch.spaceOrbit.getOrbitalVelocityAtUT(entryTime);
                         patches_.Add(patch);
                         return null;
@@ -255,7 +255,7 @@ namespace Trajectories
                             if (atmosphereCoeff <= 0.0)
                             {
                                 //rewind trajectory a bit to get actual intersection with the ground (we assume the ground is horizontal around the impact position)
-                                double groundAltitude = GetGroundAltitude(body, predictImpactPosition(body, pos, currentTime)) + body.Radius;
+                                double groundAltitude = GetGroundAltitude(body, calculateRotatedPosition(body, pos, currentTime)) + body.Radius;
                                 if (nextPosIdx == 0 && buffer.Count > 1)
                                 {
                                     nextPosIdx = chunkSize;
@@ -275,7 +275,12 @@ namespace Trajectories
                                     pos = buffer.Last()[nextPosIdx - 1];
                                 }
 
-                                patch.impactPosition = predictImpactPosition(body, pos, currentTime);
+                                if (Settings.fetch.BodyFixedMode) {
+                                    //if we do fixed-mode calculations, pos is already rotated
+                                    patch.impactPosition = pos;
+                                } else {
+                                    patch.impactPosition = calculateRotatedPosition(body, pos, currentTime);
+                                }
                                 patch.impactVelocity = vel;
                             }
 
@@ -339,7 +344,11 @@ namespace Trajectories
                                 buffer.Add(new Vector3[chunkSize]);
                                 nextPosIdx = 0;
                             }
-                            buffer.Last()[nextPosIdx++] = pos;
+                            Vector3d nextPos = pos;
+                            if (Settings.fetch.BodyFixedMode) {
+                                nextPos = calculateRotatedPosition(body, nextPos, currentTime);
+                            }
+                            buffer.Last()[nextPosIdx++] = nextPos;
                         }
                     }
                 }
@@ -353,7 +362,7 @@ namespace Trajectories
         }
 
         // TODO : double check this function, I suspect it is not accurate
-        private static Vector3 predictImpactPosition(CelestialBody body, Vector3 relativePosition, double time)
+        public static Vector3 calculateRotatedPosition(CelestialBody body, Vector3 relativePosition, double time)
         {
             float angle = (float)(-(time - Planetarium.GetUniversalTime()) * body.angularVelocity.magnitude / Math.PI * 180.0);
             Quaternion bodyRotation = Quaternion.AngleAxis(angle, body.angularVelocity.normalized);

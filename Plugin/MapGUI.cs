@@ -43,6 +43,7 @@ namespace Trajectories
         private void MainWindow(int id)
         {
             Settings.fetch.DisplayTrajectories = GUILayout.Toggle(Settings.fetch.DisplayTrajectories, "Display trajectory");
+            Settings.fetch.BodyFixedMode = GUILayout.Toggle(Settings.fetch.BodyFixedMode, "Body-fixed mode");
 
             GUI.enabled = Trajectory.fetch.targetPosition.HasValue;
             if (GUILayout.Button("Unset target"))
