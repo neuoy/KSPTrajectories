@@ -11,32 +11,15 @@ It is possible to configure a descent profile for space planes, so that you can 
 
 The mod can also help reaching a precise location on any celestial body. Even when there is no atmosphere, the original game does not display where you'll arrive according to the body rotation. This mod adds a small cross on the body showing you're estimated impact location.
 
-Known bugs
-----------
+Features
+--------
 
-Trajectory mesh is not removed when changing vessel or going back to space center (the bug is apparent only if the map is open at that moment)
+- Display atmospheric trajectories
+- Display crash/landing location (accounting for body rotation)
+- Display trajectory after an aerobraking maneuver
+- Display fixed-body trajectory (i.e. trajectory in the closest body rotating frame)
 
-The trajectory prediction is incorrect when using time warp
+Installation
+------------
 
-The stock aerodynamic model does not predict lift (prediction will be inaccurate for spacecrafts with wings). The FAR model should be fine, though.
-
-Planned features
-----------------
-
-Serialize target point, descent profile, etc, in save file, so that they are correctly restored when loading the game, and also when switching vessels
-
-Use maneuver nodes to predict trajectories of the flight plan, instead of just predicting the current trajectory
-
-Predict trajectory by taking the maximum vessel acceleration into account. That is, if you have a maneuver node where you'll accelerate in a direction, KSP just assumes the velocity change will be instantaneous. This is not true of course, and with low acceleration vessels (electric or nuclear propulsion), it can make a big change
-
-Ray trace to find actual ground intersection (in particular, should detect collision with mountains even if the impact with sea level is way farther)
-
-Refactor GUI so that everything is in a single window. Allow to toggle the window visible/hidden, and to move it on the screen.
-
-Display 3D helpers (rectangles that the craft must go through to follow the planned trajectory)
-
-Display a descent graph, indicating altitude over ground distance, and also ground altitude (would be handy to plan mountain fly-by)
-
-Allow to set an object as target (for example, a flag), and a special option for the Kerbal Space Center.
-
-Add a GUI setting to change the auto-update threshold (some crafts are very sensitive and any change, due to physics simulation, have a huge impact on the resulting aerodynamic model ; but other crafts are very stable)
+Download Trajectories.zip from the latest release, and unzip the contents in your GameData folder.
