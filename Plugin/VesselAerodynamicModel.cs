@@ -101,6 +101,8 @@ namespace Trajectories
 
         private void initFARModel()
         {
+            computeFARReferenceDrag(); // this will throw an exception if FAR is not installed ; this is on purpose
+
             maxFARVelocity = 3000.0;
             maxFARAngleOfAttack = 45.0 / 180.0 * Math.PI;
 
