@@ -19,6 +19,12 @@ Features
 - Display trajectory after an aerobraking maneuver
 - Display fixed-body trajectory (i.e. trajectory in the closest body rotating frame)
 
+Supported Aerodynamic models
+----------------------------
+
+- Stock Kerbal Space Program drag model (lift not computed yet)
+- Ferram Aerospace Research
+
 Installation
 ------------
 
