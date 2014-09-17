@@ -121,7 +121,7 @@ namespace Trajectories
                         FARWingAerodynamicModel_YmaxForce = FARWingAerodynamicModelType.GetField("YmaxForce", BindingFlags.Public | BindingFlags.Instance);
                         FARWingAerodynamicModel_XZmaxForce = FARWingAerodynamicModelType.GetField("XZmaxForce", BindingFlags.Public | BindingFlags.Instance);
                         FARAeroUtil_GetMachNumber = loadedAssembly.assembly.GetType("ferram4.FARAeroUtil").GetMethodEx("GetMachNumber", BindingFlags.Public | BindingFlags.Static);
-                        FARAeroUtil_GetCurrentDensity = loadedAssembly.assembly.GetType("ferram4.FARAeroUtil").GetMethodEx("GetCurrentDensity", BindingFlags.Public | BindingFlags.Static);
+                        FARAeroUtil_GetCurrentDensity = loadedAssembly.assembly.GetType("ferram4.FARAeroUtil").GetMethodEx("GetCurrentDensity", new Type[] { typeof(CelestialBody), typeof(double) });
                         farInstalled = true;
                         break;
                 }
@@ -280,37 +280,33 @@ namespace Trajectories
                         FARBasicDragModel_XZmaxForce.SetValue(module, XZmaxForce);
                     }
 
-                    /*var wingModel = part.FindModuleImplementing<FARWingAerodynamicModel>();
-                    if (wingModel != null)
+                    if (FARWingAerodynamicModelType.IsInstanceOfType(module))
                     {
                         // make sure we don't trigger aerodynamic failures during prediction
-                        double YmaxForce = wingModel.YmaxForce;
-                        double XZmaxForce = wingModel.XZmaxForce;
-                        wingModel.YmaxForce = Double.MaxValue;
-                        wingModel.XZmaxForce = Double.MaxValue;
+                        double YmaxForce = (double)FARWingAerodynamicModel_YmaxForce.GetValue(module);
+                        double XZmaxForce = (double)FARWingAerodynamicModel_XZmaxForce.GetValue(module);
+                        FARWingAerodynamicModel_YmaxForce.SetValue(module, Double.MaxValue);
+                        FARWingAerodynamicModel_XZmaxForce.SetValue(module, Double.MaxValue);
 
-                        // here we must use reflexion to set rho in the wing model, as there is no public access to it
-                        var rhoField = typeof(FARWingAerodynamicModel).GetField("rho", BindingFlags.NonPublic | BindingFlags.Instance);
-                        double rhoBackup = (double)rhoField.GetValue(wingModel);
-                        rhoField.SetValue(wingModel, rho);
+                        double rhoBackup = (double)FARWingAerodynamicModel_rho.GetValue(module);
+                        FARWingAerodynamicModel_rho.SetValue(module, rho);
 
                         // FAR uses the stall value computed in the previous frame to compute the new one. This is incompatible with prediction code that shares the same state variables as the normal simulation.
                         // This is also incompatible with forces caching that is made to improve performances, as such caching can't depend on the previous wing state
                         // To solve this problem, we assume wings never stall during prediction, and we backup/restore the stall value each time
-                        var stallField = typeof(FARWingAerodynamicModel).GetField("stall", BindingFlags.NonPublic | BindingFlags.Instance);
-                        double stallBackup = (double)stallField.GetValue(wingModel);
-                        stallField.SetValue(wingModel, 0);
+                        double stallBackup = (double)FARWingAerodynamicModel_stall.GetValue(module);
+                        FARWingAerodynamicModel_stall.SetValue(module, 0);
 
-                        double PerpVelocity = Vector3d.Dot(wingModel.part.partTransform.forward, airVelocityForFixedAoA.normalized);
+                        double PerpVelocity = Vector3d.Dot(part.partTransform.forward, airVelocityForFixedAoA.normalized);
                         double FARAoA = Math.Asin(Math.Min(Math.Max(PerpVelocity, -1), 1));
-                        totalForce += wingModel.CalculateForces(airVelocityForFixedAoA, machNumber, FARAoA);
+                        totalForce += (Vector3d)FARWingAerodynamicModel_CalculateForces.Invoke(module, new object[] { airVelocityForFixedAoA, machNumber, FARAoA });
 
-                        rhoField.SetValue(wingModel, rhoBackup);
-                        stallField.SetValue(wingModel, stallBackup);
+                        FARWingAerodynamicModel_rho.SetValue(module, rhoBackup);
+                        FARWingAerodynamicModel_stall.SetValue(module, stallBackup);
 
-                        wingModel.YmaxForce = YmaxForce;
-                        wingModel.XZmaxForce = XZmaxForce;
-                    }*/
+                        FARWingAerodynamicModel_YmaxForce.SetValue(module, YmaxForce);
+                        FARWingAerodynamicModel_XZmaxForce.SetValue(module, XZmaxForce);
+                    }
                 }
             }
 
@@ -358,8 +354,8 @@ namespace Trajectories
             double altitudeAboveSea = bodySpacePosition.magnitude - body.Radius;
 
             double rho = (double)FARAeroUtil_GetCurrentDensity.Invoke(null, new object[] { body, altitudeAboveSea });
-
-            double machNumber = (double)FARAeroUtil_GetMachNumber.Invoke(null, new object[] { body, altitudeAboveSea, airVelocity });
+            
+            double machNumber = (double)FARAeroUtil_GetMachNumber.Invoke(null, new object[] { body, altitudeAboveSea, (Vector3)airVelocity });
 
             // uncomment the next line to bypass the cache system (for debugging, in case you suspect a bug or inaccuracy related to the cache system)
             //return computeForces_FAR(rho, machNumber, airVelocity, bodySpacePosition, angleOfAttack, dt);

@@ -35,5 +35,17 @@ namespace Trajectories
                 throw new Exception("Failed to GetMethod " + methodName + " on type " + type.FullName + " with flags " + flags + ":\n" + e.Message + "\n" + e.StackTrace);
             }
         }
+
+        public static MethodInfo GetMethodEx(this Type type, string methodName, Type[] types)
+        {
+            try
+            {
+                return type.GetMethod(methodName, types);
+            }
+            catch (Exception e)
+            {
+                throw new Exception("Failed to GetMethod " + methodName + " on type " + type.FullName + " with types " + types.ToString() + ":\n" + e.Message + "\n" + e.StackTrace);
+            }
+        }
     }
 }
