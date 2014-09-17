@@ -5,7 +5,6 @@ Copyright 2014, Youen Toupin
 This file is part of Trajectories, under MIT license.
 */
 
-using ferram4;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
