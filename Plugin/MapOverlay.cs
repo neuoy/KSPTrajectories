@@ -89,6 +89,14 @@ namespace Trajectories
             return obj;
         }
 
+        public void Clear()
+        {
+            foreach (var mesh in meshes)
+            {
+                GameObject.Destroy(mesh);
+            }
+        }
+
         private void refreshMesh()
         {
             foreach (var mesh in meshes)
@@ -280,6 +288,7 @@ namespace Trajectories
         public void OnDestroy()
         {
             Settings.fetch.Save();
+            Clear();
         }
     }
 }

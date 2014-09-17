@@ -93,7 +93,7 @@ namespace Trajectories
 
         public void Update()
         {
-            if ((HighLogic.LoadedScene == GameScenes.FLIGHT || HighLogic.LoadedScene == GameScenes.TRACKSTATION) && FlightGlobals.ActiveVessel != null)
+            if (HighLogic.LoadedScene == GameScenes.FLIGHT && FlightGlobals.ActiveVessel != null && (MapView.MapIsEnabled || targetPosition_.HasValue))
             {
                 ComputeTrajectory(FlightGlobals.ActiveVessel);
             }
