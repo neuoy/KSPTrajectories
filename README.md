@@ -23,9 +23,15 @@ Supported Aerodynamic models
 ----------------------------
 
 - Stock Kerbal Space Program drag model (lift not computed yet)
-- Ferram Aerospace Research
+- Ferram Aerospace Research (version 0.14.1.1)
+
+Currently supporter KSP version
+-------------------------------
+
+- 0.24.2 (other versions have not been tested)
 
 Installation
 ------------
 
-Download Trajectories.zip from the latest release, and unzip the contents in your GameData folder.
+- Download Trajectories.zip from the latest release (https://github.com/neuoy/KSPTrajectories/releases)
+- Unzip the contents in your GameData folder.
