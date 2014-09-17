@@ -42,7 +42,7 @@ namespace Trajectories
                 GUILayout.EndHorizontal();
             }
         }
-
+        
         private Node entry = new Node { name = "Entry", description = "Spacecraft angle when entering the atmosphere" };
         private Node highAltitude = new Node { name = "High", description = "Spacecraft angle at 50% of atmosphere height" };
         private Node lowAltitude = new Node { name = "Low", description = "Spacecraft angle at 25% of atmosphere height" };
