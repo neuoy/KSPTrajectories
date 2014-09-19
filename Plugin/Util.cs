@@ -28,7 +28,10 @@ namespace Trajectories
         {
             try
             {
-                return type.GetMethod(methodName, flags);
+                var res = type.GetMethod(methodName, flags);
+                if (res == null)
+                    throw new Exception("method not found");
+                return res;
             }
             catch(Exception e)
             {
@@ -40,7 +43,10 @@ namespace Trajectories
         {
             try
             {
-                return type.GetMethod(methodName, types);
+                var res = type.GetMethod(methodName, types);
+                if (res == null)
+                    throw new Exception("method not found");
+                return res;
             }
             catch (Exception e)
             {
