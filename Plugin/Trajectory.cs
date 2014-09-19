@@ -389,9 +389,16 @@ namespace Trajectories
                 Vector3d bodySpaceVelocity = vessel_.obt_velocity;
                 double altitudeAboveSea = bodySpacePosition.magnitude - body.Radius;
 
-                double rho = FARAeroUtil.GetCurrentDensity(body, altitudeAboveSea);
+                //double rho = FARAeroUtil.GetCurrentDensity(body, altitudeAboveSea);
+                //double rho = vessel_.atmDensity;
+                double pressure = FlightGlobals.getStaticPressure(altitudeAboveSea, body);
+                double rho = FlightGlobals.getAtmDensity(pressure);
+
                 Vector3d airVelocity = bodySpaceVelocity - body.getRFrmVel(body.position + bodySpacePosition);
-                double machNumber = FARAeroUtil.GetMachNumber(body, altitudeAboveSea, airVelocity);
+                
+                
+                //double machNumber = FARAeroUtil.GetMachNumber(body, altitudeAboveSea, airVelocity);
+                double machNumber = airVelocity.magnitude / 300.0;
 
                 Transform vesselTransform = vessel_.ReferenceTransform;
                 Vector3d vesselBackward = (Vector3d)(-vesselTransform.up.normalized);
