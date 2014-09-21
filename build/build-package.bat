@@ -11,8 +11,10 @@ mkdir package
 cd package
 mkdir GameData
 cd GameData
+
 mkdir Trajectories
 cd Trajectories
+xcopy /y ..\..\..\LICENSE .
 
 mkdir Plugin
 xcopy /y ..\..\..\Plugin\bin\Release\Trajectories.dll Plugin

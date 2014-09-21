@@ -109,8 +109,8 @@ namespace Trajectories
             if (vessel == null)
                 return;
 
-            if (aerodynamicModel_ == null || !aerodynamicModel_.isValidFor(vessel))
-                aerodynamicModel_ = new VesselAerodynamicModel(vessel);
+            if (aerodynamicModel_ == null || !aerodynamicModel_.isValidFor(vessel, vessel.mainBody))
+                aerodynamicModel_ = new VesselAerodynamicModel(vessel, vessel.mainBody);
             else
                 aerodynamicModel_.IncrementalUpdate();
 

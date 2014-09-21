@@ -22,6 +22,7 @@ namespace Trajectories
         public double mass { get { return mass_; } }
 
         private Vessel vessel_;
+        private CelestialBody body_;
         private double stockDragCoeff_;
 
         private Vector2[,] cachedFARForces; // cached aerodynamic forces in a two dimensional array : indexed by velocity magnitude, atmosphere density and angle of attack
@@ -47,9 +48,10 @@ namespace Trajectories
         private MethodInfo FARAeroUtil_GetMachNumber;
         private MethodInfo FARAeroUtil_GetCurrentDensity;
 
-        public VesselAerodynamicModel(Vessel vessel)
+        public VesselAerodynamicModel(Vessel vessel, CelestialBody body)
         {
             vessel_ = vessel;
+            body_ = body;
 
             stockDragCoeff_ = 0.0;
             mass_ = 0.0;
@@ -63,9 +65,9 @@ namespace Trajectories
             initFARModel();
         }
 
-        public bool isValidFor(Vessel vessel)
+        public bool isValidFor(Vessel vessel, CelestialBody body)
         {
-            if (vessel != vessel_)
+            if (vessel != vessel_ || body_ != body)
                 return false;
 
             if (!useStockModel && Settings.fetch.AutoUpdateAerodynamicModel)
@@ -144,11 +146,11 @@ namespace Trajectories
                 return;
             }
 
-            maxFARVelocity = 3000.0;
-            maxFARAngleOfAttack = 45.0 / 180.0 * Math.PI;
+            maxFARVelocity = 10000.0;
+            maxFARAngleOfAttack = 180.0 / 180.0 * Math.PI;
 
-            int velocityResolution = 128;
-            int angleOfAttackResolution = 32;
+            int velocityResolution = 256;
+            int angleOfAttackResolution = 128;
 
             cachedFARForces = new Vector2[velocityResolution, angleOfAttackResolution];
 
@@ -177,7 +179,9 @@ namespace Trajectories
             if(float.IsNaN(f.x))
             {
                 Vector3d velocity = new Vector3d(vel, 0, 0);
-                double machNumber = velocity.magnitude / 300.0; // sound speed approximation
+                //double machNumber = velocity.magnitude / 300.0; // sound speed approximation (but doesn't work well for Jool for example)
+                double averageAltitude = (body_.maxAtmosphereAltitude - body_.Radius) * 0.5;
+                double machNumber = useNEAR ? 0.0 : (double)FARAeroUtil_GetMachNumber.Invoke(null, new object[] { body_, averageAltitude, new Vector3((float)vel, 0, 0) });
                 double AoA = maxFARAngleOfAttack * ((double)a / (double)(cachedFARForces.GetLength(1) - 1) * 2.0 - 1.0);
                 Vector3d force = computeForces_FAR(1.0, machNumber, velocity, new Vector3(0,1,0), AoA, 0.25);
                 f = new Vector2((float)(force.x/v2), (float)(force.y/v2)); // divide by v² before storing the force, to increase accuracy (the reverse operation is performed when reading from the cache)
@@ -378,6 +382,10 @@ namespace Trajectories
             // uncomment the next lines to bypass the cache system (for debugging, in case you suspect a bug or inaccuracy related to the cache system)
             //double machNumber = (double)FARAeroUtil_GetMachNumber.Invoke(null, new object[] { body, altitudeAboveSea, (Vector3)airVelocity });
             //return computeForces_FAR(rho, machNumber, airVelocity, bodySpacePosition, angleOfAttack, dt);
+
+            double actualMachNumber = useNEAR ? 0.0 : (double)FARAeroUtil_GetMachNumber.Invoke(null, new object[] { body_, altitudeAboveSea, new Vector3((float)airVelocity.magnitude, 0, 0) });
+            double approxMachNumber = useNEAR ? 0.0 : (double)FARAeroUtil_GetMachNumber.Invoke(null, new object[] { body_, (body.maxAtmosphereAltitude - body.Radius) * 0.5, new Vector3((float)airVelocity.magnitude, 0, 0) });
+            Util.PostSingleScreenMessage("machNum", "machNumber = " + actualMachNumber + " ; approx machNumber = " + approxMachNumber);
 
             //Util.PostSingleScreenMessage("airVelocity", "airVelocity = " + airVelocity);
             Vector2 force = getFARForce(airVelocity.magnitude, rho, angleOfAttack);

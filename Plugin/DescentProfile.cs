@@ -33,7 +33,7 @@ namespace Trajectories
 
             public void DoGUI()
             {
-                float maxAngle = 30.0f / 180.0f * Mathf.PI;
+                float maxAngle = 179.5f / 180.0f * Mathf.PI;
                 GUILayout.BeginHorizontal();
                 GUILayout.Label(new GUIContent(name, description), GUILayout.Width(50));
                 horizon = GUILayout.Toggle(horizon, new GUIContent(horizon ? "Horiz" : "AoA", "AoA = Angle of Attack = angle relatively to the velocity vector.\nHoriz = angle relatively to the horizon."), GUILayout.Width(50));
