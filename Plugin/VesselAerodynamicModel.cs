@@ -383,9 +383,9 @@ namespace Trajectories
             //double machNumber = (double)FARAeroUtil_GetMachNumber.Invoke(null, new object[] { body, altitudeAboveSea, (Vector3)airVelocity });
             //return computeForces_FAR(rho, machNumber, airVelocity, bodySpacePosition, angleOfAttack, dt);
 
-            double actualMachNumber = useNEAR ? 0.0 : (double)FARAeroUtil_GetMachNumber.Invoke(null, new object[] { body_, altitudeAboveSea, new Vector3((float)airVelocity.magnitude, 0, 0) });
-            double approxMachNumber = useNEAR ? 0.0 : (double)FARAeroUtil_GetMachNumber.Invoke(null, new object[] { body_, (body.maxAtmosphereAltitude - body.Radius) * 0.5, new Vector3((float)airVelocity.magnitude, 0, 0) });
-            Util.PostSingleScreenMessage("machNum", "machNumber = " + actualMachNumber + " ; approx machNumber = " + approxMachNumber);
+            //double actualMachNumber = useNEAR ? 0.0 : (double)FARAeroUtil_GetMachNumber.Invoke(null, new object[] { body_, altitudeAboveSea, new Vector3((float)airVelocity.magnitude, 0, 0) });
+            //double approxMachNumber = useNEAR ? 0.0 : (double)FARAeroUtil_GetMachNumber.Invoke(null, new object[] { body_, (body.maxAtmosphereAltitude - body.Radius) * 0.5, new Vector3((float)airVelocity.magnitude, 0, 0) });
+            //Util.PostSingleScreenMessage("machNum", "machNumber = " + actualMachNumber + " ; approx machNumber = " + approxMachNumber);
 
             //Util.PostSingleScreenMessage("airVelocity", "airVelocity = " + airVelocity);
             Vector2 force = getFARForce(airVelocity.magnitude, rho, angleOfAttack);

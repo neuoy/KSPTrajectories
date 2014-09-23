@@ -20,6 +20,7 @@ namespace Trajectories
         {
             public string name;
             public string description;
+            private float sliderPos;
             public double angle; // in radians
             public bool horizon; // if true, angle is relative to horizon, otherwise it's relative to velocity (i.e. angle of attack)
 
@@ -37,7 +38,8 @@ namespace Trajectories
                 GUILayout.BeginHorizontal();
                 GUILayout.Label(new GUIContent(name, description), GUILayout.Width(50));
                 horizon = GUILayout.Toggle(horizon, new GUIContent(horizon ? "Horiz" : "AoA", "AoA = Angle of Attack = angle relatively to the velocity vector.\nHoriz = angle relatively to the horizon."), GUILayout.Width(50));
-                angle = (double)GUILayout.HorizontalSlider((float)angle, -maxAngle, maxAngle, GUILayout.Width(90));
+                sliderPos = GUILayout.HorizontalSlider(sliderPos, -1.0f, 1.0f, GUILayout.Width(90));
+                angle = (double)(sliderPos * sliderPos * sliderPos * maxAngle); // this helps to have high precision near 0° while still allowing big angles
                 GUILayout.Label(Math.Floor(angle * 180.0 / Math.PI).ToString() + "°", GUILayout.Width(30));
                 GUILayout.EndHorizontal();
             }
