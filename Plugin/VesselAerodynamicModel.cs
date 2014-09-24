@@ -280,28 +280,39 @@ namespace Trajectories
                 {
                     if (FARBasicDragModelType.IsInstanceOfType(module))
                     {
-                        // make sure we don't trigger aerodynamic failures during prediction
-                        double YmaxForce = (double)FARBasicDragModel_YmaxForce.GetValue(module);
-                        double XZmaxForce = (double)FARBasicDragModel_XZmaxForce.GetValue(module);
-                        FARBasicDragModel_YmaxForce.SetValue(module, Double.MaxValue);
-                        FARBasicDragModel_XZmaxForce.SetValue(module, Double.MaxValue);
+                        double YmaxForce = 0, XZmaxForce = 0;
+                        if (!useNEAR)
+                        {
+                            // make sure we don't trigger aerodynamic failures during prediction
+                            YmaxForce = (double)FARBasicDragModel_YmaxForce.GetValue(module);
+                            XZmaxForce = (double)FARBasicDragModel_XZmaxForce.GetValue(module);
+                            FARBasicDragModel_YmaxForce.SetValue(module, Double.MaxValue);
+                            FARBasicDragModel_XZmaxForce.SetValue(module, Double.MaxValue);
+                        }
 
                         if(useNEAR)
                             totalForce += (Vector3d)FARBasicDragModel_RunDragCalculation.Invoke(module, new object[] { airVelocityForFixedAoA, rho });
                         else
                             totalForce += (Vector3d)FARBasicDragModel_RunDragCalculation.Invoke(module, new object[] { airVelocityForFixedAoA, machNumber, rho });
 
-                        FARBasicDragModel_YmaxForce.SetValue(module, YmaxForce);
-                        FARBasicDragModel_XZmaxForce.SetValue(module, XZmaxForce);
+                        if (!useNEAR)
+                        {
+                            FARBasicDragModel_YmaxForce.SetValue(module, YmaxForce);
+                            FARBasicDragModel_XZmaxForce.SetValue(module, XZmaxForce);
+                        }
                     }
 
                     if (FARWingAerodynamicModelType.IsInstanceOfType(module))
                     {
-                        // make sure we don't trigger aerodynamic failures during prediction
-                        double YmaxForce = (double)FARWingAerodynamicModel_YmaxForce.GetValue(module);
-                        double XZmaxForce = (double)FARWingAerodynamicModel_XZmaxForce.GetValue(module);
-                        FARWingAerodynamicModel_YmaxForce.SetValue(module, Double.MaxValue);
-                        FARWingAerodynamicModel_XZmaxForce.SetValue(module, Double.MaxValue);
+                        double YmaxForce = 0, XZmaxForce = 0;
+                        if (!useNEAR)
+                        {
+                            // make sure we don't trigger aerodynamic failures during prediction
+                            YmaxForce = (double)FARWingAerodynamicModel_YmaxForce.GetValue(module);
+                            XZmaxForce = (double)FARWingAerodynamicModel_XZmaxForce.GetValue(module);
+                            FARWingAerodynamicModel_YmaxForce.SetValue(module, Double.MaxValue);
+                            FARWingAerodynamicModel_XZmaxForce.SetValue(module, Double.MaxValue);
+                        }
 
                         double rhoBackup = (double)FARWingAerodynamicModel_rho.GetValue(module);
                         FARWingAerodynamicModel_rho.SetValue(module, rho);
@@ -322,8 +333,11 @@ namespace Trajectories
                         FARWingAerodynamicModel_rho.SetValue(module, rhoBackup);
                         FARWingAerodynamicModel_stall.SetValue(module, stallBackup);
 
-                        FARWingAerodynamicModel_YmaxForce.SetValue(module, YmaxForce);
-                        FARWingAerodynamicModel_XZmaxForce.SetValue(module, XZmaxForce);
+                        if (!useNEAR)
+                        {
+                            FARWingAerodynamicModel_YmaxForce.SetValue(module, YmaxForce);
+                            FARWingAerodynamicModel_XZmaxForce.SetValue(module, XZmaxForce);
+                        }
                     }
                 }
             }
