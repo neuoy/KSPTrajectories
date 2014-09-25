@@ -15,6 +15,9 @@ namespace Trajectories
         public static bool first = true;
         public void Start()
         {
+            if (TestAutomation.fetch.IsActive)
+                return;
+
             //only do it on the first entry to the menu
             if (first)
             {

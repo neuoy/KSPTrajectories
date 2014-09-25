@@ -6,3 +6,7 @@
 
 /Plugin/obj
 /Trajectories.zip
+/AutomatedTesting/obj
+/AutomatedTesting/bin
+/*.suo
+/*.zip
