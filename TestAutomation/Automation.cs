@@ -26,6 +26,11 @@ namespace TestAutomation
         {
             Automation.fetch.OnUpdate();
         }
+
+        public void LateUpdate()
+        {
+            Automation.fetch.OnLateUpdate();
+        }
     }
 
     class Automation
@@ -33,7 +38,8 @@ namespace TestAutomation
         public static Automation fetch;
 
         private bool started = false;
-        private int initialWait = 200; // this is needed to avoid conflict with some event that seems to happen in main menu even if we start a game
+        private bool autoPilotStarted = false;
+        private int initialWait = 100; // this is needed to avoid conflict with some event that seems to happen in main menu even if we start a game
 
         private Config config;
 
@@ -79,6 +85,49 @@ namespace TestAutomation
                     throw new Exception("Can't load save file "+config.SaveFile);
                 }
             }
+
+            if (started && HighLogic.LoadedScene == GameScenes.FLIGHT && FlightGlobals.ActiveVessel != null && !autoPilotStarted)
+            {
+                Debug.Log("Starting auto pilot");
+                autoPilotStarted = true;
+                FlightGlobals.ActiveVessel.OnFlyByWire += new FlightInputCallback(autoPilot);
+                FlightGlobals.ActiveVessel.VesselSAS.ManualOverride(true);
+            }
+        }
+
+        public void OnLateUpdate()
+        {
+            
+        }
+
+        private static void autoPilot(FlightCtrlState controls)
+        {
+            Vessel vessel = FlightGlobals.ActiveVessel;
+            CelestialBody body = vessel.mainBody;
+            Vector3d pos = vessel.GetWorldPos3D() - body.position;
+            Vector3d airVelocity = vessel.obt_velocity - body.getRFrmVel(body.position + pos);
+
+            Transform vesselTransform = vessel.ReferenceTransform;
+
+            Vector3d vesselBackward = (Vector3d)(-vesselTransform.up.normalized);
+            Vector3d vesselForward = -vesselBackward;
+            Vector3d vesselUp = (Vector3d)(-vesselTransform.forward.normalized);
+            Vector3d vesselRight = Vector3d.Cross(vesselUp, vesselBackward).normalized;
+
+            Vector3d localVel = new Vector3d(Vector3d.Dot(vesselRight, airVelocity), Vector3d.Dot(vesselUp, airVelocity), Vector3d.Dot(vesselBackward, airVelocity));
+            Vector3d prograde = localVel.normalized;
+
+            Vector3d localGravityUp = new Vector3d(Vector3d.Dot(vesselRight, pos), Vector3d.Dot(vesselUp, pos), Vector3d.Dot(vesselBackward, pos)).normalized;
+
+            float dirx = prograde.z > 0.0f ? Mathf.Sign((float)prograde.x) : (float)prograde.x;
+            float diry = prograde.z > 0.0f ? Mathf.Sign((float)prograde.y) : (float)prograde.y;
+            float dirz = localGravityUp.y < 0.0f ? Mathf.Sign((float)localGravityUp.x) : (float)localGravityUp.x;
+
+            float warpDamp = 1.0f / TimeWarp.CurrentRate;
+
+            controls.pitch = Mathf.Clamp(diry + vessel.angularVelocity.x, -1.0f, 1.0f) * warpDamp;
+            controls.yaw = Mathf.Clamp(-dirx + vessel.angularVelocity.z, -1.0f, 1.0f) * warpDamp;
+            controls.roll = Mathf.Clamp(-dirz + vessel.angularVelocity.y, -1.0f, 1.0f) * warpDamp;
         }
     }
 }

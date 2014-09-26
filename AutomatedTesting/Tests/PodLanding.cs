@@ -18,13 +18,13 @@ namespace AutomatedTesting.Tests
             {
                 SaveFile = "pod_landing",
                 VesselId = "b7a8fcd07f424323b1d4be23057446ec",
-                LandingZone = new Vector3(),
                 LandingZoneRadius = 1000,
             };
 
             ksp.Mods = new ModInfo[]
             {
-                new ModInfo { Name = "FerramAerospaceResearch", Version = "0.14.1.1" }
+                new ModInfo { Name = "FerramAerospaceResearch", Version = "0.14.1.1" },
+                new ModInfo { Name = "Squad", Version = "0.24.2_light" }
             };
 
             ksp.RunTest();
