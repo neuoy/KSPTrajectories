@@ -10,3 +10,5 @@
 /AutomatedTesting/bin
 /*.suo
 /*.zip
+/TestAutomation/bin
+/TestAutomation/obj

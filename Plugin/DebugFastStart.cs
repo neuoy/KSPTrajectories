@@ -15,7 +15,7 @@ namespace Trajectories
         public static bool first = true;
         public void Start()
         {
-            if (TestAutomation.fetch.IsActive)
+            if (AppDomain.CurrentDomain.GetAssemblies().Any(a => a.FullName.ToLower().Contains("testautomation")))
                 return;
 
             //only do it on the first entry to the menu
