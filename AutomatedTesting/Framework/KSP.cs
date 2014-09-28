@@ -60,6 +60,7 @@ namespace Tests.Framework
             // Copy the TestAutomation plugin
             string testAutomationPath = Path.GetDirectoryName(AppDomain.CurrentDomain.GetAssemblies().First(a => a.FullName.ToLower().Contains("testautomation")).Location);
             File.Copy(testAutomationPath + "/TestAutomation.dll", gameData + "/TestAutomation.dll");
+            File.Copy(testAutomationPath + "/TrajectoriesAPI.dll", gameData + "/TrajectoriesAPI.dll");
             File.Copy(Program.TrajectoriesRoot + "/TestAutomation/Newtonsoft.Json.dll", gameData + "/Newtonsoft.Json.dll");
 
             // Send automation config to the game

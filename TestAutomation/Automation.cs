@@ -40,8 +40,14 @@ namespace TestAutomation
         private bool started = false;
         private bool autoPilotStarted = false;
         private int initialWait = 100; // this is needed to avoid conflict with some event that seems to happen in main menu even if we start a game
+        private int waitTrajectory = 100; // Some aerodynamic models need a few frames to initialize
 
         private Config config;
+
+        private string logFile;
+
+        private Vector3 predictedPosition;
+        private Vector3 lastPosition;
 
         public static void Startup()
         {
@@ -51,8 +57,20 @@ namespace TestAutomation
 
         public Automation()
         {
+            logFile = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) + "/TestAutomation.log";
+            File.WriteAllText(logFile, "");
+            LogLine("Initializing TestAutomation");
+
             string data = File.ReadAllText(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)+"/TestAutomation.json");
             config = JsonConvert.DeserializeObject<Config>(data);
+        }
+
+        public void LogLine(string msg)
+        {
+            DateTime now = DateTime.UtcNow;
+            msg = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss.fffZ ") + msg;
+            Debug.Log("TestAutomation: " + msg);
+            File.AppendAllText(logFile, msg + "\n");
         }
 
         public void OnSceneStart()
@@ -77,7 +95,7 @@ namespace TestAutomation
                 if (game != null && game.flightState != null && game.compatible)
                 {
                     ProtoVessel vessel = game.flightState.protoVessels.First(v => v.vesselID == new Guid(config.VesselId));
-                    Debug.Log("Loading vessel: " + vessel.vesselName);
+                    LogLine("Loading vessel: " + vessel.vesselName);
                     FlightDriver.StartAndFocusVessel(game, game.flightState.protoVessels.IndexOf(vessel));
                 }
                 else
@@ -86,12 +104,58 @@ namespace TestAutomation
                 }
             }
 
-            if (started && HighLogic.LoadedScene == GameScenes.FLIGHT && FlightGlobals.ActiveVessel != null && !autoPilotStarted)
+            if (started && HighLogic.LoadedScene == GameScenes.FLIGHT && FlightGlobals.ActiveVessel != null)
             {
-                Debug.Log("Starting auto pilot");
+                TrajectoriesAPI.TrajectoriesAPI.GetTrajectory(FlightGlobals.ActiveVessel).GetRawImpactPosition();
+                --waitTrajectory;
+            }
+            if (waitTrajectory > 0)
+                return;
+
+            if (!autoPilotStarted)
+            {
+                LogLine("Starting auto pilot");
                 autoPilotStarted = true;
                 FlightGlobals.ActiveVessel.OnFlyByWire += new FlightInputCallback(autoPilot);
                 FlightGlobals.ActiveVessel.VesselSAS.ManualOverride(true);
+
+                try
+                {
+                    Vector3? predictedImpact = TrajectoriesAPI.TrajectoriesAPI.GetTrajectory(FlightGlobals.ActiveVessel).GetRawImpactPosition();
+                    if (!predictedImpact.HasValue)
+                        Terminate(false, "The Trajectories mod did not return an impact position on the current body");
+                    predictedPosition = predictedImpact.Value;
+                    LogLine("Predicted impact position: " + predictedImpact.ToString());
+                }
+                catch (Exception e)
+                {
+                    Terminate(false, "Failed to get impact position: " + e.ToString());
+                }
+
+                LogLine("Setting time warp");
+                TimeWarp timeWarp = (TimeWarp)UnityEngine.Object.FindObjectOfType(typeof(TimeWarp));
+                timeWarp.physicsWarpRates[3] = config.PhysicsWarpRate;
+                TimeWarp.SetRate(3, false);
+            }
+            else
+            {
+                Vessel vessel = FlightGlobals.ActiveVessel;
+                if (vessel == null || vessel.situation == Vessel.Situations.LANDED || vessel.situation == Vessel.Situations.SPLASHED || vessel.Parts.Count == 0)
+                {
+                    fetch.LogLine("Vessel destroyed or landed");
+                    float distanceFromPrediction = Vector3.Distance(lastPosition, predictedPosition);
+                    LogLine("Last known position: " + lastPosition.ToString() + "(" + distanceFromPrediction + "m away from prediction)");
+                    if (distanceFromPrediction > config.LandingZoneRadius)
+                        Terminate(false, "Too far away from predicted landing zone");
+                    else
+                        Terminate(true, "Predicted impact position reached");
+                }
+                else
+                {
+                    lastPosition = vessel.GetWorldPos3D() - vessel.mainBody.position;
+                    Vector3 newPrediction = TrajectoriesAPI.TrajectoriesAPI.GetTrajectory(FlightGlobals.ActiveVessel).GetRawImpactPosition().Value;
+                    PostSingleScreenMessage("prediction dist", "dist=" + (int)Vector3.Distance(lastPosition, predictedPosition) + ", updated prediction dist=" + (int)Vector3.Distance(newPrediction, predictedPosition));
+                }
             }
         }
 
@@ -103,6 +167,7 @@ namespace TestAutomation
         private static void autoPilot(FlightCtrlState controls)
         {
             Vessel vessel = FlightGlobals.ActiveVessel;
+
             CelestialBody body = vessel.mainBody;
             Vector3d pos = vessel.GetWorldPos3D() - body.position;
             Vector3d airVelocity = vessel.obt_velocity - body.getRFrmVel(body.position + pos);
@@ -128,6 +193,26 @@ namespace TestAutomation
             controls.pitch = Mathf.Clamp(diry + vessel.angularVelocity.x, -1.0f, 1.0f) * warpDamp;
             controls.yaw = Mathf.Clamp(-dirx + vessel.angularVelocity.z, -1.0f, 1.0f) * warpDamp;
             controls.roll = Mathf.Clamp(-dirz + vessel.angularVelocity.y, -1.0f, 1.0f) * warpDamp;
+
+            if (TimeWarp.CurrentRateIndex == 0) // this happens when entering atmosphere
+            {
+                TimeWarp.SetRate(3, false);
+            }
+        }
+
+        public void Terminate(bool success, string message)
+        {
+            LogLine("Test result: " + (success ? "success" : "failure") + ", with message: " + message);
+            Application.Quit();
+            throw new Exception("TestAutomation: Terminating application");
+        }
+
+        private static Dictionary<string, ScreenMessage> messages = new Dictionary<string, ScreenMessage>();
+        public static void PostSingleScreenMessage(string id, string message)
+        {
+            if (messages.ContainsKey(id))
+                ScreenMessages.RemoveMessage(messages[id]);
+            messages[id] = ScreenMessages.PostScreenMessage(message);
         }
     }
 }

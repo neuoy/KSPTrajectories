@@ -20,10 +20,10 @@ namespace Trajectories
     {
         public class VesselState
         {
-            public CelestialBody referenceBody;
-            public double time; // universal time
-            public Vector3d position; // position in world frame relatively to the reference body
-            public Vector3d velocity; // velocity in world frame relatively to the reference body
+            public CelestialBody referenceBody { get; set; }
+            public double time { get; set; } // universal time
+            public Vector3d position { get; set; } // position in world frame relatively to the reference body
+            public Vector3d velocity { get; set; } // velocity in world frame relatively to the reference body
 
             public VesselState(Vessel vessel)
             {
@@ -40,13 +40,14 @@ namespace Trajectories
 
         public class Patch
         {
-            public VesselState startingState;
-            public double endTime;
-            public bool isAtmospheric;
-            public Vector3[] atmosphericTrajectory; // position array in body space (world frame centered on the body) ; only used when isAtmospheric is true
-            public Orbit spaceOrbit; // only used when isAtmospheric is false
-            public Vector3? impactPosition;
-            public Vector3 impactVelocity;
+            public VesselState startingState { get; set; }
+            public double endTime { get; set; }
+            public bool isAtmospheric { get; set; }
+            public Vector3[] atmosphericTrajectory { get; set; } // position array in body space (world frame centered on the body) ; only used when isAtmospheric is true
+            public Orbit spaceOrbit { get; set; } // only used when isAtmospheric is false
+            public Vector3? impactPosition { get; set; }
+            public Vector3? rawImpactPosition { get; set; }
+            public Vector3 impactVelocity { get; set; }
         }
 
         private static Trajectory fetch_;
@@ -139,6 +140,20 @@ namespace Trajectories
             return elevation;
         }
 
+        public static double RealMaxAtmosphereAltitude(CelestialBody body)
+        {
+            if (!body.atmosphere) return 0;
+            if (body.useLegacyAtmosphere)
+            {
+                //Atmosphere actually cuts out when exp(-altitude / scale height) = 1e-6
+                return -body.atmosphereScaleHeight * 1000 * Math.Log(1e-6);
+            }
+            else
+            {
+                return body.pressureCurve.keys.Last().time * 1000;
+            }
+        }
+
         private VesselState AddPatch(VesselState startingState)
         {
             CelestialBody body = startingState.referenceBody;
@@ -154,10 +169,12 @@ namespace Trajectories
             // easy to do for encounters and maneuver nodes before the first atmospheric entry (just follow the KSP flight plan)
             // more difficult to do after aerobraking or other custom trajectory modifications (need to implement independent encounter algorithm? snap future maneuver nodes to the modified trajectory?)
 
-            if (patch.spaceOrbit.PeA < body.maxAtmosphereAltitude)
+            double maxAtmosphereAltitude = RealMaxAtmosphereAltitude(body);
+
+            if (patch.spaceOrbit.PeA < maxAtmosphereAltitude)
             {
                 double entryTime;
-                if (startingState.position.magnitude <= body.Radius + body.maxAtmosphereAltitude)
+                if (startingState.position.magnitude <= body.Radius + maxAtmosphereAltitude)
                 {
                     // whole orbit is inside the atmosphere
                     entryTime = startingState.time;
@@ -169,10 +186,10 @@ namespace Trajectories
                     double from = startingState.time;
                     double to = from + patch.spaceOrbit.timeToPe;
 
-                    while (to - from > 5.0)
+                    while (to - from > 0.1)
                     {
                         double middle = (from + to) * 0.5;
-                        if (patch.spaceOrbit.getRelativePositionAtUT(middle).magnitude < body.Radius + body.maxAtmosphereAltitude)
+                        if (patch.spaceOrbit.getRelativePositionAtUT(middle).magnitude < body.Radius + maxAtmosphereAltitude)
                         {
                             to = middle;
                         }
@@ -185,7 +202,7 @@ namespace Trajectories
                     entryTime = to;
                 }
 
-                if (entryTime > startingState.time + 10.0)
+                if (entryTime > startingState.time + 0.1)
                 {
                     // add the space patch before atmospheric entry
                     patch.endTime = entryTime;
@@ -213,7 +230,8 @@ namespace Trajectories
                             entryTime -= iterationSize;
 
                         patch.endTime = entryTime;
-                        patch.impactPosition = calculateRotatedPosition(body, patch.spaceOrbit.getRelativePositionAtUT(entryTime), entryTime);
+                        patch.rawImpactPosition = patch.spaceOrbit.getRelativePositionAtUT(entryTime);
+                        patch.impactPosition = calculateRotatedPosition(body, patch.rawImpactPosition.Value, entryTime);
                         patch.impactVelocity = patch.spaceOrbit.getOrbitalVelocityAtUT(entryTime);
                         patches_.Add(patch);
                         return null;
@@ -226,7 +244,7 @@ namespace Trajectories
 
                     patch.isAtmospheric = true;
 
-                    double dt = 0.15; // lower dt would be more accurate, but a tradeoff has to be found between performances and accuracy
+                    double dt = 0.05; // lower dt would be more accurate, but a tradeoff has to be found between performances and accuracy
 
                     int maxIterations = (int)(30.0 * 60.0 / dt); // some shallow entries can result in very long flight, for performances reasons, we limit the prediction duration
 
@@ -238,6 +256,7 @@ namespace Trajectories
                     
                     Vector3d pos = patch.spaceOrbit.getRelativePositionAtUT(entryTime);
                     Vector3d vel = patch.spaceOrbit.getOrbitalVelocityAtUT(entryTime);
+                    Vector3d prevPos = pos - vel * dt;
                     //Util.PostSingleScreenMessage("initial vel", "initial vel = " + vel);
                     double currentTime = entryTime;
                     double lastPositionStored = 0;
@@ -248,7 +267,7 @@ namespace Trajectories
 
                         double R = pos.magnitude;
                         double altitude = R - body.Radius;
-                        double atmosphereCoeff = altitude / body.maxAtmosphereAltitude;
+                        double atmosphereCoeff = altitude / maxAtmosphereAltitude;
                         if (atmosphereCoeff <= 0.0 || atmosphereCoeff >= 1.0 || iteration == maxIterations)
                         {
                             if (atmosphereCoeff <= 0.0)
@@ -277,8 +296,10 @@ namespace Trajectories
                                 if (Settings.fetch.BodyFixedMode) {
                                     //if we do fixed-mode calculations, pos is already rotated
                                     patch.impactPosition = pos;
+                                    patch.rawImpactPosition = calculateRotatedPosition(body, patch.impactPosition.Value, 2.0 * Planetarium.GetUniversalTime() - currentTime);
                                 } else {
-                                    patch.impactPosition = calculateRotatedPosition(body, pos, currentTime);
+                                    patch.rawImpactPosition = pos;
+                                    patch.impactPosition = calculateRotatedPosition(body, patch.rawImpactPosition.Value, currentTime);
                                 }
                                 patch.impactVelocity = vel;
                             }
@@ -323,15 +344,22 @@ namespace Trajectories
                         }
 
                         Vector3d gravityAccel = pos * (-body.gravParameter / (R * R * R));
-                        vel += gravityAccel * dt;
+                        
                         //Util.PostSingleScreenMessage("prediction vel", "prediction vel = " + vel);
                         Vector3d airVelocity = vel - body.getRFrmVel(body.position + pos);
                         double angleOfAttack = DescentProfile.fetch.GetAngleOfAttack(body, pos, airVelocity);
-                        Vector3d acceleration = aerodynamicModel_.computeForces(body, pos, airVelocity, angleOfAttack, dt) / aerodynamicModel_.mass;
+                        Vector3d acceleration = gravityAccel + aerodynamicModel_.computeForces(body, pos, airVelocity, angleOfAttack, dt) / aerodynamicModel_.mass;
                         maxaccel = Math.Max((float) acceleration.magnitude, maxaccel);
 
-                        vel += acceleration * dt;
-                        pos += vel * dt;
+                        //vel += acceleration * dt;
+                        //pos += vel * dt;
+                        
+                        // Verlet integration (more precise than using the velocity)
+                        Vector3d ppos = prevPos;
+                        prevPos = pos;
+                        pos = pos + pos - ppos + acceleration * (dt * dt);
+                        vel = (pos - prevPos) / dt;
+
                         currentTime += dt;
 
                         double interval = altitude < 15000.0 ? trajectoryInterval * 0.1 : trajectoryInterval;
