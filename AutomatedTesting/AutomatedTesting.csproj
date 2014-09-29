@@ -51,6 +51,7 @@
     <Compile Include="Framework\KSP.cs" />
     <Compile Include="Framework\KSPTest.cs" />
     <Compile Include="Framework\ModInfo.cs" />
+    <Compile Include="Tests\RocketBackwardLandingKSC.cs" />
     <Compile Include="Tests\PodLanding.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

@@ -34,13 +34,13 @@ namespace Trajectories
 
             public void DoGUI()
             {
-                float maxAngle = 179.5f / 180.0f * Mathf.PI;
+                float maxAngle = 180.0f / 180.0f * Mathf.PI;
                 GUILayout.BeginHorizontal();
                 GUILayout.Label(new GUIContent(name, description), GUILayout.Width(50));
                 horizon = GUILayout.Toggle(horizon, new GUIContent(horizon ? "Horiz" : "AoA", "AoA = Angle of Attack = angle relatively to the velocity vector.\nHoriz = angle relatively to the horizon."), GUILayout.Width(50));
                 sliderPos = GUILayout.HorizontalSlider(sliderPos, -1.0f, 1.0f, GUILayout.Width(90));
                 angle = (double)(sliderPos * sliderPos * sliderPos * maxAngle); // this helps to have high precision near 0° while still allowing big angles
-                GUILayout.Label(Math.Floor(angle * 180.0 / Math.PI).ToString() + "°", GUILayout.Width(30));
+                GUILayout.Label(Math.Round(angle * 180.0 / Math.PI).ToString() + "°", GUILayout.Width(30));
                 GUILayout.EndHorizontal();
             }
         }
@@ -54,6 +54,25 @@ namespace Trajectories
         public static DescentProfile fetch { get { return fetch_; } }
 
         public DescentProfile()
+        {
+        }
+
+        public DescentProfile(float AoA)
+        {
+            entry.angle = AoA;
+            entry.horizon = false;
+
+            highAltitude.angle = AoA;
+            highAltitude.horizon = false;
+
+            lowAltitude.angle = AoA;
+            lowAltitude.horizon = false;
+
+            finalApproach.angle = AoA;
+            finalApproach.horizon = false;
+        }
+
+        public void Start()
         {
             fetch_ = this;
         }

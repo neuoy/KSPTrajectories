@@ -42,7 +42,7 @@ namespace TrajectoriesAPI
 
             if ((Trajectory_fetch = GetProperty(traj, "fetch")) == null) return false;
             if ((Trajectory_patches = GetProperty(traj, "patches")) == null) return false;
-            if ((Trajectory_computeTrajectory = GetMethod(traj, "ComputeTrajectory")) == null) return false;
+            if ((Trajectory_computeTrajectory = GetMethod(traj, "ComputeTrajectory", new Type[] { typeof(Vessel), typeof(float) })) == null) return false;
 
             if ((PatchType = GetNestedType(traj, "Patch")) == null) return false;
             if ((Patch_startingState = GetProperty(PatchType, "startingState")) == null) return false;
@@ -82,21 +82,21 @@ namespace TrajectoriesAPI
             return res;
         }
 
-        private static MethodInfo GetMethod(Type type, string methodName)
+        private static MethodInfo GetMethod(Type type, string methodName, Type[] types)
         {
-            MethodInfo res = type.GetMethod(methodName);
+            MethodInfo res = type.GetMethod(methodName, types);
             if (res == null)
                 Debug.Log("Property " + methodName + " not found in type " + type.FullName);
             return res;
         }
 
         /// <summary>
-        /// Returns the Trajectory of the specified vessel.
+        /// Creates a Trajectory object that can be used to compute a predicted trajectory and access data about it.
         /// </summary>
-        public static Trajectory GetTrajectory(Vessel vessel)
+        public static Trajectory CreateTrajectory()
         {
             CheckModInstalled();
-            return new Trajectory(vessel);
+            return new Trajectory();
         }
 
         private static void CheckModInstalled()

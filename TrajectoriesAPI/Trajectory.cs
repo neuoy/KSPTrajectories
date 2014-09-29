@@ -9,23 +9,23 @@ namespace TrajectoriesAPI
 {
     public class Trajectory
     {
-        private Vessel Vessel;
+        object trajectory;
 
-        public Trajectory(Vessel vessel)
+        public Trajectory()
         {
-            Vessel = vessel;
+            trajectory = Activator.CreateInstance(TrajectoriesAPI.TrajectoryType);
+        }
+
+        public void ComputeTrajectory(Vessel vessel, float AoA = 0)
+        {
+            TrajectoriesAPI.Trajectory_computeTrajectory.Invoke(trajectory, new object[] { vessel, AoA });
         }
 
         /// <summary>
         /// Gets the impact position of the vessel associated to this Trajectory, relatively to the Vessel main CelestialBody (in the inertial reference frame of the body), or null if the Vessel is not going to collide with the body.
         /// </summary>
-        public Vector3? GetRawImpactPosition()
+        public Vector3? GetImpactPosition()
         {
-            object trajectory = TrajectoriesAPI.Trajectory_fetch.GetValue(null, null);
-
-            Debug.Log("Computing trajectory from API");
-            TrajectoriesAPI.Trajectory_computeTrajectory.Invoke(trajectory, new object[] { Vessel });
-
             IList patches = (IList)TrajectoriesAPI.Trajectory_patches.GetValue(trajectory, null);
             Debug.Log(patches.Count.ToString() + " patches");
             foreach (object patch in patches)

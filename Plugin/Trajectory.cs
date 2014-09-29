@@ -96,11 +96,17 @@ namespace Trajectories
         {
             if (HighLogic.LoadedScene == GameScenes.FLIGHT && FlightGlobals.ActiveVessel != null && (MapView.MapIsEnabled || targetPosition_.HasValue))
             {
-                ComputeTrajectory(FlightGlobals.ActiveVessel);
+                ComputeTrajectory(FlightGlobals.ActiveVessel, DescentProfile.fetch);
             }
         }
 
-        public void ComputeTrajectory(Vessel vessel)
+        public void ComputeTrajectory(Vessel vessel, float AoA)
+        {
+            DescentProfile profile = new DescentProfile(AoA);
+            ComputeTrajectory(vessel, profile);
+        }
+
+        public void ComputeTrajectory(Vessel vessel, DescentProfile profile)
         {
             patches_.Clear();
             maxaccel = 0;
@@ -120,7 +126,7 @@ namespace Trajectories
             {
                 if (state == null)
                     break;
-                state = AddPatch(state);
+                state = AddPatch(state, profile);
             }
         }
 
@@ -154,7 +160,7 @@ namespace Trajectories
             }
         }
 
-        private VesselState AddPatch(VesselState startingState)
+        private VesselState AddPatch(VesselState startingState, DescentProfile profile)
         {
             CelestialBody body = startingState.referenceBody;
 
@@ -347,7 +353,7 @@ namespace Trajectories
                         
                         //Util.PostSingleScreenMessage("prediction vel", "prediction vel = " + vel);
                         Vector3d airVelocity = vel - body.getRFrmVel(body.position + pos);
-                        double angleOfAttack = DescentProfile.fetch.GetAngleOfAttack(body, pos, airVelocity);
+                        double angleOfAttack = profile.GetAngleOfAttack(body, pos, airVelocity);
                         Vector3d acceleration = gravityAccel + aerodynamicModel_.computeForces(body, pos, airVelocity, angleOfAttack, dt) / aerodynamicModel_.mass;
                         maxaccel = Math.Max((float) acceleration.magnitude, maxaccel);
 

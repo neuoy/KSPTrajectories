@@ -46,6 +46,7 @@ namespace TestAutomation
 
         private string logFile;
 
+        private TrajectoriesAPI.Trajectory trajectory;
         private Vector3 predictedPosition;
         private Vector3 lastPosition;
 
@@ -106,7 +107,6 @@ namespace TestAutomation
 
             if (started && HighLogic.LoadedScene == GameScenes.FLIGHT && FlightGlobals.ActiveVessel != null)
             {
-                TrajectoriesAPI.TrajectoriesAPI.GetTrajectory(FlightGlobals.ActiveVessel).GetRawImpactPosition();
                 --waitTrajectory;
             }
             if (waitTrajectory > 0)
@@ -121,9 +121,11 @@ namespace TestAutomation
 
                 try
                 {
-                    Vector3? predictedImpact = TrajectoriesAPI.TrajectoriesAPI.GetTrajectory(FlightGlobals.ActiveVessel).GetRawImpactPosition();
+                    trajectory = TrajectoriesAPI.TrajectoriesAPI.CreateTrajectory();
+                    trajectory.ComputeTrajectory(FlightGlobals.ActiveVessel);
+                    Vector3? predictedImpact = trajectory.GetImpactPosition();
                     if (!predictedImpact.HasValue)
-                        Terminate(false, "The Trajectories mod did not return an impact position on the current body");
+                        throw new Exception("The Trajectories mod did not return an impact position on the current body");
                     predictedPosition = predictedImpact.Value;
                     LogLine("Predicted impact position: " + predictedImpact.ToString());
                 }
@@ -153,7 +155,9 @@ namespace TestAutomation
                 else
                 {
                     lastPosition = vessel.GetWorldPos3D() - vessel.mainBody.position;
-                    Vector3 newPrediction = TrajectoriesAPI.TrajectoriesAPI.GetTrajectory(FlightGlobals.ActiveVessel).GetRawImpactPosition().Value;
+
+                    trajectory.ComputeTrajectory(FlightGlobals.ActiveVessel);
+                    Vector3 newPrediction = trajectory.GetImpactPosition().Value;
                     PostSingleScreenMessage("prediction dist", "dist=" + (int)Vector3.Distance(lastPosition, predictedPosition) + ", updated prediction dist=" + (int)Vector3.Distance(newPrediction, predictedPosition));
                 }
             }
@@ -184,9 +188,13 @@ namespace TestAutomation
 
             Vector3d localGravityUp = new Vector3d(Vector3d.Dot(vesselRight, pos), Vector3d.Dot(vesselUp, pos), Vector3d.Dot(vesselBackward, pos)).normalized;
 
-            float dirx = prograde.z > 0.0f ? Mathf.Sign((float)prograde.x) : (float)prograde.x;
-            float diry = prograde.z > 0.0f ? Mathf.Sign((float)prograde.y) : (float)prograde.y;
-            float dirz = localGravityUp.y < 0.0f ? Mathf.Sign((float)localGravityUp.x) : (float)localGravityUp.x;
+            double AoA = fetch.config.AoA;
+            Vector3d targetDirection = prograde * Math.Cos(AoA) + localGravityUp * Math.Sin(AoA);
+            Vector3d targetUp = Vector3d.Cross(new Vector3d(1, 0, 0), targetDirection);
+
+            float dirx = targetDirection.z > 0.0f ? Mathf.Sign((float)targetDirection.x) : (float)targetDirection.x;
+            float diry = targetDirection.z > 0.0f ? Mathf.Sign((float)targetDirection.y) : (float)targetDirection.y;
+            float dirz = targetUp.y < 0.0f ? Mathf.Sign((float)targetUp.x) : (float)targetUp.x;
 
             float warpDamp = 1.0f / TimeWarp.CurrentRate;
 

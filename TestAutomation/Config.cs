@@ -18,5 +18,6 @@ namespace TestAutomation
         public string VesselId { get; set; }
         public float LandingZoneRadius { get; set; } // in meters
         public float PhysicsWarpRate { get; set; }
+        public float AoA { get; set; } // in radians
     }
 }
