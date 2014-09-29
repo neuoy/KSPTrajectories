@@ -18,6 +18,8 @@ namespace TrajectoriesAPI
         internal static PropertyInfo Patch_startingState;
         internal static PropertyInfo Patch_impactPosition;
         internal static PropertyInfo Patch_rawImpactPosition;
+        internal static PropertyInfo Patch_isAtmospheric;
+        internal static MethodInfo Patch_GetAerodynamicForce;
 
         internal static Type VesselStateType;
         internal static PropertyInfo VesselState_referenceBody;
@@ -48,6 +50,8 @@ namespace TrajectoriesAPI
             if ((Patch_startingState = GetProperty(PatchType, "startingState")) == null) return false;
             if ((Patch_impactPosition = GetProperty(PatchType, "impactPosition")) == null) return false;
             if ((Patch_rawImpactPosition = GetProperty(PatchType, "rawImpactPosition")) == null) return false;
+            if ((Patch_isAtmospheric = GetProperty(PatchType, "isAtmospheric")) == null) return false;
+            if ((Patch_GetAerodynamicForce = GetMethod(PatchType, "GetAerodynamicForce", new Type[] { typeof(float) })) == null) return false;
 
             if ((VesselStateType = GetNestedType(traj, "VesselState")) == null) return false;
             if ((VesselState_referenceBody = GetProperty(VesselStateType, "referenceBody")) == null) return false;
@@ -97,6 +101,16 @@ namespace TrajectoriesAPI
         {
             CheckModInstalled();
             return new Trajectory();
+        }
+
+        /// <summary>
+        /// Returns the Trajectory that associated to the active vessel (the one that is displayed in the map view).
+        /// </summary>
+        /// <returns></returns>
+        public static Trajectory GetCurrentTrajectory()
+        {
+            CheckModInstalled();
+            return new Trajectory(Trajectory_fetch.GetValue(null, null));
         }
 
         private static void CheckModInstalled()

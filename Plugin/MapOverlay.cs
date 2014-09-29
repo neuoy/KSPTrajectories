@@ -193,17 +193,17 @@ namespace Trajectories
             mesh.RecalculateBounds();
         }
 
-        private void initMeshFromTrajectory(Transform meshTransform, Mesh mesh, Vector3[] trajectory, Color color)
+        private void initMeshFromTrajectory(Transform meshTransform, Mesh mesh, Trajectory.Point[] trajectory, Color color)
         {
             var vertices = new Vector3[trajectory.Length * 2];
             var triangles = new int[(trajectory.Length-1) * 6];
 
             Vector3 camPos = meshTransform.InverseTransformPoint(MapView.MapCamera.transform.position);
 
-            Vector3 prevMeshPos = trajectory[0] - (trajectory[1]-trajectory[0]);
+            Vector3 prevMeshPos = trajectory[0].pos - (trajectory[1].pos-trajectory[0].pos);
             for(int i = 0; i < trajectory.Length; ++i)
             {
-                Vector3 curMeshPos = trajectory[i];
+                Vector3 curMeshPos = trajectory[i].pos;
                 // the fixed-body rotation transformation has already been applied in AddPatch.
 
                 // compute an "up" vector that is orthogonal to the trajectory orientation and to the camera vector (used to correctly orient quads to always face the camera)

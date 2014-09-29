@@ -5,6 +5,7 @@ Copyright 2014, Youen Toupin
 This file is part of Trajectories, under MIT license.
 */
 
+//using ferram4;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -38,16 +39,49 @@ namespace Trajectories
             }
         }
 
+        public struct Point
+        {
+            public Vector3 pos;
+            public Vector3 aerodynamicForce;
+        }
+
         public class Patch
         {
             public VesselState startingState { get; set; }
             public double endTime { get; set; }
             public bool isAtmospheric { get; set; }
-            public Vector3[] atmosphericTrajectory { get; set; } // position array in body space (world frame centered on the body) ; only used when isAtmospheric is true
+            public Point[] atmosphericTrajectory { get; set; } // position array in body space (world frame centered on the body) ; only used when isAtmospheric is true
             public Orbit spaceOrbit { get; set; } // only used when isAtmospheric is false
             public Vector3? impactPosition { get; set; }
             public Vector3? rawImpactPosition { get; set; }
             public Vector3 impactVelocity { get; set; }
+
+            public Point GetInfo(float altitudeAboveSeaLevel)
+            {
+                if(!isAtmospheric)
+                    throw new Exception("Trajectory info available only for atmospheric patches");
+
+                float absAltitude = (float)startingState.referenceBody.Radius + altitudeAboveSeaLevel;
+                float sqMag = absAltitude * absAltitude;
+
+                // TODO: optimize by doing a dichotomic search (this function assumes that altitude variation is monotonic anyway)
+                int idx = 1;
+                while (idx < atmosphericTrajectory.Length && atmosphericTrajectory[idx].pos.sqrMagnitude > sqMag)
+                    ++idx;
+
+                float coeff = (absAltitude - atmosphericTrajectory[idx].pos.magnitude) / Mathf.Max(0.00001f, atmosphericTrajectory[idx-1].pos.magnitude - atmosphericTrajectory[idx].pos.magnitude);
+
+                Point res = new Point();
+                res.pos = atmosphericTrajectory[idx].pos * (1.0f - coeff) + atmosphericTrajectory[idx-1].pos;
+                res.aerodynamicForce = atmosphericTrajectory[idx].aerodynamicForce * (1.0f - coeff) + atmosphericTrajectory[idx - 1].aerodynamicForce;
+
+                return res;
+            }
+
+            public Vector3 GetAerodynamicForce(float altitudeAboveSeaLevel)
+            {
+                return GetInfo(altitudeAboveSeaLevel).aerodynamicForce;
+            }
         }
 
         private static Trajectory fetch_;
@@ -256,8 +290,8 @@ namespace Trajectories
 
                     int chunkSize = 128;
                     double trajectoryInterval = 5.0; // time between two consecutive stored positions (more intermediate positions are computed for better accuracy)
-                    var buffer = new List<Vector3[]>();
-                    buffer.Add(new Vector3[chunkSize]);
+                    var buffer = new List<Point[]>();
+                    buffer.Add(new Point[chunkSize]);
                     int nextPosIdx = 0;
                     
                     Vector3d pos = patch.spaceOrbit.getRelativePositionAtUT(entryTime);
@@ -296,7 +330,7 @@ namespace Trajectories
                                         nextPosIdx = chunkSize;
                                         buffer.RemoveAt(buffer.Count - 1);
                                     }
-                                    pos = buffer.Last()[nextPosIdx - 1];
+                                    pos = buffer.Last()[nextPosIdx - 1].pos;
                                 }
 
                                 if (Settings.fetch.BodyFixedMode) {
@@ -313,7 +347,7 @@ namespace Trajectories
                             patch.endTime = currentTime;
 
                             int totalCount = (buffer.Count - 1) * chunkSize + nextPosIdx;
-                            patch.atmosphericTrajectory = new Vector3[totalCount];
+                            patch.atmosphericTrajectory = new Point[totalCount];
                             int outIdx = 0;
                             foreach (var chunk in buffer)
                             {
@@ -354,7 +388,8 @@ namespace Trajectories
                         //Util.PostSingleScreenMessage("prediction vel", "prediction vel = " + vel);
                         Vector3d airVelocity = vel - body.getRFrmVel(body.position + pos);
                         double angleOfAttack = profile.GetAngleOfAttack(body, pos, airVelocity);
-                        Vector3d acceleration = gravityAccel + aerodynamicModel_.computeForces(body, pos, airVelocity, angleOfAttack, dt) / aerodynamicModel_.mass;
+                        Vector3d aerodynamicForce = aerodynamicModel_.computeForces(body, pos, airVelocity, angleOfAttack, dt);
+                        Vector3d acceleration = gravityAccel + aerodynamicForce / aerodynamicModel_.mass;
                         maxaccel = Math.Max((float) acceleration.magnitude, maxaccel);
 
                         //vel += acceleration * dt;
@@ -374,14 +409,15 @@ namespace Trajectories
                             lastPositionStored = currentTime;
                             if (nextPosIdx == chunkSize)
                             {
-                                buffer.Add(new Vector3[chunkSize]);
+                                buffer.Add(new Point[chunkSize]);
                                 nextPosIdx = 0;
                             }
                             Vector3d nextPos = pos;
                             if (Settings.fetch.BodyFixedMode) {
                                 nextPos = calculateRotatedPosition(body, nextPos, currentTime);
                             }
-                            buffer.Last()[nextPosIdx++] = nextPos;
+                            buffer.Last()[nextPosIdx].aerodynamicForce = aerodynamicForce;
+                            buffer.Last()[nextPosIdx++].pos = nextPos;
                         }
                     }
                 }
@@ -423,16 +459,16 @@ namespace Trajectories
                 Vector3d bodySpaceVelocity = vessel_.obt_velocity;
                 double altitudeAboveSea = bodySpacePosition.magnitude - body.Radius;
 
-                //double rho = FARAeroUtil.GetCurrentDensity(body, altitudeAboveSea);
+                double rho = FARAeroUtil.GetCurrentDensity(body, altitudeAboveSea);
                 //double rho = vessel_.atmDensity;
-                double pressure = FlightGlobals.getStaticPressure(altitudeAboveSea, body);
-                double rho = FlightGlobals.getAtmDensity(pressure);
+                //double pressure = FlightGlobals.getStaticPressure(altitudeAboveSea, body);
+                //double rho = FlightGlobals.getAtmDensity(pressure);
 
                 Vector3d airVelocity = bodySpaceVelocity - body.getRFrmVel(body.position + bodySpacePosition);
                 
                 
-                //double machNumber = FARAeroUtil.GetMachNumber(body, altitudeAboveSea, airVelocity);
-                double machNumber = airVelocity.magnitude / 300.0;
+                double machNumber = FARAeroUtil.GetMachNumber(body, altitudeAboveSea, airVelocity);
+                //double machNumber = airVelocity.magnitude / 300.0;
 
                 Transform vesselTransform = vessel_.ReferenceTransform;
                 Vector3d vesselBackward = (Vector3d)(-vesselTransform.up.normalized);

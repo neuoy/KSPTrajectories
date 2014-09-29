@@ -149,8 +149,8 @@ namespace Trajectories
             maxFARVelocity = 10000.0;
             maxFARAngleOfAttack = 180.0 / 180.0 * Math.PI;
 
-            int velocityResolution = 256;
-            int angleOfAttackResolution = 128;
+            int velocityResolution = 512;
+            int angleOfAttackResolution = 256;
 
             cachedFARForces = new Vector2[velocityResolution, angleOfAttackResolution];
 
@@ -401,12 +401,7 @@ namespace Trajectories
             //double approxMachNumber = useNEAR ? 0.0 : (double)FARAeroUtil_GetMachNumber.Invoke(null, new object[] { body_, (body.maxAtmosphereAltitude - body.Radius) * 0.5, new Vector3((float)airVelocity.magnitude, 0, 0) });
             //Util.PostSingleScreenMessage("machNum", "machNumber = " + actualMachNumber + " ; approx machNumber = " + approxMachNumber);
 
-            //Util.PostSingleScreenMessage("airVelocity", "airVelocity = " + airVelocity);
             Vector2 force = getFARForce(airVelocity.magnitude, rho, angleOfAttack);
-            //if (float.IsNaN(force.x) || float.IsNaN(force.y))
-            //{
-            //    throw new Exception("force is NAN: bodySpacePosition = " + bodySpacePosition + ", airVelocity=" + airVelocity + ", angleOfAttack=" + angleOfAttack + ", dt=" + dt);
-            //}
 
             Vector3d forward = airVelocity.normalized;
             Vector3d right = Vector3d.Cross(forward, bodySpacePosition).normalized;
