@@ -80,8 +80,8 @@ namespace Tests.Framework
             // Copy log files
             string logDir = Program.TrajectoriesRoot + "/AutomatedTesting/Results/" + Program.CurrentTestName;
             Directory.CreateDirectory(logDir);
-            File.Copy(gameData + "/TestAutomation.log", logDir + "/TestAutomation.log");
-            File.Copy(kspRoot + "/KSP_Data/output_log.txt", logDir + "/output_log.txt");
+            File.Copy(gameData + "/TestAutomation.log", logDir + "/TestAutomation.log", true);
+            File.Copy(kspRoot + "/KSP_Data/output_log.txt", logDir + "/output_log.txt", true);
 
             if (proc.ExitCode != 0)
                 throw new Exception("KSP exited with error code "+proc.ExitCode);
