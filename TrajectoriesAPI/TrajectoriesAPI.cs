@@ -19,7 +19,13 @@ namespace TrajectoriesAPI
         internal static PropertyInfo Patch_impactPosition;
         internal static PropertyInfo Patch_rawImpactPosition;
         internal static PropertyInfo Patch_isAtmospheric;
-        internal static MethodInfo Patch_GetAerodynamicForce;
+        internal static MethodInfo Patch_GetInfo;
+
+        internal static Type PointType;
+        internal static FieldInfo Point_pos;
+        internal static FieldInfo Point_aerodynamicForce;
+        internal static FieldInfo Point_orbitalVelocity;
+        internal static FieldInfo Point_airVelocity;
 
         internal static Type VesselStateType;
         internal static PropertyInfo VesselState_referenceBody;
@@ -51,7 +57,13 @@ namespace TrajectoriesAPI
             if ((Patch_impactPosition = GetProperty(PatchType, "impactPosition")) == null) return false;
             if ((Patch_rawImpactPosition = GetProperty(PatchType, "rawImpactPosition")) == null) return false;
             if ((Patch_isAtmospheric = GetProperty(PatchType, "isAtmospheric")) == null) return false;
-            if ((Patch_GetAerodynamicForce = GetMethod(PatchType, "GetAerodynamicForce", new Type[] { typeof(float) })) == null) return false;
+            if ((Patch_GetInfo = GetMethod(PatchType, "GetInfo", new Type[] { typeof(float) })) == null) return false;
+
+            if ((PointType = GetNestedType(traj, "Point")) == null) return false;
+            if ((Point_pos = GetField(PointType, "pos")) == null) return false;
+            if ((Point_aerodynamicForce = GetField(PointType, "aerodynamicForce")) == null) return false;
+            if ((Point_orbitalVelocity = GetField(PointType, "orbitalVelocity")) == null) return false;
+            if ((Point_airVelocity = GetField(PointType, "airVelocity")) == null) return false;
 
             if ((VesselStateType = GetNestedType(traj, "VesselState")) == null) return false;
             if ((VesselState_referenceBody = GetProperty(VesselStateType, "referenceBody")) == null) return false;
@@ -83,6 +95,14 @@ namespace TrajectoriesAPI
             PropertyInfo res = type.GetProperty(propertyName);
             if (res == null)
                 Debug.Log("Property " + propertyName + " not found in type " + type.FullName);
+            return res;
+        }
+
+        private static FieldInfo GetField(Type type, string fieldName)
+        {
+            FieldInfo res = type.GetField(fieldName);
+            if (res == null)
+                Debug.Log("Field " + fieldName + " not found in type " + type.FullName);
             return res;
         }
 

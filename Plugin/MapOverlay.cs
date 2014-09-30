@@ -151,12 +151,12 @@ namespace Trajectories
 
             Vector3 camPos = meshTransform.InverseTransformPoint(MapView.MapCamera.transform.position);
 
-            Vector3 prevMeshPos = orbit.getRelativePositionAtUT(startTime - duration / (double)steps);
+            Vector3 prevMeshPos = Util.SwapYZ(orbit.getRelativePositionAtUT(startTime - duration / (double)steps));
             for (int i = 0; i <= steps; ++i)
             {
                 double time = startTime + duration * (double)i / (double)steps;
 
-                Vector3 curMeshPos = orbit.getRelativePositionAtUT(time);
+                Vector3 curMeshPos = Util.SwapYZ(orbit.getRelativePositionAtUT(time));
                 if (Settings.fetch.BodyFixedMode) {
                     curMeshPos = Trajectory.calculateRotatedPosition(orbit.referenceBody, curMeshPos, time);
                 }

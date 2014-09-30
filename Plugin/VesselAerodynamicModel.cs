@@ -53,16 +53,22 @@ namespace Trajectories
             vessel_ = vessel;
             body_ = body;
 
-            stockDragCoeff_ = 0.0;
-            mass_ = 0.0;
-            foreach (var part in vessel.Parts)
-            {
-                stockDragCoeff_ += part.maximum_drag * part.mass;
-                mass_ += part.mass;
-            }
-            stockDragCoeff_ /= mass_;
+            updateVesselInfo();
 
             initFARModel();
+        }
+
+        private void updateVesselInfo()
+        {
+            stockDragCoeff_ = 0.0;
+            mass_ = 0.0;
+            foreach (var part in vessel_.Parts)
+            {
+                float partMass = part.mass + part.GetResourceMass();
+                stockDragCoeff_ += part.maximum_drag * partMass;
+                mass_ += partMass;
+            }
+            stockDragCoeff_ /= mass_;
         }
 
         public bool isValidFor(Vessel vessel, CelestialBody body)
@@ -89,7 +95,7 @@ namespace Trajectories
 
         public void IncrementalUpdate()
         {
-            
+            updateVesselInfo();
         }
 
         public void Invalidate()
@@ -253,7 +259,7 @@ namespace Trajectories
 
             double velocityMag = airVelocity.magnitude;
 
-            double crossSectionalArea = FlightGlobals.DragMultiplier * mass_;
+            double crossSectionalArea = FlightGlobals.DragMultiplier * vessel_.GetTotalMass();
             return airVelocity * (-0.5 * rho * velocityMag * stockDragCoeff_ * crossSectionalArea);
         }
 

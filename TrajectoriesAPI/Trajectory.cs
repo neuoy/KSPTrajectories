@@ -9,6 +9,14 @@ namespace TrajectoriesAPI
 {
     public class Trajectory
     {
+        public struct Point
+        {
+            public Vector3 pos;
+            public Vector3 aerodynamicForce;
+            public Vector3 orbitalVelocity;
+            public Vector3 airVelocity;
+        }
+
         object trajectory;
 
         internal Trajectory()
@@ -54,7 +62,7 @@ namespace TrajectoriesAPI
         /// <summary>
         /// Gets the predicted aerodynamic force (in world coordinates) when the vessel will be at the specified altitude arround the currently orbited body.
         /// </summary>
-        public Vector3? GetAerodynamicForce(float altitudeAboveSeaLevel)
+        public Point? GetInfo(float altitudeAboveSeaLevel)
         {
             IList patches = (IList)TrajectoriesAPI.Trajectory_patches.GetValue(trajectory, null);
             Debug.Log(patches.Count.ToString() + " patches");
@@ -67,7 +75,14 @@ namespace TrajectoriesAPI
 
                 if ((bool)TrajectoriesAPI.Patch_isAtmospheric.GetValue(patch, null))
                 {
-                    return (Vector3)TrajectoriesAPI.Patch_GetAerodynamicForce.Invoke(patch, new object[] { altitudeAboveSeaLevel });
+                    object p = TrajectoriesAPI.Patch_GetInfo.Invoke(patch, new object[] { altitudeAboveSeaLevel });
+                    return new Point
+                    {
+                        pos = (Vector3)TrajectoriesAPI.Point_pos.GetValue(p),
+                        aerodynamicForce = (Vector3)TrajectoriesAPI.Point_aerodynamicForce.GetValue(p),
+                        orbitalVelocity = (Vector3)TrajectoriesAPI.Point_orbitalVelocity.GetValue(p),
+                        airVelocity = (Vector3)TrajectoriesAPI.Point_airVelocity.GetValue(p)
+                    };
                 }
             }
 

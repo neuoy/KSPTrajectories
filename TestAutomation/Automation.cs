@@ -162,8 +162,16 @@ namespace TestAutomation
                     Vector3? newPrediction = mapTrajectory.GetImpactPosition();
                     PostSingleScreenMessage("prediction dist", "dist=" + (int)Vector3.Distance(lastPosition, predictedPosition) + ", updated prediction dist=" + (newPrediction.HasValue ? ((int)Vector3.Distance(newPrediction.Value, predictedPosition)).ToString() : "<no impact>"));
 
-                    Vector3? predictedForce = trajectory.GetAerodynamicForce(lastPosition.magnitude - (float)vessel.mainBody.Radius);
-                    PostSingleScreenMessage("predicted force", "predicted force="+(predictedForce.HasValue?predictedForce.Value.magnitude.ToString() : "<none>"));
+                    TrajectoriesAPI.Trajectory.Point? predictedPoint = trajectory.GetInfo(lastPosition.magnitude - (float)vessel.mainBody.Radius);
+                    if (predictedPoint.HasValue)
+                    {
+                        float dist = Vector3.Distance(predictedPoint.Value.pos, lastPosition);
+                        PostSingleScreenMessage("predicted force", "predicted dist="+dist+", force=" + predictedPoint.Value.aerodynamicForce.magnitude.ToString()+", vel="+predictedPoint.Value.orbitalVelocity.magnitude.ToString()+", air vel="+predictedPoint.Value.airVelocity.magnitude);
+                    }
+                    else
+                    {
+                        PostSingleScreenMessage("predicted force", "no prediction info");
+                    }
                 }
             }
         }

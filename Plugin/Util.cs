@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using UnityEngine;
 
 namespace Trajectories
 {
@@ -52,6 +53,16 @@ namespace Trajectories
             {
                 throw new Exception("Failed to GetMethod " + methodName + " on type " + type.FullName + " with types " + types.ToString() + ":\n" + e.Message + "\n" + e.StackTrace);
             }
+        }
+
+        public static Vector3d SwapYZ(Vector3d v)
+        {
+            return new Vector3d(v.x, v.z, v.y);
+        }
+
+        public static Vector3 SwapYZ(Vector3 v)
+        {
+            return new Vector3(v.x, v.z, v.y);
         }
     }
 }

@@ -43,6 +43,8 @@ namespace Trajectories
         {
             public Vector3 pos;
             public Vector3 aerodynamicForce;
+            public Vector3 orbitalVelocity;
+            public Vector3 airVelocity;
         }
 
         public class Patch
@@ -72,15 +74,12 @@ namespace Trajectories
                 float coeff = (absAltitude - atmosphericTrajectory[idx].pos.magnitude) / Mathf.Max(0.00001f, atmosphericTrajectory[idx-1].pos.magnitude - atmosphericTrajectory[idx].pos.magnitude);
 
                 Point res = new Point();
-                res.pos = atmosphericTrajectory[idx].pos * (1.0f - coeff) + atmosphericTrajectory[idx-1].pos;
-                res.aerodynamicForce = atmosphericTrajectory[idx].aerodynamicForce * (1.0f - coeff) + atmosphericTrajectory[idx - 1].aerodynamicForce;
+                res.pos = atmosphericTrajectory[idx].pos * (1.0f - coeff) + atmosphericTrajectory[idx-1].pos * coeff;
+                res.aerodynamicForce = atmosphericTrajectory[idx].aerodynamicForce * (1.0f - coeff) + atmosphericTrajectory[idx - 1].aerodynamicForce * coeff;
+                res.orbitalVelocity = atmosphericTrajectory[idx].orbitalVelocity * (1.0f - coeff) + atmosphericTrajectory[idx - 1].orbitalVelocity * coeff;
+                res.airVelocity = atmosphericTrajectory[idx].airVelocity * (1.0f - coeff) + atmosphericTrajectory[idx - 1].airVelocity * coeff;
 
                 return res;
-            }
-
-            public Vector3 GetAerodynamicForce(float altitudeAboveSeaLevel)
-            {
-                return GetInfo(altitudeAboveSeaLevel).aerodynamicForce;
             }
         }
 
@@ -202,7 +201,7 @@ namespace Trajectories
             patch.startingState = startingState;           
             patch.isAtmospheric = false;
             patch.spaceOrbit = new Orbit();
-            patch.spaceOrbit.UpdateFromStateVectors(startingState.position, startingState.velocity, body, startingState.time);
+            patch.spaceOrbit.UpdateFromStateVectors(Util.SwapYZ(startingState.position), Util.SwapYZ(startingState.velocity), body, startingState.time);
             patch.endTime = patch.startingState.time + patch.spaceOrbit.period;
 
             // TODO: predict encounters and use maneuver nodes
@@ -252,10 +251,10 @@ namespace Trajectories
                         patches_.Add(patch);
                         return new VesselState
                         {
-                            position = patch.spaceOrbit.getRelativePositionAtUT(entryTime),
+                            position = Util.SwapYZ(patch.spaceOrbit.getRelativePositionAtUT(entryTime)),
                             referenceBody = body,
                             time = entryTime,
-                            velocity = patch.spaceOrbit.getOrbitalVelocityAtUT(entryTime)
+                            velocity = Util.SwapYZ(patch.spaceOrbit.getOrbitalVelocityAtUT(entryTime))
                         };
                     }
                     else
@@ -263,16 +262,16 @@ namespace Trajectories
                         // the body has no atmosphere, so what we actually computed is the impact on the body surface
                         // now, go back in time until the impact point is above the ground to take ground height in account
                         // we assume the ground is horizontal around the impact position
-                        double groundAltitude = GetGroundAltitude(body, calculateRotatedPosition(body, patch.spaceOrbit.getRelativePositionAtUT(entryTime), entryTime)) + body.Radius;
+                        double groundAltitude = GetGroundAltitude(body, calculateRotatedPosition(body, Util.SwapYZ(patch.spaceOrbit.getRelativePositionAtUT(entryTime)), entryTime)) + body.Radius;
 
                         double iterationSize = 1.0;
                         while (entryTime > startingState.time + iterationSize && patch.spaceOrbit.getRelativePositionAtUT(entryTime).magnitude < groundAltitude)
                             entryTime -= iterationSize;
 
                         patch.endTime = entryTime;
-                        patch.rawImpactPosition = patch.spaceOrbit.getRelativePositionAtUT(entryTime);
+                        patch.rawImpactPosition = Util.SwapYZ(patch.spaceOrbit.getRelativePositionAtUT(entryTime));
                         patch.impactPosition = calculateRotatedPosition(body, patch.rawImpactPosition.Value, entryTime);
-                        patch.impactVelocity = patch.spaceOrbit.getOrbitalVelocityAtUT(entryTime);
+                        patch.impactVelocity = Util.SwapYZ(patch.spaceOrbit.getOrbitalVelocityAtUT(entryTime));
                         patches_.Add(patch);
                         return null;
                     }
@@ -294,8 +293,8 @@ namespace Trajectories
                     buffer.Add(new Point[chunkSize]);
                     int nextPosIdx = 0;
                     
-                    Vector3d pos = patch.spaceOrbit.getRelativePositionAtUT(entryTime);
-                    Vector3d vel = patch.spaceOrbit.getOrbitalVelocityAtUT(entryTime);
+                    Vector3d pos = Util.SwapYZ(patch.spaceOrbit.getRelativePositionAtUT(entryTime));
+                    Vector3d vel = Util.SwapYZ(patch.spaceOrbit.getOrbitalVelocityAtUT(entryTime));
                     Vector3d prevPos = pos - vel * dt;
                     //Util.PostSingleScreenMessage("initial vel", "initial vel = " + vel);
                     double currentTime = entryTime;
@@ -417,6 +416,8 @@ namespace Trajectories
                                 nextPos = calculateRotatedPosition(body, nextPos, currentTime);
                             }
                             buffer.Last()[nextPosIdx].aerodynamicForce = aerodynamicForce;
+                            buffer.Last()[nextPosIdx].orbitalVelocity = vel;
+                            buffer.Last()[nextPosIdx].airVelocity = airVelocity;
                             buffer.Last()[nextPosIdx++].pos = nextPos;
                         }
                     }
@@ -440,7 +441,7 @@ namespace Trajectories
 
         private Vector3d GetWorldPositionAtUT(Orbit orbit, double ut)
         {
-            Vector3d worldPos = orbit.getRelativePositionAtUT(ut);
+            Vector3d worldPos = Util.SwapYZ(orbit.getRelativePositionAtUT(ut));
             if (orbit.referenceBody != FlightGlobals.Bodies[0])
                 worldPos += GetWorldPositionAtUT(orbit.referenceBody.orbit, ut);
             return worldPos;
