@@ -76,6 +76,13 @@ namespace Tests.Framework
             info.UseShellExecute = false;
             proc = Process.Start(info);
             proc.WaitForExit();
+
+            // Copy log files
+            string logDir = Program.TrajectoriesRoot + "/AutomatedTesting/Results/" + Program.CurrentTestName;
+            Directory.CreateDirectory(logDir);
+            File.Copy(gameData + "/TestAutomation.log", logDir + "/TestAutomation.log");
+            File.Copy(kspRoot + "/KSP_Data/output_log.txt", logDir + "/output_log.txt");
+
             if (proc.ExitCode != 0)
                 throw new Exception("KSP exited with error code "+proc.ExitCode);
         }

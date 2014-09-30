@@ -11,7 +11,7 @@ namespace TestAutomation
         public Config()
         {
             PhysicsWarpRate = 4;
-            LandingZoneRadius = 1000.0f;
+            LandingZoneRadius = 3000.0f;
         }
 
         public string SaveFile { get; set; }

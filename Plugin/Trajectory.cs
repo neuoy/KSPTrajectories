@@ -283,7 +283,7 @@ namespace Trajectories
 
                     patch.isAtmospheric = true;
 
-                    double dt = 0.05; // lower dt would be more accurate, but a tradeoff has to be found between performances and accuracy
+                    double dt = 0.1; // lower dt would be more accurate, but a tradeoff has to be found between performances and accuracy
 
                     int maxIterations = (int)(30.0 * 60.0 / dt); // some shallow entries can result in very long flight, for performances reasons, we limit the prediction duration
 

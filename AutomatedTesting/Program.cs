@@ -13,6 +13,7 @@ namespace AutomatedTesting
     {
         public static string TrajectoriesRoot = @"D:\dev\KerbalSpaceProgram\KSPTrajectories";
         public static string TestZoneRoot = @"D:\dev\KerbalSpaceProgram\KSP_TestZone";
+        public static string CurrentTestName;
 
         static void Main(string[] args)
         {
@@ -25,7 +26,8 @@ namespace AutomatedTesting
             {
                 try
                 {
-                    Trace.TraceInformation("Starting test: " + test.Type.Name);
+                    CurrentTestName = test.Type.Name;
+                    Trace.TraceInformation("Starting test: " + CurrentTestName);
                     object inst = Activator.CreateInstance(test.Type);
                     test.Type.GetMethod("Run").Invoke(inst, null);
                 }
