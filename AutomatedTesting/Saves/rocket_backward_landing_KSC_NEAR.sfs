@@ -68,7 +68,7 @@ GAME
 	{
 		name = ScenarioDiscoverableObjects
 		scene = 7, 8, 5
-		 = 695532587
+		 = 1203750042
 		sizeCurve
 		{
 			key = 0 0 1.5 1.5
@@ -271,7 +271,7 @@ GAME
 	FLIGHTSTATE
 	{
 		version = 0.24.2
-		UT = 33341387.2675865
+		UT = 33341460.4875849
 		activeVessel = 1
 		VESSEL
 		{
@@ -301,13 +301,13 @@ GAME
 			cMod = 0
 			ORBIT
 			{
-				SMA = 0
+				SMA = NaN
 				ECC = 1
 				INC = NaN
-				LPE = 34.5140662137544
-				LAN = 82.0015276363171
+				LPE = 34.5590633952512
+				LAN = 82.7218638877436
 				MNA = -8.40714670366795
-				EPH = 33341387.0075865
+				EPH = 33341427.5275856
 				REF = 1
 			}
 			PART
@@ -475,16 +475,16 @@ GAME
 			landed = False
 			landedAt = 
 			splashed = False
-			met = 1669.64781279117
+			met = 1742.86781116202
 			lct = 33339717.6197737
 			root = 0
-			lat = 0.339854010990716
-			lon = -167.748794820882
-			alt = 79761.2736230195
+			lat = 0.329237410460441
+			lon = 204.747430468662
+			alt = 75443.9995166393
 			hgt = -1
-			nrm = -0.02610252,-0.008177754,0.9996258
-			rot = 0.5496716,-0.53828,-0.4471475,0.4562619
-			CoM = -1.695077E-07,-1.484034,7.130162E-06
+			nrm = -0.02432059,0.1159154,0.9929613
+			rot = 0.6230811,-0.6102275,-0.3425024,0.349406
+			CoM = 4.30431E-07,-2.098948,9.389697E-05
 			stg = 1
 			prst = False
 			ref = 4080983656
@@ -494,13 +494,13 @@ GAME
 			cMod = 0
 			ORBIT
 			{
-				SMA = 644614.608394518
-				ECC = 0.0578774590881303
-				INC = 0.339866118239396
-				LPE = 251.952397913123
-				LAN = 43.8333172905568
-				MNA = 3.47761650229674
-				EPH = 33341380.2475867
+				SMA = 637845.381485117
+				ECC = 0.0678977927502345
+				INC = 0.340333803851034
+				LPE = 256.792111483682
+				LAN = 43.3494014307337
+				MNA = 3.69468434772206
+				EPH = 33341460.4875849
 				REF = 1
 			}
 			PART
@@ -522,7 +522,7 @@ GAME
 				attN = bottom, 1
 				attN = None, -1
 				mass = 0.8
-				temp = -39.05306
+				temp = -90.23615
 				expt = 0.5
 				state = 0
 				connected = True
@@ -791,6 +791,17 @@ GAME
 						at = Kerbin
 					}
 				}
+				MODULE
+				{
+					name = FARBasicDragModel
+					isEnabled = True
+					EVENTS
+					{
+					}
+					ACTIONS
+					{
+					}
+				}
 				RESOURCE
 				{
 					name = ElectricCharge
@@ -831,7 +842,7 @@ GAME
 				attN = top, 0
 				attN = bottom, 2
 				mass = 0.1
-				temp = -39.05059
+				temp = -89.76943
 				expt = 0.5
 				state = 0
 				connected = True
@@ -892,6 +903,17 @@ GAME
 					{
 					}
 				}
+				MODULE
+				{
+					name = FARBasicDragModel
+					isEnabled = True
+					EVENTS
+					{
+					}
+					ACTIONS
+					{
+					}
+				}
 			}
 			PART
 			{
@@ -912,7 +934,7 @@ GAME
 				attN = bottom, 3
 				attN = top, 1
 				mass = 0.05
-				temp = -39.05013
+				temp = -88.87177
 				expt = 0.5
 				state = 0
 				connected = True
@@ -975,6 +997,17 @@ GAME
 					{
 					}
 				}
+				MODULE
+				{
+					name = FARBasicDragModel
+					isEnabled = True
+					EVENTS
+					{
+					}
+					ACTIONS
+					{
+					}
+				}
 			}
 			PART
 			{
@@ -995,7 +1028,7 @@ GAME
 				attN = top, 2
 				attN = bottom, 4
 				mass = 0.25
-				temp = -39.04969
+				temp = -87.39849
 				expt = 0.5
 				state = 0
 				connected = True
@@ -1008,6 +1041,17 @@ GAME
 				}
 				ACTIONS
 				{
+				}
+				MODULE
+				{
+					name = FARBasicDragModel
+					isEnabled = True
+					EVENTS
+					{
+					}
+					ACTIONS
+					{
+					}
 				}
 				RESOURCE
 				{
@@ -1049,7 +1093,7 @@ GAME
 				attN = top, 3
 				attN = None, -1
 				mass = 1.25
-				temp = -39.04579
+				temp = -85.29337
 				expt = 0.5
 				state = 1
 				connected = True
@@ -1170,6 +1214,17 @@ GAME
 					{
 					}
 				}
+				MODULE
+				{
+					name = FARBasicDragModel
+					isEnabled = True
+					EVENTS
+					{
+					}
+					ACTIONS
+					{
+					}
+				}
 				RESOURCE
 				{
 					name = ElectricCharge
@@ -1214,9 +1269,9 @@ GAME
 			}
 			CTRLSTATE
 			{
-				pitch = 3.222042E-06
-				yaw = 1.175886E-05
-				roll = -0.0003293945
+				pitch = -0.0004614377
+				yaw = -8.150985E-06
+				roll = 2.71134E-07
 				trimPitch = 0
 				trimYaw = 0
 				trimRoll = 0

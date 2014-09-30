@@ -16,7 +16,7 @@ namespace AutomatedTesting.Tests
             var ksp = new KSP() { Version = "0.24.2" };
             ksp.GameConfig = new TestAutomation.Config
             {
-                SaveFile = "rocket_backward_landing_KSC",
+                SaveFile = "rocket_backward_landing_KSC_Stock",
                 VesselId = "b7a8fcd07f424323b1d4be23057446ec",
                 AoA = Mathf.PI
             };
