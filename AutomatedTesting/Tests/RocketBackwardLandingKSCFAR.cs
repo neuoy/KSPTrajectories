@@ -9,7 +9,7 @@ using UnityEngine;
 namespace AutomatedTesting.Tests
 {
     [KSPTest]
-    class RocketBackwardLandingKSC
+    class RocketBackwardLandingKSCFAR
     {
         public void Run()
         {

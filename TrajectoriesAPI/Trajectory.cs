@@ -11,9 +11,24 @@ namespace TrajectoriesAPI
     {
         public struct Point
         {
+            /// <summary>
+            /// Position relatively to the orbited body (in the inertial frame, unless body-fixed mode is enabled)
+            /// </summary>
             public Vector3 pos;
+
+            /// <summary>
+            /// Aerodynamic forces applied to the vessel (in world/inertial frame)
+            /// </summary>
             public Vector3 aerodynamicForce;
+
+            /// <summary>
+            /// Vessel velocity in world/inertial frame
+            /// </summary>
             public Vector3 orbitalVelocity;
+
+            /// <summary>
+            /// Vessel velocity relatively to the air (i.e. in the body rotating frame)
+            /// </summary>
             public Vector3 airVelocity;
         }
 
@@ -60,7 +75,7 @@ namespace TrajectoriesAPI
         }
 
         /// <summary>
-        /// Gets the predicted aerodynamic force (in world coordinates) when the vessel will be at the specified altitude arround the currently orbited body.
+        /// Gets information about the point the vessel will be at the specified altitude arround the currently orbited body.
         /// </summary>
         public Point? GetInfo(float altitudeAboveSeaLevel)
         {

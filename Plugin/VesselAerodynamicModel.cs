@@ -64,6 +64,9 @@ namespace Trajectories
             mass_ = 0.0;
             foreach (var part in vessel_.Parts)
             {
+                if (part.physicalSignificance == Part.PhysicalSignificance.NONE)
+                    continue;
+
                 float partMass = part.mass + part.GetResourceMass();
                 stockDragCoeff_ += part.maximum_drag * partMass;
                 mass_ += partMass;
