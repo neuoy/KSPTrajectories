@@ -187,6 +187,7 @@ namespace Trajectories
             for (int i = 0; i < colors.Length; ++i)
                 colors[i] = color;
 
+            mesh.Clear();
             mesh.vertices = vertices;
             mesh.colors = colors;
             mesh.triangles = triangles;
@@ -232,9 +233,10 @@ namespace Trajectories
             for (int i = 0; i < colors.Length; ++i)
                 colors[i] = color;
 
+            mesh.Clear();
             mesh.vertices = vertices;
-            mesh.triangles = triangles;
             mesh.colors = colors;
+            mesh.triangles = triangles;
             mesh.RecalculateBounds();
         }
 
@@ -248,7 +250,7 @@ namespace Trajectories
             Vector3 crossV1 = Vector3.Cross(impactPosition, Vector3.right).normalized;
             Vector3 crossV2 = Vector3.Cross(impactPosition, crossV1).normalized;
             
-            float crossThickness = lineWidth * Vector3.Distance(camPos, impactPosition);
+            float crossThickness = Mathf.Min(lineWidth * Vector3.Distance(camPos, impactPosition), 6000.0f);
             float crossSize = crossThickness * 10.0f;
 
             vertices[0] = impactPosition - crossV1 * crossSize + crossV2 * crossThickness;
@@ -279,9 +281,10 @@ namespace Trajectories
             for (int i = 0; i < colors.Length; ++i)
                 colors[i] = color;
 
+            mesh.Clear();
             mesh.vertices = vertices;
-            mesh.triangles = triangles;
             mesh.colors = colors;
+            mesh.triangles = triangles;
             mesh.RecalculateBounds();
         }
 
