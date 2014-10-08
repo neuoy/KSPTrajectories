@@ -151,29 +151,31 @@ namespace Trajectories
             double prevTA = orbit.TrueAnomalyAtUT(startTime);
             double prevTime = startTime;
 
-            double[] stepUT = new double[steps * 2];
+            double[] stepUT = new double[steps * 4];
             int utIdx = 0;
             double maxDT = Math.Max(1.0, duration / (double)steps);
+            double maxDTA = 2.0 * Math.PI / (double)steps;
             stepUT[utIdx++] = startTime;
             while(true)
             {
-                double ta = prevTA + 2.0 * Math.PI / (double)steps;
-                
-                double time = orbit.GetUTforTrueAnomaly(ta, prevTime);
-                while (time < prevTime)
-                    time += orbit.period;
-
-                if (time > prevTime + maxDT)
+                double time = prevTime + maxDT;
+                while (true)
                 {
-                    time = prevTime + maxDT;
-                    ta = orbit.TrueAnomalyAtUT(time);
+                    double ta = orbit.TrueAnomalyAtUT(time);
+                    while (ta < prevTA)
+                        ta += 2.0 * Math.PI;
+                    if (ta - prevTA <= maxDTA)
+                    {
+                        prevTA = ta;
+                        break;
+                    }
+                    time = (prevTime + time) * 0.5;
                 }
 
                 if (time > startTime + duration - (time-prevTime) * 0.5)
                     break;
 
                 prevTime = time;
-                prevTA = ta;
 
                 stepUT[utIdx++] = time;
                 if (utIdx >= stepUT.Length - 1)
