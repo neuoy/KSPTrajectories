@@ -17,13 +17,34 @@ namespace Trajectories
     [KSPAddon(KSPAddon.Startup.EveryScene, false)]
     public class MapOverlay : MonoBehaviour
     {
+        private class CameraListener : MonoBehaviour
+        {
+            public MapOverlay overlay;
+
+            public void OnPreRender()
+            {
+                overlay.Render();
+            }
+        }
+
         private List<GameObject> meshes = new List<GameObject>();
         private bool displayEnabled = false;
 
         private Material lineMaterial;
         private float lineWidth = 0.002f;
 
-        public void LateUpdate()
+        public void Update()
+        {
+            if ((HighLogic.LoadedScene != GameScenes.FLIGHT && HighLogic.LoadedScene != GameScenes.TRACKSTATION) || !MapView.MapIsEnabled || MapView.MapCamera == null)
+                return;
+
+            if (!MapView.MapCamera.gameObject.GetComponents<CameraListener>().Any())
+            {
+                MapView.MapCamera.gameObject.AddComponent<CameraListener>().overlay = this;
+            }
+        }
+
+        public void Render()
         {
             if ((HighLogic.LoadedScene != GameScenes.FLIGHT && HighLogic.LoadedScene != GameScenes.TRACKSTATION) || !MapView.MapIsEnabled || MapView.MapCamera == null)
             {
@@ -79,11 +100,6 @@ namespace Trajectories
                 obj = newMesh;
             }
 
-            obj.transform.parent = ScaledSpace.Instance.scaledSpaceTransforms.First(t => t.name == body.name);
-            obj.transform.localScale = Vector3.one * (0.0001667f / obj.transform.parent.localScale.x);
-            obj.transform.localPosition = Vector3.zero;
-            obj.transform.rotation = Quaternion.identity;
-
             obj.renderer.sharedMaterial = material;
 
             return obj;
@@ -118,18 +134,18 @@ namespace Trajectories
                 
                 if (patch.isAtmospheric)
                 {
-                    initMeshFromTrajectory(obj.transform, mesh, patch.atmosphericTrajectory, Color.red);
+                    initMeshFromTrajectory(patch.startingState.referenceBody.position, mesh, patch.atmosphericTrajectory, Color.red);
                 }
                 else
                 {
-                    initMeshFromOrbit(obj.transform, mesh, patch.spaceOrbit, patch.startingState.time, patch.endTime - patch.startingState.time, Color.white);
+                    initMeshFromOrbit(patch.startingState.referenceBody.position, mesh, patch.spaceOrbit, patch.startingState.time, patch.endTime - patch.startingState.time, Color.white);
                 }
 
                 if (patch.impactPosition.HasValue)
                 {
                     obj = GetMesh(patch.startingState.referenceBody, lineMaterial);
                     mesh = obj.GetComponent<MeshFilter>().mesh;
-                    initMeshFromImpact(obj.transform, mesh, patch.impactPosition.Value, Color.red);
+                    initMeshFromImpact(patch.startingState.referenceBody.position, mesh, patch.impactPosition.Value, Color.red);
                 }
             }
 
@@ -138,15 +154,15 @@ namespace Trajectories
             {
                 var obj = GetMesh(Trajectory.fetch.targetBody, lineMaterial);
                 var mesh = obj.GetComponent<MeshFilter>().mesh;
-                initMeshFromImpact(obj.transform, mesh, targetPosition.Value, Color.green);
+                initMeshFromImpact(Trajectory.fetch.patches[0].startingState.referenceBody.position, mesh, targetPosition.Value, Color.green);
             }
         }
 
-        private void initMeshFromOrbit(Transform meshTransform, Mesh mesh, Orbit orbit, double startTime, double duration, Color color)
+        private void initMeshFromOrbit(Vector3 bodyPosition, Mesh mesh, Orbit orbit, double startTime, double duration, Color color)
         {
             int steps = 128;
 
-            Vector3 camPos = meshTransform.InverseTransformPoint(MapView.MapCamera.transform.position);
+            Vector3 camPos = ScaledSpace.ScaledToLocalSpace(MapView.MapCamera.transform.position) - bodyPosition;
 
             double prevTA = orbit.TrueAnomalyAtUT(startTime);
             double prevTime = startTime;
@@ -230,6 +246,11 @@ namespace Trajectories
                     colors[i] = new Color(0, (float)i / (float)colors.Length, 1.0f - (float)i / (float)colors.Length);*/
             }
 
+            for (int i = 0; i < vertices.Length; ++i)
+            {
+                vertices[i] = ScaledSpace.LocalToScaledSpace(vertices[i] + bodyPosition);
+            }
+
             mesh.Clear();
             mesh.vertices = vertices;
             mesh.colors = colors;
@@ -237,12 +258,12 @@ namespace Trajectories
             mesh.RecalculateBounds();
         }
 
-        private void initMeshFromTrajectory(Transform meshTransform, Mesh mesh, Trajectory.Point[] trajectory, Color color)
+        private void initMeshFromTrajectory(Vector3 bodyPosition, Mesh mesh, Trajectory.Point[] trajectory, Color color)
         {
             var vertices = new Vector3[trajectory.Length * 2];
             var triangles = new int[(trajectory.Length-1) * 6];
 
-            Vector3 camPos = meshTransform.InverseTransformPoint(MapView.MapCamera.transform.position);
+            Vector3 camPos = ScaledSpace.ScaledToLocalSpace(MapView.MapCamera.transform.position) - bodyPosition;
 
             Vector3 prevMeshPos = trajectory[0].pos - (trajectory[1].pos-trajectory[0].pos);
             for(int i = 0; i < trajectory.Length; ++i)
@@ -276,6 +297,11 @@ namespace Trajectories
             for (int i = 0; i < colors.Length; ++i)
                 colors[i] = color;
 
+            for (int i = 0; i < vertices.Length; ++i)
+            {
+                vertices[i] = ScaledSpace.LocalToScaledSpace(vertices[i] + bodyPosition);
+            }
+
             mesh.Clear();
             mesh.vertices = vertices;
             mesh.colors = colors;
@@ -283,12 +309,12 @@ namespace Trajectories
             mesh.RecalculateBounds();
         }
 
-        private void initMeshFromImpact(Transform meshTransform, Mesh mesh, Vector3 impactPosition, Color color)
+        private void initMeshFromImpact(Vector3 bodyPosition, Mesh mesh, Vector3 impactPosition, Color color)
         {
             var vertices = new Vector3[8];
             var triangles = new int[12];
 
-            Vector3 camPos = meshTransform.InverseTransformPoint(MapView.MapCamera.transform.position);
+            Vector3 camPos = ScaledSpace.ScaledToLocalSpace(MapView.MapCamera.transform.position) - bodyPosition;
 
             Vector3 crossV1 = Vector3.Cross(impactPosition, Vector3.right).normalized;
             Vector3 crossV2 = Vector3.Cross(impactPosition, crossV1).normalized;
@@ -323,6 +349,11 @@ namespace Trajectories
             var colors = new Color[vertices.Length];
             for (int i = 0; i < colors.Length; ++i)
                 colors[i] = color;
+
+            for (int i = 0; i < vertices.Length; ++i)
+            {
+                vertices[i] = ScaledSpace.LocalToScaledSpace(vertices[i] + bodyPosition);
+            }
 
             mesh.Clear();
             mesh.vertices = vertices;
