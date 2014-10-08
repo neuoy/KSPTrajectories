@@ -64,7 +64,7 @@ namespace Trajectories
 
             if (obj == null)
             {
-                ScreenMessages.PostScreenMessage("adding trajectory mesh " + meshes.Count);
+                //ScreenMessages.PostScreenMessage("adding trajectory mesh " + meshes.Count);
 
                 var newMesh = new GameObject();
                 newMesh.AddComponent<MeshFilter>();
@@ -144,17 +144,53 @@ namespace Trajectories
 
         private void initMeshFromOrbit(Transform meshTransform, Mesh mesh, Orbit orbit, double startTime, double duration, Color color)
         {
-            int steps = 256;
-
-            var vertices = new Vector3[steps * 2 + 2];
-            var triangles = new int[steps * 6];
+            int steps = 128;
 
             Vector3 camPos = meshTransform.InverseTransformPoint(MapView.MapCamera.transform.position);
 
-            Vector3 prevMeshPos = Util.SwapYZ(orbit.getRelativePositionAtUT(startTime - duration / (double)steps));
-            for (int i = 0; i <= steps; ++i)
+            double prevTA = orbit.TrueAnomalyAtUT(startTime);
+            double prevTime = startTime;
+
+            double[] stepUT = new double[steps * 2];
+            int utIdx = 0;
+            double maxDT = Math.Max(1.0, duration / (double)steps);
+            stepUT[utIdx++] = startTime;
+            while(true)
             {
-                double time = startTime + duration * (double)i / (double)steps;
+                double ta = prevTA + 2.0 * Math.PI / (double)steps;
+                
+                double time = orbit.GetUTforTrueAnomaly(ta, prevTime);
+                while (time < prevTime)
+                    time += orbit.period;
+
+                if (time > prevTime + maxDT)
+                {
+                    time = prevTime + maxDT;
+                    ta = orbit.TrueAnomalyAtUT(time);
+                }
+
+                if (time > startTime + duration - (time-prevTime) * 0.5)
+                    break;
+
+                prevTime = time;
+                prevTA = ta;
+
+                stepUT[utIdx++] = time;
+                if (utIdx >= stepUT.Length - 1)
+                {
+                    //Util.PostSingleScreenMessage("ut overflow", "ut overflow");
+                    break; // this should never happen, but better stop than overflow if it does
+                }
+            }
+            stepUT[utIdx++] = startTime + duration;
+
+            var vertices = new Vector3[utIdx * 2 + 2];
+            var triangles = new int[utIdx * 6];
+
+            Vector3 prevMeshPos = Util.SwapYZ(orbit.getRelativePositionAtUT(startTime - duration / (double)steps));
+            for(int i = 0; i < utIdx; ++i)
+            {
+                double time = stepUT[i];
 
                 Vector3 curMeshPos = Util.SwapYZ(orbit.getRelativePositionAtUT(time));
                 if (Settings.fetch.BodyFixedMode) {
@@ -185,7 +221,12 @@ namespace Trajectories
 
             var colors = new Color[vertices.Length];
             for (int i = 0; i < colors.Length; ++i)
-                colors[i] = color;
+            {
+                //if (color.g < 0.5)
+                    colors[i] = color;
+                /*else
+                    colors[i] = new Color(0, (float)i / (float)colors.Length, 1.0f - (float)i / (float)colors.Length);*/
+            }
 
             mesh.Clear();
             mesh.vertices = vertices;
