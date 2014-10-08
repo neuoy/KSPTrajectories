@@ -1,8 +1,8 @@
-2014-09-30T22:33:54.194Z Initializing TestAutomation
-2014-09-30T22:34:04.379Z Loading vessel: _pod
-2014-09-30T22:34:08.305Z Starting auto pilot
-2014-09-30T22:34:08.348Z Predicted impact position: (-351944.4, -1835.0, 486116.9)
-2014-09-30T22:34:08.349Z Setting time warp
-2014-09-30T22:36:43.794Z Vessel destroyed or landed
-2014-09-30T22:36:43.795Z Last known position: (-353115.8, -1843.9, 485070.5)(1570.789m away from prediction)
-2014-09-30T22:36:43.796Z Test result: success, with message: Predicted impact position reached
+2014-10-08T20:16:21.567Z Initializing TestAutomation
+2014-10-08T20:16:32.151Z Loading vessel: _pod
+2014-10-08T20:16:36.296Z Starting auto pilot
+2014-10-08T20:16:36.340Z Predicted impact position: (-351948.5, -1835.0, 486117.1)
+2014-10-08T20:16:36.341Z Setting time warp
+2014-10-08T20:19:11.798Z Vessel destroyed or landed
+2014-10-08T20:19:11.799Z Last known position: (-353279.9, -1833.0, 484961.4)(1762.985m away from prediction)
+2014-10-08T20:19:11.800Z Test result: success, with message: Predicted impact position reached
