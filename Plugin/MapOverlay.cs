@@ -49,6 +49,8 @@ namespace Trajectories
 
         public void Update()
         {
+            setDisplayEnabled((HighLogic.LoadedScene == GameScenes.FLIGHT || HighLogic.LoadedScene == GameScenes.TRACKSTATION) && MapView.MapIsEnabled && MapView.MapCamera != null);
+
             if (attachedCamera != null && (MapView.MapCamera == null || MapView.MapCamera.gameObject != attachedCamera))
             {
                 DetachCamera();
@@ -148,7 +150,7 @@ namespace Trajectories
 
             foreach (var patch in Trajectory.fetch.patches)
             {
-                if (!patch.isDifferentFromStockTrajectory && !Settings.fetch.BodyFixedMode)
+                if (!patch.isDifferentFromStockTrajectory && !Settings.fetch.BodyFixedMode && !Settings.fetch.DisplayCompleteTrajectory)
                     continue;
 
                 if (patch.isAtmospheric && patch.atmosphericTrajectory.Length < 2)

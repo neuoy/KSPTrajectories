@@ -166,6 +166,17 @@ namespace Trajectories
             {
                 if (state == null)
                     break;
+
+                var maneuverNodes = vessel_.patchedConicSolver.maneuverNodes;
+                foreach (var node in maneuverNodes)
+                {
+                    if (node.UT == state.time)
+                    {
+                        state.velocity += node.GetBurnVector(createOrbitFromState(state));
+                        break;
+                    }
+                }
+
                 state = AddPatch(state, profile);
                 if (patchIdx > 0 && patches_[patchIdx - 1].isDifferentFromStockTrajectory)
                     patches_[patchIdx].isDifferentFromStockTrajectory = true;
@@ -202,6 +213,13 @@ namespace Trajectories
             }
         }
 
+        private Orbit createOrbitFromState(VesselState state)
+        {
+            var orbit = new Orbit();
+            orbit.UpdateFromStateVectors(Util.SwapYZ(state.position), Util.SwapYZ(state.velocity), state.referenceBody, state.time);
+            return orbit;
+        }
+
         private VesselState AddPatch(VesselState startingState, DescentProfile profile)
         {
             CelestialBody body = startingState.referenceBody;
@@ -209,9 +227,19 @@ namespace Trajectories
             var patch = new Patch();
             patch.startingState = startingState;           
             patch.isAtmospheric = false;
-            patch.spaceOrbit = new Orbit();
-            patch.spaceOrbit.UpdateFromStateVectors(Util.SwapYZ(startingState.position), Util.SwapYZ(startingState.velocity), body, startingState.time);
+            patch.spaceOrbit = createOrbitFromState(startingState);
             patch.endTime = patch.startingState.time + patch.spaceOrbit.period;
+
+            bool nodeOnSpaceOrbit = false;
+            var maneuverNodes = vessel_.patchedConicSolver.maneuverNodes;
+            foreach (var node in maneuverNodes)
+            {
+                if (node.UT > patch.startingState.time && node.UT < patch.endTime)
+                {
+                    nodeOnSpaceOrbit = true;
+                    patch.endTime = node.UT;
+                }
+            }
 
             // TODO: predict encounters and use maneuver nodes
             // easy to do for encounters and maneuver nodes before the first atmospheric entry (just follow the KSP flight plan)
@@ -219,7 +247,12 @@ namespace Trajectories
 
             double maxAtmosphereAltitude = RealMaxAtmosphereAltitude(body);
 
-            if (patch.spaceOrbit.PeA < maxAtmosphereAltitude)
+            double minAltitude = patch.spaceOrbit.PeA;
+            if (patch.endTime < patch.spaceOrbit.timeToPe)
+            {
+                minAltitude = patch.spaceOrbit.getRelativePositionAtUT(patch.endTime).magnitude;
+            }
+            if (minAltitude < maxAtmosphereAltitude)
             {
                 double entryTime;
                 if (startingState.position.magnitude <= body.Radius + maxAtmosphereAltitude)
@@ -317,7 +350,7 @@ namespace Trajectories
                         double R = pos.magnitude;
                         double altitude = R - body.Radius;
                         double atmosphereCoeff = altitude / maxAtmosphereAltitude;
-                        if (atmosphereCoeff <= 0.0 || atmosphereCoeff >= 1.0 || iteration == maxIterations)
+                        if (atmosphereCoeff <= 0.0 || atmosphereCoeff >= 1.0 || iteration == maxIterations || currentTime > patch.endTime)
                         {
                             if (atmosphereCoeff <= 0.0)
                             {
@@ -353,7 +386,7 @@ namespace Trajectories
                                 patch.impactVelocity = vel;
                             }
 
-                            patch.endTime = currentTime;
+                            patch.endTime = Math.Min(currentTime, patch.endTime);
 
                             int totalCount = (buffer.Count - 1) * chunkSize + nextPosIdx;
                             patch.atmosphericTrajectory = new Point[totalCount];
@@ -387,7 +420,7 @@ namespace Trajectories
                                     position = pos,
                                     velocity = vel,
                                     referenceBody = body,
-                                    time = currentTime
+                                    time = patch.endTime
                                 };
                             }
                         }
@@ -437,7 +470,18 @@ namespace Trajectories
             {
                 // no atmospheric entry, just add the space orbit
                 patches_.Add(patch);
-                return null;
+                if (nodeOnSpaceOrbit)
+                {
+                    return new VesselState
+                    {
+                        position = Util.SwapYZ(patch.spaceOrbit.getRelativePositionAtUT(patch.endTime)),
+                        velocity = Util.SwapYZ(patch.spaceOrbit.getOrbitalVelocityAtUT(patch.endTime)),
+                        referenceBody = body,
+                        time = patch.endTime
+                    };
+                }
+                else
+                    return null;
             }
         }
 

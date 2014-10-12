@@ -20,6 +20,9 @@ namespace Trajectories
         public bool DisplayTrajectories { get; set; }
 
         [Persistent(Default: false)]
+        public bool DisplayCompleteTrajectory { get; set; }
+
+        [Persistent(Default: false)]
         public bool BodyFixedMode { get; set; }
 
         [Persistent(Default: true)]

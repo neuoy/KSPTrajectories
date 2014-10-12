@@ -42,7 +42,15 @@ namespace Trajectories
 
         private void MainWindow(int id)
         {
-            Settings.fetch.DisplayTrajectories = GUILayout.Toggle(Settings.fetch.DisplayTrajectories, "Display trajectory");
+            GUILayout.BeginHorizontal();
+            Settings.fetch.DisplayTrajectories = GUILayout.Toggle(Settings.fetch.DisplayTrajectories, "Display trajectory", GUILayout.Width(125));
+
+            if (Settings.fetch.DisplayTrajectories)
+            {
+                Settings.fetch.DisplayCompleteTrajectory = GUILayout.Toggle(Settings.fetch.DisplayCompleteTrajectory, "complete", GUILayout.Width(70));
+            }
+            GUILayout.EndHorizontal();
+
             Settings.fetch.BodyFixedMode = GUILayout.Toggle(Settings.fetch.BodyFixedMode, "Body-fixed mode");
 
             GUI.enabled = Trajectory.fetch.targetPosition.HasValue;
