@@ -97,7 +97,6 @@ namespace Trajectories
         private VesselAerodynamicModel aerodynamicModel_;
         private List<Patch> patches_ = new List<Patch>();
         public List<Patch> patches { get { return patches_; } }
-        private readonly int MaxPatchCount = 3;
 
         public float maxaccel;
 
@@ -162,7 +161,7 @@ namespace Trajectories
                 aerodynamicModel_.IncrementalUpdate();
 
             var state = vessel.LandedOrSplashed ? null : new VesselState(vessel);
-            for (int patchIdx = 0; patchIdx < MaxPatchCount; ++patchIdx)
+            for (int patchIdx = 0; patchIdx < Settings.fetch.MaxPatchCount; ++patchIdx)
             {
                 if (state == null)
                     break;
@@ -248,7 +247,7 @@ namespace Trajectories
             double maxAtmosphereAltitude = RealMaxAtmosphereAltitude(body);
 
             double minAltitude = patch.spaceOrbit.PeA;
-            if (patch.endTime < patch.spaceOrbit.timeToPe)
+            if (patch.endTime < startingState.time + patch.spaceOrbit.timeToPe)
             {
                 minAltitude = patch.spaceOrbit.getRelativePositionAtUT(patch.endTime).magnitude;
             }

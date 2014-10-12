@@ -53,6 +53,12 @@ namespace Trajectories
 
             Settings.fetch.BodyFixedMode = GUILayout.Toggle(Settings.fetch.BodyFixedMode, "Body-fixed mode");
 
+            GUILayout.BeginHorizontal();
+            GUILayout.Label("Max patches", GUILayout.Width(80));
+            Settings.fetch.MaxPatchCount = Mathf.RoundToInt(GUILayout.HorizontalSlider((float)Settings.fetch.MaxPatchCount, 3, 10, GUILayout.Width(120)));
+            GUILayout.Label(Settings.fetch.MaxPatchCount.ToString(), GUILayout.Width(15));
+            GUILayout.EndHorizontal();
+
             GUI.enabled = Trajectory.fetch.targetPosition.HasValue;
             if (GUILayout.Button("Unset target"))
                 Trajectory.SetTarget();

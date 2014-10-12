@@ -34,6 +34,9 @@ namespace Trajectories
         [Persistent(Default: false)]
         public bool GUIEnabled { get; set; }
 
+        [Persistent(Default: 4)]
+        public int MaxPatchCount { get; set; }
+
         private KSP.IO.PluginConfiguration config;
 
         public Settings()
