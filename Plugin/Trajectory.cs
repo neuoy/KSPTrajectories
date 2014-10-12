@@ -25,6 +25,7 @@ namespace Trajectories
             public double time { get; set; } // universal time
             public Vector3d position { get; set; } // position in world frame relatively to the reference body
             public Vector3d velocity { get; set; } // velocity in world frame relatively to the reference body
+            public Orbit stockPatch { get; set; } // tells wether the patch starting from this state is superimposed on a stock KSP patch, or null if something makes it diverge (atmospheric entry for example)
 
             public VesselState(Vessel vessel)
             {
@@ -32,6 +33,7 @@ namespace Trajectories
                 time = Planetarium.GetUniversalTime();
                 position = vessel.GetWorldPos3D() - referenceBody.position;
                 velocity = vessel.obt_velocity;
+                stockPatch = vessel.orbit;
             }
 
             public VesselState()
@@ -57,7 +59,6 @@ namespace Trajectories
             public Vector3? impactPosition { get; set; }
             public Vector3? rawImpactPosition { get; set; }
             public Vector3 impactVelocity { get; set; }
-            public bool isDifferentFromStockTrajectory { get; set; } // tells wether this patch is superimposed on the stock KSP trajectory, or if something makes it diverge (atmospheric entry for example)
 
             public Point GetInfo(float altitudeAboveSeaLevel)
             {
@@ -177,8 +178,6 @@ namespace Trajectories
                 }
 
                 state = AddPatch(state, profile);
-                if (patchIdx > 0 && patches_[patchIdx - 1].isDifferentFromStockTrajectory)
-                    patches_[patchIdx].isDifferentFromStockTrajectory = true;
             }
         }
 
@@ -226,18 +225,33 @@ namespace Trajectories
             var patch = new Patch();
             patch.startingState = startingState;           
             patch.isAtmospheric = false;
-            patch.spaceOrbit = createOrbitFromState(startingState);
+            patch.spaceOrbit = startingState.stockPatch ?? createOrbitFromState(startingState);
             patch.endTime = patch.startingState.time + patch.spaceOrbit.period;
 
-            bool nodeOnSpaceOrbit = false;
-            var maneuverNodes = vessel_.patchedConicSolver.maneuverNodes;
-            foreach (var node in maneuverNodes)
+            var flightPlan = vessel_.patchedConicSolver.flightPlan;
+            if (!flightPlan.Any())
             {
-                if (node.UT > patch.startingState.time && node.UT < patch.endTime)
+                // when there is no maneuver node, the flight plan is empty, so we populate it with the current orbit and associated encounters etc.
+                flightPlan = new List<Orbit>();
+                for (var orbit = vessel_.orbit; orbit != null && orbit.activePatch; orbit = orbit.nextPatch)
                 {
-                    nodeOnSpaceOrbit = true;
-                    patch.endTime = node.UT;
+                    flightPlan.Add(orbit);
                 }
+            }
+
+            Orbit nextStockPatch = null;
+            if (startingState.stockPatch != null)
+            {
+                int planIdx = flightPlan.IndexOf(startingState.stockPatch);
+                if (planIdx >= 0 && planIdx < flightPlan.Count - 1)
+                {
+                    nextStockPatch = flightPlan[planIdx + 1];
+                }
+            }
+
+            if (nextStockPatch != null)
+            {
+                patch.endTime = nextStockPatch.StartUT;
             }
 
             // TODO: predict encounters and use maneuver nodes
@@ -323,7 +337,7 @@ namespace Trajectories
                     // the simulation assumes a constant angle of attack
 
                     patch.isAtmospheric = true;
-                    patch.isDifferentFromStockTrajectory = true;
+                    patch.startingState.stockPatch = null;
 
                     double dt = 0.1; // lower dt would be more accurate, but a tradeoff has to be found between performances and accuracy
 
@@ -469,14 +483,15 @@ namespace Trajectories
             {
                 // no atmospheric entry, just add the space orbit
                 patches_.Add(patch);
-                if (nodeOnSpaceOrbit)
+                if (nextStockPatch != null)
                 {
                     return new VesselState
                     {
                         position = Util.SwapYZ(patch.spaceOrbit.getRelativePositionAtUT(patch.endTime)),
                         velocity = Util.SwapYZ(patch.spaceOrbit.getOrbitalVelocityAtUT(patch.endTime)),
-                        referenceBody = body,
-                        time = patch.endTime
+                        referenceBody = nextStockPatch == null ? body : nextStockPatch.referenceBody,
+                        time = patch.endTime,
+                        stockPatch = nextStockPatch
                     };
                 }
                 else
