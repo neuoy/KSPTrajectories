@@ -57,6 +57,7 @@ namespace Trajectories
             public Vector3? impactPosition { get; set; }
             public Vector3? rawImpactPosition { get; set; }
             public Vector3 impactVelocity { get; set; }
+            public bool isDifferentFromStockTrajectory { get; set; } // tells wether this patch is superimposed on the stock KSP trajectory, or if something makes it diverge (atmospheric entry for example)
 
             public Point GetInfo(float altitudeAboveSeaLevel)
             {
@@ -160,6 +161,8 @@ namespace Trajectories
                 if (state == null)
                     break;
                 state = AddPatch(state, profile);
+                if (patchIdx > 0 && patches_[patchIdx - 1].isDifferentFromStockTrajectory)
+                    patches_[patchIdx].isDifferentFromStockTrajectory = true;
             }
         }
 
@@ -282,6 +285,7 @@ namespace Trajectories
                     // the simulation assumes a constant angle of attack
 
                     patch.isAtmospheric = true;
+                    patch.isDifferentFromStockTrajectory = true;
 
                     double dt = 0.1; // lower dt would be more accurate, but a tradeoff has to be found between performances and accuracy
 

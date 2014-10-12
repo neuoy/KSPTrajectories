@@ -126,6 +126,9 @@ namespace Trajectories
 
             foreach (var patch in Trajectory.fetch.patches)
             {
+                if (!patch.isDifferentFromStockTrajectory && !Settings.fetch.BodyFixedMode)
+                    continue;
+
                 if (patch.isAtmospheric && patch.atmosphericTrajectory.Length < 2)
                     continue;
 
