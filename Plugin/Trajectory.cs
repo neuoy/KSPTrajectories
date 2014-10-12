@@ -161,6 +161,28 @@ namespace Trajectories
             else
                 aerodynamicModel_.IncrementalUpdate();
 
+            /*Debug.Log("======== Initial orbit ============");
+            for (var sub = vessel_.orbit; sub != null && sub.activePatch; sub = sub.nextPatch)
+            {
+                Debug.Log("Orbit: arround " + sub.referenceBody.name + ", start=" + sub.StartUT + ", period=" + sub.period + ", start trans=" + sub.patchStartTransition + ", end trans=" + sub.patchEndTransition);
+            }
+
+            Debug.Log("========= Flight plan ==============");
+            foreach (var patch in vessel_.patchedConicSolver.flightPlan)
+            {
+                Debug.Log("- flightPlan entry");
+                for (var sub = patch; sub != null && sub.activePatch; sub = sub.nextPatch)
+                {
+                    Debug.Log("Orbit: arround " + sub.referenceBody.name + ", start=" + sub.StartUT + ", period=" + sub.period + ", start trans=" + sub.patchStartTransition + ", end trans=" + sub.patchEndTransition);
+                }
+            }
+
+            Debug.Log("========= Maneuver nodes ============");
+            foreach (var node in vessel_.patchedConicSolver.maneuverNodes)
+            {
+                Debug.Log("at " + node.UT + ", deltav=" + node.DeltaV.magnitude);
+            }*/
+
             var state = vessel.LandedOrSplashed ? null : new VesselState(vessel);
             for (int patchIdx = 0; patchIdx < Settings.fetch.MaxPatchCount; ++patchIdx)
             {
@@ -228,15 +250,18 @@ namespace Trajectories
             patch.spaceOrbit = startingState.stockPatch ?? createOrbitFromState(startingState);
             patch.endTime = patch.startingState.time + patch.spaceOrbit.period;
 
-            var flightPlan = vessel_.patchedConicSolver.flightPlan;
-            if (!flightPlan.Any())
+            // the flight plan does not always contain the first patches (before the first maneuver node), so we populate it with the current orbit and associated encounters etc.
+            var flightPlan = new List<Orbit>();
+            for (var orbit = vessel_.orbit; orbit != null && orbit.activePatch; orbit = orbit.nextPatch)
             {
-                // when there is no maneuver node, the flight plan is empty, so we populate it with the current orbit and associated encounters etc.
-                flightPlan = new List<Orbit>();
-                for (var orbit = vessel_.orbit; orbit != null && orbit.activePatch; orbit = orbit.nextPatch)
-                {
-                    flightPlan.Add(orbit);
-                }
+                if (vessel_.patchedConicSolver.flightPlan.Contains(orbit))
+                    break;
+                flightPlan.Add(orbit);
+            }
+
+            foreach (var orbit in vessel_.patchedConicSolver.flightPlan)
+            {
+                flightPlan.Add(orbit);
             }
 
             Orbit nextStockPatch = null;
