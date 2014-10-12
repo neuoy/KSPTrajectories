@@ -27,20 +27,42 @@ namespace Trajectories
             }
         }
 
+        private GameObject attachedCamera;
+        private CameraListener listener;
         private List<GameObject> meshes = new List<GameObject>();
         private bool displayEnabled = false;
 
         private Material lineMaterial;
         private float lineWidth = 0.002f;
 
+        private void DetachCamera()
+        {
+            if (attachedCamera == null)
+                return;
+
+            Debug.Log("Trajectories: detaching camera listener");
+
+            Destroy(listener);
+            listener = null;
+            attachedCamera = null;
+        }
+
         public void Update()
         {
+            if (attachedCamera != null && (MapView.MapCamera == null || MapView.MapCamera.gameObject != attachedCamera))
+            {
+                DetachCamera();
+            }
+
             if ((HighLogic.LoadedScene != GameScenes.FLIGHT && HighLogic.LoadedScene != GameScenes.TRACKSTATION) || !MapView.MapIsEnabled || MapView.MapCamera == null)
                 return;
 
-            if (!MapView.MapCamera.gameObject.GetComponents<CameraListener>().Any())
+            if (listener == null)
             {
-                MapView.MapCamera.gameObject.AddComponent<CameraListener>().overlay = this;
+                Debug.Log("Trajectories: attaching camera listener");
+                listener = MapView.MapCamera.gameObject.AddComponent<CameraListener>();
+                listener.overlay = this;
+                attachedCamera = MapView.MapCamera.gameObject;
             }
         }
 
@@ -368,6 +390,7 @@ namespace Trajectories
         public void OnDestroy()
         {
             Settings.fetch.Save();
+            DetachCamera();
             Clear();
         }
     }

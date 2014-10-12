@@ -64,6 +64,11 @@ namespace Trajectories
                 if(!isAtmospheric)
                     throw new Exception("Trajectory info available only for atmospheric patches");
 
+                if (atmosphericTrajectory.Length == 1)
+                    return atmosphericTrajectory[0];
+                else if (atmosphericTrajectory.Length == 0)
+                    return new Point();
+
                 float absAltitude = (float)startingState.referenceBody.Radius + altitudeAboveSeaLevel;
                 float sqMag = absAltitude * absAltitude;
 
@@ -73,6 +78,7 @@ namespace Trajectories
                     ++idx;
 
                 float coeff = (absAltitude - atmosphericTrajectory[idx].pos.magnitude) / Mathf.Max(0.00001f, atmosphericTrajectory[idx-1].pos.magnitude - atmosphericTrajectory[idx].pos.magnitude);
+                coeff = Math.Min(1.0f, Math.Max(0.0f, coeff));
 
                 Point res = new Point();
                 res.pos = atmosphericTrajectory[idx].pos * (1.0f - coeff) + atmosphericTrajectory[idx-1].pos * coeff;
