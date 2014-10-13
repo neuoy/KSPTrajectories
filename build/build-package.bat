@@ -12,6 +12,8 @@ cd package
 mkdir GameData
 cd GameData
 
+xcopy /y ..\..\3rdParty\ModuleManager.2.5.1.dll .
+
 mkdir Trajectories
 cd Trajectories
 xcopy /y ..\..\..\License.txt .
