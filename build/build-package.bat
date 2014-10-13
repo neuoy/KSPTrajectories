@@ -14,7 +14,9 @@ cd GameData
 
 mkdir Trajectories
 cd Trajectories
-xcopy /y ..\..\..\LICENSE .
+xcopy /y ..\..\..\License.txt .
+xcopy /y ..\..\..\Trajectories.cfg .
+xcopy /y ..\..\..\Trajectories.version .
 
 mkdir Plugin
 xcopy /y ..\..\..\Plugin\bin\Release\Trajectories.dll Plugin
@@ -22,6 +24,7 @@ xcopy /y ..\..\..\Plugin\bin\Release\Trajectories.dll Plugin
 mkdir Textures
 xcopy /y ..\..\..\Textures\icon.png Textures
 
+del ..\..\..\Trajectories.zip
 "%scriptPath%7z.exe" a ../../../Trajectories.zip ../../GameData
 cd "%scriptPath%.."
 rd /s /q package

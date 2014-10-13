@@ -24,6 +24,8 @@ namespace Trajectories
             public double angle; // in radians
             public bool horizon; // if true, angle is relative to horizon, otherwise it's relative to velocity (i.e. angle of attack)
 
+            static private readonly float maxAngle = 180.0f / 180.0f * Mathf.PI;
+
             public double GetAngleOfAttack(Vector3d position, Vector3d velocity)
             {
                 if (!horizon)
@@ -34,7 +36,6 @@ namespace Trajectories
 
             public void DoGUI()
             {
-                float maxAngle = 180.0f / 180.0f * Mathf.PI;
                 GUILayout.BeginHorizontal();
                 GUILayout.Label(new GUIContent(name, description), GUILayout.Width(50));
                 horizon = GUILayout.Toggle(horizon, new GUIContent(horizon ? "Horiz" : "AoA", "AoA = Angle of Attack = angle relatively to the velocity vector.\nHoriz = angle relatively to the horizon."), GUILayout.Width(50));
@@ -42,6 +43,14 @@ namespace Trajectories
                 angle = (double)(sliderPos * sliderPos * sliderPos * maxAngle); // this helps to have high precision near 0° while still allowing big angles
                 GUILayout.Label(Math.Round(angle * 180.0 / Math.PI).ToString() + "°", GUILayout.Width(30));
                 GUILayout.EndHorizontal();
+            }
+
+            public void RefreshSliderPos()
+            {
+                bool negative = angle < 0;
+                sliderPos = (float)Math.Pow(Math.Abs(angle) / maxAngle, 1.0 / 3.0);
+                if (negative)
+                    sliderPos = -sliderPos;
             }
         }
         
@@ -53,11 +62,18 @@ namespace Trajectories
         private static DescentProfile fetch_;
         public static DescentProfile fetch { get { return fetch_; } }
 
+        private Vessel attachedVessel;
+
         public DescentProfile()
         {
         }
 
         public DescentProfile(float AoA)
+        {
+            Reset(AoA);
+        }
+
+        public void Reset(float AoA = 0)
         {
             entry.angle = AoA;
             entry.horizon = false;
@@ -72,6 +88,66 @@ namespace Trajectories
             finalApproach.horizon = false;
         }
 
+        public void Update()
+        {
+            if (attachedVessel != FlightGlobals.ActiveVessel)
+            {
+                //Debug.Log("Loading vessel descent profile");
+                attachedVessel = FlightGlobals.ActiveVessel;
+
+                if (attachedVessel == null)
+                {
+                    //Debug.Log("No vessel");
+                    Reset();
+                }
+                else
+                {
+                    TrajectoriesVesselSettings module = attachedVessel.Parts.SelectMany(p => p.Modules.OfType<TrajectoriesVesselSettings>()).FirstOrDefault();
+                    if (module == null)
+                    {
+                        //Debug.Log("No TrajectoriesVesselSettings module");
+                        Reset();
+                    }
+                    else
+                    {
+                        //Debug.Log("Reading settings...");
+                        entry.angle = module.EntryAngle;
+                        entry.horizon = module.EntryHorizon;
+                        highAltitude.angle = module.HighAngle;
+                        highAltitude.horizon = module.HighHorizon;
+                        lowAltitude.angle = module.LowAngle;
+                        lowAltitude.horizon = module.LowHorizon;
+                        finalApproach.angle = module.GroundAngle;
+                        finalApproach.horizon = module.GroundHorizon;
+
+                        entry.RefreshSliderPos();
+                        highAltitude.RefreshSliderPos();
+                        lowAltitude.RefreshSliderPos();
+                        finalApproach.RefreshSliderPos();
+                        //Debug.Log("Descent profile loaded");
+                    }
+                }
+            }
+        }
+
+        private void Save()
+        {
+            if(attachedVessel == null)
+                return;
+
+            foreach (var module in attachedVessel.Parts.SelectMany(p => p.Modules.OfType<TrajectoriesVesselSettings>()))
+            {
+                module.EntryAngle = (float)entry.angle;
+                module.EntryHorizon = entry.horizon;
+                module.HighAngle = (float)highAltitude.angle;
+                module.HighHorizon = highAltitude.horizon;
+                module.LowAngle = (float)lowAltitude.angle;
+                module.LowHorizon = lowAltitude.horizon;
+                module.GroundAngle = (float)finalApproach.angle;
+                module.GroundHorizon = finalApproach.horizon;
+            }
+        }
+
         public void Start()
         {
             fetch_ = this;
@@ -79,10 +155,14 @@ namespace Trajectories
 
         public void DoGUI()
         {
+            Update();
+
             entry.DoGUI();
             highAltitude.DoGUI();
             lowAltitude.DoGUI();
             finalApproach.DoGUI();
+
+            Save();
         }
 
         // Computes the angle of attack to follow the current profile if the aircraft is at the specified position (in world frame, but relative to the body) with the specified velocity (relative to the air, so it takes the body rotation into account)

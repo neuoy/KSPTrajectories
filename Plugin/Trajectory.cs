@@ -102,21 +102,30 @@ namespace Trajectories
         public float maxaccel;
 
         private Vector3? targetPosition_;
-        private double targetSetTime_;
         private CelestialBody targetBody_;
 
         public static void SetTarget(CelestialBody body = null, Vector3? relativePosition = null)
         {
-            fetch.targetBody_ = body;
             if (body != null && relativePosition.HasValue)
             {
+                fetch.targetBody_ = body;
                 fetch.targetPosition_ = body.transform.InverseTransformDirection((Vector3)relativePosition);
             }
             else
             {
-                fetch.targetPosition_ = relativePosition;
+                fetch.targetBody_ = null;
+                fetch.targetPosition_ = null;
             }
-            fetch.targetSetTime_ = Planetarium.GetUniversalTime();
+
+            if (FlightGlobals.ActiveVessel != null)
+            {
+                foreach (var module in FlightGlobals.ActiveVessel.Parts.SelectMany(p => p.Modules.OfType<TrajectoriesVesselSettings>()))
+                {
+                    module.hasTarget = fetch.targetPosition_ != null;
+                    module.targetLocation = fetch.targetPosition_.HasValue ? fetch.targetPosition_.Value : new Vector3();
+                    module.targetReferenceBody = fetch.targetBody_ == null ? "" : fetch.targetBody_.name;
+                }
+            }
         }
 
         public Vector3? targetPosition { get { return targetPosition_.HasValue ? (Vector3?)targetBody_.transform.TransformDirection(targetPosition_.Value) : null; } }
@@ -136,6 +145,21 @@ namespace Trajectories
         {
             if (HighLogic.LoadedScene == GameScenes.FLIGHT && FlightGlobals.ActiveVessel != null && FlightGlobals.ActiveVessel.Parts.Count != 0 && (MapView.MapIsEnabled || targetPosition_.HasValue))
             {
+                if (vessel_ != FlightGlobals.ActiveVessel)
+                {
+                    TrajectoriesVesselSettings module = FlightGlobals.ActiveVessel == null ? null : FlightGlobals.ActiveVessel.Parts.SelectMany(p => p.Modules.OfType<TrajectoriesVesselSettings>()).FirstOrDefault();
+                    CelestialBody body = module == null ? null : FlightGlobals.Bodies.FirstOrDefault(b => b.name == module.targetReferenceBody);
+
+                    if (body == null || !module.hasTarget)
+                    {
+                        SetTarget();
+                    }
+                    else
+                    {
+                        SetTarget(body, body.transform.TransformDirection(module.targetLocation));
+                    }
+                }
+
                 ComputeTrajectory(FlightGlobals.ActiveVessel, DescentProfile.fetch);
             }
         }
