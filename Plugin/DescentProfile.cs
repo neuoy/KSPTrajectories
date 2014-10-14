@@ -90,7 +90,7 @@ namespace Trajectories
 
         public void Update()
         {
-            if (attachedVessel != FlightGlobals.ActiveVessel)
+            if (HighLogic.LoadedScene == GameScenes.FLIGHT && attachedVessel != FlightGlobals.ActiveVessel)
             {
                 //Debug.Log("Loading vessel descent profile");
                 attachedVessel = FlightGlobals.ActiveVessel;

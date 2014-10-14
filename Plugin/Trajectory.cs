@@ -143,23 +143,23 @@ namespace Trajectories
 
         public void Update()
         {
+            if (HighLogic.LoadedScene == GameScenes.FLIGHT && vessel_ != FlightGlobals.ActiveVessel)
+            {
+                TrajectoriesVesselSettings module = FlightGlobals.ActiveVessel == null ? null : FlightGlobals.ActiveVessel.Parts.SelectMany(p => p.Modules.OfType<TrajectoriesVesselSettings>()).FirstOrDefault();
+                CelestialBody body = module == null ? null : FlightGlobals.Bodies.FirstOrDefault(b => b.name == module.targetReferenceBody);
+
+                if (body == null || !module.hasTarget)
+                {
+                    SetTarget();
+                }
+                else
+                {
+                    SetTarget(body, body.transform.TransformDirection(module.targetLocation));
+                }
+            }
+
             if (HighLogic.LoadedScene == GameScenes.FLIGHT && FlightGlobals.ActiveVessel != null && FlightGlobals.ActiveVessel.Parts.Count != 0 && (MapView.MapIsEnabled || targetPosition_.HasValue))
             {
-                if (vessel_ != FlightGlobals.ActiveVessel)
-                {
-                    TrajectoriesVesselSettings module = FlightGlobals.ActiveVessel == null ? null : FlightGlobals.ActiveVessel.Parts.SelectMany(p => p.Modules.OfType<TrajectoriesVesselSettings>()).FirstOrDefault();
-                    CelestialBody body = module == null ? null : FlightGlobals.Bodies.FirstOrDefault(b => b.name == module.targetReferenceBody);
-
-                    if (body == null || !module.hasTarget)
-                    {
-                        SetTarget();
-                    }
-                    else
-                    {
-                        SetTarget(body, body.transform.TransformDirection(module.targetLocation));
-                    }
-                }
-
                 ComputeTrajectory(FlightGlobals.ActiveVessel, DescentProfile.fetch);
             }
         }
