@@ -6,12 +6,37 @@ using UnityEngine;
 
 namespace Trajectories
 {
+    class FlightMapVisibility : IVisibility
+    {
+        internal static FlightMapVisibility Instance
+        {
+            get { return new FlightMapVisibility(); }
+        }
+        
+        private static IVisibility FLIGHT_VISIBILITY;
+
+        public bool Visible
+        {
+            get
+            {
+                return FLIGHT_VISIBILITY.Visible && MapView.MapIsEnabled;
+            }
+        }
+
+        private FlightMapVisibility()
+        {
+            if (FLIGHT_VISIBILITY == null)
+                FLIGHT_VISIBILITY = new GameScenesVisibility(GameScenes.FLIGHT);
+        }
+    }
+
     [KSPAddon(KSPAddon.Startup.EveryScene, false)]
     class MapGUI : MonoBehaviour
     {
         private static readonly int GUIId = 934824;
 
-        private ApplicationLauncherButton GUIToggleButton = null;
+        private ApplicationLauncherButton GUIToggleButton;
+        private IButton GUIToggleButtonBlizzy;
 
         private string tooltip = String.Empty;
 
@@ -100,7 +125,20 @@ namespace Trajectories
 
         public void Awake()
         {
-            GameEvents.onGUIApplicationLauncherReady.Add(OnGUIAppLauncherReady);
+            if (ToolbarManager.ToolbarAvailable)
+            {
+                Debug.Log("Using Blizzy toolbar for Trajectories GUI");
+                GUIToggleButtonBlizzy = ToolbarManager.Instance.add("Trajectories", "ToggleUI");
+                GUIToggleButtonBlizzy.Visibility = FlightMapVisibility.Instance;
+                GUIToggleButtonBlizzy.TexturePath = "Trajectories/Textures/icon-blizzy";
+                GUIToggleButtonBlizzy.ToolTip = "Toggle Trajectories window";
+                GUIToggleButtonBlizzy.OnClick += OnToggleGUIBlizzy;
+            }
+            else
+            {
+                Debug.Log("Using stock toolbar for Trajectories GUI");
+                GameEvents.onGUIApplicationLauncherReady.Add(OnGUIAppLauncherReady);
+            }
         }
 
         void OnGUIAppLauncherReady()
@@ -124,6 +162,11 @@ namespace Trajectories
 
         void DummyVoid() { }
 
+        void OnToggleGUIBlizzy(ClickEvent e)
+        {
+            Settings.fetch.GUIEnabled = !Settings.fetch.GUIEnabled;
+        }
+
         void OnToggleOn()
         {
             Settings.fetch.GUIEnabled = true;
@@ -139,6 +182,8 @@ namespace Trajectories
             GameEvents.onGUIApplicationLauncherReady.Remove(OnGUIAppLauncherReady);
             if (GUIToggleButton != null)
                 ApplicationLauncher.Instance.RemoveModApplication(GUIToggleButton);
+            if (GUIToggleButtonBlizzy != null)
+                GUIToggleButtonBlizzy.Destroy();
         }
 
         private static Rect ClampToScreen(Rect window)

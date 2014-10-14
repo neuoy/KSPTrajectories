@@ -181,7 +181,7 @@ namespace Trajectories
             {
                 var obj = GetMesh(Trajectory.fetch.targetBody, lineMaterial);
                 var mesh = obj.GetComponent<MeshFilter>().mesh;
-                initMeshFromImpact(Trajectory.fetch.patches[0].startingState.referenceBody.position, mesh, targetPosition.Value, Color.green);
+                initMeshFromImpact(Trajectory.fetch.targetBody.position, mesh, targetPosition.Value, Color.green);
             }
         }
 

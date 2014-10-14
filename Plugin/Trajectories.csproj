@@ -55,6 +55,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="3rdParty\ToolbarWrapper.cs" />
     <Compile Include="DebugFastStart.cs" />
     <Compile Include="DescentProfile.cs" />
     <Compile Include="MapGUI.cs" />

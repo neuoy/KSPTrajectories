@@ -26,6 +26,7 @@ xcopy /y ..\..\..\Plugin\bin\Release\Trajectories.dll Plugin
 
 mkdir Textures
 xcopy /y ..\..\..\Textures\icon.png Textures
+xcopy /y ..\..\..\Textures\icon-blizzy.tga Textures
 
 del ..\..\..\Trajectories.zip
 "%scriptPath%7z.exe" a ../../../Trajectories.zip ../../GameData
