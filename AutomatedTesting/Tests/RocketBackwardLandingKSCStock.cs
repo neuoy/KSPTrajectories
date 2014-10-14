@@ -13,7 +13,7 @@ namespace AutomatedTesting.Tests
     {
         public void Run()
         {
-            var ksp = new KSP() { Version = "0.24.2" };
+            var ksp = new KSP() { Version = "0.25.0" };
             ksp.GameConfig = new TestAutomation.Config
             {
                 SaveFile = "rocket_backward_landing_KSC_Stock",
@@ -23,7 +23,7 @@ namespace AutomatedTesting.Tests
 
             ksp.Mods = new ModInfo[]
             {
-                new ModInfo { Name = "Squad", Version = "0.24.2_light" }
+                new ModInfo { Name = "Squad", Version = "0.25.0_light" }
             };
 
             ksp.RunTest();

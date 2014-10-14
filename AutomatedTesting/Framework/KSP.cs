@@ -55,6 +55,10 @@ namespace Tests.Framework
             if (proc.ExitCode != 0)
                 throw new Exception("Failed to deploy the Trajectories plugin");
             Directory.Move(gameData + "/GameData/Trajectories", gameData + "/Trajectories");
+            foreach (string file in Directory.GetFiles(gameData + "/GameData"))
+            {
+                File.Delete(file);
+            }
             Directory.Delete(gameData + "/GameData");
 
             // Copy the TestAutomation plugin

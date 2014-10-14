@@ -9,15 +9,15 @@ using UnityEngine;
 namespace AutomatedTesting.Tests
 {
     [KSPTest]
-    class RocketBackwardLandingKSCFAR
+    class PodLandingFAR_0_25
     {
         public void Run()
         {
             var ksp = new KSP() { Version = "0.25.0" };
             ksp.GameConfig = new TestAutomation.Config
             {
-                SaveFile = "rocket_backward_landing_KSC_FAR",
-                VesselId = "b7a8fcd07f424323b1d4be23057446ec",
+                SaveFile = "pod_landing_0_25",
+                VesselId = "85ffa3d4dd104ec18467f67e02c21630",
                 AoA = Mathf.PI
             };
 
