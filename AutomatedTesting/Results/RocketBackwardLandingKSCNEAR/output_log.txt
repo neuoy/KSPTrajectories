@@ -190,7 +190,7 @@ Mod DLLs found:
   NEAR v1.0.3.0
   TDx.TDxInput v1.1.0.0
   UnityEngine v0.0.0.0
-  Trajectories v0.3.1.0
+  Trajectories v0.4.0.0
 Non-DLL mods added:
 Mods by directory (subdirs of GameData):
   Squad
@@ -386,6 +386,10 @@ Mods by directory (subdirs of GameData):
  
 (Filename: C:/BuildAgent/work/d63dfc6385190b60/artifacts/StandalonePlayerGenerated/UnityEngineDebug.cpp Line: 49)
 
+[ModuleManager] Applying node Trajectories/Trajectories/@PART[*]:HAS[@MODULE[ModuleCommand]]:FOR[Trajectories] to Squad/Parts/Command/mk1pod/part/mk1pod
+ 
+(Filename: C:/BuildAgent/work/d63dfc6385190b60/artifacts/StandalonePlayerGenerated/UnityEngineDebug.cpp Line: 49)
+
 [ModuleManager] :AFTER[TRAJECTORIES] pass
  
 (Filename: C:/BuildAgent/work/d63dfc6385190b60/artifacts/StandalonePlayerGenerated/UnityEngineDebug.cpp Line: 49)
@@ -406,7 +410,7 @@ Mods by directory (subdirs of GameData):
  
 (Filename: C:/BuildAgent/work/d63dfc6385190b60/artifacts/StandalonePlayerGenerated/UnityEngineDebug.cpp Line: 49)
 
-[ModuleManager] ModuleManager: 10 patches applied, 0 hidden items
+[ModuleManager] ModuleManager: 11 patches applied, 0 hidden items
 
  
 (Filename: C:/BuildAgent/work/d63dfc6385190b60/artifacts/StandalonePlayerGenerated/UnityEngineDebug.cpp Line: 49)
@@ -415,7 +419,7 @@ AddonLoader: Instantiating addon 'AutomationPlugin' from assembly 'TestAutomatio
  
 (Filename: C:/BuildAgent/work/d63dfc6385190b60/artifacts/StandalonePlayerGenerated/UnityEngineDebug.cpp Line: 49)
 
-TestAutomation: 2014-10-08T20:19:17.290Z Initializing TestAutomation
+TestAutomation: 2014-10-14T21:36:52.721Z Initializing TestAutomation
  
 (Filename: C:/BuildAgent/work/d63dfc6385190b60/artifacts/StandalonePlayerGenerated/UnityEngineDebug.cpp Line: 49)
 
@@ -428,6 +432,10 @@ AddonLoader: Instantiating addon 'DescentProfile' from assembly 'Trajectories'
 (Filename: C:/BuildAgent/work/d63dfc6385190b60/artifacts/StandalonePlayerGenerated/UnityEngineDebug.cpp Line: 49)
 
 AddonLoader: Instantiating addon 'MapGUI' from assembly 'Trajectories'
+ 
+(Filename: C:/BuildAgent/work/d63dfc6385190b60/artifacts/StandalonePlayerGenerated/UnityEngineDebug.cpp Line: 49)
+
+Using stock toolbar for Trajectories GUI
  
 (Filename: C:/BuildAgent/work/d63dfc6385190b60/artifacts/StandalonePlayerGenerated/UnityEngineDebug.cpp Line: 49)
 
@@ -782,6 +790,10 @@ Load(Texture): Squad/Spaces/mk1PodCockpit/model006
 (Filename: C:/BuildAgent/work/d63dfc6385190b60/artifacts/StandalonePlayerGenerated/UnityEngineDebug.cpp Line: 49)
 
 Load(Texture): Squad/Spaces/mk1PodCockpit/model007
+ 
+(Filename: C:/BuildAgent/work/d63dfc6385190b60/artifacts/StandalonePlayerGenerated/UnityEngineDebug.cpp Line: 49)
+
+Load(Texture): Trajectories/Textures/icon-blizzy
  
 (Filename: C:/BuildAgent/work/d63dfc6385190b60/artifacts/StandalonePlayerGenerated/UnityEngineDebug.cpp Line: 49)
 
@@ -1261,7 +1273,7 @@ Resource RESOURCE_DEFINITION added to database
  
 (Filename: C:/BuildAgent/work/d63dfc6385190b60/artifacts/StandalonePlayerGenerated/UnityEngineDebug.cpp Line: 49)
 
-GameDatabase: Assets loaded in 5.941s
+GameDatabase: Assets loaded in 5.952s
  
 (Filename: C:/BuildAgent/work/d63dfc6385190b60/artifacts/StandalonePlayerGenerated/UnityEngineDebug.cpp Line: 49)
 
@@ -1461,11 +1473,11 @@ PartLoader: Compiling Internal Space 'Squad/Spaces/mk1PodCockpit/internal/mk1Pod
  
 (Filename: C:/BuildAgent/work/d63dfc6385190b60/artifacts/StandalonePlayerGenerated/UnityEngineDebug.cpp Line: 49)
 
-UnloadTime: 11.108622 ms
+UnloadTime: 14.863073 ms
 Unloading 7 Unused Serialized files (Serialized files now loaded: 0 / Dirty serialized files: 0)
 
-Unloading 114 unused Assets to reduce memory usage. Loaded Objects now: 41378.
-Total: 17.377880 ms (FindLiveObjects: 1.628817 ms CreateObjectMapping: 0.945112 ms MarkObjects: 14.003728 ms  DeleteObjects: 0.358605 ms)
+Unloading 114 unused Assets to reduce memory usage. Loaded Objects now: 41381.
+Total: 18.374258 ms (FindLiveObjects: 1.818378 ms CreateObjectMapping: 1.021781 ms MarkObjects: 14.758027 ms  DeleteObjects: 0.362528 ms)
 
 AddonLoader: Instantiating addon 'AutomationPlugin' from assembly 'TestAutomation'
  
@@ -1476,6 +1488,10 @@ AddonLoader: Instantiating addon 'DescentProfile' from assembly 'Trajectories'
 (Filename: C:/BuildAgent/work/d63dfc6385190b60/artifacts/StandalonePlayerGenerated/UnityEngineDebug.cpp Line: 49)
 
 AddonLoader: Instantiating addon 'MapGUI' from assembly 'Trajectories'
+ 
+(Filename: C:/BuildAgent/work/d63dfc6385190b60/artifacts/StandalonePlayerGenerated/UnityEngineDebug.cpp Line: 49)
+
+Using stock toolbar for Trajectories GUI
  
 (Filename: C:/BuildAgent/work/d63dfc6385190b60/artifacts/StandalonePlayerGenerated/UnityEngineDebug.cpp Line: 49)
 
@@ -1583,11 +1599,11 @@ PQS - Graphics shader in fallback mode
  
 (Filename: C:/BuildAgent/work/d63dfc6385190b60/artifacts/StandalonePlayerGenerated/UnityEngineDebug.cpp Line: 49)
 
-UnloadTime: 2.029381 ms
+UnloadTime: 2.394621 ms
 Unloading 1 Unused Serialized files (Serialized files now loaded: 0 / Dirty serialized files: 0)
 
-Unloading 8 unused Assets to reduce memory usage. Loaded Objects now: 49179.
-Total: 47.530331 ms (FindLiveObjects: 1.362882 ms CreateObjectMapping: 0.984957 ms MarkObjects: 44.704651 ms  DeleteObjects: 0.110177 ms)
+Unloading 8 unused Assets to reduce memory usage. Loaded Objects now: 49182.
+Total: 50.033794 ms (FindLiveObjects: 1.511391 ms CreateObjectMapping: 1.126827 ms MarkObjects: 46.923470 ms  DeleteObjects: 0.110479 ms)
 
 AddonLoader: Instantiating addon 'AutomationPlugin' from assembly 'TestAutomation'
  
@@ -1598,6 +1614,10 @@ AddonLoader: Instantiating addon 'DescentProfile' from assembly 'Trajectories'
 (Filename: C:/BuildAgent/work/d63dfc6385190b60/artifacts/StandalonePlayerGenerated/UnityEngineDebug.cpp Line: 49)
 
 AddonLoader: Instantiating addon 'MapGUI' from assembly 'Trajectories'
+ 
+(Filename: C:/BuildAgent/work/d63dfc6385190b60/artifacts/StandalonePlayerGenerated/UnityEngineDebug.cpp Line: 49)
+
+Using stock toolbar for Trajectories GUI
  
 (Filename: C:/BuildAgent/work/d63dfc6385190b60/artifacts/StandalonePlayerGenerated/UnityEngineDebug.cpp Line: 49)
 
@@ -1615,14 +1635,14 @@ AddonLoader: Instantiating addon 'Trajectory' from assembly 'Trajectories'
 
 Unloading 0 Unused Serialized files (Serialized files now loaded: 0 / Dirty serialized files: 0)
 
-Unloading 0 unused Assets to reduce memory usage. Loaded Objects now: 49191.
-Total: 48.310631 ms (FindLiveObjects: 1.889320 ms CreateObjectMapping: 0.983750 ms MarkObjects: 45.027939 ms  DeleteObjects: 0.078482 ms)
+Unloading 0 unused Assets to reduce memory usage. Loaded Objects now: 49194.
+Total: 48.631069 ms (FindLiveObjects: 2.082502 ms CreateObjectMapping: 1.026007 ms MarkObjects: 45.107506 ms  DeleteObjects: 0.080293 ms)
 
-UnloadTime: 2.352669 ms
+UnloadTime: 2.707343 ms
 Unloading 2 Unused Serialized files (Serialized files now loaded: 0 / Dirty serialized files: 0)
 
-Unloading 9 unused Assets to reduce memory usage. Loaded Objects now: 51070.
-Total: 48.231541 ms (FindLiveObjects: 1.706395 ms CreateObjectMapping: 1.017256 ms MarkObjects: 44.833847 ms  DeleteObjects: 0.292197 ms)
+Unloading 9 unused Assets to reduce memory usage. Loaded Objects now: 51073.
+Total: 48.481651 ms (FindLiveObjects: 1.772496 ms CreateObjectMapping: 0.988577 ms MarkObjects: 45.054077 ms  DeleteObjects: 0.293403 ms)
 
 AddonLoader: Instantiating addon 'SaveGameFixer' from assembly 'ModuleManager.2.2.0'
  
@@ -1648,6 +1668,10 @@ AddonLoader: Instantiating addon 'MapGUI' from assembly 'Trajectories'
  
 (Filename: C:/BuildAgent/work/d63dfc6385190b60/artifacts/StandalonePlayerGenerated/UnityEngineDebug.cpp Line: 49)
 
+Using stock toolbar for Trajectories GUI
+ 
+(Filename: C:/BuildAgent/work/d63dfc6385190b60/artifacts/StandalonePlayerGenerated/UnityEngineDebug.cpp Line: 49)
+
 AddonLoader: Instantiating addon 'MapOverlay' from assembly 'Trajectories'
  
 (Filename: C:/BuildAgent/work/d63dfc6385190b60/artifacts/StandalonePlayerGenerated/UnityEngineDebug.cpp Line: 49)
@@ -1660,7 +1684,7 @@ AddonLoader: Instantiating addon 'Trajectory' from assembly 'Trajectories'
  
 (Filename: C:/BuildAgent/work/d63dfc6385190b60/artifacts/StandalonePlayerGenerated/UnityEngineDebug.cpp Line: 49)
 
-TestAutomation: 2014-10-08T20:19:27.471Z Loading vessel: _pod
+TestAutomation: 2014-10-14T21:37:02.958Z Loading vessel: _pod
  
 (Filename: C:/BuildAgent/work/d63dfc6385190b60/artifacts/StandalonePlayerGenerated/UnityEngineDebug.cpp Line: 49)
 
@@ -1668,11 +1692,11 @@ TestAutomation: 2014-10-08T20:19:27.471Z Loading vessel: _pod
  
 (Filename: C:/BuildAgent/work/d63dfc6385190b60/artifacts/StandalonePlayerGenerated/UnityEngineDebug.cpp Line: 49)
 
-UnloadTime: 4.095891 ms
+UnloadTime: 4.548663 ms
 Unloading 3 Unused Serialized files (Serialized files now loaded: 0 / Dirty serialized files: 0)
 
-Unloading 156 unused Assets to reduce memory usage. Loaded Objects now: 49202.
-Total: 49.491489 ms (FindLiveObjects: 1.345374 ms CreateObjectMapping: 1.046234 ms MarkObjects: 45.090729 ms  DeleteObjects: 1.628516 ms)
+Unloading 156 unused Assets to reduce memory usage. Loaded Objects now: 49205.
+Total: 49.904903 ms (FindLiveObjects: 1.354426 ms CreateObjectMapping: 1.044722 ms MarkObjects: 45.443470 ms  DeleteObjects: 1.696429 ms)
 
 AddonLoader: Instantiating addon 'AutomationPlugin' from assembly 'TestAutomation'
  
@@ -1683,6 +1707,10 @@ AddonLoader: Instantiating addon 'DescentProfile' from assembly 'Trajectories'
 (Filename: C:/BuildAgent/work/d63dfc6385190b60/artifacts/StandalonePlayerGenerated/UnityEngineDebug.cpp Line: 49)
 
 AddonLoader: Instantiating addon 'MapGUI' from assembly 'Trajectories'
+ 
+(Filename: C:/BuildAgent/work/d63dfc6385190b60/artifacts/StandalonePlayerGenerated/UnityEngineDebug.cpp Line: 49)
+
+Using stock toolbar for Trajectories GUI
  
 (Filename: C:/BuildAgent/work/d63dfc6385190b60/artifacts/StandalonePlayerGenerated/UnityEngineDebug.cpp Line: 49)
 
@@ -1700,15 +1728,15 @@ AddonLoader: Instantiating addon 'Trajectory' from assembly 'Trajectories'
 
 Unloading 0 Unused Serialized files (Serialized files now loaded: 0 / Dirty serialized files: 0)
 
-Unloading 0 unused Assets to reduce memory usage. Loaded Objects now: 49208.
-Total: 48.499893 ms (FindLiveObjects: 1.959652 ms CreateObjectMapping: 0.979222 ms MarkObjects: 45.151398 ms  DeleteObjects: 0.081803 ms)
+Unloading 0 unused Assets to reduce memory usage. Loaded Objects now: 49211.
+Total: 48.605713 ms (FindLiveObjects: 1.937008 ms CreateObjectMapping: 0.986464 ms MarkObjects: 45.272320 ms  DeleteObjects: 0.080595 ms)
 
 NullReferenceException: Object reference not set to an instance of an object
   at DebugToolbar+.MoveNext () [0x00000] in <filename unknown>:0 
  
 (Filename:  Line: -1)
 
-UnloadTime: 2.161594 ms
+UnloadTime: 2.176983 ms
 NullReferenceException: Object reference not set to an instance of an object
   at ContractsApp.Awake () [0x00000] in <filename unknown>:0 
  
@@ -1716,8 +1744,8 @@ NullReferenceException: Object reference not set to an instance of an object
 
 Unloading 4 Unused Serialized files (Serialized files now loaded: 0 / Dirty serialized files: 0)
 
-Unloading 9 unused Assets to reduce memory usage. Loaded Objects now: 52518.
-Total: 53.479317 ms (FindLiveObjects: 1.981084 ms CreateObjectMapping: 1.042008 ms MarkObjects: 49.923752 ms  DeleteObjects: 0.120138 ms)
+Unloading 9 unused Assets to reduce memory usage. Loaded Objects now: 52521.
+Total: 53.482494 ms (FindLiveObjects: 1.994058 ms CreateObjectMapping: 1.042609 ms MarkObjects: 49.930256 ms  DeleteObjects: 0.119233 ms)
 
 AddonLoader: Instantiating addon 'AutomationPlugin' from assembly 'TestAutomation'
  
@@ -1732,6 +1760,10 @@ AddonLoader: Instantiating addon 'DescentProfile' from assembly 'Trajectories'
 (Filename: C:/BuildAgent/work/d63dfc6385190b60/artifacts/StandalonePlayerGenerated/UnityEngineDebug.cpp Line: 49)
 
 AddonLoader: Instantiating addon 'MapGUI' from assembly 'Trajectories'
+ 
+(Filename: C:/BuildAgent/work/d63dfc6385190b60/artifacts/StandalonePlayerGenerated/UnityEngineDebug.cpp Line: 49)
+
+Using stock toolbar for Trajectories GUI
  
 (Filename: C:/BuildAgent/work/d63dfc6385190b60/artifacts/StandalonePlayerGenerated/UnityEngineDebug.cpp Line: 49)
 
@@ -1773,7 +1805,18 @@ Reference Frame: Rotating
  
 (Filename: C:/BuildAgent/work/d63dfc6385190b60/artifacts/StandalonePlayerGenerated/UnityEngineDebug.cpp Line: 49)
 
-[Part]: PartModule FARBasicDragModel at mk1pod, index 7: index exceeds module count as defined in cfg.
+[Part]: PartModule indexing mismatch at mk1pod, index 6.
+Node 'ModuleTripLogger' found in loaded data, but 'TrajectoriesVesselSettings' is defined in prefab.
+Looking for ModuleTripLogger in other indices...
+ 
+(Filename: C:/BuildAgent/work/d63dfc6385190b60/artifacts/StandalonePlayerGenerated/UnityEngineDebug.cpp Line: 49)
+
+...ModuleTripLogger module found at index 7.
+ 
+(Filename: C:/BuildAgent/work/d63dfc6385190b60/artifacts/StandalonePlayerGenerated/UnityEngineDebug.cpp Line: 49)
+
+[Part]: PartModule indexing mismatch at mk1pod, index 7.
+Node 'FARBasicDragModel' found in loaded data, but 'ModuleTripLogger' is defined in prefab.
 Looking for FARBasicDragModel in other indices...
  
 (Filename: C:/BuildAgent/work/d63dfc6385190b60/artifacts/StandalonePlayerGenerated/UnityEngineDebug.cpp Line: 49)
@@ -1945,7 +1988,7 @@ Part: LV-T30 Liquid Fuel Engine Transforms: 10
  
 (Filename: C:/BuildAgent/work/d63dfc6385190b60/artifacts/StandalonePlayerGenerated/UnityEngineDebug.cpp Line: 49)
 
-TestAutomation: 2014-10-08T20:19:31.494Z Starting auto pilot
+TestAutomation: 2014-10-14T21:37:06.921Z Starting auto pilot
  
 (Filename: C:/BuildAgent/work/d63dfc6385190b60/artifacts/StandalonePlayerGenerated/UnityEngineDebug.cpp Line: 49)
 
@@ -1961,11 +2004,11 @@ Trajectories API initialized
  
 (Filename: C:/BuildAgent/work/d63dfc6385190b60/artifacts/StandalonePlayerGenerated/UnityEngineDebug.cpp Line: 49)
 
-TestAutomation: 2014-10-08T20:19:31.524Z Predicted impact position: (-494253.8, -771.7, 340435.8)
+TestAutomation: 2014-10-14T21:37:06.951Z Predicted impact position: (-494253.8, -771.7, 340435.8)
  
 (Filename: C:/BuildAgent/work/d63dfc6385190b60/artifacts/StandalonePlayerGenerated/UnityEngineDebug.cpp Line: 49)
 
-TestAutomation: 2014-10-08T20:19:31.525Z Setting time warp
+TestAutomation: 2014-10-14T21:37:06.953Z Setting time warp
  
 (Filename: C:/BuildAgent/work/d63dfc6385190b60/artifacts/StandalonePlayerGenerated/UnityEngineDebug.cpp Line: 49)
 
@@ -1978,6 +2021,14 @@ TestAutomation: 2014-10-08T20:19:31.525Z Setting time warp
 (Filename: C:/BuildAgent/work/d63dfc6385190b60/artifacts/StandalonePlayerGenerated/UnityEngineDebug.cpp Line: 49)
 
 Packing _pod for orbit
+ 
+(Filename: C:/BuildAgent/work/d63dfc6385190b60/artifacts/StandalonePlayerGenerated/UnityEngineDebug.cpp Line: 49)
+
+0 patches
+ 
+(Filename: C:/BuildAgent/work/d63dfc6385190b60/artifacts/StandalonePlayerGenerated/UnityEngineDebug.cpp Line: 49)
+
+2 patches
  
 (Filename: C:/BuildAgent/work/d63dfc6385190b60/artifacts/StandalonePlayerGenerated/UnityEngineDebug.cpp Line: 49)
 
@@ -2901,14 +2952,6 @@ Packing _pod for orbit
  
 (Filename: C:/BuildAgent/work/d63dfc6385190b60/artifacts/StandalonePlayerGenerated/UnityEngineDebug.cpp Line: 49)
 
-0 patches
- 
-(Filename: C:/BuildAgent/work/d63dfc6385190b60/artifacts/StandalonePlayerGenerated/UnityEngineDebug.cpp Line: 49)
-
-2 patches
- 
-(Filename: C:/BuildAgent/work/d63dfc6385190b60/artifacts/StandalonePlayerGenerated/UnityEngineDebug.cpp Line: 49)
-
 Unpacking _pod
  
 (Filename: C:/BuildAgent/work/d63dfc6385190b60/artifacts/StandalonePlayerGenerated/UnityEngineDebug.cpp Line: 49)
@@ -51592,59 +51635,6 @@ Unpacking _pod
 2 patches
  
 (Filename: C:/BuildAgent/work/d63dfc6385190b60/artifacts/StandalonePlayerGenerated/UnityEngineDebug.cpp Line: 49)
-
-0 patches
- 
-(Filename: C:/BuildAgent/work/d63dfc6385190b60/artifacts/StandalonePlayerGenerated/UnityEngineDebug.cpp Line: 49)
-
-2 patches
- 
-(Filename: C:/BuildAgent/work/d63dfc6385190b60/artifacts/StandalonePlayerGenerated/UnityEngineDebug.cpp Line: 49)
-
-0 patches
- 
-(Filename: C:/BuildAgent/work/d63dfc6385190b60/artifacts/StandalonePlayerGenerated/UnityEngineDebug.cpp Line: 49)
-
-2 patches
- 
-(Filename: C:/BuildAgent/work/d63dfc6385190b60/artifacts/StandalonePlayerGenerated/UnityEngineDebug.cpp Line: 49)
-
-0 patches
- 
-(Filename: C:/BuildAgent/work/d63dfc6385190b60/artifacts/StandalonePlayerGenerated/UnityEngineDebug.cpp Line: 49)
-
-2 patches
- 
-(Filename: C:/BuildAgent/work/d63dfc6385190b60/artifacts/StandalonePlayerGenerated/UnityEngineDebug.cpp Line: 49)
-
-0 patches
- 
-(Filename: C:/BuildAgent/work/d63dfc6385190b60/artifacts/StandalonePlayerGenerated/UnityEngineDebug.cpp Line: 49)
-
-2 patches
- 
-(Filename: C:/BuildAgent/work/d63dfc6385190b60/artifacts/StandalonePlayerGenerated/UnityEngineDebug.cpp Line: 49)
-
-0 patches
- 
-(Filename: C:/BuildAgent/work/d63dfc6385190b60/artifacts/StandalonePlayerGenerated/UnityEngineDebug.cpp Line: 49)
-
-2 patches
- 
-(Filename: C:/BuildAgent/work/d63dfc6385190b60/artifacts/StandalonePlayerGenerated/UnityEngineDebug.cpp Line: 49)
-
-IndexOutOfRangeException: Array index is out of range.
-  at Trajectories.Trajectory+Patch.GetInfo (Single altitudeAboveSeaLevel) [0x00000] in <filename unknown>:0 
-  at (wrapper managed-to-native) System.Reflection.MonoMethod:InternalInvoke (object,object[],System.Exception&)
-  at System.Reflection.MonoMethod.Invoke (System.Object obj, BindingFlags invokeAttr, System.Reflection.Binder binder, System.Object[] parameters, System.Globalization.CultureInfo culture) [0x00000] in <filename unknown>:0 
-Rethrow as TargetInvocationException: Exception has been thrown by the target of an invocation.
-  at System.Reflection.MonoMethod.Invoke (System.Object obj, BindingFlags invokeAttr, System.Reflection.Binder binder, System.Object[] parameters, System.Globalization.CultureInfo culture) [0x00000] in <filename unknown>:0 
-  at System.Reflection.MethodBase.Invoke (System.Object obj, System.Object[] parameters) [0x00000] in <filename unknown>:0 
-  at TrajectoriesAPI.Trajectory.GetInfo (Single altitudeAboveSeaLevel) [0x00000] in <filename unknown>:0 
-  at TestAutomation.Automation.OnUpdate () [0x00000] in <filename unknown>:0 
-  at TestAutomation.AutomationPlugin.Update () [0x00000] in <filename unknown>:0 
- 
-(Filename:  Line: -1)
 
 0 patches
  
@@ -51873,15 +51863,15 @@ liquidEngine Exploded!! - blast awesomeness: 0.5
  
 (Filename: C:/BuildAgent/work/d63dfc6385190b60/artifacts/StandalonePlayerGenerated/UnityEngineDebug.cpp Line: 49)
 
-TestAutomation: 2014-10-08T20:21:16.264Z Vessel destroyed or landed
+TestAutomation: 2014-10-14T21:38:51.556Z Vessel destroyed or landed
  
 (Filename: C:/BuildAgent/work/d63dfc6385190b60/artifacts/StandalonePlayerGenerated/UnityEngineDebug.cpp Line: 49)
 
-TestAutomation: 2014-10-08T20:21:16.265Z Last known position: (-491975.1, -746.6, 343546.5)(3856.082m away from prediction)
+TestAutomation: 2014-10-14T21:38:51.557Z Last known position: (-491979.5, -746.7, 343539.0)(3847.428m away from prediction)
  
 (Filename: C:/BuildAgent/work/d63dfc6385190b60/artifacts/StandalonePlayerGenerated/UnityEngineDebug.cpp Line: 49)
 
-TestAutomation: 2014-10-08T20:21:16.266Z Test result: failure, with message: Too far away from predicted landing zone
+TestAutomation: 2014-10-14T21:38:51.558Z Test result: failure, with message: Too far away from predicted landing zone
  
 (Filename: C:/BuildAgent/work/d63dfc6385190b60/artifacts/StandalonePlayerGenerated/UnityEngineDebug.cpp Line: 49)
 
@@ -51897,26 +51887,11 @@ Exception: TestAutomation: Terminating application
 (Filename: C:/BuildAgent/work/d63dfc6385190b60/artifacts/StandalonePlayerGenerated/UnityEngineDebug.cpp Line: 49)
 
 NullReferenceException
-  at (wrapper managed-to-native) UnityEngine.Component:InternalGetTransform ()
-  at UnityEngine.Component.get_transform () [0x00000] in <filename unknown>:0 
-  at PQSCity.OnSphereReset () [0x00000] in <filename unknown>:0 
-  at PQS.Mod_OnSphereReset () [0x00000] in <filename unknown>:0 
-  at PQS.ResetSphere () [0x00000] in <filename unknown>:0 
-  at PQS.OnDestroy () [0x00000] in <filename unknown>:0 
- 
-(Filename:  Line: -1)
-
-NullReferenceException: Object reference not set to an instance of an object
-  at ApplicationLauncher.RemoveApplication (.ApplicationLauncherButton button) [0x00000] in <filename unknown>:0 
-  at ContractsApp.OnDestroy () [0x00000] in <filename unknown>:0 
- 
-(Filename:  Line: -1)
-
-NullReferenceException
   at (wrapper managed-to-native) UnityEngine.MeshFilter:set_sharedMesh (UnityEngine.Mesh)
   at SpriteMesh.CreateMesh () [0x00000] in <filename unknown>:0 
   at SpriteMesh.get_mesh () [0x00000] in <filename unknown>:0 
   at SpriteRoot.Delete () [0x00000] in <filename unknown>:0 
+  at SpriteBase.Delete () [0x00000] in <filename unknown>:0 
   at UIListItemContainer.Delete () [0x00000] in <filename unknown>:0 
   at UIScrollList.RemoveItem (Int32 index, Boolean destroy, Boolean doEasing) [0x00000] in <filename unknown>:0 
   at UIScrollList.RemoveItem (IUIListObject item, Boolean destroy, Boolean doEasing) [0x00000] in <filename unknown>:0 
@@ -51926,9 +51901,7 @@ NullReferenceException
  
 (Filename:  Line: -1)
 
-NullReferenceException
-  at (wrapper managed-to-native) UnityEngine.Component:InternalGetGameObject ()
-  at UnityEngine.Component.get_gameObject () [0x00000] in <filename unknown>:0 
+NullReferenceException: Object reference not set to an instance of an object
   at MapView.OnDestroy () [0x00000] in <filename unknown>:0 
  
 (Filename:  Line: -1)
