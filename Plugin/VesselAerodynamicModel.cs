@@ -133,6 +133,8 @@ namespace Trajectories
                         FARWingAerodynamicModelType = loadedAssembly.assembly.GetType(namespaceName + ".FARWingAerodynamicModel");
                         FARWingAerodynamicModel_CalculateForces = FARWingAerodynamicModelType.GetMethodEx("CalculateForces", BindingFlags.Public | BindingFlags.Instance);
                         FARWingAerodynamicModel_rho = FARWingAerodynamicModelType.GetField("rho", BindingFlags.NonPublic | BindingFlags.Instance);
+                        if(FARWingAerodynamicModel_rho == null)
+                            FARWingAerodynamicModel_rho = loadedAssembly.assembly.GetType(namespaceName + ".FARBaseAerodynamics").GetField("rho", BindingFlags.Public | BindingFlags.Instance); // this has changed in FAR 0.14.3
                         FARWingAerodynamicModel_stall = FARWingAerodynamicModelType.GetField("stall", BindingFlags.NonPublic | BindingFlags.Instance);
                         FARWingAerodynamicModel_YmaxForce = FARWingAerodynamicModelType.GetField("YmaxForce", BindingFlags.Public | BindingFlags.Instance);
                         FARWingAerodynamicModel_XZmaxForce = FARWingAerodynamicModelType.GetField("XZmaxForce", BindingFlags.Public | BindingFlags.Instance);
