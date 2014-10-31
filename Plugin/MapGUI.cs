@@ -68,6 +68,16 @@ namespace Trajectories
         private void MainWindow(int id)
         {
             GUILayout.BeginHorizontal();
+            GUILayout.Label("Computations: " + Trajectory.fetch.ComputationTime + "s", GUILayout.Width(100));
+            GUILayout.Label(Trajectory.fetch.ErrorCount+" error(s)", GUILayout.Width(80));
+            GUILayout.EndHorizontal();
+
+            if (ToolbarManager.ToolbarAvailable)
+            {
+                Settings.fetch.UseBlizzyToolbar = GUILayout.Toggle(Settings.fetch.UseBlizzyToolbar, new GUIContent("Use Blizzy's toolbar", "Will take effect after restart"));
+            }
+
+            GUILayout.BeginHorizontal();
             Settings.fetch.DisplayTrajectories = GUILayout.Toggle(Settings.fetch.DisplayTrajectories, "Display trajectory", GUILayout.Width(125));
 
             if (Settings.fetch.DisplayTrajectories)
@@ -125,13 +135,13 @@ namespace Trajectories
 
         public void Awake()
         {
-            if (ToolbarManager.ToolbarAvailable)
+            if (ToolbarManager.ToolbarAvailable && Settings.fetch.UseBlizzyToolbar)
             {
                 Debug.Log("Using Blizzy toolbar for Trajectories GUI");
                 GUIToggleButtonBlizzy = ToolbarManager.Instance.add("Trajectories", "ToggleUI");
                 GUIToggleButtonBlizzy.Visibility = FlightMapVisibility.Instance;
                 GUIToggleButtonBlizzy.TexturePath = "Trajectories/Textures/icon-blizzy";
-                GUIToggleButtonBlizzy.ToolTip = "Toggle Trajectories window";
+                GUIToggleButtonBlizzy.ToolTip = "Right click toggles Trajectories window";
                 GUIToggleButtonBlizzy.OnClick += OnToggleGUIBlizzy;
             }
             else
@@ -164,7 +174,14 @@ namespace Trajectories
 
         void OnToggleGUIBlizzy(ClickEvent e)
         {
-            Settings.fetch.GUIEnabled = !Settings.fetch.GUIEnabled;
+            if (e.MouseButton == 0)
+            {
+                Settings.fetch.DisplayTrajectories = !Settings.fetch.DisplayTrajectories;
+            }
+            else
+            {
+                Settings.fetch.GUIEnabled = !Settings.fetch.GUIEnabled;
+            }
         }
 
         void OnToggleOn()

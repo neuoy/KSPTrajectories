@@ -17,6 +17,9 @@ namespace Trajectories
         public static Settings fetch { get { settings_ = settings_ ?? new Settings(); return settings_; } }
 
         [Persistent(Default: true)]
+        public bool UseBlizzyToolbar { get; set; }
+
+        [Persistent(Default: true)]
         public bool DisplayTrajectories { get; set; }
 
         [Persistent(Default: false)]

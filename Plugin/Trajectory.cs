@@ -104,6 +104,13 @@ namespace Trajectories
         private Vector3? targetPosition_;
         private CelestialBody targetBody_;
 
+        private static int errorCount_;
+        public int ErrorCount { get { return errorCount_; } }
+
+        private static float frameTime_;
+        private static float computationTime_;
+        public float ComputationTime { get { return computationTime_ * 0.001f; } }
+
         public static void SetTarget(CelestialBody body = null, Vector3? relativePosition = null)
         {
             if (body != null && relativePosition.HasValue)
@@ -143,6 +150,9 @@ namespace Trajectories
 
         public void Update()
         {
+            computationTime_ = computationTime_ * 0.9f + frameTime_ * 0.1f;
+            frameTime_ = 0;
+
             if (HighLogic.LoadedScene == GameScenes.FLIGHT && vessel_ != FlightGlobals.ActiveVessel)
             {
                 TrajectoriesVesselSettings module = FlightGlobals.ActiveVessel == null ? null : FlightGlobals.ActiveVessel.Parts.SelectMany(p => p.Modules.OfType<TrajectoriesVesselSettings>()).FirstOrDefault();
@@ -158,7 +168,7 @@ namespace Trajectories
                 }
             }
 
-            if (HighLogic.LoadedScene == GameScenes.FLIGHT && FlightGlobals.ActiveVessel != null && FlightGlobals.ActiveVessel.Parts.Count != 0 && (MapView.MapIsEnabled || targetPosition_.HasValue))
+            if (HighLogic.LoadedScene == GameScenes.FLIGHT && FlightGlobals.ActiveVessel != null && FlightGlobals.ActiveVessel.Parts.Count != 0 && ((MapView.MapIsEnabled && Settings.fetch.DisplayTrajectories) || targetPosition_.HasValue))
             {
                 ComputeTrajectory(FlightGlobals.ActiveVessel, DescentProfile.fetch);
             }
@@ -172,58 +182,49 @@ namespace Trajectories
 
         public void ComputeTrajectory(Vessel vessel, DescentProfile profile)
         {
-            patches_.Clear();
-            maxaccel = 0;
-
-            vessel_ = vessel;
-
-            if (vessel == null)
-                return;
-
-            if (aerodynamicModel_ == null || !aerodynamicModel_.isValidFor(vessel, vessel.mainBody))
-                aerodynamicModel_ = new VesselAerodynamicModel(vessel, vessel.mainBody);
-            else
-                aerodynamicModel_.IncrementalUpdate();
-
-            /*Debug.Log("======== Initial orbit ============");
-            for (var sub = vessel_.orbit; sub != null && sub.activePatch; sub = sub.nextPatch)
+            try
             {
-                Debug.Log("Orbit: arround " + sub.referenceBody.name + ", start=" + sub.StartUT + ", period=" + sub.period + ", start trans=" + sub.patchStartTransition + ", end trans=" + sub.patchEndTransition);
-            }
+                int start = Environment.TickCount;
 
-            Debug.Log("========= Flight plan ==============");
-            foreach (var patch in vessel_.patchedConicSolver.flightPlan)
-            {
-                Debug.Log("- flightPlan entry");
-                for (var sub = patch; sub != null && sub.activePatch; sub = sub.nextPatch)
+                patches_.Clear();
+                maxaccel = 0;
+
+                vessel_ = vessel;
+
+                if (vessel == null)
+                    return;
+
+                if (aerodynamicModel_ == null || !aerodynamicModel_.isValidFor(vessel, vessel.mainBody))
+                    aerodynamicModel_ = new VesselAerodynamicModel(vessel, vessel.mainBody);
+                else
+                    aerodynamicModel_.IncrementalUpdate();
+
+                var state = vessel.LandedOrSplashed ? null : new VesselState(vessel);
+                for (int patchIdx = 0; patchIdx < Settings.fetch.MaxPatchCount; ++patchIdx)
                 {
-                    Debug.Log("Orbit: arround " + sub.referenceBody.name + ", start=" + sub.StartUT + ", period=" + sub.period + ", start trans=" + sub.patchStartTransition + ", end trans=" + sub.patchEndTransition);
-                }
-            }
-
-            Debug.Log("========= Maneuver nodes ============");
-            foreach (var node in vessel_.patchedConicSolver.maneuverNodes)
-            {
-                Debug.Log("at " + node.UT + ", deltav=" + node.DeltaV.magnitude);
-            }*/
-
-            var state = vessel.LandedOrSplashed ? null : new VesselState(vessel);
-            for (int patchIdx = 0; patchIdx < Settings.fetch.MaxPatchCount; ++patchIdx)
-            {
-                if (state == null)
-                    break;
-
-                var maneuverNodes = vessel_.patchedConicSolver.maneuverNodes;
-                foreach (var node in maneuverNodes)
-                {
-                    if (node.UT == state.time)
-                    {
-                        state.velocity += node.GetBurnVector(createOrbitFromState(state));
+                    if (state == null)
                         break;
+
+                    var maneuverNodes = vessel_.patchedConicSolver.maneuverNodes;
+                    foreach (var node in maneuverNodes)
+                    {
+                        if (node.UT == state.time)
+                        {
+                            state.velocity += node.GetBurnVector(createOrbitFromState(state));
+                            break;
+                        }
                     }
+
+                    state = AddPatch(state, profile);
                 }
 
-                state = AddPatch(state, profile);
+                int end = Environment.TickCount;
+                frameTime_ += (float)(end - start);
+            }
+            catch (Exception)
+            {
+                ++errorCount_;
+                throw;
             }
         }
 
