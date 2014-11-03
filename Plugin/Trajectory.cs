@@ -91,15 +91,23 @@ namespace Trajectories
             }
         }
 
+        private int MaxIncrementTime { get { return 5; } }
+
         private static Trajectory fetch_;
         public static Trajectory fetch { get { return fetch_; } }
 
         private Vessel vessel_;
         private VesselAerodynamicModel aerodynamicModel_;
         private List<Patch> patches_ = new List<Patch>();
+        private List<Patch> patchesBackBuffer_ = new List<Patch>();
         public List<Patch> patches { get { return patches_; } }
 
-        public float maxaccel;
+        private int incrementStartTime_;
+        private IEnumerator<bool> partialComputation_;
+
+        private float maxAccel_;
+        private float maxAccelBackBuffer_;
+        public float MaxAccel { get { return maxAccelBackBuffer_; } }
 
         private Vector3? targetPosition_;
         private CelestialBody targetBody_;
@@ -170,61 +178,92 @@ namespace Trajectories
 
             if (HighLogic.LoadedScene == GameScenes.FLIGHT && FlightGlobals.ActiveVessel != null && FlightGlobals.ActiveVessel.Parts.Count != 0 && ((MapView.MapIsEnabled && Settings.fetch.DisplayTrajectories) || targetPosition_.HasValue))
             {
-                ComputeTrajectory(FlightGlobals.ActiveVessel, DescentProfile.fetch);
+                ComputeTrajectory(FlightGlobals.ActiveVessel, DescentProfile.fetch, true);
             }
         }
 
-        public void ComputeTrajectory(Vessel vessel, float AoA)
+        public void ComputeTrajectory(Vessel vessel, float AoA, bool incremental)
         {
             DescentProfile profile = new DescentProfile(AoA);
-            ComputeTrajectory(vessel, profile);
+            ComputeTrajectory(vessel, profile, incremental);
         }
 
-        public void ComputeTrajectory(Vessel vessel, DescentProfile profile)
+        public void ComputeTrajectory(Vessel vessel, DescentProfile profile, bool incremental)
         {
             try
             {
-                int start = Environment.TickCount;
+                incrementStartTime_ = Environment.TickCount;
 
-                patches_.Clear();
-                maxaccel = 0;
-
-                vessel_ = vessel;
-
-                if (vessel == null)
-                    return;
-
-                if (aerodynamicModel_ == null || !aerodynamicModel_.isValidFor(vessel, vessel.mainBody))
-                    aerodynamicModel_ = new VesselAerodynamicModel(vessel, vessel.mainBody);
-                else
-                    aerodynamicModel_.IncrementalUpdate();
-
-                var state = vessel.LandedOrSplashed ? null : new VesselState(vessel);
-                for (int patchIdx = 0; patchIdx < Settings.fetch.MaxPatchCount; ++patchIdx)
+                if (partialComputation_ == null || vessel != vessel_)
                 {
-                    if (state == null)
-                        break;
+                    patchesBackBuffer_.Clear();
+                    maxAccelBackBuffer_ = 0;
 
-                    var maneuverNodes = vessel_.patchedConicSolver.maneuverNodes;
-                    foreach (var node in maneuverNodes)
+                    vessel_ = vessel;
+
+                    if (vessel == null)
                     {
-                        if (node.UT == state.time)
-                        {
-                            state.velocity += node.GetBurnVector(createOrbitFromState(state));
-                            break;
-                        }
+                        patches_.Clear();
+                        return;
                     }
 
-                    state = AddPatch(state, profile);
+                    partialComputation_ = computeTrajectoryIncrement(vessel, profile).GetEnumerator();
+                }
+
+                bool finished = !partialComputation_.MoveNext();
+
+                if (finished)
+                {
+                    var tmp = patches_;
+                    patches_ = patchesBackBuffer_;
+                    patchesBackBuffer_ = tmp;
+
+                    maxAccel_ = maxAccelBackBuffer_;
+
+                    partialComputation_.Dispose();
+                    partialComputation_ = null;
                 }
 
                 int end = Environment.TickCount;
-                frameTime_ += (float)(end - start);
+                frameTime_ += (float)(end - incrementStartTime_);
             }
             catch (Exception)
             {
                 ++errorCount_;
                 throw;
+            }
+        }
+
+        private IEnumerable<bool> computeTrajectoryIncrement(Vessel vessel, DescentProfile profile)
+        {
+            if (aerodynamicModel_ == null || !aerodynamicModel_.isValidFor(vessel, vessel.mainBody))
+                aerodynamicModel_ = new VesselAerodynamicModel(vessel, vessel.mainBody);
+            else
+                aerodynamicModel_.IncrementalUpdate();
+
+            var state = vessel.LandedOrSplashed ? null : new VesselState(vessel);
+            for (int patchIdx = 0; patchIdx < Settings.fetch.MaxPatchCount; ++patchIdx)
+            {
+                if (state == null)
+                    break;
+
+                if (Environment.TickCount - incrementStartTime_ > MaxIncrementTime)
+                    yield return false;
+
+                var maneuverNodes = vessel_.patchedConicSolver.maneuverNodes;
+                foreach (var node in maneuverNodes)
+                {
+                    if (node.UT == state.time)
+                    {
+                        state.velocity += node.GetBurnVector(createOrbitFromState(state));
+                        break;
+                    }
+                }
+
+                foreach (var result in AddPatch(state, profile))
+                    yield return false;
+                
+                state = AddPatch_outState;
             }
         }
 
@@ -265,7 +304,8 @@ namespace Trajectories
             return orbit;
         }
 
-        private VesselState AddPatch(VesselState startingState, DescentProfile profile)
+        private VesselState AddPatch_outState;
+        private IEnumerable<bool> AddPatch(VesselState startingState, DescentProfile profile)
         {
             CelestialBody body = startingState.referenceBody;
 
@@ -289,6 +329,7 @@ namespace Trajectories
                 flightPlan.Add(orbit);
             }
 
+
             Orbit nextStockPatch = null;
             if (startingState.stockPatch != null)
             {
@@ -303,10 +344,6 @@ namespace Trajectories
             {
                 patch.endTime = nextStockPatch.StartUT;
             }
-
-            // TODO: predict encounters and use maneuver nodes
-            // easy to do for encounters and maneuver nodes before the first atmospheric entry (just follow the KSP flight plan)
-            // more difficult to do after aerobraking or other custom trajectory modifications (need to implement independent encounter algorithm? snap future maneuver nodes to the modified trajectory?)
 
             double maxAtmosphereAltitude = RealMaxAtmosphereAltitude(body);
 
@@ -330,6 +367,7 @@ namespace Trajectories
                     double from = startingState.time;
                     double to = from + patch.spaceOrbit.timeToPe;
 
+                    //int iteration = 0;
                     while (to - from > 0.1)
                     {
                         double middle = (from + to) * 0.5;
@@ -341,6 +379,13 @@ namespace Trajectories
                         {
                             from = middle;
                         }
+
+                        /*++iteration;
+                        if (iteration % 10 == 0)
+                        {
+                            if (Environment.TickCount - incrementStartTime_ > MaxIncrementTime)
+                                yield return false;
+                        }*/
                     }
 
                     entryTime = to;
@@ -353,14 +398,15 @@ namespace Trajectories
 
                     if (body.atmosphere)
                     {
-                        patches_.Add(patch);
-                        return new VesselState
+                        patchesBackBuffer_.Add(patch);
+                        AddPatch_outState = new VesselState
                         {
                             position = Util.SwapYZ(patch.spaceOrbit.getRelativePositionAtUT(entryTime)),
                             referenceBody = body,
                             time = entryTime,
                             velocity = Util.SwapYZ(patch.spaceOrbit.getOrbitalVelocityAtUT(entryTime))
                         };
+                        yield break;
                     }
                     else
                     {
@@ -377,8 +423,9 @@ namespace Trajectories
                         patch.rawImpactPosition = Util.SwapYZ(patch.spaceOrbit.getRelativePositionAtUT(entryTime));
                         patch.impactPosition = calculateRotatedPosition(body, patch.rawImpactPosition.Value, entryTime);
                         patch.impactVelocity = Util.SwapYZ(patch.spaceOrbit.getOrbitalVelocityAtUT(entryTime));
-                        patches_.Add(patch);
-                        return null;
+                        patchesBackBuffer_.Add(patch);
+                        AddPatch_outState = null;
+                        yield break;
                     }
                 }
                 else
@@ -409,6 +456,12 @@ namespace Trajectories
                     while (true)
                     {
                         ++iteration;
+
+                        if (iteration % 10 == 0)
+                        {
+                            if (Environment.TickCount - incrementStartTime_ > MaxIncrementTime)
+                                yield return false;
+                        }
 
                         double R = pos.magnitude;
                         double altitude = R - body.Radius;
@@ -467,24 +520,27 @@ namespace Trajectories
                             if (iteration == maxIterations)
                             {
                                 ScreenMessages.PostScreenMessage("WARNING: trajectory prediction stopped, too many iterations");
-                                patches_.Add(patch);
-                                return null;
+                                patchesBackBuffer_.Add(patch);
+                                AddPatch_outState = null;
+                                yield break;
                             }
                             else if (atmosphereCoeff <= 0.0)
                             {
-                                patches_.Add(patch);
-                                return null;
+                                patchesBackBuffer_.Add(patch);
+                                AddPatch_outState = null;
+                                yield break;
                             }
                             else
                             {
-                                patches_.Add(patch);
-                                return new VesselState
+                                patchesBackBuffer_.Add(patch);
+                                AddPatch_outState = new VesselState
                                 {
                                     position = pos,
                                     velocity = vel,
                                     referenceBody = body,
                                     time = patch.endTime
                                 };
+                                yield break;
                             }
                         }
 
@@ -495,7 +551,7 @@ namespace Trajectories
                         double angleOfAttack = profile.GetAngleOfAttack(body, pos, airVelocity);
                         Vector3d aerodynamicForce = aerodynamicModel_.computeForces(body, pos, airVelocity, angleOfAttack, dt);
                         Vector3d acceleration = gravityAccel + aerodynamicForce / aerodynamicModel_.mass;
-                        maxaccel = Math.Max((float) acceleration.magnitude, maxaccel);
+                        maxAccelBackBuffer_ = Math.Max((float) acceleration.magnitude, maxAccelBackBuffer_);
 
                         //vel += acceleration * dt;
                         //pos += vel * dt;
@@ -532,10 +588,10 @@ namespace Trajectories
             else
             {
                 // no atmospheric entry, just add the space orbit
-                patches_.Add(patch);
+                patchesBackBuffer_.Add(patch);
                 if (nextStockPatch != null)
                 {
-                    return new VesselState
+                    AddPatch_outState = new VesselState
                     {
                         position = Util.SwapYZ(patch.spaceOrbit.getRelativePositionAtUT(patch.endTime)),
                         velocity = Util.SwapYZ(patch.spaceOrbit.getOrbitalVelocityAtUT(patch.endTime)),
@@ -543,13 +599,16 @@ namespace Trajectories
                         time = patch.endTime,
                         stockPatch = nextStockPatch
                     };
+                    yield break;
                 }
                 else
-                    return null;
+                {
+                    AddPatch_outState = null;
+                    yield break;
+                }
             }
         }
 
-        // TODO : double check this function, I suspect it is not accurate
         public static Vector3 calculateRotatedPosition(CelestialBody body, Vector3 relativePosition, double time)
         {
             float angle = (float)(-(time - Planetarium.GetUniversalTime()) * body.angularVelocity.magnitude / Math.PI * 180.0);

@@ -5,6 +5,8 @@ Copyright 2014, Youen Toupin
 This file is part of Trajectories, under MIT license.
 */
 
+//#define PRECOMPUTE_CACHE
+
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -32,6 +34,7 @@ namespace Trajectories
         private bool farInitialized = false;
         private bool useNEAR = false;
         private bool useStockModel;
+        private bool cachePrecomputed = false;
         private double referenceDrag = 0;
         private DateTime nextAllowedAutomaticUpdate = DateTime.Now;
 
@@ -109,7 +112,6 @@ namespace Trajectories
         public double computeFARReferenceDrag()
         {
             computeForces_FAR(10, 2, new Vector3d(3000.0, 0, 0), new Vector3(0, 1, 0), 0, 0.25);
-            computeForces_FAR(10, 2, new Vector3d(3000.0, 0, 0), new Vector3(0, 1, 0), 0, 0.25);
             return computeForces_FAR(10, 2, new Vector3d(3000.0, 0, 0), new Vector3(0, 1, 0), 0, 0.25).sqrMagnitude;
         }
 
@@ -174,51 +176,78 @@ namespace Trajectories
             }
 
             isValid = true;
+
+            precomputeCache();
         }
 
-        private Vector2 getCachedFARForce(int v, int a)
+        private void precomputeCache()
         {
-            //if (v < 0 || v >= cachedFARForces.GetLength(0))
-            //    Util.PostSingleScreenMessage("v out of range", "Out of range: v = " + v);
-            //if (a < 0 || a >= cachedFARForces.GetLength(1))
-            //    Util.PostSingleScreenMessage("a out of range", "Out of range: a = " + a);
-            Vector2 f = cachedFARForces[v,a];
+            #if PRECOMPUTE_CACHE
+            if (!cachePrecomputed && isFARInitialized())
+            {
+                for (int v = 0; v < cachedFARForces.GetLength(0); ++v)
+                {
+                    for (int a = 0; a < cachedFARForces.GetLength(1); ++a)
+                    {
+                        computeCacheEntry(v, a);
+                    }
+                }
+                cachePrecomputed = true;
+            }
+            #endif
+        }
+
+        private Vector2 computeCacheEntry(int v, int a)
+        {
+            if (!isFARInitialized())
+                throw new Exception("Internal error");
 
             double vel = maxFARVelocity * (double)v / (double)(cachedFARForces.GetLength(0) - 1);
             double v2 = Math.Max(1.0, vel * vel);
 
+            Vector3d velocity = new Vector3d(vel, 0, 0);
+            //double machNumber = velocity.magnitude / 300.0; // sound speed approximation (but doesn't work well for Jool for example)
+            double averageAltitude = (body_.maxAtmosphereAltitude - body_.Radius) * 0.5;
+            double machNumber = useNEAR ? 0.0 : (double)FARAeroUtil_GetMachNumber.Invoke(null, new object[] { body_, averageAltitude, new Vector3((float)vel, 0, 0) });
+            double AoA = maxFARAngleOfAttack * ((double)a / (double)(cachedFARForces.GetLength(1) - 1) * 2.0 - 1.0);
+            Vector3d force = computeForces_FAR(1.0, machNumber, velocity, new Vector3(0, 1, 0), AoA, 0.25);
+            return cachedFARForces[v, a] = new Vector2((float)(force.x / v2), (float)(force.y / v2)); // divide by v² before storing the force, to increase accuracy (the reverse operation is performed when reading from the cache)
+        }
+
+        private bool isFARInitialized()
+        {
+            if (!farInitialized)
+                farInitialized = (computeFARReferenceDrag() >= 1);
+
+            return farInitialized;
+        }
+
+        private Vector2 getCachedFARForce(int v, int a)
+        {
+            if (!isFARInitialized())
+                return new Vector2(0, 0);
+
+            double vel = maxFARVelocity * (double)v / (double)(cachedFARForces.GetLength(0) - 1);
+            double v2 = Math.Max(1.0, vel * vel);
+
+            #if PRECOMPUTE_CACHE
+            return cachedFARForces[v,a] * (float)v2;
+            #else
+            Vector2 f = cachedFARForces[v, a];
+
             if(float.IsNaN(f.x))
             {
-                Vector3d velocity = new Vector3d(vel, 0, 0);
-                //double machNumber = velocity.magnitude / 300.0; // sound speed approximation (but doesn't work well for Jool for example)
-                double averageAltitude = (body_.maxAtmosphereAltitude - body_.Radius) * 0.5;
-                double machNumber = useNEAR ? 0.0 : (double)FARAeroUtil_GetMachNumber.Invoke(null, new object[] { body_, averageAltitude, new Vector3((float)vel, 0, 0) });
-                double AoA = maxFARAngleOfAttack * ((double)a / (double)(cachedFARForces.GetLength(1) - 1) * 2.0 - 1.0);
-                Vector3d force = computeForces_FAR(1.0, machNumber, velocity, new Vector3(0,1,0), AoA, 0.25);
-                f = new Vector2((float)(force.x/v2), (float)(force.y/v2)); // divide by v² before storing the force, to increase accuracy (the reverse operation is performed when reading from the cache)
-
-                bool validForce = farInitialized;
-                if(!validForce)
-                {
-                    // double check if FAR is correctly initialized before caching the value
-                    if (computeFARReferenceDrag() >= 1)
-                    {
-                        validForce = true;
-                        farInitialized = true;
-                    }
-                }
-
-                if (validForce)
-                {
-                    cachedFARForces[v, a] = f;
-                }
+                f = computeCacheEntry(v,a); 
             }
 
             return f * (float)v2;
+            #endif
         }
 
         private Vector2 getFARForce(double velocity, double rho, double angleOfAttack)
         {
+            precomputeCache();
+
             //Util.PostSingleScreenMessage("getFARForce velocity", "velocity = " + velocity);
             float vFrac = (float)(velocity / maxFARVelocity * (double)(cachedFARForces.GetLength(0)-1));
             int vFloor = Math.Min(cachedFARForces.GetLength(0)-2, (int)vFrac);

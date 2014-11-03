@@ -49,7 +49,7 @@ namespace TrajectoriesAPI
         /// </summary>
         public void ComputeTrajectory(Vessel vessel, float AoA = 0)
         {
-            TrajectoriesAPI.Trajectory_computeTrajectory.Invoke(trajectory, new object[] { vessel, AoA });
+            TrajectoriesAPI.Trajectory_computeTrajectory.Invoke(trajectory, new object[] { vessel, AoA, false });
         }
 
         /// <summary>

@@ -68,7 +68,7 @@ namespace Trajectories
         private void MainWindow(int id)
         {
             GUILayout.BeginHorizontal();
-            GUILayout.Label("Computations: " + Trajectory.fetch.ComputationTime + "s", GUILayout.Width(100));
+            GUILayout.Label("Perf: " + (Mathf.Round(Trajectory.fetch.ComputationTime*10000.0f)*0.1f) + "ms", GUILayout.Width(120));
             GUILayout.Label(Trajectory.fetch.ErrorCount+" error(s)", GUILayout.Width(80));
             GUILayout.EndHorizontal();
 
@@ -117,7 +117,7 @@ namespace Trajectories
             GUILayout.Label("Descent profile");
             DescentProfile.fetch.DoGUI();
 
-            GUILayout.Label ("Expected g loading: " + (Trajectory.fetch.maxaccel / 9.81).ToString("0.00"));
+            GUILayout.Label ("Expected g loading: " + (Trajectory.fetch.MaxAccel / 9.81).ToString("0.00"));
 
             tooltip = GUI.tooltip;
 

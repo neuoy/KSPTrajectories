@@ -50,7 +50,7 @@ namespace TrajectoriesAPI
 
             if ((Trajectory_fetch = GetProperty(traj, "fetch")) == null) return false;
             if ((Trajectory_patches = GetProperty(traj, "patches")) == null) return false;
-            if ((Trajectory_computeTrajectory = GetMethod(traj, "ComputeTrajectory", new Type[] { typeof(Vessel), typeof(float) })) == null) return false;
+            if ((Trajectory_computeTrajectory = GetMethod(traj, "ComputeTrajectory", new Type[] { typeof(Vessel), typeof(float), typeof(bool) })) == null) return false;
 
             if ((PatchType = GetNestedType(traj, "Patch")) == null) return false;
             if ((Patch_startingState = GetProperty(PatchType, "startingState")) == null) return false;
