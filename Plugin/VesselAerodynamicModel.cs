@@ -34,7 +34,9 @@ namespace Trajectories
         private bool farInitialized = false;
         private bool useNEAR = false;
         private bool useStockModel;
+        #if PRECOMPUTE_CACHE
         private bool cachePrecomputed = false;
+        #endif
         private double referenceDrag = 0;
         private DateTime nextAllowedAutomaticUpdate = DateTime.Now;
 

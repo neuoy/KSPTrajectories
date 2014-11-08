@@ -28,7 +28,7 @@ mkdir Textures
 xcopy /y ..\..\..\Textures\icon.png Textures
 xcopy /y ..\..\..\Textures\icon-blizzy.tga Textures
 
-del ..\..\..\Trajectories.zip
+IF EXIST ..\..\..\Trajectories.zip del ..\..\..\Trajectories.zip
 "%scriptPath%7z.exe" a ../../../Trajectories.zip ../../GameData
 cd "%scriptPath%.."
 rd /s /q package
