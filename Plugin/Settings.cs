@@ -16,6 +16,15 @@ namespace Trajectories
 
         public static Settings fetch { get { settings_ = settings_ ?? new Settings(); return settings_; } }
 
+        [Persistent(Default: false)]
+        public bool DisplayTargetGUI { get; set; }
+
+        [Persistent(Default: false)]
+        public bool DisplayDescentProfileGUI { get; set; }
+
+        [Persistent(Default: false)]
+        public bool DisplaySettingsGUI { get; set; }
+
         [Persistent(Default: true)]
         public bool UseBlizzyToolbar { get; set; }
 

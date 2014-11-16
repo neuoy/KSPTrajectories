@@ -23,6 +23,9 @@ namespace Trajectories
         private double mass_;
         public double mass { get { return mass_; } }
 
+        private static string aerodynamicModelName_ = "unknown";
+        public static string AerodynamicModelName { get { return aerodynamicModelName_; } }
+
         private Vessel vessel_;
         private CelestialBody body_;
         private double stockDragCoeff_;
@@ -93,7 +96,7 @@ namespace Trajectories
                 if (ratio > 1.2 && DateTime.Now > nextAllowedAutomaticUpdate)
                 {
                     nextAllowedAutomaticUpdate = DateTime.Now.AddSeconds(10); // limit updates frequency (could make the game almost unresponsive on some computers)
-                    ScreenMessages.PostScreenMessage("Trajectory aerodynamic model auto-updated");
+                    //ScreenMessages.PostScreenMessage("Trajectory aerodynamic model auto-updated");
                     isValid = false;
                 }
             }
@@ -127,8 +130,10 @@ namespace Trajectories
                 {
                     case "NEAR":
                         useNEAR = true;
+                        aerodynamicModelName_ = "NEAR";
                         goto case "FerramAerospaceResearch";
                     case "FerramAerospaceResearch":
+                        aerodynamicModelName_ = "FAR";
                         string namespaceName = useNEAR ? "NEAR" : "ferram4";
                         FARBasicDragModelType = loadedAssembly.assembly.GetType(namespaceName + ".FARBasicDragModel");
                         FARBasicDragModel_RunDragCalculation = FARBasicDragModelType.GetMethodEx("RunDragCalculation", BindingFlags.Public | BindingFlags.Instance);
@@ -154,8 +159,9 @@ namespace Trajectories
 
             if(!farInstalled)
             {
-                ScreenMessages.PostScreenMessage("Ferram Aerospace Research (FAR or NEAR) not installed, or incompatible version, using stock aerodynamics");
-                ScreenMessages.PostScreenMessage("WARNING: stock aerodynamic model does not predict lift, spacecrafts with wings will have inaccurate predictions");
+                //ScreenMessages.PostScreenMessage("Ferram Aerospace Research (FAR or NEAR) not installed, or incompatible version, using stock aerodynamics");
+                //ScreenMessages.PostScreenMessage("WARNING: stock aerodynamic model does not predict lift, spacecrafts with wings will have inaccurate predictions");
+                aerodynamicModelName_ = "stock";
                 useStockModel = true;
                 isValid = true;
                 return;
