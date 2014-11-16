@@ -67,9 +67,12 @@ namespace Trajectories
 
         private void MainWindow(int id)
         {
+            Trajectory traj = Trajectory.fetch;
+            var lastPatch = traj.patches.LastOrDefault();
+
             GUILayout.BeginHorizontal();
-            GUILayout.Label("Perf: " + (Mathf.Round(Trajectory.fetch.ComputationTime*10000.0f)*0.1f) + "ms", GUILayout.Width(120));
-            GUILayout.Label(Trajectory.fetch.ErrorCount+" error(s)", GUILayout.Width(80));
+            GUILayout.Label("Perf: " + (Mathf.Round(traj.ComputationTime*10000.0f)*0.1f) + "ms", GUILayout.Width(120));
+            GUILayout.Label(traj.ErrorCount+" error(s)", GUILayout.Width(80));
             GUILayout.EndHorizontal();
 
             if (ToolbarManager.ToolbarAvailable)
@@ -94,12 +97,12 @@ namespace Trajectories
             GUILayout.Label(Settings.fetch.MaxPatchCount.ToString(), GUILayout.Width(15));
             GUILayout.EndHorizontal();
 
-            GUI.enabled = Trajectory.fetch.targetPosition.HasValue;
+            GUI.enabled = traj.targetPosition.HasValue;
             if (GUILayout.Button("Unset target"))
                 Trajectory.SetTarget();
             GUI.enabled = true;
 
-            var patch = Trajectory.fetch.patches.LastOrDefault();
+            var patch = traj.patches.LastOrDefault();
             GUI.enabled = (patch != null && patch.impactPosition.HasValue);
             if (GUILayout.Button("Set current impact as target"))
             {
@@ -110,14 +113,27 @@ namespace Trajectories
             GUILayout.BeginHorizontal();
             Settings.fetch.AutoUpdateAerodynamicModel = GUILayout.Toggle(Settings.fetch.AutoUpdateAerodynamicModel, new GUIContent("Auto update", "Auto-update of the aerodynamic model. For example if a part is decoupled, the model needs to be updated. This is independent from trajectory update."));
             if (GUILayout.Button("Update now"))
-                Trajectory.fetch.InvalidateAerodynamicModel();
+                traj.InvalidateAerodynamicModel();
             GUILayout.EndHorizontal();
 
             GUILayout.Space(10);
             GUILayout.Label("Descent profile");
             DescentProfile.fetch.DoGUI();
 
-            GUILayout.Label ("Expected g loading: " + (Trajectory.fetch.MaxAccel / 9.81).ToString("0.00"));
+            GUILayout.Label("Max G-force: " + (traj.MaxAccel / 9.81).ToString("0.00"));
+            if(lastPatch != null && lastPatch.impactPosition.HasValue)
+            {
+                Vector3 up = lastPatch.impactPosition.Value.normalized;
+                Vector3 vel = lastPatch.impactVelocity - lastPatch.startingState.referenceBody.getRFrmVel(lastPatch.impactPosition.Value + lastPatch.startingState.referenceBody.position);
+                float vVelMag = Vector3.Dot(vel, up);
+                Vector3 vVel = up * vVelMag;
+                float hVelMag = (vel - vVel).magnitude;
+                GUILayout.Label("Impact: V = " + vVelMag.ToString("0.0") + "m/s, H = " + hVelMag.ToString("0.0") + "m/s");
+            }
+            else
+            {
+                GUILayout.Label("Impact velocity: -");
+            }
 
             tooltip = GUI.tooltip;
 
