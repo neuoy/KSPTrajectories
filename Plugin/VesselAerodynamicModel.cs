@@ -130,10 +130,8 @@ namespace Trajectories
                 {
                     case "NEAR":
                         useNEAR = true;
-                        aerodynamicModelName_ = "NEAR";
                         goto case "FerramAerospaceResearch";
                     case "FerramAerospaceResearch":
-                        aerodynamicModelName_ = "FAR";
                         string namespaceName = useNEAR ? "NEAR" : "ferram4";
                         FARBasicDragModelType = loadedAssembly.assembly.GetType(namespaceName + ".FARBasicDragModel");
                         FARBasicDragModel_RunDragCalculation = FARBasicDragModelType.GetMethodEx("RunDragCalculation", BindingFlags.Public | BindingFlags.Instance);
@@ -157,7 +155,7 @@ namespace Trajectories
                 }
             }
 
-            if(!farInstalled)
+            if (!farInstalled)
             {
                 //ScreenMessages.PostScreenMessage("Ferram Aerospace Research (FAR or NEAR) not installed, or incompatible version, using stock aerodynamics");
                 //ScreenMessages.PostScreenMessage("WARNING: stock aerodynamic model does not predict lift, spacecrafts with wings will have inaccurate predictions");
@@ -165,6 +163,13 @@ namespace Trajectories
                 useStockModel = true;
                 isValid = true;
                 return;
+            }
+            else
+            {
+                if(useNEAR)
+                    aerodynamicModelName_ = "NEAR";
+                else
+                    aerodynamicModelName_ = "FAR";
             }
 
             maxFARVelocity = 10000.0;
