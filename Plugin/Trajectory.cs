@@ -270,7 +270,8 @@ namespace Trajectories
             }
         }
 
-        // relativePosition is in world frame, but relative to the body
+        // relativePosition is in world frame, but relative to the body (i.e. inertial body space)
+        // returns the altitude above sea level (can be negative for bodies without ocean)
         private double GetGroundAltitude(CelestialBody body, Vector3 relativePosition)
         {
             if (body.pqsController == null)
@@ -446,7 +447,9 @@ namespace Trajectories
                     Vector3d prevPos = pos - vel * dt;
                     //Util.PostSingleScreenMessage("initial vel", "initial vel = " + vel);
                     double currentTime = entryTime;
-                    double lastPositionStored = 0;
+                    double lastPositionStoredUT = 0;
+                    Vector3d lastPositionStored = new Vector3d();
+                    bool hitGround = false;
                     int iteration = 0;
                     while (true)
                     {
@@ -458,39 +461,12 @@ namespace Trajectories
                         double R = pos.magnitude;
                         double altitude = R - body.Radius;
                         double atmosphereCoeff = altitude / maxAtmosphereAltitude;
-                        if (atmosphereCoeff <= 0.0 || atmosphereCoeff >= 1.0 || iteration == maxIterations || currentTime > patch.endTime)
+                        if (hitGround || atmosphereCoeff <= 0.0 || atmosphereCoeff >= 1.0 || iteration == maxIterations || currentTime > patch.endTime)
                         {
-                            if (atmosphereCoeff <= 0.0)
+                            if (hitGround || atmosphereCoeff <= 0.0)
                             {
-                                //rewind trajectory a bit to get actual intersection with the ground (we assume the ground is horizontal around the impact position)
-                                double groundAltitude = GetGroundAltitude(body, calculateRotatedPosition(body, pos, currentTime)) + body.Radius;
-                                if (nextPosIdx == 0 && buffer.Count > 1)
-                                {
-                                    nextPosIdx = chunkSize;
-                                    buffer.RemoveAt(buffer.Count - 1);
-                                }
-                                while (pos.magnitude <= groundAltitude)
-                                {
-                                    --nextPosIdx;
-                                    currentTime -= dt;
-                                    if (nextPosIdx == 0)
-                                    {
-                                        if (buffer.Count == 1)
-                                            break;
-                                        nextPosIdx = chunkSize;
-                                        buffer.RemoveAt(buffer.Count - 1);
-                                    }
-                                    pos = buffer.Last()[nextPosIdx - 1].pos;
-                                }
-
-                                if (Settings.fetch.BodyFixedMode) {
-                                    //if we do fixed-mode calculations, pos is already rotated
-                                    patch.impactPosition = pos;
-                                    patch.rawImpactPosition = calculateRotatedPosition(body, patch.impactPosition.Value, 2.0 * Planetarium.GetUniversalTime() - currentTime);
-                                } else {
-                                    patch.rawImpactPosition = pos;
-                                    patch.impactPosition = calculateRotatedPosition(body, patch.rawImpactPosition.Value, currentTime);
-                                }
+                                patch.rawImpactPosition = pos;
+                                patch.impactPosition = calculateRotatedPosition(body, patch.rawImpactPosition.Value, currentTime);
                                 patch.impactVelocity = vel;
                             }
 
@@ -556,23 +532,40 @@ namespace Trajectories
 
                         currentTime += dt;
 
-                        double interval = altitude < 15000.0 ? trajectoryInterval * 0.1 : trajectoryInterval;
-                        if (currentTime >= lastPositionStored + interval)
+                        double interval = altitude < 10000.0 ? trajectoryInterval * 0.3 : trajectoryInterval;
+                        if (currentTime >= lastPositionStoredUT + interval)
                         {
-                            lastPositionStored = currentTime;
+                            if (lastPositionStoredUT > 0)
+                            {
+                                // check terrain collision, to detect impact on mountains etc.
+                                Vector3 rayOrigin = lastPositionStored;
+                                Vector3 rayEnd = pos;
+                                double groundAltitude = GetGroundAltitude(body, calculateRotatedPosition(body,rayEnd,currentTime)) + body.Radius;
+                                if (groundAltitude > rayEnd.magnitude)
+                                {
+                                    hitGround = true;
+                                    float coeff = Math.Max(0.01f, (float)((groundAltitude - rayOrigin.magnitude) / (rayEnd.magnitude - rayOrigin.magnitude)));
+                                    pos = rayEnd * coeff + rayOrigin * (1.0f - coeff);
+                                    currentTime = currentTime * coeff + lastPositionStoredUT * (1.0f - coeff);
+                                }
+                            }
+
+                            lastPositionStoredUT = currentTime;
                             if (nextPosIdx == chunkSize)
                             {
                                 buffer.Add(new Point[chunkSize]);
                                 nextPosIdx = 0;
                             }
                             Vector3d nextPos = pos;
-                            if (Settings.fetch.BodyFixedMode) {
+                            if (Settings.fetch.BodyFixedMode)
+                            {
                                 nextPos = calculateRotatedPosition(body, nextPos, currentTime);
                             }
                             buffer.Last()[nextPosIdx].aerodynamicForce = aerodynamicForce;
                             buffer.Last()[nextPosIdx].orbitalVelocity = vel;
                             buffer.Last()[nextPosIdx].airVelocity = airVelocity;
                             buffer.Last()[nextPosIdx++].pos = nextPos;
+                            lastPositionStored = pos;
                         }
                     }
                 }
