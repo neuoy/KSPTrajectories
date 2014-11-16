@@ -9,6 +9,7 @@ This file is part of Trajectories, under MIT license.
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using UnityEngine;
@@ -91,7 +92,7 @@ namespace Trajectories
             }
         }
 
-        private int MaxIncrementTime { get { return 5; } }
+        private int MaxIncrementTime { get { return 2; } }
 
         private static Trajectory fetch_;
         public static Trajectory fetch { get { return fetch_; } }
@@ -102,7 +103,7 @@ namespace Trajectories
         private List<Patch> patchesBackBuffer_ = new List<Patch>();
         public List<Patch> patches { get { return patches_; } }
 
-        private int incrementStartTime_;
+        private Stopwatch incrementTime_;
         private IEnumerator<bool> partialComputation_;
 
         private float maxAccel_;
@@ -158,7 +159,8 @@ namespace Trajectories
 
         public void Update()
         {
-            computationTime_ = computationTime_ * 0.9f + frameTime_ * 0.1f;
+            computationTime_ = computationTime_ * 0.99f + frameTime_ * 0.01f;
+            float offset = frameTime_ - computationTime_;
             frameTime_ = 0;
 
             if (HighLogic.LoadedScene == GameScenes.FLIGHT && vessel_ != FlightGlobals.ActiveVessel)
@@ -192,7 +194,7 @@ namespace Trajectories
         {
             try
             {
-                incrementStartTime_ = Environment.TickCount;
+                incrementTime_ = Stopwatch.StartNew();
 
                 if (partialComputation_ == null || vessel != vessel_)
                 {
@@ -207,6 +209,8 @@ namespace Trajectories
                         return;
                     }
 
+                    if (partialComputation_ != null)
+                        partialComputation_.Dispose();
                     partialComputation_ = computeTrajectoryIncrement(vessel, profile).GetEnumerator();
                 }
 
@@ -224,8 +228,7 @@ namespace Trajectories
                     partialComputation_ = null;
                 }
 
-                int end = Environment.TickCount;
-                frameTime_ += (float)(end - incrementStartTime_);
+                frameTime_ += (float)incrementTime_.ElapsedMilliseconds;
             }
             catch (Exception)
             {
@@ -247,7 +250,7 @@ namespace Trajectories
                 if (state == null)
                     break;
 
-                if (Environment.TickCount - incrementStartTime_ > MaxIncrementTime)
+                if (incrementTime_.ElapsedMilliseconds > MaxIncrementTime)
                     yield return false;
 
                 var maneuverNodes = vessel_.patchedConicSolver.maneuverNodes;
@@ -367,7 +370,6 @@ namespace Trajectories
                     double from = startingState.time;
                     double to = from + patch.spaceOrbit.timeToPe;
 
-                    //int iteration = 0;
                     while (to - from > 0.1)
                     {
                         double middle = (from + to) * 0.5;
@@ -379,13 +381,6 @@ namespace Trajectories
                         {
                             from = middle;
                         }
-
-                        /*++iteration;
-                        if (iteration % 10 == 0)
-                        {
-                            if (Environment.TickCount - incrementStartTime_ > MaxIncrementTime)
-                                yield return false;
-                        }*/
                     }
 
                     entryTime = to;
@@ -457,11 +452,8 @@ namespace Trajectories
                     {
                         ++iteration;
 
-                        if (iteration % 10 == 0)
-                        {
-                            if (Environment.TickCount - incrementStartTime_ > MaxIncrementTime)
-                                yield return false;
-                        }
+                        if (incrementTime_.ElapsedMilliseconds > MaxIncrementTime)
+                            yield return false;
 
                         double R = pos.magnitude;
                         double altitude = R - body.Radius;
