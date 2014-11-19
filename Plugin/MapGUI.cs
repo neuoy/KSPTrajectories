@@ -91,6 +91,8 @@ namespace Trajectories
             }
             GUILayout.EndHorizontal();
 
+            Settings.fetch.BodyFixedMode = GUILayout.Toggle(Settings.fetch.BodyFixedMode, "Body-fixed mode");
+
             GUILayout.Label("Max G-force: " + (traj.MaxAccel / 9.81).ToString("0.00"));
             if (lastPatch != null && lastPatch.impactPosition.HasValue)
             {
@@ -132,12 +134,16 @@ namespace Trajectories
 
             if (Settings.fetch.DisplaySettingsGUI = ToggleGroup(Settings.fetch.DisplaySettingsGUI, "Settings"))
             {
-                Settings.fetch.BodyFixedMode = GUILayout.Toggle(Settings.fetch.BodyFixedMode, "Body-fixed mode");
+                GUILayout.BeginHorizontal();
+                GUILayout.Label("Max patches", GUILayout.Width(100));
+                Settings.fetch.MaxPatchCount = Mathf.RoundToInt(GUILayout.HorizontalSlider((float)Settings.fetch.MaxPatchCount, 3, 10, GUILayout.Width(100)));
+                GUILayout.Label(Settings.fetch.MaxPatchCount.ToString(), GUILayout.Width(15));
+                GUILayout.EndHorizontal();
 
                 GUILayout.BeginHorizontal();
-                GUILayout.Label("Max patches", GUILayout.Width(80));
-                Settings.fetch.MaxPatchCount = Mathf.RoundToInt(GUILayout.HorizontalSlider((float)Settings.fetch.MaxPatchCount, 3, 10, GUILayout.Width(120)));
-                GUILayout.Label(Settings.fetch.MaxPatchCount.ToString(), GUILayout.Width(15));
+                GUILayout.Label("Max frames per patch", GUILayout.Width(100));
+                Settings.fetch.MaxFramesPerPatch = Mathf.RoundToInt(GUILayout.HorizontalSlider((float)Settings.fetch.MaxFramesPerPatch, 1, 50, GUILayout.Width(100)));
+                GUILayout.Label(Settings.fetch.MaxFramesPerPatch.ToString(), GUILayout.Width(15));
                 GUILayout.EndHorizontal();
 
                 GUILayout.BeginHorizontal();
@@ -153,7 +159,7 @@ namespace Trajectories
 
                 GUILayout.Label("Aerodynamic model: " + VesselAerodynamicModel.AerodynamicModelName);
                 GUILayout.BeginHorizontal();
-                GUILayout.Label("Perf: " + (Mathf.Round(traj.ComputationTime * 10000.0f) * 0.1f) + "ms", GUILayout.Width(120));
+                GUILayout.Label("Perf: " + (traj.ComputationTime * 1000.0f).ToString("0.0") + "ms (" + (traj.ComputationTime/traj.GameFrameTime*100.0f).ToString("0") + "%)", GUILayout.Width(120));
                 GUILayout.Label(traj.ErrorCount + " error(s)", GUILayout.Width(80));
                 GUILayout.EndHorizontal();
             }

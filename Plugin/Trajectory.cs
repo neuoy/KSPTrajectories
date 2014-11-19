@@ -120,6 +120,10 @@ namespace Trajectories
         private static float computationTime_;
         public float ComputationTime { get { return computationTime_ * 0.001f; } }
 
+        private static Stopwatch gameFrameTime_;
+        private static float averageGameFrameTime_;
+        public float GameFrameTime { get { return averageGameFrameTime_ * 0.001f; } }
+
         public static void SetTarget(CelestialBody body = null, Vector3? relativePosition = null)
         {
             if (body != null && relativePosition.HasValue)
@@ -162,6 +166,13 @@ namespace Trajectories
             computationTime_ = computationTime_ * 0.99f + frameTime_ * 0.01f;
             float offset = frameTime_ - computationTime_;
             frameTime_ = 0;
+
+            if (gameFrameTime_ != null)
+            {
+                float t = (float)gameFrameTime_.ElapsedMilliseconds;
+                averageGameFrameTime_ = averageGameFrameTime_ * 0.99f + t * 0.01f;
+            }
+            gameFrameTime_ = Stopwatch.StartNew();
 
             if (HighLogic.LoadedScene == GameScenes.FLIGHT && vessel_ != FlightGlobals.ActiveVessel)
             {
@@ -437,7 +448,7 @@ namespace Trajectories
                     int maxIterations = (int)(30.0 * 60.0 / dt); // some shallow entries can result in very long flight, for performances reasons, we limit the prediction duration
 
                     int chunkSize = 128;
-                    double trajectoryInterval = 5.0; // time between two consecutive stored positions (more intermediate positions are computed for better accuracy)
+                    double trajectoryInterval = 10.0; // time between two consecutive stored positions (more intermediate positions are computed for better accuracy), also used for ground collision checks
                     var buffer = new List<Point[]>();
                     buffer.Add(new Point[chunkSize]);
                     int nextPosIdx = 0;
@@ -451,12 +462,18 @@ namespace Trajectories
                     Vector3d lastPositionStored = new Vector3d();
                     bool hitGround = false;
                     int iteration = 0;
+                    int incrementIterations = 0;
+                    int minIterationsPerIncrement = maxIterations / Settings.fetch.MaxFramesPerPatch;
                     while (true)
                     {
                         ++iteration;
+                        ++incrementIterations;
 
-                        if (incrementTime_.ElapsedMilliseconds > MaxIncrementTime)
+                        if (incrementIterations > minIterationsPerIncrement && incrementTime_.ElapsedMilliseconds > MaxIncrementTime)
+                        {
                             yield return false;
+                            incrementIterations = 0;
+                        }
 
                         double R = pos.magnitude;
                         double altitude = R - body.Radius;

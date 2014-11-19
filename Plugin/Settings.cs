@@ -49,6 +49,9 @@ namespace Trajectories
         [Persistent(Default: 4)]
         public int MaxPatchCount { get; set; }
 
+        [Persistent(Default: 15)]
+        public int MaxFramesPerPatch { get; set; }
+
         private KSP.IO.PluginConfiguration config;
 
         public Settings()

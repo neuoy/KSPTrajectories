@@ -306,7 +306,7 @@ namespace Trajectories
 
             double velocityMag = airVelocity.magnitude;
 
-            double crossSectionalArea = FlightGlobals.DragMultiplier * vessel_.GetTotalMass();
+            double crossSectionalArea = FlightGlobals.DragMultiplier * mass_;
             return airVelocity * (-0.5 * rho * velocityMag * stockDragCoeff_ * crossSectionalArea);
         }
 
