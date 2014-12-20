@@ -1,4 +1,5 @@
 /Plugin/*.user
+*.csproj.user
 
 /Plugin/*.suo
 
