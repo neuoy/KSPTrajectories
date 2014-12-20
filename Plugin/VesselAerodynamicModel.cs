@@ -148,7 +148,7 @@ namespace Trajectories
                         if (!useNEAR)
                         {
                             FARAeroUtil_GetMachNumber = loadedAssembly.assembly.GetType(namespaceName + ".FARAeroUtil").GetMethodEx("GetMachNumber", BindingFlags.Public | BindingFlags.Static);
-                            FARAeroUtil_GetCurrentDensity = loadedAssembly.assembly.GetType(namespaceName + ".FARAeroUtil").GetMethodEx("GetCurrentDensity", new Type[] { typeof(CelestialBody), typeof(double) });
+                            FARAeroUtil_GetCurrentDensity = loadedAssembly.assembly.GetType(namespaceName + ".FARAeroUtil").GetMethodEx("GetCurrentDensity", new Type[] { typeof(CelestialBody), typeof(double), typeof(bool) });
                         }
                         farInstalled = true;
                         break;
@@ -444,7 +444,7 @@ namespace Trajectories
 
             double stockRho = FlightGlobals.getAtmDensity(pressure);
 
-            double rho = useNEAR ? stockRho : (double)FARAeroUtil_GetCurrentDensity.Invoke(null, new object[] { body, altitudeAboveSea });
+            double rho = useNEAR ? stockRho : (double)FARAeroUtil_GetCurrentDensity.Invoke(null, new object[] { body, altitudeAboveSea, false });
             
             // uncomment the next lines to bypass the cache system (for debugging, in case you suspect a bug or inaccuracy related to the cache system)
             //double machNumber = (double)FARAeroUtil_GetMachNumber.Invoke(null, new object[] { body, altitudeAboveSea, (Vector3)airVelocity });
