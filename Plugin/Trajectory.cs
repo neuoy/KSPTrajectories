@@ -264,18 +264,20 @@ namespace Trajectories
                 if (incrementTime_.ElapsedMilliseconds > MaxIncrementTime)
                     yield return false;
 
-                var maneuverNodes = vessel_.patchedConicSolver.maneuverNodes;
-                foreach (var node in maneuverNodes)
+                if (null != vessel_.patchedConicSolver)
                 {
-                    if (node.UT == state.time)
+                    var maneuverNodes = vessel_.patchedConicSolver.maneuverNodes;
+                    foreach (var node in maneuverNodes)
                     {
-                        state.velocity += node.GetBurnVector(createOrbitFromState(state));
-                        break;
+                        if (node.UT == state.time)
+                        {
+                            state.velocity += node.GetBurnVector(createOrbitFromState(state));
+                            break;
+                        }
                     }
+                    foreach (var result in AddPatch(state, profile))
+                        yield return false;
                 }
-
-                foreach (var result in AddPatch(state, profile))
-                    yield return false;
                 
                 state = AddPatch_outState;
             }
@@ -322,6 +324,12 @@ namespace Trajectories
         private VesselState AddPatch_outState;
         private IEnumerable<bool> AddPatch(VesselState startingState, DescentProfile profile)
         {
+            if (null == vessel_.patchedConicSolver)
+            {
+                UnityEngine.Debug.LogWarning("Trajectories: AddPatch() attempted when patchedConicsSolver is null; Skipping.");
+                yield break;
+            }
+
             CelestialBody body = startingState.referenceBody;
 
             var patch = new Patch();
