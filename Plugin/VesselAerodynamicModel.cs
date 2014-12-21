@@ -116,8 +116,8 @@ namespace Trajectories
 
         public double computeFARReferenceDrag()
         {
-            computeForces_FAR(10, 2, new Vector3d(3000.0, 0, 0), new Vector3(0, 1, 0), 0, 0.25);
-            return computeForces_FAR(10, 2, new Vector3d(3000.0, 0, 0), new Vector3(0, 1, 0), 0, 0.25).sqrMagnitude;
+            Vector3 forces = computeForces_FAR(10, 2, new Vector3d(3000.0, 0, 0), new Vector3(0, 1, 0), 0, 0.25);
+            return forces.sqrMagnitude;
         }
 
         private void initFARModel()
