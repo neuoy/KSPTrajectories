@@ -23,12 +23,12 @@ Supported Aerodynamic models
 ----------------------------
 
 - Stock Kerbal Space Program drag model (lift not computed yet)
-- Ferram Aerospace Research (version 0.14.1.1)
+(Ferram Aerospace Research and NEAR are not supported yet)
 
 Currently supporter KSP version
 -------------------------------
 
-- 0.24.2 (other versions have not been tested)
+- 0.90 (other versions have not been tested)
 
 Installation
 ------------
