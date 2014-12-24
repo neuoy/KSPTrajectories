@@ -58,6 +58,21 @@ namespace Trajectories
                 >= 0;
         }
 
+        private bool farInstalled()
+        {
+            // remove when FAR prediction is fixed.
+            foreach (var loadedAssembly in AssemblyLoader.loadedAssemblies)
+            {
+                if (loadedAssembly.name.Equals("NEAR"))
+                    return true;
+
+                if(loadedAssembly.name.Equals("FerramAerospaceResearch"))
+                    return true;
+            }
+
+            return false;
+        }
+
         public void OnGUI()
         {
             if(!Settings.fetch.GUIEnabled)
@@ -109,6 +124,15 @@ namespace Trajectories
                 ScreenMessages.PostScreenMessage(
                     "Can't show trajectory because patched conics are not available." +
                     " Please update your tracking station facility.");
+                Settings.fetch.DisplayTrajectories = false;
+                return;
+            }
+
+
+            // :(
+            if (Settings.fetch.DisplayTrajectories && farInstalled())
+            {
+                ScreenMessages.PostScreenMessage("Sorry, trajectory prediction does not work with FAR or NEAR.");
                 Settings.fetch.DisplayTrajectories = false;
                 return;
             }
@@ -255,6 +279,14 @@ namespace Trajectories
                     ScreenMessages.PostScreenMessage(
                         "Can't show trajectory because patched conics are not available." +
                         " Please update your tracking station facility.");
+                    Settings.fetch.DisplayTrajectories = false;
+                    return;
+                }
+
+                // :(
+                if (farInstalled())
+                {
+                    ScreenMessages.PostScreenMessage("Sorry, trajectory prediction does not work with FAR or NEAR.");
                     Settings.fetch.DisplayTrajectories = false;
                     return;
                 }
