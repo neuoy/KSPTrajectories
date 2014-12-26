@@ -108,7 +108,7 @@ namespace Trajectories
 
         private float maxAccel_;
         private float maxAccelBackBuffer_;
-        public float MaxAccel { get { return maxAccelBackBuffer_; } }
+        public float MaxAccel { get { return maxAccel_; } }
 
         private Vector3? targetPosition_;
         private CelestialBody targetBody_;
@@ -544,7 +544,10 @@ namespace Trajectories
                         double angleOfAttack = profile.GetAngleOfAttack(body, pos, airVelocity);
                         Vector3d aerodynamicForce = aerodynamicModel_.computeForces(body, pos, airVelocity, angleOfAttack, dt);
                         Vector3d acceleration = gravityAccel + aerodynamicForce / aerodynamicModel_.mass;
-                        maxAccelBackBuffer_ = Math.Max((float) acceleration.magnitude, maxAccelBackBuffer_);
+
+                        // acceleration in the vessel reference frame is acceleration - gravityAccel
+                        maxAccelBackBuffer_ = Math.Max((float) (aerodynamicForce.magnitude / aerodynamicModel_.mass), maxAccelBackBuffer_);
+
 
                         //vel += acceleration * dt;
                         //pos += vel * dt;
