@@ -134,7 +134,7 @@ namespace Trajectories
                     case "FerramAerospaceResearch":
                         string namespaceName = useNEAR ? "NEAR" : "ferram4";
                         FARBasicDragModelType = loadedAssembly.assembly.GetType(namespaceName + ".FARBasicDragModel");
-                        FARBasicDragModel_RunDragCalculation = FARBasicDragModelType.GetMethodEx("RunDragCalculation", BindingFlags.Public | BindingFlags.Instance);
+                        FARBasicDragModel_RunDragCalculation = FARBasicDragModelType.GetMethodEx("RunDragCalculation", new Type[] { typeof(Vector3d), typeof(double), typeof(double) });
                         FARBasicDragModel_YmaxForce = FARBasicDragModelType.GetField("YmaxForce", BindingFlags.Public | BindingFlags.Instance);
                         FARBasicDragModel_XZmaxForce = FARBasicDragModelType.GetField("XZmaxForce", BindingFlags.Public | BindingFlags.Instance);
                         FARWingAerodynamicModelType = loadedAssembly.assembly.GetType(namespaceName + ".FARWingAerodynamicModel");
@@ -147,7 +147,7 @@ namespace Trajectories
                         FARWingAerodynamicModel_XZmaxForce = FARWingAerodynamicModelType.GetField("XZmaxForce", BindingFlags.Public | BindingFlags.Instance);
                         if (!useNEAR)
                         {
-                            FARAeroUtil_GetMachNumber = loadedAssembly.assembly.GetType(namespaceName + ".FARAeroUtil").GetMethodEx("GetMachNumber", BindingFlags.Public | BindingFlags.Static);
+                            FARAeroUtil_GetMachNumber = loadedAssembly.assembly.GetType(namespaceName + ".FARAeroUtil").GetMethodEx("GetMachNumber", new Type[] { typeof(CelestialBody), typeof(double), typeof(Vector3d)});
                             FARAeroUtil_GetCurrentDensity = loadedAssembly.assembly.GetType(namespaceName + ".FARAeroUtil").GetMethodEx("GetCurrentDensity", new Type[] { typeof(CelestialBody), typeof(double), typeof(bool) });
                         }
                         farInstalled = true;
@@ -221,7 +221,7 @@ namespace Trajectories
             Vector3d velocity = new Vector3d(vel, 0, 0);
             //double machNumber = velocity.magnitude / 300.0; // sound speed approximation (but doesn't work well for Jool for example)
             double averageAltitude = (body_.maxAtmosphereAltitude - body_.Radius) * 0.5;
-            double machNumber = useNEAR ? 0.0 : (double)FARAeroUtil_GetMachNumber.Invoke(null, new object[] { body_, averageAltitude, new Vector3((float)vel, 0, 0) });
+            double machNumber = useNEAR ? 0.0 : (double)FARAeroUtil_GetMachNumber.Invoke(null, new object[] { body_, averageAltitude, new Vector3d((float)vel, 0, 0) });
             double AoA = maxFARAngleOfAttack * ((double)a / (double)(cachedFARForces.GetLength(1) - 1) * 2.0 - 1.0);
             Vector3d force = computeForces_FAR(1.0, machNumber, velocity, new Vector3(0, 1, 0), AoA, 0.25);
             return cachedFARForces[v, a] = new Vector2((float)(force.x / v2), (float)(force.y / v2)); // divide by v² before storing the force, to increase accuracy (the reverse operation is performed when reading from the cache)
