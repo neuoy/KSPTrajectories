@@ -6,6 +6,7 @@ This file is part of Trajectories, under MIT license.
 */
 
 //#define PRECOMPUTE_CACHE
+#define USE_CACHE
 
 using System;
 using System.Collections.Generic;
@@ -451,11 +452,12 @@ namespace Trajectories
             double rho = useNEAR ? stockRho : (double)FARAeroUtil_GetCurrentDensity.Invoke(null, new object[] { body, altitudeAboveSea, false });
             
             // uncomment the next lines to bypass the cache system (for debugging, in case you suspect a bug or inaccuracy related to the cache system)
-            //double machNumber = (double)FARAeroUtil_GetMachNumber.Invoke(null, new object[] { body, altitudeAboveSea, (Vector3)airVelocity });
-            //return computeForces_FAR(rho, machNumber, airVelocity, bodySpacePosition, angleOfAttack, dt);
-
-            //double actualMachNumber = useNEAR ? 0.0 : (double)FARAeroUtil_GetMachNumber.Invoke(null, new object[] { body_, altitudeAboveSea, new Vector3((float)airVelocity.magnitude, 0, 0) });
-            //double approxMachNumber = useNEAR ? 0.0 : (double)FARAeroUtil_GetMachNumber.Invoke(null, new object[] { body_, (body.maxAtmosphereAltitude - body.Radius) * 0.5, new Vector3((float)airVelocity.magnitude, 0, 0) });
+#if !USE_CACHE
+            double machNumber = (double)FARAeroUtil_GetMachNumber.Invoke(null, new object[] { body, altitudeAboveSea, (Vector3d)airVelocity });
+            return computeForces_FAR(rho, machNumber, airVelocity, bodySpacePosition, angleOfAttack, dt);
+#else
+            //double actualMachNumber = useNEAR ? 0.0 : (double)FARAeroUtil_GetMachNumber.Invoke(null, new object[] { body_, altitudeAboveSea, new Vector3d((float)airVelocity.magnitude, 0, 0) });
+            //double approxMachNumber = useNEAR ? 0.0 : (double)FARAeroUtil_GetMachNumber.Invoke(null, new object[] { body_, (body.maxAtmosphereAltitude - body.Radius) * 0.5, new Vector3d((float)airVelocity.magnitude, 0, 0) });
             //Util.PostSingleScreenMessage("machNum", "machNumber = " + actualMachNumber + " ; approx machNumber = " + approxMachNumber);
 
             Vector2 force = getFARForce(airVelocity.magnitude, rho, angleOfAttack);
@@ -465,6 +467,7 @@ namespace Trajectories
             Vector3d up = Vector3d.Cross(right, forward).normalized;
 
             return forward * force.x + up * force.y;
+#endif
         }
     }
 }
