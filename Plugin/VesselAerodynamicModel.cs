@@ -134,7 +134,6 @@ namespace Trajectories
                     case "FerramAerospaceResearch":
                         string namespaceName = useNEAR ? "NEAR" : "ferram4";
                         FARBasicDragModelType = loadedAssembly.assembly.GetType(namespaceName + ".FARBasicDragModel");
-                        FARBasicDragModel_RunDragCalculation = FARBasicDragModelType.GetMethodEx("RunDragCalculation", new Type[] { typeof(Vector3d), typeof(double), typeof(double) });
                         FARBasicDragModel_YmaxForce = FARBasicDragModelType.GetField("YmaxForce", BindingFlags.Public | BindingFlags.Instance);
                         FARBasicDragModel_XZmaxForce = FARBasicDragModelType.GetField("XZmaxForce", BindingFlags.Public | BindingFlags.Instance);
                         FARWingAerodynamicModelType = loadedAssembly.assembly.GetType(namespaceName + ".FARWingAerodynamicModel");
@@ -147,8 +146,13 @@ namespace Trajectories
                         FARWingAerodynamicModel_XZmaxForce = FARWingAerodynamicModelType.GetField("XZmaxForce", BindingFlags.Public | BindingFlags.Instance);
                         if (!useNEAR)
                         {
+                            FARBasicDragModel_RunDragCalculation = FARBasicDragModelType.GetMethodEx("RunDragCalculation", new Type[] { typeof(Vector3d), typeof(double), typeof(double) });
                             FARAeroUtil_GetMachNumber = loadedAssembly.assembly.GetType(namespaceName + ".FARAeroUtil").GetMethodEx("GetMachNumber", new Type[] { typeof(CelestialBody), typeof(double), typeof(Vector3d)});
                             FARAeroUtil_GetCurrentDensity = loadedAssembly.assembly.GetType(namespaceName + ".FARAeroUtil").GetMethodEx("GetCurrentDensity", new Type[] { typeof(CelestialBody), typeof(double), typeof(bool) });
+                        }
+                        else
+                        {
+                            FARBasicDragModel_RunDragCalculation = FARBasicDragModelType.GetMethodEx("RunDragCalculation", new Type[] { typeof(Vector3d), typeof(double) });
                         }
                         farInstalled = true;
                         break;
