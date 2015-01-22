@@ -205,8 +205,6 @@ namespace Trajectories
         {
             try
             {
-                incrementTime_ = Stopwatch.StartNew();
-
                 if (partialComputation_ == null || vessel != vessel_)
                 {
                     patchesBackBuffer_.Clear();
@@ -225,7 +223,12 @@ namespace Trajectories
                     partialComputation_ = computeTrajectoryIncrement(vessel, profile).GetEnumerator();
                 }
 
-                bool finished = !partialComputation_.MoveNext();
+                bool finished;
+                do
+                {
+                    incrementTime_ = Stopwatch.StartNew();
+                    finished = !partialComputation_.MoveNext();
+                } while (!finished && !incremental);
 
                 if (finished)
                 {
