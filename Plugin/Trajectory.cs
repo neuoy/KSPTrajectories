@@ -108,7 +108,7 @@ namespace Trajectories
 
         private float maxAccel_;
         private float maxAccelBackBuffer_;
-        public float MaxAccel { get { return maxAccelBackBuffer_; } }
+        public float MaxAccel { get { return maxAccel_; } }
 
         private Vector3? targetPosition_;
         private CelestialBody targetBody_;
@@ -267,18 +267,20 @@ namespace Trajectories
                 if (incrementTime_.ElapsedMilliseconds > MaxIncrementTime)
                     yield return false;
 
-                var maneuverNodes = vessel_.patchedConicSolver.maneuverNodes;
-                foreach (var node in maneuverNodes)
+                if (null != vessel_.patchedConicSolver)
                 {
-                    if (node.UT == state.time)
+                    var maneuverNodes = vessel_.patchedConicSolver.maneuverNodes;
+                    foreach (var node in maneuverNodes)
                     {
-                        state.velocity += node.GetBurnVector(createOrbitFromState(state));
-                        break;
+                        if (node.UT == state.time)
+                        {
+                            state.velocity += node.GetBurnVector(createOrbitFromState(state));
+                            break;
+                        }
                     }
+                    foreach (var result in AddPatch(state, profile))
+                        yield return false;
                 }
-
-                foreach (var result in AddPatch(state, profile))
-                    yield return false;
                 
                 state = AddPatch_outState;
             }
@@ -325,6 +327,12 @@ namespace Trajectories
         private VesselState AddPatch_outState;
         private IEnumerable<bool> AddPatch(VesselState startingState, DescentProfile profile)
         {
+            if (null == vessel_.patchedConicSolver)
+            {
+                UnityEngine.Debug.LogWarning("Trajectories: AddPatch() attempted when patchedConicsSolver is null; Skipping.");
+                yield break;
+            }
+
             CelestialBody body = startingState.referenceBody;
 
             var patch = new Patch();
@@ -539,7 +547,10 @@ namespace Trajectories
                         double angleOfAttack = profile.GetAngleOfAttack(body, pos, airVelocity);
                         Vector3d aerodynamicForce = aerodynamicModel_.computeForces(body, pos, airVelocity, angleOfAttack, dt);
                         Vector3d acceleration = gravityAccel + aerodynamicForce / aerodynamicModel_.mass;
-                        maxAccelBackBuffer_ = Math.Max((float) acceleration.magnitude, maxAccelBackBuffer_);
+
+                        // acceleration in the vessel reference frame is acceleration - gravityAccel
+                        maxAccelBackBuffer_ = Math.Max((float) (aerodynamicForce.magnitude / aerodynamicModel_.mass), maxAccelBackBuffer_);
+
 
                         //vel += acceleration * dt;
                         //pos += vel * dt;

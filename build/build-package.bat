@@ -1,4 +1,7 @@
 @echo off
+
+SET MODMANAGER_VERSION=2.5.6
+
 rem make sure the initial working directory is the one containing the current script
 SET scriptPath=%~dp0
 SET initialWD=%CD%
@@ -12,7 +15,7 @@ cd package
 mkdir GameData
 cd GameData
 
-xcopy /y ..\..\3rdParty\ModuleManager.2.5.1.dll .
+xcopy /y ..\..\3rdParty\ModuleManager.%MODMANAGER_VERSION%.dll .
 xcopy /y ..\..\3rdParty\ModuleManager-License.txt .
 
 mkdir Trajectories

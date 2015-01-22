@@ -40,6 +40,24 @@ namespace Trajectories
 
         private string tooltip = String.Empty;
 
+
+        /// <summary>
+        /// Check if patched conics are available in the current save.
+        /// </summary>
+        /// <returns>True if patched conics are available</returns>
+        private bool isPatchedConicsAvailable()
+        {
+            // Get our level of tracking station
+            float trackingstation_level =
+                ScenarioUpgradeableFacilities.GetFacilityLevel(SpaceCenterFacility.TrackingStation);
+
+            // Check if the tracking station knows Patched Conics
+            return 
+                GameVariables.Instance.GetOrbitDisplayMode(trackingstation_level).CompareTo(
+                    GameVariables.OrbitDisplayMode.PatchedConics)
+                >= 0;
+        }
+
         public void OnGUI()
         {
             if(!Settings.fetch.GUIEnabled)
@@ -84,6 +102,16 @@ namespace Trajectories
 
             GUILayout.BeginHorizontal();
             Settings.fetch.DisplayTrajectories = GUILayout.Toggle(Settings.fetch.DisplayTrajectories, "Display trajectory", GUILayout.Width(125));
+
+            // check that we have patched conics. If not, apologize to the user and return.
+            if (Settings.fetch.DisplayTrajectories && !isPatchedConicsAvailable())
+            {
+                ScreenMessages.PostScreenMessage(
+                    "Can't show trajectory because patched conics are not available." +
+                    " Please update your tracking station facility.");
+                Settings.fetch.DisplayTrajectories = false;
+                return;
+            }
 
             if (Settings.fetch.DisplayTrajectories)
             {
@@ -221,6 +249,16 @@ namespace Trajectories
         {
             if (e.MouseButton == 0)
             {
+                // check that we have patched conics. If not, apologize to the user and return.
+                if (!isPatchedConicsAvailable())
+                {
+                    ScreenMessages.PostScreenMessage(
+                        "Can't show trajectory because patched conics are not available." +
+                        " Please update your tracking station facility.");
+                    Settings.fetch.DisplayTrajectories = false;
+                    return;
+                }
+
                 Settings.fetch.DisplayTrajectories = !Settings.fetch.DisplayTrajectories;
             }
             else
