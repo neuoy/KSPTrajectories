@@ -5,7 +5,7 @@ Copyright 2014, Youen Toupin
 This file is part of Trajectories, under MIT license.
 */
 
-#define DEBUG_COMPARE_FORCES
+//#define DEBUG_COMPARE_FORCES
 
 #if DEBUG_COMPARE_FORCES
 using ferram4;
@@ -209,6 +209,8 @@ namespace Trajectories
         {
             try
             {
+                incrementTime_ = Stopwatch.StartNew();
+
                 if (partialComputation_ == null || vessel != vessel_)
                 {
                     patchesBackBuffer_.Clear();
@@ -227,12 +229,7 @@ namespace Trajectories
                     partialComputation_ = computeTrajectoryIncrement(vessel, profile).GetEnumerator();
                 }
 
-                bool finished;
-                do
-                {
-                    incrementTime_ = Stopwatch.StartNew();
-                    finished = !partialComputation_.MoveNext();
-                } while (!finished && !incremental);
+                bool finished = !partialComputation_.MoveNext();
 
                 if (finished)
                 {
@@ -397,8 +394,16 @@ namespace Trajectories
                     double from = startingState.time;
                     double to = from + patch.spaceOrbit.timeToPe;
 
+                    int loopCount = 0;
                     while (to - from > 0.1)
                     {
+                        ++loopCount;
+                        if (loopCount > 1000)
+                        {
+                            UnityEngine.Debug.Log("WARNING: infinite loop? (Trajectories.Trajectory.AddPatch, atmosphere limit search)");
+                            ++errorCount_;
+                            break;
+                        }
                         double middle = (from + to) * 0.5;
                         if (patch.spaceOrbit.getRelativePositionAtUT(middle).magnitude < body.Radius + maxAtmosphereAltitude)
                         {

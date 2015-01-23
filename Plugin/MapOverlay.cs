@@ -202,8 +202,10 @@ namespace Trajectories
             while(true)
             {
                 double time = prevTime + maxDT;
-                while (true)
+                for (int count = 0; count < 100; ++count)
                 {
+                    if (count == 99)
+                        Debug.Log("WARNING: infinite loop? (Trajectories.MapOverlay.initMeshFromOrbit)");
                     double ta = orbit.TrueAnomalyAtUT(time);
                     while (ta < prevTA)
                         ta += 2.0 * Math.PI;

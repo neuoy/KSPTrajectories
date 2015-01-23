@@ -182,17 +182,17 @@ namespace Trajectories
             maxFARVelocity = 10000.0;
             maxFARAngleOfAttack = 180.0 / 180.0 * Math.PI;
 
-            int velocityResolution = 512;
-            int angleOfAttackResolution = 256;
-            int machNumberResolution = 32;
+            int velocityResolution = 64;
+            int angleOfAttackResolution = 32;
+            int altitudeResolution = 32;
 
-            cachedFARForces = new Vector2[velocityResolution, angleOfAttackResolution, machNumberResolution];
+            cachedFARForces = new Vector2[velocityResolution, angleOfAttackResolution, altitudeResolution];
 
             for (int v = 0; v < velocityResolution; ++v)
             {
                 for (int a = 0; a < angleOfAttackResolution; ++a)
                 {
-                    for (int m = 0; m < machNumberResolution; ++m)
+                    for (int m = 0; m < altitudeResolution; ++m)
                     {
                         cachedFARForces[v, a, m] = new Vector2(float.NaN, float.NaN);
                     }
@@ -234,15 +234,12 @@ namespace Trajectories
 
             Vector3d velocity = new Vector3d(vel, 0, 0);
             
-            //double machNumber = velocity.magnitude / 300.0; // sound speed approximation (but doesn't work well for Jool for example)
             double maxAltitude = body_.maxAtmosphereAltitude;
             double currentAltitude = maxAltitude * (double)m / (double)(cachedFARForces.GetLength(2) - 1);
-            //double currentAltitude = maxAltitude * 0.5;
             double machNumber = useNEAR ? 0.0 : (double)FARAeroUtil_GetMachNumber.Invoke(null, new object[] { body_, currentAltitude, new Vector3d((float)vel, 0, 0) });
             double pressure = FlightGlobals.getStaticPressure(currentAltitude, body_);
             double stockRho = FlightGlobals.getAtmDensity(pressure);
             double rho = useNEAR ? stockRho : (double)FARAeroUtil_GetCurrentDensity.Invoke(null, new object[] { body_, currentAltitude, false });
-            //double rho = 1.0;
 
             double AoA = maxFARAngleOfAttack * ((double)a / (double)(cachedFARForces.GetLength(1) - 1) * 2.0 - 1.0);
             Vector3d force = computeForces_FAR(rho, machNumber, velocity, new Vector3(0, 1, 0), AoA, 0.25) * (1.0/rho);
@@ -279,6 +276,28 @@ namespace Trajectories
             #endif
         }
 
+        private Vector2 sample2d(int vFloor, float vFrac, int aFloor, float aFrac, int mFloor)
+        {
+            Vector2 f00 = getCachedFARForce(vFloor, aFloor, mFloor);
+            Vector2 f10 = getCachedFARForce(vFloor + 1, aFloor, mFloor);
+
+            Vector2 f01 = getCachedFARForce(vFloor, aFloor + 1, mFloor);
+            Vector2 f11 = getCachedFARForce(vFloor + 1, aFloor + 1, mFloor);
+
+            Vector2 f0 = f01 * aFrac + f00 * (1.0f - aFrac);
+            Vector2 f1 = f11 * aFrac + f10 * (1.0f - aFrac);
+
+            return f1 * vFrac + f0 * (1.0f - vFrac);
+        }
+
+        private Vector2 sample3d(int vFloor, float vFrac, int aFloor, float aFrac, int mFloor, float mFrac)
+        {
+            Vector2 f0 = sample2d(vFloor, vFrac, aFloor, aFrac, mFloor);
+            Vector2 f1 = sample2d(vFloor, vFrac, aFloor, aFrac, mFloor + 1);
+
+            return f1 * mFrac + f0 * (1.0f - mFrac);
+        }
+
         private Vector2 getFARForce(double velocity, double altitudeAboveSea, double angleOfAttack)
         {
             precomputeCache();
@@ -303,28 +322,7 @@ namespace Trajectories
                 Util.PostSingleScreenMessage("altitude cell", "altitude cell: " + altitudeAboveSea + " / " + maxAltitude + " * " + (double)(cachedFARForces.GetLength(2) - 1));
             }
 
-            Vector2 f000 = getCachedFARForce(vFloor, aFloor, mFloor);
-            Vector2 f100 = getCachedFARForce(vFloor + 1, aFloor, mFloor);
-
-            Vector2 f010 = getCachedFARForce(vFloor, aFloor + 1, mFloor);
-            Vector2 f110 = getCachedFARForce(vFloor + 1, aFloor + 1, mFloor);
-
-            Vector2 f001 = getCachedFARForce(vFloor, aFloor, mFloor + 1);
-            Vector2 f101 = getCachedFARForce(vFloor + 1, aFloor, mFloor + 1);
-
-            Vector2 f011 = getCachedFARForce(vFloor, aFloor + 1, mFloor + 1);
-            Vector2 f111 = getCachedFARForce(vFloor + 1, aFloor + 1, mFloor + 1);
-
-            Vector2 f00 = f000 * mFrac + f001 * (1.0f - mFrac);
-            Vector2 f10 = f100 * mFrac + f101 * (1.0f - mFrac);
-
-            Vector2 f01 = f010 * mFrac + f011 * (1.0f - mFrac);
-            Vector2 f11 = f110 * mFrac + f111 * (1.0f - mFrac);
-
-            Vector2 f0 = f00 * aFrac + f01 * (1.0f - aFrac);
-            Vector2 f1 = f10 * aFrac + f11 * (1.0f - aFrac);
-
-            Vector2 res = f1 * vFrac + f0 * (1.0f - vFrac);
+            Vector2 res = sample3d(vFloor, vFrac, aFloor, aFrac, mFloor, mFrac);
 
             double pressure = FlightGlobals.getStaticPressure(altitudeAboveSea, body_);
             double stockRho = FlightGlobals.getAtmDensity(pressure);

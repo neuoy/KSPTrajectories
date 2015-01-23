@@ -48,14 +48,6 @@
       <HintPath>..\..\0.90_dev\KSP_Data\Managed\Assembly-CSharp-firstpass.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="FerramAerospaceResearch">
-      <HintPath>..\..\0.90_dev\GameData\FerramAerospaceResearch\Plugins\FerramAerospaceResearch.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="Scale_Redist">
-      <HintPath>..\..\0.90_dev\GameData\FerramAerospaceResearch\Plugins\Scale_Redist.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
