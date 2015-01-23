@@ -1,8 +1,0 @@
-2014-10-14T21:41:27.085Z Initializing TestAutomation
-2014-10-14T21:41:37.335Z Loading vessel: _pod
-2014-10-14T21:41:41.458Z Starting auto pilot
-2014-10-14T21:41:41.500Z Predicted impact position: (-494187.0, -750.2, 340456.6)
-2014-10-14T21:41:41.501Z Setting time warp
-2014-10-14T21:43:30.205Z Vessel destroyed or landed
-2014-10-14T21:43:30.206Z Last known position: (-491312.1, -717.9, 344639.1)(5075.411m away from prediction)
-2014-10-14T21:43:30.207Z Test result: failure, with message: Too far away from predicted landing zone

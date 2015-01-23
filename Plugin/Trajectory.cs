@@ -5,7 +5,11 @@ Copyright 2014, Youen Toupin
 This file is part of Trajectories, under MIT license.
 */
 
-//using ferram4;
+#define DEBUG_COMPARE_FORCES
+
+#if DEBUG_COMPARE_FORCES
+using ferram4;
+#endif
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -640,7 +644,8 @@ namespace Trajectories
             return worldPos;
         }
 
-        /*public void FixedUpdate()
+        #if DEBUG_COMPARE_FORCES
+        public void FixedUpdate()
         {
             if (aerodynamicModel_ != null && vessel_ != null)
             {
@@ -674,13 +679,18 @@ namespace Trajectories
                     AoA = -AoA;
 
                 Vector3d predictedForce = aerodynamicModel_.computeForces_FAR(rho, machNumber, airVelocity, vesselUp, AoA, 0.05);
-                //Vector3d predictedForce = aerodynamicModel_.computeForces(body, bodySpacePosition, bodySpaceVelocity, 0.05);
+                aerodynamicModel_.Verbose = true;
+                Vector3d predictedForceWithCache = aerodynamicModel_.computeForces(body, bodySpacePosition, airVelocity, AoA, 0.05);
+                aerodynamicModel_.Verbose = false;
 
                 Vector3d localFARForce = new Vector3d(Vector3d.Dot(FARForce, vesselRight), Vector3d.Dot(FARForce, vesselUp), Vector3d.Dot(FARForce, vesselBackward));
                 Vector3d localPredictedForce = new Vector3d(Vector3d.Dot(predictedForce, vesselRight), Vector3d.Dot(predictedForce, vesselUp), Vector3d.Dot(predictedForce, vesselBackward));
+                Vector3d localPredictedForceWithCache = new Vector3d(Vector3d.Dot(predictedForceWithCache, vesselRight), Vector3d.Dot(predictedForceWithCache, vesselUp), Vector3d.Dot(predictedForceWithCache, vesselBackward));
 
                 Util.PostSingleScreenMessage("FAR/predict comparison", "air vel=" + Math.Floor(airVelocity.magnitude) + ", AoA=" + (AoA*180.0/Math.PI) + ", FAR force=" + localFARForce + ", predicted force=" + localPredictedForce);
+                Util.PostSingleScreenMessage("predict with cache", "predicted force with cache=" + localPredictedForceWithCache);
             }
-        }*/
+        }
+        #endif
     }
 }

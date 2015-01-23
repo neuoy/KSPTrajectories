@@ -1,18 +1,9 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
-VisualStudioVersion = 12.0.30501.0
+VisualStudioVersion = 12.0.31101.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Trajectories", "Plugin\Trajectories.csproj", "{34928415-4627-4BAD-ABC6-CB5677691E95}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AutomatedTesting", "AutomatedTesting\AutomatedTesting.csproj", "{56BD7AA9-806C-4D83-9894-40A0236A5922}"
-	ProjectSection(ProjectDependencies) = postProject
-		{34928415-4627-4BAD-ABC6-CB5677691E95} = {34928415-4627-4BAD-ABC6-CB5677691E95}
-	EndProjectSection
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestAutomation", "TestAutomation\TestAutomation.csproj", "{FE138EE7-2B32-476F-B89D-931BCD3B3FEA}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TrajectoriesAPI", "TrajectoriesAPI\TrajectoriesAPI.csproj", "{F1D71BBE-BCC9-418A-871E-29600F685936}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -36,30 +27,6 @@ Global
 		{34928415-4627-4BAD-ABC6-CB5677691E95}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{34928415-4627-4BAD-ABC6-CB5677691E95}.Release|x86.ActiveCfg = Release|Any CPU
 		{34928415-4627-4BAD-ABC6-CB5677691E95}.Release|x86.Build.0 = Release|Any CPU
-		{56BD7AA9-806C-4D83-9894-40A0236A5922}.Debug|Any CPU.ActiveCfg = Release|Any CPU
-		{56BD7AA9-806C-4D83-9894-40A0236A5922}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
-		{56BD7AA9-806C-4D83-9894-40A0236A5922}.Debug|x86.ActiveCfg = Release|Any CPU
-		{56BD7AA9-806C-4D83-9894-40A0236A5922}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{56BD7AA9-806C-4D83-9894-40A0236A5922}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
-		{56BD7AA9-806C-4D83-9894-40A0236A5922}.Release|x86.ActiveCfg = Release|Any CPU
-		{FE138EE7-2B32-476F-B89D-931BCD3B3FEA}.Debug|Any CPU.ActiveCfg = Release|Any CPU
-		{FE138EE7-2B32-476F-B89D-931BCD3B3FEA}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
-		{FE138EE7-2B32-476F-B89D-931BCD3B3FEA}.Debug|x86.ActiveCfg = Release|Any CPU
-		{FE138EE7-2B32-476F-B89D-931BCD3B3FEA}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{FE138EE7-2B32-476F-B89D-931BCD3B3FEA}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
-		{FE138EE7-2B32-476F-B89D-931BCD3B3FEA}.Release|x86.ActiveCfg = Release|Any CPU
-		{F1D71BBE-BCC9-418A-871E-29600F685936}.Debug|Any CPU.ActiveCfg = Release|Any CPU
-		{F1D71BBE-BCC9-418A-871E-29600F685936}.Debug|Any CPU.Build.0 = Release|Any CPU
-		{F1D71BBE-BCC9-418A-871E-29600F685936}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
-		{F1D71BBE-BCC9-418A-871E-29600F685936}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
-		{F1D71BBE-BCC9-418A-871E-29600F685936}.Debug|x86.ActiveCfg = Release|Any CPU
-		{F1D71BBE-BCC9-418A-871E-29600F685936}.Debug|x86.Build.0 = Release|Any CPU
-		{F1D71BBE-BCC9-418A-871E-29600F685936}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{F1D71BBE-BCC9-418A-871E-29600F685936}.Release|Any CPU.Build.0 = Release|Any CPU
-		{F1D71BBE-BCC9-418A-871E-29600F685936}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
-		{F1D71BBE-BCC9-418A-871E-29600F685936}.Release|Mixed Platforms.Build.0 = Release|Any CPU
-		{F1D71BBE-BCC9-418A-871E-29600F685936}.Release|x86.ActiveCfg = Release|Any CPU
-		{F1D71BBE-BCC9-418A-871E-29600F685936}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

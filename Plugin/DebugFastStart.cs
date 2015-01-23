@@ -45,7 +45,9 @@ namespace Trajectories
                     }
                     if (!blnFoundVessel)
                         FirstVessel = 0;
-                    FlightDriver.StartAndFocusVessel(game, FirstVessel);
+
+                    // warning : with KSP 0.90 and new NEAR version, skipping the KSC screen prevents NEAR from initializing correctly, so we can't directly load a vessel
+                    //FlightDriver.StartAndFocusVessel(game, FirstVessel);
                 }
 
                 CheatOptions.InfiniteFuel = true;
