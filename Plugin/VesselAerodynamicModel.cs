@@ -31,7 +31,7 @@ namespace Trajectories
         private CelestialBody body_;
         private double stockDragCoeff_;
 
-        private Vector2[,] cachedFARForces; // cached aerodynamic forces in a two dimensional array : indexed by velocity magnitude, atmosphere density and angle of attack
+        private Vector2[,,] cachedFARForces; // cached aerodynamic forces in a two dimensional array : indexed by velocity magnitude, atmosphere density and angle of attack
         private double maxFARVelocity;
         private double maxFARAngleOfAttack; // valid values are in range [-maxFARAngleOfAttack ; maxFARAngleOfAttack]
         private bool isValid;
@@ -56,6 +56,8 @@ namespace Trajectories
         private FieldInfo FARWingAerodynamicModel_XZmaxForce;
         private MethodInfo FARAeroUtil_GetMachNumber;
         private MethodInfo FARAeroUtil_GetCurrentDensity;
+
+        public bool Verbose { get; set; }
 
         public VesselAerodynamicModel(Vessel vessel, CelestialBody body)
         {
@@ -182,14 +184,18 @@ namespace Trajectories
 
             int velocityResolution = 512;
             int angleOfAttackResolution = 256;
+            int machNumberResolution = 32;
 
-            cachedFARForces = new Vector2[velocityResolution, angleOfAttackResolution];
+            cachedFARForces = new Vector2[velocityResolution, angleOfAttackResolution, machNumberResolution];
 
             for (int v = 0; v < velocityResolution; ++v)
             {
                 for (int a = 0; a < angleOfAttackResolution; ++a)
                 {
-                    cachedFARForces[v, a] = new Vector2(float.NaN, float.NaN);
+                    for (int m = 0; m < machNumberResolution; ++m)
+                    {
+                        cachedFARForces[v, a, m] = new Vector2(float.NaN, float.NaN);
+                    }
                 }
             }
 
@@ -207,15 +213,18 @@ namespace Trajectories
                 {
                     for (int a = 0; a < cachedFARForces.GetLength(1); ++a)
                     {
-                        computeCacheEntry(v, a);
+                        for(int m = 0; m < cachedFARForces.GetLength(2); ++m)
+                        {
+                            computeCacheEntry(v, a, m);
+                        }
                     }
                 }
                 cachePrecomputed = true;
             }
-            #endif
+#endif
         }
 
-        private Vector2 computeCacheEntry(int v, int a)
+        private Vector2 computeCacheEntry(int v, int a, int m)
         {
             if (!isFARInitialized())
                 throw new Exception("Internal error");
@@ -224,12 +233,20 @@ namespace Trajectories
             double v2 = Math.Max(1.0, vel * vel);
 
             Vector3d velocity = new Vector3d(vel, 0, 0);
+            
             //double machNumber = velocity.magnitude / 300.0; // sound speed approximation (but doesn't work well for Jool for example)
-            double averageAltitude = (body_.maxAtmosphereAltitude - body_.Radius) * 0.5;
-            double machNumber = useNEAR ? 0.0 : (double)FARAeroUtil_GetMachNumber.Invoke(null, new object[] { body_, averageAltitude, new Vector3d((float)vel, 0, 0) });
+            double maxAltitude = body_.maxAtmosphereAltitude;
+            double currentAltitude = maxAltitude * (double)m / (double)(cachedFARForces.GetLength(2) - 1);
+            //double currentAltitude = maxAltitude * 0.5;
+            double machNumber = useNEAR ? 0.0 : (double)FARAeroUtil_GetMachNumber.Invoke(null, new object[] { body_, currentAltitude, new Vector3d((float)vel, 0, 0) });
+            double pressure = FlightGlobals.getStaticPressure(currentAltitude, body_);
+            double stockRho = FlightGlobals.getAtmDensity(pressure);
+            double rho = useNEAR ? stockRho : (double)FARAeroUtil_GetCurrentDensity.Invoke(null, new object[] { body_, currentAltitude, false });
+            //double rho = 1.0;
+
             double AoA = maxFARAngleOfAttack * ((double)a / (double)(cachedFARForces.GetLength(1) - 1) * 2.0 - 1.0);
-            Vector3d force = computeForces_FAR(1.0, machNumber, velocity, new Vector3(0, 1, 0), AoA, 0.25);
-            return cachedFARForces[v, a] = new Vector2((float)(force.x / v2), (float)(force.y / v2)); // divide by v² before storing the force, to increase accuracy (the reverse operation is performed when reading from the cache)
+            Vector3d force = computeForces_FAR(rho, machNumber, velocity, new Vector3(0, 1, 0), AoA, 0.25) * (1.0/rho);
+            return cachedFARForces[v, a, m] = new Vector2((float)(force.x / v2), (float)(force.y / v2)); // divide by v² before storing the force, to increase accuracy (the reverse operation is performed when reading from the cache)
         }
 
         private bool isFARInitialized()
@@ -240,7 +257,7 @@ namespace Trajectories
             return farInitialized;
         }
 
-        private Vector2 getCachedFARForce(int v, int a)
+        private Vector2 getCachedFARForce(int v, int a, int m)
         {
             if (!isFARInitialized())
                 return new Vector2(0, 0);
@@ -249,20 +266,20 @@ namespace Trajectories
             double v2 = Math.Max(1.0, vel * vel);
 
             #if PRECOMPUTE_CACHE
-            return cachedFARForces[v,a] * (float)v2;
+            return cachedFARForces[v,a,m] * (float)v2;
             #else
-            Vector2 f = cachedFARForces[v, a];
+            Vector2 f = cachedFARForces[v, a, m];
 
             if(float.IsNaN(f.x))
             {
-                f = computeCacheEntry(v,a); 
+                f = computeCacheEntry(v,a,m); 
             }
 
             return f * (float)v2;
             #endif
         }
 
-        private Vector2 getFARForce(double velocity, double rho, double angleOfAttack)
+        private Vector2 getFARForce(double velocity, double altitudeAboveSea, double angleOfAttack)
         {
             precomputeCache();
 
@@ -275,16 +292,44 @@ namespace Trajectories
             int aFloor = Math.Max(0, Math.Min(cachedFARForces.GetLength(1) - 2, (int)aFrac));
             aFrac = Math.Max(0.0f, Math.Min(1.0f, aFrac - (float)aFloor));
 
-            Vector2 f00 = getCachedFARForce(vFloor, aFloor);
-            Vector2 f10 = getCachedFARForce(vFloor + 1, aFloor);
+            double maxAltitude = body_.maxAtmosphereAltitude;
+            float mFrac = (float)(altitudeAboveSea / maxAltitude * (double)(cachedFARForces.GetLength(2) - 1));
+            int mFloor = Math.Max(0, Math.Min(cachedFARForces.GetLength(2) - 2, (int)mFrac));
+            mFrac = Math.Max(0.0f, Math.Min(1.0f, mFrac - (float)mFloor));
 
-            Vector2 f01 = getCachedFARForce(vFloor, aFloor + 1);
-            Vector2 f11 = getCachedFARForce(vFloor + 1, aFloor + 1);
+            if(Verbose)
+            {
+                Util.PostSingleScreenMessage("cache cell", "cache cell: ["+vFloor+", "+aFloor+", "+mFloor+"]");
+                Util.PostSingleScreenMessage("altitude cell", "altitude cell: " + altitudeAboveSea + " / " + maxAltitude + " * " + (double)(cachedFARForces.GetLength(2) - 1));
+            }
+
+            Vector2 f000 = getCachedFARForce(vFloor, aFloor, mFloor);
+            Vector2 f100 = getCachedFARForce(vFloor + 1, aFloor, mFloor);
+
+            Vector2 f010 = getCachedFARForce(vFloor, aFloor + 1, mFloor);
+            Vector2 f110 = getCachedFARForce(vFloor + 1, aFloor + 1, mFloor);
+
+            Vector2 f001 = getCachedFARForce(vFloor, aFloor, mFloor + 1);
+            Vector2 f101 = getCachedFARForce(vFloor + 1, aFloor, mFloor + 1);
+
+            Vector2 f011 = getCachedFARForce(vFloor, aFloor + 1, mFloor + 1);
+            Vector2 f111 = getCachedFARForce(vFloor + 1, aFloor + 1, mFloor + 1);
+
+            Vector2 f00 = f000 * mFrac + f001 * (1.0f - mFrac);
+            Vector2 f10 = f100 * mFrac + f101 * (1.0f - mFrac);
+
+            Vector2 f01 = f010 * mFrac + f011 * (1.0f - mFrac);
+            Vector2 f11 = f110 * mFrac + f111 * (1.0f - mFrac);
 
             Vector2 f0 = f00 * aFrac + f01 * (1.0f - aFrac);
             Vector2 f1 = f10 * aFrac + f11 * (1.0f - aFrac);
 
             Vector2 res = f1 * vFrac + f0 * (1.0f - vFrac);
+
+            double pressure = FlightGlobals.getStaticPressure(altitudeAboveSea, body_);
+            double stockRho = FlightGlobals.getAtmDensity(pressure);
+            double rho = useNEAR ? stockRho : (double)FARAeroUtil_GetCurrentDensity.Invoke(null, new object[] { body_, altitudeAboveSea, false });
+
             res = res * (float)rho;
 
             return res;
@@ -450,17 +495,15 @@ namespace Trajectories
             double stockRho = FlightGlobals.getAtmDensity(pressure);
 
             double rho = useNEAR ? stockRho : (double)FARAeroUtil_GetCurrentDensity.Invoke(null, new object[] { body, altitudeAboveSea, false });
-            
-            // uncomment the next lines to bypass the cache system (for debugging, in case you suspect a bug or inaccuracy related to the cache system)
+
+            double actualMachNumber = useNEAR ? 0.0 : (double)FARAeroUtil_GetMachNumber.Invoke(null, new object[] { body_, altitudeAboveSea, new Vector3d((float)airVelocity.magnitude, 0, 0) });
 #if !USE_CACHE
-            double machNumber = (double)FARAeroUtil_GetMachNumber.Invoke(null, new object[] { body, altitudeAboveSea, (Vector3d)airVelocity });
-            return computeForces_FAR(rho, machNumber, airVelocity, bodySpacePosition, angleOfAttack, dt);
+            return computeForces_FAR(rho, actualMachNumber, airVelocity, bodySpacePosition, angleOfAttack, dt);
 #else
-            //double actualMachNumber = useNEAR ? 0.0 : (double)FARAeroUtil_GetMachNumber.Invoke(null, new object[] { body_, altitudeAboveSea, new Vector3d((float)airVelocity.magnitude, 0, 0) });
-            //double approxMachNumber = useNEAR ? 0.0 : (double)FARAeroUtil_GetMachNumber.Invoke(null, new object[] { body_, (body.maxAtmosphereAltitude - body.Radius) * 0.5, new Vector3d((float)airVelocity.magnitude, 0, 0) });
+            //double approxMachNumber = useNEAR ? 0.0 : (double)FARAeroUtil_GetMachNumber.Invoke(null, new object[] { body_, body.maxAtmosphereAltitude * 0.5, new Vector3d((float)airVelocity.magnitude, 0, 0) });
             //Util.PostSingleScreenMessage("machNum", "machNumber = " + actualMachNumber + " ; approx machNumber = " + approxMachNumber);
 
-            Vector2 force = getFARForce(airVelocity.magnitude, rho, angleOfAttack);
+            Vector2 force = getFARForce(airVelocity.magnitude, altitudeAboveSea, angleOfAttack);
 
             Vector3d forward = airVelocity.normalized;
             Vector3d right = Vector3d.Cross(forward, bodySpacePosition).normalized;
