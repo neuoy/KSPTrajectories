@@ -84,12 +84,17 @@ namespace Trajectories
             }
         }
 
-        private bool ToggleGroup(bool visible, string label)
+        private bool ToggleGroup(bool visible, string label, int? width = null)
         {
             //return GUILayout.Toggle(visible, label);
             var oldAlignement = GUI.skin.button.alignment;
             GUI.skin.button.alignment = TextAnchor.MiddleLeft;
-            if (GUILayout.Button((visible ? "^ " : "v ") + label))
+            bool buttonClicked;
+            if (width.HasValue)
+                buttonClicked = GUILayout.Button((visible ? "^ " : "v ") + label, GUILayout.Width(width.Value));
+            else
+                buttonClicked = GUILayout.Button((visible ? "^ " : "v ") + label);
+            if (buttonClicked)
                 visible = !visible;
             GUI.skin.button.alignment = oldAlignement;
             return visible;
@@ -154,7 +159,11 @@ namespace Trajectories
             }
             GUILayout.Space(10);
 
-            if (Settings.fetch.DisplayDescentProfileGUI = ToggleGroup(Settings.fetch.DisplayDescentProfileGUI, "Descent profile"))
+            GUILayout.BeginHorizontal();
+            bool descentProfileGroup = Settings.fetch.DisplayDescentProfileGUI = ToggleGroup(Settings.fetch.DisplayDescentProfileGUI, "Descent profile", 120);
+            DescentProfile.fetch.DoQuickControlsGUI();
+            GUILayout.EndHorizontal();
+            if (descentProfileGroup)
             {
                 DescentProfile.fetch.DoGUI();
             }

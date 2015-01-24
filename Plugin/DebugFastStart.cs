@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using UnityEngine;
 
@@ -11,10 +12,19 @@ namespace Trajectories
     [KSPAddon(KSPAddon.Startup.MainMenu, false)]
     public class DebugFastStart : MonoBehaviour
     {
+        [DllImport("user32.dll", EntryPoint = "SetWindowText")]
+        private static extern bool SetWindowText(System.IntPtr hwnd, System.String lpString);
+        [DllImport("user32.dll", EntryPoint = "FindWindow")]
+        private static extern System.IntPtr FindWindow(System.String className, System.String windowName);
+
         //use this variable for first run to avoid the issue with when this is true and multiple addons use it
         public static bool first = true;
         public void Start()
         {
+            var windowPtr = FindWindow(null, "Kerbal Space Program");
+            if(windowPtr != null)
+                SetWindowText(windowPtr, "KSP - Trajectories Debug"); // this is handy to have AutoSizer or similar program correctly set the window position when launching
+
             if (AppDomain.CurrentDomain.GetAssemblies().Any(a => a.FullName.ToLower().Contains("testautomation")))
                 return;
 

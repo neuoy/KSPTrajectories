@@ -59,6 +59,9 @@ namespace Trajectories
         private Node lowAltitude = new Node { name = "Low", description = "Spacecraft angle at 25% of atmosphere height" };
         private Node finalApproach = new Node { name = "Ground", description = "Spacecraft angle near the ground" };
 
+        private bool progradeEntry;
+        private bool retrogradeEntry;
+
         private static DescentProfile fetch_;
         public static DescentProfile fetch { get { return fetch_; } }
 
@@ -86,6 +89,9 @@ namespace Trajectories
 
             finalApproach.angle = AoA;
             finalApproach.horizon = false;
+
+            progradeEntry = AoA == 0;
+            retrogradeEntry = AoA == 180;
         }
 
         public void Update()
@@ -124,6 +130,9 @@ namespace Trajectories
                         highAltitude.RefreshSliderPos();
                         lowAltitude.RefreshSliderPos();
                         finalApproach.RefreshSliderPos();
+
+                        progradeEntry = module.ProgradeEntry;
+                        retrogradeEntry = module.RetrogradeEntry;
                         //Debug.Log("Descent profile loaded");
                     }
                 }
@@ -145,6 +154,9 @@ namespace Trajectories
                 module.LowHorizon = lowAltitude.horizon;
                 module.GroundAngle = (float)finalApproach.angle;
                 module.GroundHorizon = finalApproach.horizon;
+
+                module.ProgradeEntry = progradeEntry;
+                module.RetrogradeEntry = retrogradeEntry;
             }
         }
 
@@ -161,6 +173,61 @@ namespace Trajectories
             highAltitude.DoGUI();
             lowAltitude.DoGUI();
             finalApproach.DoGUI();
+
+            Save();
+        }
+
+        public void DoQuickControlsGUI()
+        {
+            Update();
+
+            bool newPrograde = GUILayout.Toggle(progradeEntry, "Progr.", GUILayout.Width(50));
+            bool newRetrograde = GUILayout.Toggle(retrogradeEntry, "Retro.", GUILayout.Width(50));
+
+            bool presetActivated = false;
+            if (newPrograde && !progradeEntry)
+            {
+                newRetrograde = false;
+                presetActivated = true;
+            }
+            else if (newRetrograde && !retrogradeEntry)
+            {
+                newPrograde = false;
+                presetActivated = true;
+            }
+
+            progradeEntry = newPrograde;
+            retrogradeEntry = newRetrograde;
+
+            if (presetActivated)
+            {
+                double setAoA = progradeEntry ? 0 : Math.PI;
+
+                entry.angle = setAoA;
+                entry.horizon = false;
+                entry.RefreshSliderPos();
+                highAltitude.angle = setAoA;
+                highAltitude.horizon = false;
+                highAltitude.RefreshSliderPos();
+                lowAltitude.angle = setAoA;
+                lowAltitude.horizon = false;
+                lowAltitude.RefreshSliderPos();
+                finalApproach.angle = setAoA;
+                finalApproach.horizon = false;
+                finalApproach.RefreshSliderPos();
+            }
+            else
+            {
+                double? AoA = entry.horizon ? (double?)null : entry.angle;
+                if (highAltitude.angle != AoA || highAltitude.horizon) AoA = null;
+                if (lowAltitude.angle != AoA || lowAltitude.horizon) AoA = null;
+                if (finalApproach.angle != AoA || finalApproach.horizon) AoA = null;
+
+                if (!AoA.HasValue || Math.Abs(AoA.Value - 0) > 0.01)
+                    progradeEntry = false;
+                if (!AoA.HasValue || Math.Abs(AoA.Value - Math.PI) > 0.01)
+                    retrogradeEntry = false;
+            }
 
             Save();
         }
