@@ -240,9 +240,12 @@ namespace Trajectories
             double pressure = FlightGlobals.getStaticPressure(currentAltitude, body_);
             double stockRho = FlightGlobals.getAtmDensity(pressure);
             double rho = useNEAR ? stockRho : (double)FARAeroUtil_GetCurrentDensity.Invoke(null, new object[] { body_, currentAltitude, false });
+            if (rho < 0.00001)
+                return new Vector2(0, 0);
+            double invRho = 1.0 / rho;
 
             double AoA = maxFARAngleOfAttack * ((double)a / (double)(cachedFARForces.GetLength(1) - 1) * 2.0 - 1.0);
-            Vector3d force = computeForces_FAR(rho, machNumber, velocity, new Vector3(0, 1, 0), AoA, 0.25) * (1.0/rho);
+            Vector3d force = computeForces_FAR(rho, machNumber, velocity, new Vector3(0, 1, 0), AoA, 0.25) * invRho;
             return cachedFARForces[v, a, m] = new Vector2((float)(force.x / v2), (float)(force.y / v2)); // divide by v² before storing the force, to increase accuracy (the reverse operation is performed when reading from the cache)
         }
 
@@ -443,8 +446,11 @@ namespace Trajectories
                 }
             }
 
-            //if (Double.IsNaN(totalForce.x) || Double.IsNaN(totalForce.y) || Double.IsNaN(totalForce.z))
-            //    throw new Exception("totalForce is NAN");
+            if (Double.IsNaN(totalForce.x) || Double.IsNaN(totalForce.y) || Double.IsNaN(totalForce.z))
+            {
+                Debug.Log("Trajectories: WARNING: FAR/NEAR totalForce is NAN (rho=" + rho + ", machNumber=" + machNumber + ", airVelocity=" + airVelocity.magnitude + ", angleOfAttack=" + angleOfAttack);
+                return new Vector3d(0, 0, 0); // Don't send NaN into the simulation as it would cause bad things (infinite loops, crash, etc.). I think this case only happens at the atmosphere edge, so the total force should be 0 anyway.
+            }
 
             // convert the force computed by FAR (depends on the current vessel orientation, which is irrelevant for the prediction) to the predicted vessel orientation (which depends on the predicted velocity)
             Vector3d localForce = new Vector3d(Vector3d.Dot(vesselRight, totalForce), Vector3d.Dot(vesselUp, totalForce), Vector3d.Dot(vesselBackward, totalForce));
@@ -477,8 +483,11 @@ namespace Trajectories
             Vector3d predictedVesselUp = Vector3d.Cross(predictedVesselBackward, predictedVesselRight).normalized;
 
             Vector3d res = predictedVesselRight * localForce.x + predictedVesselUp * localForce.y + predictedVesselBackward * localForce.z;
-            //if (Double.IsNaN(res.x) || Double.IsNaN(res.y) || Double.IsNaN(res.z))
-            //    throw new Exception("res is NAN");
+            if (Double.IsNaN(res.x) || Double.IsNaN(res.y) || Double.IsNaN(res.z))
+            {
+                Debug.Log("Trajectories: res is NaN (rho=" + rho + ", machNumber=" + machNumber + ", airVelocity=" + airVelocity.magnitude + ", angleOfAttack=" + angleOfAttack);
+                return new Vector3d(0, 0, 0); // Don't send NaN into the simulation as it would cause bad things (infinite loops, crash, etc.). I think this case only happens at the atmosphere edge, so the total force should be 0 anyway.
+            }
             return res;
         }
 
