@@ -182,7 +182,7 @@ namespace Trajectories
             maxFARVelocity = 10000.0;
             maxFARAngleOfAttack = 180.0 / 180.0 * Math.PI;
 
-            int velocityResolution = 64;
+            int velocityResolution = 32;
             int angleOfAttackResolution = 32;
             int altitudeResolution = 32;
 
@@ -242,11 +242,11 @@ namespace Trajectories
             double rho = useNEAR ? stockRho : (double)FARAeroUtil_GetCurrentDensity.Invoke(null, new object[] { body_, currentAltitude, false });
             if (rho < 0.0000000001)
                 return new Vector2(0, 0);
-            double invRho = 1.0 / rho;
+            double invScale = 1.0 / (rho * v2); // divide by v² and rho before storing the force, to increase accuracy (the reverse operation is performed when reading from the cache)
 
             double AoA = maxFARAngleOfAttack * ((double)a / (double)(cachedFARForces.GetLength(1) - 1) * 2.0 - 1.0);
-            Vector3d force = computeForces_FAR(rho, machNumber, velocity, new Vector3(0, 1, 0), AoA, 0.25) * invRho;
-            return cachedFARForces[v, a, m] = new Vector2((float)(force.x / v2), (float)(force.y / v2)); // divide by v² before storing the force, to increase accuracy (the reverse operation is performed when reading from the cache)
+            Vector3d force = computeForces_FAR(rho, machNumber, velocity, new Vector3(0, 1, 0), AoA, 0.25) * invScale;
+            return cachedFARForces[v, a, m] = new Vector2((float)force.x, (float)force.y);
         }
 
         private bool isFARInitialized()
@@ -262,11 +262,8 @@ namespace Trajectories
             if (!isFARInitialized())
                 return new Vector2(0, 0);
 
-            double vel = maxFARVelocity * (double)v / (double)(cachedFARForces.GetLength(0) - 1);
-            double v2 = Math.Max(1.0, vel * vel);
-
             #if PRECOMPUTE_CACHE
-            return cachedFARForces[v,a,m] * (float)v2;
+            return cachedFARForces[v,a,m];
             #else
             Vector2 f = cachedFARForces[v, a, m];
 
@@ -275,7 +272,7 @@ namespace Trajectories
                 f = computeCacheEntry(v,a,m); 
             }
 
-            return f * (float)v2;
+            return f;
             #endif
         }
 
@@ -326,12 +323,12 @@ namespace Trajectories
             }
 
             Vector2 res = sample3d(vFloor, vFrac, aFloor, aFrac, mFloor, mFrac);
-
+            
             double pressure = FlightGlobals.getStaticPressure(altitudeAboveSea, body_);
             double stockRho = FlightGlobals.getAtmDensity(pressure);
             double rho = useNEAR ? stockRho : (double)FARAeroUtil_GetCurrentDensity.Invoke(null, new object[] { body_, altitudeAboveSea, false });
 
-            res = res * (float)rho;
+            res = res * (float)(velocity * velocity * rho);
 
             return res;
         }
