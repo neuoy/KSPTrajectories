@@ -240,7 +240,7 @@ namespace Trajectories
             double pressure = FlightGlobals.getStaticPressure(currentAltitude, body_);
             double stockRho = FlightGlobals.getAtmDensity(pressure);
             double rho = useNEAR ? stockRho : (double)FARAeroUtil_GetCurrentDensity.Invoke(null, new object[] { body_, currentAltitude, false });
-            if (rho < 0.00001)
+            if (rho < 0.0000000001)
                 return new Vector2(0, 0);
             double invRho = 1.0 / rho;
 
