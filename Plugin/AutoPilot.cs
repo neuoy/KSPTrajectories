@@ -12,7 +12,28 @@ namespace Trajectories
         private static AutoPilot fetch_;
         public static AutoPilot fetch { get { return fetch_; } }
 
-        public bool Enabled { get; set; }
+        private bool enabled_;
+        public bool Enabled
+        {
+            get
+            {
+                return enabled_;
+            }
+
+            set
+            {
+                if (enabled_ == value)
+                    return;
+                enabled_ = value;
+                if(attachedVessel == null)
+                    enabled_ = false;
+                if (enabled_)
+                {
+                    // disable stock auto-pilot when ours is active
+                    attachedVessel.ActionGroups.SetGroup(KSPActionGroup.SAS, false);
+                }
+            }
+        }
         public float Strength { get; set; }
         public float Smoothness { get; set; }
 
@@ -162,6 +183,10 @@ namespace Trajectories
 
         private void autoPilot(AutoPilot pilot, FlightCtrlState controls)
         {
+            controls.killRot = false;
+            if (!controls.isIdle)
+                Enabled = false;
+
             if (attachedVessel == null || !Enabled)
                 return;
 
