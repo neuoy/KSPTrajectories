@@ -110,9 +110,11 @@ namespace Trajectories
 
             Vector3 referenceVector = AutoPilot.fetch.PlannedDirection;
             trajectoryReference.transform.localPosition = (navball.attitudeGymbal * referenceVector).normalized * navBallRadius;
+            trajectoryReference.SetActive(trajectoryReference.transform.localPosition.z > 0); // hide if behind navball
 
             Vector3 guideDir = AutoPilot.fetch.CorrectedDirection;
             trajectoryGuide.transform.localPosition = (navball.attitudeGymbal * guideDir).normalized * navBallRadius;
+            trajectoryGuide.SetActive(trajectoryGuide.transform.localPosition.z > 0); // hide if behind navball
         }
     }
 }

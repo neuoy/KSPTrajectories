@@ -12,12 +12,14 @@ namespace Trajectories
         private static AutoPilot fetch_;
         public static AutoPilot fetch { get { return fetch_; } }
 
+        public bool IsAvailable { get { return Settings.fetch.AutoPilotAvailable; } }
+
         private bool enabled_;
         public bool Enabled
         {
             get
             {
-                return enabled_;
+                return IsAvailable && enabled_;
             }
 
             set
@@ -82,7 +84,7 @@ namespace Trajectories
 
         public void OnGUI()
         {
-            if (attachedVessel == null)
+            if (attachedVessel == null || !IsAvailable)
                 return;
 
             if (HighLogic.LoadedScene != GameScenes.FLIGHT)
@@ -156,11 +158,11 @@ namespace Trajectories
                 Vector3 impactPosition = patch.impactPosition.Value;
                 foreach(var p in patch.atmosphericTrajectory)
                 {
-                    float neededClearance = 300.0f;
+                    float neededClearance = 600.0f;
                     float missingClearance = neededClearance - (p.pos.magnitude - (float)body.Radius - p.groundAltitude);
                     if (missingClearance > 0.0f)
                     {
-                        if(Vector3.Distance(p.pos, patch.rawImpactPosition.Value) > 1000.0f)
+                        if(Vector3.Distance(p.pos, patch.rawImpactPosition.Value) > 3000.0f)
                         {
                             float coeff = missingClearance / neededClearance;
                             Vector3 rotatedPos = p.pos;
@@ -180,7 +182,13 @@ namespace Trajectories
                 Vector3 offset = targetPosition.Value - impactPosition;
                 Vector2 offsetDir = new Vector2(Vector3.Dot(right, offset), Vector3.Dot(behind, offset));
                 offsetDir *= 0.00005f; // 20km <-> 1 <-> 45° (this is purely indicative, no physical meaning, it would be very complicated to compute an actual correction angle as it depends on the spacecraft behavior in the atmosphere ; a small angle will suffice for a plane, but even a big angle might do almost nothing for a rocket)
-                offsetDir.y = -offsetDir.y;
+
+                Vector3d pos = attachedVessel.GetWorldPos3D() - body.position;
+                Vector3d vel = attachedVessel.obt_velocity - body.getRFrmVel(body.position + pos); // air velocity
+                float plannedAngleOfAttack = (float)DescentProfile.fetch.GetAngleOfAttack(body, pos, vel);
+                if (plannedAngleOfAttack < Math.PI * 0.5f)
+                    offsetDir.y = -offsetDir.y; // behavior is different for prograde or retrograde entry
+
                 float maxCorrection = Math.Min(0.7f, 1.0f / Smoothness);
                 offsetDir.x = Mathf.Clamp(offsetDir.x, -maxCorrection, maxCorrection);
                 offsetDir.y = Mathf.Clamp(offsetDir.y, -maxCorrection, maxCorrection);

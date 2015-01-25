@@ -143,7 +143,7 @@ namespace Trajectories
             }
             GUILayout.Space(10);
 
-            if (Settings.fetch.DisplayTargetGUI = ToggleGroup(Settings.fetch.DisplayTargetGUI, "Target", 120))
+            if (Settings.fetch.DisplayTargetGUI = ToggleGroup(Settings.fetch.DisplayTargetGUI, "Target"))
             {
                 GUI.enabled = traj.targetPosition.HasValue;
                 if (GUILayout.Button("Unset target"))
@@ -223,6 +223,8 @@ namespace Trajectories
                 {
                     Settings.fetch.UseBlizzyToolbar = GUILayout.Toggle(Settings.fetch.UseBlizzyToolbar, new GUIContent("Use Blizzy's toolbar", "Will take effect after restart"));
                 }
+
+                Settings.fetch.AutoPilotAvailable = GUILayout.Toggle(Settings.fetch.AutoPilotAvailable, new GUIContent("Unlock auto-pilot (EXPERIMENTAL)", "Enables the auto-pilot interface. This is experimental, subject to change, and might crash your spaceplanes more often than not."));
 
                 if(FlightGlobals.ActiveVessel != null)
                 {
