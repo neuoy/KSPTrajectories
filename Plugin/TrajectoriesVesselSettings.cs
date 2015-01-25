@@ -45,9 +45,6 @@ namespace Trajectories
         public float AutoPilotStrength;
 
         [KSPField(isPersistant = true, guiActive = false)]
-        public float AutoPilotSmoothness;
-
-        [KSPField(isPersistant = true, guiActive = false)]
         public bool hasTarget;
 
         [KSPField(isPersistant = true, guiActive = false)]

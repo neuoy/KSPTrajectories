@@ -51,7 +51,16 @@ namespace Trajectories
             public Vector3 pos;
             public Vector3 aerodynamicForce;
             public Vector3 orbitalVelocity;
-            public Vector3 airVelocity;
+
+            /// <summary>
+            /// Ground altitude above (or under) sea level, in meters.
+            /// </summary>
+            public float groundAltitude;
+
+            /// <summary>
+            /// Universal time
+            /// </summary>
+            public double time;
         }
 
         public class Patch
@@ -90,7 +99,8 @@ namespace Trajectories
                 res.pos = atmosphericTrajectory[idx].pos * (1.0f - coeff) + atmosphericTrajectory[idx-1].pos * coeff;
                 res.aerodynamicForce = atmosphericTrajectory[idx].aerodynamicForce * (1.0f - coeff) + atmosphericTrajectory[idx - 1].aerodynamicForce * coeff;
                 res.orbitalVelocity = atmosphericTrajectory[idx].orbitalVelocity * (1.0f - coeff) + atmosphericTrajectory[idx - 1].orbitalVelocity * coeff;
-                res.airVelocity = atmosphericTrajectory[idx].airVelocity * (1.0f - coeff) + atmosphericTrajectory[idx - 1].airVelocity * coeff;
+                res.groundAltitude = atmosphericTrajectory[idx].groundAltitude * (1.0f - coeff) + atmosphericTrajectory[idx - 1].groundAltitude * coeff;
+                res.time = atmosphericTrajectory[idx].time * (1.0f - coeff) + atmosphericTrajectory[idx - 1].time * coeff;
 
                 return res;
             }
@@ -576,16 +586,17 @@ namespace Trajectories
                         double interval = altitude < 10000.0 ? trajectoryInterval * 0.1 : trajectoryInterval;
                         if (currentTime >= lastPositionStoredUT + interval)
                         {
+                            double groundAltitude = GetGroundAltitude(body, calculateRotatedPosition(body, pos, currentTime));
                             if (lastPositionStoredUT > 0)
                             {
                                 // check terrain collision, to detect impact on mountains etc.
                                 Vector3 rayOrigin = lastPositionStored;
                                 Vector3 rayEnd = pos;
-                                double groundAltitude = GetGroundAltitude(body, calculateRotatedPosition(body,rayEnd,currentTime)) + body.Radius;
-                                if (groundAltitude + AutoPilot.fetch.GetMinimumClearance(body, body.transform.InverseTransformDirection((Vector3)rayEnd)) > rayEnd.magnitude)
+                                double absGroundAltitude = groundAltitude + body.Radius;
+                                if (absGroundAltitude > rayEnd.magnitude)
                                 {
                                     hitGround = true;
-                                    float coeff = Math.Max(0.01f, (float)((groundAltitude - rayOrigin.magnitude) / (rayEnd.magnitude - rayOrigin.magnitude)));
+                                    float coeff = Math.Max(0.01f, (float)((absGroundAltitude - rayOrigin.magnitude) / (rayEnd.magnitude - rayOrigin.magnitude)));
                                     pos = rayEnd * coeff + rayOrigin * (1.0f - coeff);
                                     currentTime = currentTime * coeff + lastPositionStoredUT * (1.0f - coeff);
                                 }
@@ -604,7 +615,8 @@ namespace Trajectories
                             }
                             buffer.Last()[nextPosIdx].aerodynamicForce = aerodynamicForce;
                             buffer.Last()[nextPosIdx].orbitalVelocity = vel;
-                            buffer.Last()[nextPosIdx].airVelocity = airVelocity;
+                            buffer.Last()[nextPosIdx].groundAltitude = (float)groundAltitude;
+                            buffer.Last()[nextPosIdx].time = currentTime;
                             buffer.Last()[nextPosIdx++].pos = nextPos;
                             lastPositionStored = pos;
                         }

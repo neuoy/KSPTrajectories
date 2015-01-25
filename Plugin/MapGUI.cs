@@ -143,11 +143,7 @@ namespace Trajectories
             }
             GUILayout.Space(10);
 
-            GUILayout.BeginHorizontal();
-            bool targetGroup = Settings.fetch.DisplayTargetGUI = ToggleGroup(Settings.fetch.DisplayTargetGUI, "Target", 120);
-            AutoPilot.fetch.Enabled = GUILayout.Toggle(AutoPilot.fetch.Enabled, "Auto-pilot", GUILayout.Width(100));
-            GUILayout.EndHorizontal();
-            if (targetGroup)
+            if (Settings.fetch.DisplayTargetGUI = ToggleGroup(Settings.fetch.DisplayTargetGUI, "Target", 120))
             {
                 GUI.enabled = traj.targetPosition.HasValue;
                 if (GUILayout.Button("Unset target"))
@@ -205,16 +201,6 @@ namespace Trajectories
 
             if (Settings.fetch.DisplaySettingsGUI = ToggleGroup(Settings.fetch.DisplaySettingsGUI, "Settings"))
             {
-                GUILayout.BeginHorizontal();
-                GUILayout.Label("Auto-pilot strength", GUILayout.Width(130));
-                AutoPilot.fetch.Strength = GUILayout.HorizontalSlider(AutoPilot.fetch.Strength, 0.5f, 10.0f, GUILayout.Width(90));
-                GUILayout.EndHorizontal();
-
-                GUILayout.BeginHorizontal();
-                GUILayout.Label("Auto-pilot smoothness", GUILayout.Width(130));
-                AutoPilot.fetch.Smoothness = GUILayout.HorizontalSlider(AutoPilot.fetch.Smoothness, 0.5f, 10.0f, GUILayout.Width(90));
-                GUILayout.EndHorizontal();
-
                 GUILayout.BeginHorizontal();
                 GUILayout.Label("Max patches", GUILayout.Width(100));
                 Settings.fetch.MaxPatchCount = Mathf.RoundToInt(GUILayout.HorizontalSlider((float)Settings.fetch.MaxPatchCount, 3, 10, GUILayout.Width(100)));

@@ -61,23 +61,48 @@ namespace Trajectories
 
                 if (attachedVessel != null)
                 {
-                    Strength = 2.0f;
-                    Smoothness = 5.0f;
+                    Strength = 5.0f;
                     Enabled = false;
                     TrajectoriesVesselSettings module = attachedVessel.Parts.SelectMany(p => p.Modules.OfType<TrajectoriesVesselSettings>()).FirstOrDefault();
                     if (module != null)
                     {
                         Enabled = module.AutoPilotEnabled;
                         Strength = module.AutoPilotStrength;
-                        Smoothness = module.AutoPilotSmoothness;
+                        if (Strength < 0.5f)
+                            Strength = 5.0f;
                     }
-
+                    
                     callback = new FlightInputCallback((controls) => autoPilot(this, controls));
                     activeVessel.OnFlyByWire += callback;
                 }
             }
 
             Save();
+        }
+
+        public void OnGUI()
+        {
+            if (attachedVessel == null)
+                return;
+
+            if (HighLogic.LoadedScene != GameScenes.FLIGHT)
+                return;
+
+            // get stock KSP buttons position
+            VesselAutopilotUI aui = (VesselAutopilotUI)FindObjectOfType(typeof(VesselAutopilotUI));
+            Vector2 stabilityAssistButtonCenter = new Vector2(aui.modeButtons[0].sprite.transform.position.x + Screen.width / 2, -aui.modeButtons[0].sprite.transform.position.y + Screen.height / 2);
+            int x0 = (int)stabilityAssistButtonCenter.x - 10;
+            int y0 = (int)stabilityAssistButtonCenter.y - 35;
+
+            Enabled = GUI.Toggle(new Rect(x0, y0, 60, 30), Enabled, new GUIContent("Traj.", "Enable trajectory auto-pilot (atmospheric flight) ; touch controls or engage SAS to disable"));
+            if (Enabled)
+            {
+                GUI.Label(new Rect(x0, y0+30, 60, 30), "Strong");
+                Strength = GUI.VerticalSlider(new Rect(x0 + 10, y0 + 50, 30, 70), Strength, 10.0f, 0.5f);
+                GUI.Label(new Rect(x0, y0 + 120, 60, 30), "Smooth");
+
+                Smoothness = 10.5f - Strength;
+            }
         }
 
         private void Save()
@@ -89,20 +114,7 @@ namespace Trajectories
             {
                 module.AutoPilotEnabled = Enabled;
                 module.AutoPilotStrength = Strength;
-                module.AutoPilotSmoothness = Smoothness;
             }
-        }
-
-        public float GetMinimumClearance(CelestialBody body, Vector3d groundRelativePosition)
-        {
-            float targetDistance = 0.0f;
-            Vector3? targetPosition = Trajectory.fetch.groundRelativeTargetPosition;
-            if(Trajectory.fetch.targetBody == body && targetPosition.HasValue)
-            {
-                targetDistance = Vector3.Distance(targetPosition.Value, groundRelativePosition);
-            }
-
-            return Math.Min(300.0f, Math.Max(3.0f, targetDistance * 0.1f - 10.0f));
         }
 
         public Vector3 PlannedDirection
@@ -140,10 +152,32 @@ namespace Trajectories
                 if (!targetPosition.HasValue || patch == null || !patch.impactPosition.HasValue || patch.startingState.referenceBody != body)
                     return new Vector2(0, 0);
 
-                Vector3 right = Vector3.Cross(patch.impactVelocity, patch.impactPosition.Value).normalized;
-                Vector3 behind = Vector3.Cross(right, patch.impactPosition.Value).normalized;
+                // Get impact position, or, if some point over the trajectory has not enough clearance, smoothly interpolate to that point depending on how much clearance is missing
+                Vector3 impactPosition = patch.impactPosition.Value;
+                foreach(var p in patch.atmosphericTrajectory)
+                {
+                    float neededClearance = 300.0f;
+                    float missingClearance = neededClearance - (p.pos.magnitude - (float)body.Radius - p.groundAltitude);
+                    if (missingClearance > 0.0f)
+                    {
+                        if(Vector3.Distance(p.pos, patch.rawImpactPosition.Value) > 1000.0f)
+                        {
+                            float coeff = missingClearance / neededClearance;
+                            Vector3 rotatedPos = p.pos;
+                            if(!Settings.fetch.BodyFixedMode)
+                            {
+                                rotatedPos = Trajectory.calculateRotatedPosition(body, p.pos, p.time);
+                            }
+                            impactPosition = impactPosition * (1.0f - coeff) + rotatedPos * coeff;
+                        }
+                        break;
+                    }
+                }
 
-                Vector3 offset = targetPosition.Value - patch.impactPosition.Value;
+                Vector3 right = Vector3.Cross(patch.impactVelocity, impactPosition).normalized;
+                Vector3 behind = Vector3.Cross(right, impactPosition).normalized;
+
+                Vector3 offset = targetPosition.Value - impactPosition;
                 Vector2 offsetDir = new Vector2(Vector3.Dot(right, offset), Vector3.Dot(behind, offset));
                 offsetDir *= 0.00005f; // 20km <-> 1 <-> 45° (this is purely indicative, no physical meaning, it would be very complicated to compute an actual correction angle as it depends on the spacecraft behavior in the atmosphere ; a small angle will suffice for a plane, but even a big angle might do almost nothing for a rocket)
                 offsetDir.y = -offsetDir.y;
