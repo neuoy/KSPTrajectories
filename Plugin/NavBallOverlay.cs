@@ -108,33 +108,10 @@ namespace Trajectories
             if(navBallRadius == 0.0f)
                 navBallRadius = navball.progradeVector.localPosition.magnitude;
 
-            Vector3 right = Vector3.Cross(patch.impactVelocity, patch.impactPosition.Value).normalized;
-            Vector3 behind = Vector3.Cross(right, patch.impactPosition.Value).normalized;
-
-            Vector3 offset = targetPosition.Value - patch.impactPosition.Value;
-            Vector2 offsetDir = new Vector2(Vector3.Dot(right, offset), Vector3.Dot(behind, offset));
-            offsetDir *= 0.00005f; // 20km <-> 1 <-> 45° (this is purely indicative, no physical meaning, it would be very complicated to compute an actual correction angle as it depends on the spacecraft behavior in the atmosphere ; a small angle will suffice for a plane, but even a big angle might do almost nothing for a rocket)
-            offsetDir.y = -offsetDir.y;
-
-            Vector3d pos = FlightGlobals.ActiveVessel.GetWorldPos3D() - Trajectory.fetch.targetBody.position;
-            Vector3d vel = FlightGlobals.ActiveVessel.obt_velocity - body.getRFrmVel(body.position + pos); // air velocity
-            float plannedAngleOfAttack = (float)DescentProfile.fetch.GetAngleOfAttack(Trajectory.fetch.targetBody, pos, vel);
-            //Util.PostSingleScreenMessage("plannedAngleOfAttack", "plannedAngleOfAttack=" + (plannedAngleOfAttack * 180.0f / Mathf.PI));
-
-            Vector3 up = pos.normalized;
-            Vector3 velRight = Vector3.Cross(vel, up).normalized;
-            //Vector3 horizon = Vector3.Cross(velRight, up).normalized;
-            Vector3 velUp = Vector3.Cross(velRight, vel).normalized;
-
-            //Vector3 referenceVector = FlightGlobals.ActiveVessel.obt_velocity.normalized;
-            Vector3 referenceVector = vel.normalized * Mathf.Cos(plannedAngleOfAttack) + velUp * Mathf.Sin(plannedAngleOfAttack);
-
+            Vector3 referenceVector = AutoPilot.fetch.PlannedDirection;
             trajectoryReference.transform.localPosition = (navball.attitudeGymbal * referenceVector).normalized * navBallRadius;
 
-            Vector3 refUp = Vector3.Cross(velRight, referenceVector).normalized;
-            Vector3 refRight = velRight;
-
-            Vector3 guideDir = referenceVector + refUp * offsetDir.y + refRight * offsetDir.x;
+            Vector3 guideDir = AutoPilot.fetch.CorrectedDirection;
             trajectoryGuide.transform.localPosition = (navball.attitudeGymbal * guideDir).normalized * navBallRadius;
         }
     }

@@ -40,6 +40,7 @@ namespace Trajectories
 
         private string tooltip = String.Empty;
 
+        private string coords = "";
 
         /// <summary>
         /// Check if patched conics are available in the current save.
@@ -142,20 +143,53 @@ namespace Trajectories
             }
             GUILayout.Space(10);
 
-            if (Settings.fetch.DisplayTargetGUI = ToggleGroup(Settings.fetch.DisplayTargetGUI, "Target"))
+            GUILayout.BeginHorizontal();
+            bool targetGroup = Settings.fetch.DisplayTargetGUI = ToggleGroup(Settings.fetch.DisplayTargetGUI, "Target", 120);
+            AutoPilot.fetch.Enabled = GUILayout.Toggle(AutoPilot.fetch.Enabled, "Auto-pilot", GUILayout.Width(100));
+            GUILayout.EndHorizontal();
+            if (targetGroup)
             {
                 GUI.enabled = traj.targetPosition.HasValue;
                 if (GUILayout.Button("Unset target"))
                     Trajectory.SetTarget();
                 GUI.enabled = true;
 
+                GUILayout.BeginHorizontal();
                 var patch = traj.patches.LastOrDefault();
                 GUI.enabled = (patch != null && patch.impactPosition.HasValue);
-                if (GUILayout.Button("Set current impact as target"))
+                if (GUILayout.Button("Set current impact", GUILayout.Width(150)))
                 {
                     Trajectory.SetTarget(patch.startingState.referenceBody, patch.impactPosition);
                 }
                 GUI.enabled = true;
+                if (GUILayout.Button("Set KSC", GUILayout.Width(70)))
+                {
+                    var body = FlightGlobals.Bodies.SingleOrDefault(b => b.isHomeWorld);
+                    if (body != null)
+                    {
+                        Vector3d worldPos = body.GetWorldSurfacePosition(-0.04860002, -74.72425635, 2.0);
+                        Trajectory.SetTarget(body, worldPos - body.position);
+                    }
+                }
+                GUILayout.EndHorizontal();
+
+                GUILayout.BeginHorizontal();
+                coords = GUILayout.TextField(coords, GUILayout.Width(170));
+                if (GUILayout.Button(new GUIContent("Set", "Enter target latitude and longitude, separated by a comma"), GUILayout.Width(50)))
+                {
+                    string[] latLng = coords.Split(new char[] { ',', ';' });
+                    var body = FlightGlobals.currentMainBody;
+                    if(latLng.Length == 2 && body != null)
+                    {
+                        double lat, lng;
+                        if(Double.TryParse(latLng[0].Trim(), out lat) && Double.TryParse(latLng[1].Trim(), out lng))
+                        {
+                            Vector3d worldPos = body.GetWorldSurfacePosition(lat, lng, 2.0);
+                            Trajectory.SetTarget(body, worldPos - body.position);
+                        }
+                    }
+                }
+                GUILayout.EndHorizontal();
             }
             GUILayout.Space(10);
 
@@ -171,6 +205,16 @@ namespace Trajectories
 
             if (Settings.fetch.DisplaySettingsGUI = ToggleGroup(Settings.fetch.DisplaySettingsGUI, "Settings"))
             {
+                GUILayout.BeginHorizontal();
+                GUILayout.Label("Auto-pilot strength", GUILayout.Width(130));
+                AutoPilot.fetch.Strength = GUILayout.HorizontalSlider(AutoPilot.fetch.Strength, 0.5f, 10.0f, GUILayout.Width(90));
+                GUILayout.EndHorizontal();
+
+                GUILayout.BeginHorizontal();
+                GUILayout.Label("Auto-pilot smoothness", GUILayout.Width(130));
+                AutoPilot.fetch.Smoothness = GUILayout.HorizontalSlider(AutoPilot.fetch.Smoothness, 0.5f, 10.0f, GUILayout.Width(90));
+                GUILayout.EndHorizontal();
+
                 GUILayout.BeginHorizontal();
                 GUILayout.Label("Max patches", GUILayout.Width(100));
                 Settings.fetch.MaxPatchCount = Mathf.RoundToInt(GUILayout.HorizontalSlider((float)Settings.fetch.MaxPatchCount, 3, 10, GUILayout.Width(100)));
@@ -192,6 +236,17 @@ namespace Trajectories
                 if (ToolbarManager.ToolbarAvailable)
                 {
                     Settings.fetch.UseBlizzyToolbar = GUILayout.Toggle(Settings.fetch.UseBlizzyToolbar, new GUIContent("Use Blizzy's toolbar", "Will take effect after restart"));
+                }
+
+                if(FlightGlobals.ActiveVessel != null)
+                {
+                    GUILayout.Label("Position:");
+                    GUILayout.BeginHorizontal();
+                    var body = FlightGlobals.ActiveVessel.mainBody;
+                    var worldPos = FlightGlobals.ActiveVessel.GetWorldPos3D();
+                    GUILayout.Label("lat=" + body.GetLatitude(worldPos).ToString("000.000000"), GUILayout.Width(110));
+                    GUILayout.Label("lng=" + body.GetLongitude(worldPos).ToString("000.000000"), GUILayout.Width(110));
+                    GUILayout.EndHorizontal();
                 }
 
                 GUILayout.Label("Aerodynamic model: " + VesselAerodynamicModel.AerodynamicModelName);

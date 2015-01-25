@@ -153,6 +153,7 @@ namespace Trajectories
         }
 
         public Vector3? targetPosition { get { return targetPosition_.HasValue ? (Vector3?)targetBody_.transform.TransformDirection(targetPosition_.Value) : null; } }
+        public Vector3? groundRelativeTargetPosition { get { return targetPosition_; } }
         public CelestialBody targetBody { get { return targetBody_; } }
 
         public void InvalidateAerodynamicModel()
@@ -529,7 +530,7 @@ namespace Trajectories
                                 AddPatch_outState = null;
                                 yield break;
                             }
-                            else if (atmosphereCoeff <= 0.0)
+                            else if (atmosphereCoeff <= 0.0 || hitGround)
                             {
                                 patchesBackBuffer_.Add(patch);
                                 AddPatch_outState = null;
@@ -572,7 +573,7 @@ namespace Trajectories
 
                         currentTime += dt;
 
-                        double interval = altitude < 10000.0 ? trajectoryInterval * 0.3 : trajectoryInterval;
+                        double interval = altitude < 10000.0 ? trajectoryInterval * 0.1 : trajectoryInterval;
                         if (currentTime >= lastPositionStoredUT + interval)
                         {
                             if (lastPositionStoredUT > 0)
@@ -581,7 +582,7 @@ namespace Trajectories
                                 Vector3 rayOrigin = lastPositionStored;
                                 Vector3 rayEnd = pos;
                                 double groundAltitude = GetGroundAltitude(body, calculateRotatedPosition(body,rayEnd,currentTime)) + body.Radius;
-                                if (groundAltitude > rayEnd.magnitude)
+                                if (groundAltitude + AutoPilot.fetch.GetMinimumClearance(body, body.transform.InverseTransformDirection((Vector3)rayEnd)) > rayEnd.magnitude)
                                 {
                                     hitGround = true;
                                     float coeff = Math.Max(0.01f, (float)((groundAltitude - rayOrigin.magnitude) / (rayEnd.magnitude - rayOrigin.magnitude)));

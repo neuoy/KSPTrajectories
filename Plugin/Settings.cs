@@ -60,6 +60,8 @@ namespace Trajectories
             config.load();
 
             Serialize(false);
+
+            MapGUIWindowPos = new Rect(MapGUIWindowPos.xMin, MapGUIWindowPos.yMin, 1, MapGUIWindowPos.height); // width will be auto-sized to fit contents
         }
 
         public void Save()
