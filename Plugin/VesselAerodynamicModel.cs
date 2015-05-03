@@ -233,12 +233,13 @@ namespace Trajectories
             double v2 = Math.Max(1.0, vel * vel);
 
             Vector3d velocity = new Vector3d(vel, 0, 0);
-            
-            double maxAltitude = body_.maxAtmosphereAltitude;
+
+            double maxAltitude = body_.atmosphereDepth;
             double currentAltitude = maxAltitude * (double)m / (double)(cachedFARForces.GetLength(2) - 1);
             double machNumber = useNEAR ? 0.0 : (double)FARAeroUtil_GetMachNumber.Invoke(null, new object[] { body_, currentAltitude, new Vector3d((float)vel, 0, 0) });
             double pressure = FlightGlobals.getStaticPressure(currentAltitude, body_);
-            double stockRho = FlightGlobals.getAtmDensity(pressure);
+            double temperature = FlightGlobals.getExternalTemperature(currentAltitude, body_);
+            double stockRho = FlightGlobals.getAtmDensity(pressure, temperature);
             double rho = useNEAR ? stockRho : (double)FARAeroUtil_GetCurrentDensity.Invoke(null, new object[] { body_, currentAltitude, false });
             if (rho < 0.0000000001)
                 return new Vector2(0, 0);
@@ -314,7 +315,7 @@ namespace Trajectories
             int aFloor = Math.Max(0, Math.Min(cachedFARForces.GetLength(1) - 2, (int)aFrac));
             aFrac = Math.Max(0.0f, Math.Min(1.0f, aFrac - (float)aFloor));
 
-            double maxAltitude = body_.maxAtmosphereAltitude;
+            double maxAltitude = body_.atmosphereDepth;
             float mFrac = (float)(altitudeAboveSea / maxAltitude * (double)(cachedFARForces.GetLength(2) - 1));
             int mFloor = Math.Max(0, Math.Min(cachedFARForces.GetLength(2) - 2, (int)mFrac));
             mFrac = Math.Max(0.0f, Math.Min(1.0f, mFrac - (float)mFloor));
@@ -328,7 +329,8 @@ namespace Trajectories
             Vector2 res = sample3d(vFloor, vFrac, aFloor, aFrac, mFloor, mFrac);
 
             double pressure = FlightGlobals.getStaticPressure(altitudeAboveSea, body_);
-            double stockRho = FlightGlobals.getAtmDensity(pressure);
+            double temperature = FlightGlobals.getExternalTemperature(altitudeAboveSea, body_);
+            double stockRho = FlightGlobals.getAtmDensity(pressure, temperature);
             double rho = useNEAR ? stockRho : (double)FARAeroUtil_GetCurrentDensity.Invoke(null, new object[] { body_, altitudeAboveSea, false });
 
             res = res * (float)rho;
@@ -350,14 +352,15 @@ namespace Trajectories
         {
             double altitudeAboveSea = bodySpacePosition.magnitude - body.Radius;
             double pressure = FlightGlobals.getStaticPressure(altitudeAboveSea, body);
+            double temperature = FlightGlobals.getExternalTemperature(altitudeAboveSea, body);
             if (pressure <= 0)
                 return Vector3d.zero;
 
-            double rho = FlightGlobals.getAtmDensity(pressure);
+            double rho = FlightGlobals.getAtmDensity(pressure, temperature);
 
             double velocityMag = airVelocity.magnitude;
 
-            double crossSectionalArea = FlightGlobals.DragMultiplier * mass_;
+            double crossSectionalArea = PhysicsGlobals.DragMultiplier * mass_;
             return airVelocity * (-0.5 * rho * velocityMag * stockDragCoeff_ * crossSectionalArea);
         }
 
@@ -496,10 +499,13 @@ namespace Trajectories
             double altitudeAboveSea = bodySpacePosition.magnitude - body.Radius;
 
             double pressure = FlightGlobals.getStaticPressure(altitudeAboveSea, body);
-            if (pressure <= 0)
+            if (pressure <= 0) {
                 return Vector3d.zero;
-
-            double stockRho = FlightGlobals.getAtmDensity(pressure);
+            }
+                
+            double temperature = FlightGlobals.getExternalTemperature(altitudeAboveSea, body);
+            
+            double stockRho = FlightGlobals.getAtmDensity(pressure, temperature);
 
             double rho = useNEAR ? stockRho : (double)FARAeroUtil_GetCurrentDensity.Invoke(null, new object[] { body, altitudeAboveSea, false });
 

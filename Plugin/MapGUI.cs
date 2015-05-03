@@ -36,11 +36,13 @@ namespace Trajectories
         private static readonly int GUIId = 934824;
 
         private ApplicationLauncherButton GUIToggleButton;
+
         private IButton GUIToggleButtonBlizzy;
 
         private string tooltip = String.Empty;
 
-
+        private static bool first_button_check = true;
+        
         /// <summary>
         /// Check if patched conics are available in the current save.
         /// </summary>
@@ -220,14 +222,18 @@ namespace Trajectories
             else
             {
                 Debug.Log("Using stock toolbar for Trajectories GUI");
-                GameEvents.onGUIApplicationLauncherReady.Add(OnGUIAppLauncherReady);
+                GameEvents.onGUIApplicationLauncherReady.Add(InitGUIButton);
+                GameEvents.onGUIApplicationLauncherDestroyed.Add(RemoveGUIButton);
             }
         }
 
-        void OnGUIAppLauncherReady()
+        void InitGUIButton()
         {
-            if (ApplicationLauncher.Ready)
+            Debug.Log("TRAJ_DEBUG: Checking if Launcher Ready?!?!");
+            if (ApplicationLauncher.Ready && first_button_check)
             {
+                first_button_check = false;
+                
                 GUIToggleButton = ApplicationLauncher.Instance.AddModApplication(
                     OnToggleOn,
                     OnToggleOff,
@@ -237,12 +243,20 @@ namespace Trajectories
                     DummyVoid,
                     ApplicationLauncher.AppScenes.MAPVIEW,
                     (Texture)GameDatabase.Instance.GetTexture("Trajectories/Textures/icon", false));
-
+                
+                Debug.Log("TRAJ_DEBUG: Stock Button On...");
+                
                 if(Settings.fetch.GUIEnabled)
                     GUIToggleButton.SetTrue(false);
             }
         }
-
+        
+        void RemoveGUIButton()
+        {
+            if (GUIToggleButton != null)
+                ApplicationLauncher.Instance.RemoveModApplication(GUIToggleButton);
+        }
+        
         void DummyVoid() { }
 
         void OnToggleGUIBlizzy(ClickEvent e)
@@ -279,9 +293,10 @@ namespace Trajectories
 
         void OnDestroy()
         {
-            GameEvents.onGUIApplicationLauncherReady.Remove(OnGUIAppLauncherReady);
-            if (GUIToggleButton != null)
-                ApplicationLauncher.Instance.RemoveModApplication(GUIToggleButton);
+            //TODO:  Need to kill stock toolbar here?
+            //GameEvents.onGUIApplicationLauncherReady.Remove(OnGUIAppLauncherReady);
+            //if (GUIToggleButton != null)
+            //    ApplicationLauncher.Instance.RemoveModApplication(GUIToggleButton);
             if (GUIToggleButtonBlizzy != null)
                 GUIToggleButtonBlizzy.Destroy();
         }
@@ -290,5 +305,6 @@ namespace Trajectories
         {
             return new Rect(Mathf.Clamp(window.x, 0, Screen.width - window.width), Mathf.Clamp(window.y, 0, Screen.height - window.height), window.width, window.height);
         }
+        
     }
 }
