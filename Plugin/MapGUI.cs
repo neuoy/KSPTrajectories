@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -35,7 +35,7 @@ namespace Trajectories
     {
         private static readonly int GUIId = 934824;
 
-        private ApplicationLauncherButton GUIToggleButton;
+        private static ApplicationLauncherButton GUIToggleButton = null;
         private IButton GUIToggleButtonBlizzy;
 
         private string tooltip = String.Empty;
@@ -221,12 +221,27 @@ namespace Trajectories
             {
                 Debug.Log("Using stock toolbar for Trajectories GUI");
                 GameEvents.onGUIApplicationLauncherReady.Add(OnGUIAppLauncherReady);
+                GameEvents.onGUIApplicationLauncherDestroyed.Add(OnGUIAppLauncherDestroyed);
+                GameEvents.onGameSceneLoadRequested.Remove(OnGameSceneLoadRequestedForAppLauncher);
             }
         }
-
+        
+        void DummyVoid() { }
+        
+        void RemoveFromAppLauncher()
+        {
+            if (GUIToggleButton != null)
+            {
+                ApplicationLauncher.Instance.RemoveApplication(GUIToggleButton);
+                GameEvents.onGUIApplicationLauncherReady.Remove(OnGUIAppLauncherReady);
+                GameEvents.onGUIApplicationLauncherReady.Remove(OnGUIAppLauncherDestroyed);
+                GameEvents.onGameSceneLoadRequested.Remove(OnGameSceneLoadRequestedForAppLauncher);
+            }
+        }
+        
         void OnGUIAppLauncherReady()
         {
-            if (ApplicationLauncher.Ready)
+            if (ApplicationLauncher.Ready && GUIToggleButton == null)
             {
                 GUIToggleButton = ApplicationLauncher.Instance.AddModApplication(
                     OnToggleOn,
@@ -242,8 +257,32 @@ namespace Trajectories
                     GUIToggleButton.SetTrue(false);
             }
         }
+        
+        void OnGUIAppLauncherDestroyed()
+        {
+            if (GUIToggleButton != null)
+            {
+                RemoveFromAppLauncher();
+            }
+        }
 
-        void DummyVoid() { }
+        void OnGameSceneLoadRequestedForAppLauncher(GameScenes _scene)
+        {
+            if (GUIToggleButton != null)
+            {
+                RemoveFromAppLauncher();
+            }
+        }
+
+        /// <summary>
+        /// Determines if the current game scane is valid for the plugin.
+        /// This plugin should be able to run in VAB/SPH, Flight, Space Center, and Tracking Station scenes.
+        /// </summary>
+        /// <returns>True if valid; false if not valid.</returns>
+        Boolean IsValidScene()
+        {
+            return HighLogic.LoadedSceneIsEditor || HighLogic.LoadedSceneIsFlight || HighLogic.LoadedScene == GameScenes.SPACECENTER || HighLogic.LoadedScene == GameScenes.TRACKSTATION;
+        }
 
         void OnToggleGUIBlizzy(ClickEvent e)
         {
@@ -279,9 +318,7 @@ namespace Trajectories
 
         void OnDestroy()
         {
-            GameEvents.onGUIApplicationLauncherReady.Remove(OnGUIAppLauncherReady);
-            if (GUIToggleButton != null)
-                ApplicationLauncher.Instance.RemoveModApplication(GUIToggleButton);
+            RemoveFromAppLauncher();
             if (GUIToggleButtonBlizzy != null)
                 GUIToggleButtonBlizzy.Destroy();
         }
