@@ -318,15 +318,8 @@ namespace Trajectories
         public static double RealMaxAtmosphereAltitude(CelestialBody body)
         {
             if (!body.atmosphere) return 0;
-            if (body.useLegacyAtmosphere)
-            {
-                //Atmosphere actually cuts out when exp(-altitude / scale height) = 1e-6
-                return -body.atmosphereScaleHeight * 1000 * Math.Log(1e-6);
-            }
-            else
-            {
-                return body.pressureCurve.keys.Last().time * 1000;
-            }
+            // Change for 1.0 refer to atmosphereDepth
+            return body.atmosphereDepth;
         }
 
         private Orbit createOrbitFromState(VesselState state)

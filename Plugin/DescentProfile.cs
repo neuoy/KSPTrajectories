@@ -236,7 +236,7 @@ namespace Trajectories
         public double GetAngleOfAttack(CelestialBody body, Vector3d position, Vector3d velocity)
         {
             double altitude = position.magnitude - body.Radius;
-            double altitudeRatio = body.atmosphere ? altitude / body.maxAtmosphereAltitude : 0;
+            double altitudeRatio = body.atmosphere ? altitude / body.atmosphereDepth : 0;
 
             Node a, b;
             double aCoeff;
