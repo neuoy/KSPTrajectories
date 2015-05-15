@@ -35,8 +35,8 @@ namespace Trajectories
                     if (AppDomain.CurrentDomain.GetAssemblies().Any(a => a.FullName.ToLower().Contains("testautomation")))
                         return;
 
-                    HighLogic.SaveFolder = "default";
-                    HighLogic.LoadScene(GameScenes.TRACKSTATION);
+                    //HighLogic.SaveFolder = "default";
+                    //HighLogic.LoadScene(GameScenes.TRACKSTATION);
 
                     CheatOptions.InfiniteFuel = true;
                 }

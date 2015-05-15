@@ -55,6 +55,21 @@ namespace Trajectories
             }
         }
 
+        public static MethodInfo GetMethodEx(this Type type, string methodName, BindingFlags flags, Type[] types)
+        {
+            try
+            {
+                var res = type.GetMethod(methodName, flags, null, types, null);
+                if (res == null)
+                    throw new Exception("method not found");
+                return res;
+            }
+            catch (Exception e)
+            {
+                throw new Exception("Failed to GetMethod " + methodName + " on type " + type.FullName + " with types " + types.ToString() + ":\n" + e.Message + "\n" + e.StackTrace);
+            }
+        }
+
         public static Vector3d SwapYZ(Vector3d v)
         {
             return new Vector3d(v.x, v.z, v.y);

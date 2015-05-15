@@ -44,18 +44,9 @@ namespace Trajectories
         private double referenceDrag = 0;
         private DateTime nextAllowedAutomaticUpdate = DateTime.Now;
 
-        private Type FARBasicDragModelType;
-        private Type FARWingAerodynamicModelType;
-        private MethodInfo FARBasicDragModel_RunDragCalculation;
-        private FieldInfo FARBasicDragModel_YmaxForce;
-        private FieldInfo FARBasicDragModel_XZmaxForce;
-        private MethodInfo FARWingAerodynamicModel_CalculateForces;
-        private FieldInfo FARWingAerodynamicModel_rho;
-        private FieldInfo FARWingAerodynamicModel_stall;
-        private FieldInfo FARWingAerodynamicModel_YmaxForce;
-        private FieldInfo FARWingAerodynamicModel_XZmaxForce;
-        private MethodInfo FARAeroUtil_GetMachNumber;
-        private MethodInfo FARAeroUtil_GetCurrentDensity;
+        private Type FARAPIType;
+        private MethodInfo FARAPI_CalculateVesselAeroForces;
+		private MethodInfo FARAeroUtil_GetCurrentDensity;
 
         public bool Verbose { get; set; }
 
@@ -119,46 +110,49 @@ namespace Trajectories
 
         public double computeFARReferenceDrag()
         {
-            Vector3 forces = computeForces_FAR(10, 2, new Vector3d(3000.0, 0, 0), new Vector3(0, 1, 0), 0, 0.25);
+            Vector3 forces = computeForces_FAR(3000, new Vector3d(3000.0, 0, 0), new Vector3(0, 1, 0), 0, 0.25);
             return forces.sqrMagnitude;
         }
 
         private void initFARModel()
         {
+            Debug.Log("Trajectories: Initializing aerodynamic model...");
+
             bool farInstalled = false;
 
             foreach (var loadedAssembly in AssemblyLoader.loadedAssemblies)
             {
-                switch (loadedAssembly.name)
+                try
                 {
-                    case "NEAR":
-                        useNEAR = true;
-                        goto case "FerramAerospaceResearch";
-                    case "FerramAerospaceResearch":
-                        string namespaceName = useNEAR ? "NEAR" : "ferram4";
-                        FARBasicDragModelType = loadedAssembly.assembly.GetType(namespaceName + ".FARBasicDragModel");
-                        FARBasicDragModel_YmaxForce = FARBasicDragModelType.GetField("YmaxForce", BindingFlags.Public | BindingFlags.Instance);
-                        FARBasicDragModel_XZmaxForce = FARBasicDragModelType.GetField("XZmaxForce", BindingFlags.Public | BindingFlags.Instance);
-                        FARWingAerodynamicModelType = loadedAssembly.assembly.GetType(namespaceName + ".FARWingAerodynamicModel");
-                        FARWingAerodynamicModel_CalculateForces = FARWingAerodynamicModelType.GetMethodEx("CalculateForces", BindingFlags.Public | BindingFlags.Instance);
-                        FARWingAerodynamicModel_rho = FARWingAerodynamicModelType.GetField("rho", BindingFlags.NonPublic | BindingFlags.Instance);
-                        if(FARWingAerodynamicModel_rho == null)
-                            FARWingAerodynamicModel_rho = loadedAssembly.assembly.GetType(namespaceName + ".FARBaseAerodynamics").GetField("rho", BindingFlags.Public | BindingFlags.Instance); // this has changed in FAR 0.14.3
-                        FARWingAerodynamicModel_stall = FARWingAerodynamicModelType.GetField("stall", BindingFlags.NonPublic | BindingFlags.Instance);
-                        FARWingAerodynamicModel_YmaxForce = FARWingAerodynamicModelType.GetField("YmaxForce", BindingFlags.Public | BindingFlags.Instance);
-                        FARWingAerodynamicModel_XZmaxForce = FARWingAerodynamicModelType.GetField("XZmaxForce", BindingFlags.Public | BindingFlags.Instance);
-                        if (!useNEAR)
-                        {
-                            FARBasicDragModel_RunDragCalculation = FARBasicDragModelType.GetMethodEx("RunDragCalculation", new Type[] { typeof(Vector3d), typeof(double), typeof(double) });
-                            FARAeroUtil_GetMachNumber = loadedAssembly.assembly.GetType(namespaceName + ".FARAeroUtil").GetMethodEx("GetMachNumber", new Type[] { typeof(CelestialBody), typeof(double), typeof(Vector3d)});
-                            FARAeroUtil_GetCurrentDensity = loadedAssembly.assembly.GetType(namespaceName + ".FARAeroUtil").GetMethodEx("GetCurrentDensity", new Type[] { typeof(CelestialBody), typeof(double), typeof(bool) });
-                        }
-                        else
-                        {
-                            FARBasicDragModel_RunDragCalculation = FARBasicDragModelType.GetMethodEx("RunDragCalculation", new Type[] { typeof(Vector3d), typeof(double) });
-                        }
-                        farInstalled = true;
-                        break;
+                    switch (loadedAssembly.name)
+                    {
+                        case "NEAR":
+                            useNEAR = true;
+                            goto case "FerramAerospaceResearch";
+                        case "FerramAerospaceResearch":
+                            string namespaceName = useNEAR ? "NEAR" : "FerramAerospaceResearch";
+                            FARAPIType = loadedAssembly.assembly.GetType(namespaceName + ".FARAPI");
+                            if (useNEAR)
+                            {
+                                throw new Exception("NEAR support not implemented yet");
+                            }
+                            else
+                            {
+                                // public static void FerramAerospaceResearch.FARAPI.CalculateVesselAeroForces(Vessel vessel, out Vector3 aeroForce, out Vector3 aeroTorque, Vector3 velocityWorldVector, double altitude)
+                                FARAPI_CalculateVesselAeroForces = FARAPIType.GetMethodEx("CalculateVesselAeroForces", BindingFlags.Public | BindingFlags.Static, new Type[] { typeof(Vessel), typeof(Vector3).MakeByRefType(), typeof(Vector3).MakeByRefType(), typeof(Vector3), typeof(double) });
+
+                                // public static double FerramAerospaceResearch.FARAeroUtil.GetCurrentDensity(CelestialBody body, double altitude, bool densitySmoothingAtOcean = true)
+								FARAeroUtil_GetCurrentDensity = loadedAssembly.assembly.GetType(namespaceName + ".FARAeroUtil").GetMethodEx("GetCurrentDensity", new Type[] { typeof(CelestialBody), typeof(double), typeof(bool) });
+                            }
+                            farInstalled = true;
+                            break;
+                    }
+                }
+                catch(Exception e)
+                {
+                    Debug.Log("Trajectories: failed to interface with assembly " + loadedAssembly.name);
+                    Debug.Log("Using stock model instead");
+                    Debug.Log(e.ToString());
                 }
             }
 
@@ -236,7 +230,6 @@ namespace Trajectories
             
             double maxAltitude = body_.atmosphereDepth;
             double currentAltitude = maxAltitude * (double)m / (double)(cachedFARForces.GetLength(2) - 1);
-            double machNumber = useNEAR ? 0.0 : (double)FARAeroUtil_GetMachNumber.Invoke(null, new object[] { body_, currentAltitude, new Vector3d((float)vel, 0, 0) });
             double pressure = FlightGlobals.getStaticPressure(currentAltitude, body_);
             double temperature = FlightGlobals.getExternalTemperature(currentAltitude, body_);
             double stockRho = FlightGlobals.getAtmDensity(pressure, temperature);
@@ -246,7 +239,7 @@ namespace Trajectories
             double invScale = 1.0 / (rho * v2); // divide by v² and rho before storing the force, to increase accuracy (the reverse operation is performed when reading from the cache)
 
             double AoA = maxFARAngleOfAttack * ((double)a / (double)(cachedFARForces.GetLength(1) - 1) * 2.0 - 1.0);
-            Vector3d force = computeForces_FAR(rho, machNumber, velocity, new Vector3(0, 1, 0), AoA, 0.25) * invScale;
+            Vector3d force = computeForces_FAR(currentAltitude, velocity, new Vector3(0, 1, 0), AoA, 0.25) * invScale;
             return cachedFARForces[v, a, m] = new Vector2((float)force.x, (float)force.y);
         }
 
@@ -361,7 +354,7 @@ namespace Trajectories
             return airVelocity * (-0.5 * rho * velocityMag * stockDragCoeff_ * crossSectionalArea);
         }
 
-        public Vector3d computeForces_FAR(double rho, double machNumber, Vector3d airVelocity, Vector3d vup, double angleOfAttack, double dt)
+        public Vector3d computeForces_FAR(double altitude, Vector3d airVelocity, Vector3d vup, double angleOfAttack, double dt)
         {
             Transform vesselTransform = vessel_.ReferenceTransform;
 
@@ -373,82 +366,16 @@ namespace Trajectories
 
             Vector3d airVelocityForFixedAoA = (vesselForward * Math.Cos(-angleOfAttack) + vesselUp * Math.Sin(-angleOfAttack)) * airVelocity.magnitude;
 
-            Vector3d totalForce = new Vector3d(0, 0, 0);
-
-            foreach (var part in vessel_.Parts)
-            {
-                if (part.Rigidbody == null)
-                    continue;
-
-                foreach (var module in part.Modules)
-                {
-                    if (FARBasicDragModelType.IsInstanceOfType(module))
-                    {
-                        double YmaxForce = 0, XZmaxForce = 0;
-                        if (!useNEAR)
-                        {
-                            // make sure we don't trigger aerodynamic failures during prediction
-                            YmaxForce = (double)FARBasicDragModel_YmaxForce.GetValue(module);
-                            XZmaxForce = (double)FARBasicDragModel_XZmaxForce.GetValue(module);
-                            FARBasicDragModel_YmaxForce.SetValue(module, Double.MaxValue);
-                            FARBasicDragModel_XZmaxForce.SetValue(module, Double.MaxValue);
-                        }
-
-                        if(useNEAR)
-                            totalForce += (Vector3d)FARBasicDragModel_RunDragCalculation.Invoke(module, new object[] { airVelocityForFixedAoA, rho });
-                        else
-                            totalForce += (Vector3d)FARBasicDragModel_RunDragCalculation.Invoke(module, new object[] { airVelocityForFixedAoA, machNumber, rho });
-
-                        if (!useNEAR)
-                        {
-                            FARBasicDragModel_YmaxForce.SetValue(module, YmaxForce);
-                            FARBasicDragModel_XZmaxForce.SetValue(module, XZmaxForce);
-                        }
-                    }
-
-                    if (FARWingAerodynamicModelType.IsInstanceOfType(module))
-                    {
-                        double YmaxForce = 0, XZmaxForce = 0;
-                        if (!useNEAR)
-                        {
-                            // make sure we don't trigger aerodynamic failures during prediction
-                            YmaxForce = (double)FARWingAerodynamicModel_YmaxForce.GetValue(module);
-                            XZmaxForce = (double)FARWingAerodynamicModel_XZmaxForce.GetValue(module);
-                            FARWingAerodynamicModel_YmaxForce.SetValue(module, Double.MaxValue);
-                            FARWingAerodynamicModel_XZmaxForce.SetValue(module, Double.MaxValue);
-                        }
-
-                        double rhoBackup = (double)FARWingAerodynamicModel_rho.GetValue(module);
-                        FARWingAerodynamicModel_rho.SetValue(module, rho);
-
-                        // FAR uses the stall value computed in the previous frame to compute the new one. This is incompatible with prediction code that shares the same state variables as the normal simulation.
-                        // This is also incompatible with forces caching that is made to improve performances, as such caching can't depend on the previous wing state
-                        // To solve this problem, we assume wings never stall during prediction, and we backup/restore the stall value each time
-                        double stallBackup = (double)FARWingAerodynamicModel_stall.GetValue(module);
-                        FARWingAerodynamicModel_stall.SetValue(module, 0);
-
-                        double PerpVelocity = Vector3d.Dot(part.partTransform.forward, airVelocityForFixedAoA.normalized);
-                        double FARAoA = Math.Asin(Math.Min(Math.Max(PerpVelocity, -1), 1));
-                        if(useNEAR)
-                            totalForce += (Vector3d)FARWingAerodynamicModel_CalculateForces.Invoke(module, new object[] { airVelocityForFixedAoA, FARAoA });
-                        else
-                            totalForce += (Vector3d)FARWingAerodynamicModel_CalculateForces.Invoke(module, new object[] { airVelocityForFixedAoA, machNumber, FARAoA });
-
-                        FARWingAerodynamicModel_rho.SetValue(module, rhoBackup);
-                        FARWingAerodynamicModel_stall.SetValue(module, stallBackup);
-
-                        if (!useNEAR)
-                        {
-                            FARWingAerodynamicModel_YmaxForce.SetValue(module, YmaxForce);
-                            FARWingAerodynamicModel_XZmaxForce.SetValue(module, XZmaxForce);
-                        }
-                    }
-                }
-            }
+            Debug.Log("Trajectories: getting FAR forces");
+            Vector3 worldAirVel = new Vector3((float)airVelocityForFixedAoA.x, (float)airVelocityForFixedAoA.y, (float)airVelocityForFixedAoA.z);
+            var parameters = new object[] { vessel_, new Vector3(), new Vector3(), worldAirVel, altitude };
+            FARAPI_CalculateVesselAeroForces.Invoke(null, parameters);
+            Vector3d totalForce = (Vector3)parameters[1];
+            Debug.Log("Trajectories: got FAR forces");
 
             if (Double.IsNaN(totalForce.x) || Double.IsNaN(totalForce.y) || Double.IsNaN(totalForce.z))
             {
-                Debug.Log("Trajectories: WARNING: FAR/NEAR totalForce is NAN (rho=" + rho + ", machNumber=" + machNumber + ", airVelocity=" + airVelocity.magnitude + ", angleOfAttack=" + angleOfAttack);
+                Debug.Log("Trajectories: WARNING: FAR/NEAR totalForce is NAN (altitude=" + altitude + ", airVelocity=" + airVelocity.magnitude + ", angleOfAttack=" + angleOfAttack);
                 return new Vector3d(0, 0, 0); // Don't send NaN into the simulation as it would cause bad things (infinite loops, crash, etc.). I think this case only happens at the atmosphere edge, so the total force should be 0 anyway.
             }
 
@@ -485,7 +412,7 @@ namespace Trajectories
             Vector3d res = predictedVesselRight * localForce.x + predictedVesselUp * localForce.y + predictedVesselBackward * localForce.z;
             if (Double.IsNaN(res.x) || Double.IsNaN(res.y) || Double.IsNaN(res.z))
             {
-                Debug.Log("Trajectories: res is NaN (rho=" + rho + ", machNumber=" + machNumber + ", airVelocity=" + airVelocity.magnitude + ", angleOfAttack=" + angleOfAttack);
+                Debug.Log("Trajectories: res is NaN (altitude=" + altitude + ", airVelocity=" + airVelocity.magnitude + ", angleOfAttack=" + angleOfAttack);
                 return new Vector3d(0, 0, 0); // Don't send NaN into the simulation as it would cause bad things (infinite loops, crash, etc.). I think this case only happens at the atmosphere edge, so the total force should be 0 anyway.
             }
             return res;
@@ -507,9 +434,8 @@ namespace Trajectories
 
             double rho = useNEAR ? stockRho : (double)FARAeroUtil_GetCurrentDensity.Invoke(null, new object[] { body, altitudeAboveSea, false });
 
-            double actualMachNumber = useNEAR ? 0.0 : (double)FARAeroUtil_GetMachNumber.Invoke(null, new object[] { body_, altitudeAboveSea, new Vector3d((float)airVelocity.magnitude, 0, 0) });
 #if !USE_CACHE
-            return computeForces_FAR(rho, actualMachNumber, airVelocity, bodySpacePosition, angleOfAttack, dt);
+            return computeForces_FAR(altitudeAboveSea, airVelocity, bodySpacePosition, angleOfAttack, dt);
 #else
             //double approxMachNumber = useNEAR ? 0.0 : (double)FARAeroUtil_GetMachNumber.Invoke(null, new object[] { body_, body.maxAtmosphereAltitude * 0.5, new Vector3d((float)airVelocity.magnitude, 0, 0) });
             //Util.PostSingleScreenMessage("machNum", "machNumber = " + actualMachNumber + " ; approx machNumber = " + approxMachNumber);
