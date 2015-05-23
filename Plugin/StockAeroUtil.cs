@@ -1,4 +1,4 @@
-/*
+﻿/*
 Trajectories
 Copyright 2014, Youen Toupin
 
@@ -95,7 +95,7 @@ namespace Trajectories
             return GetDensity(altitude, latitude, body);
 
         }
-        
+
         //*******************************************************
         public static Vector3 SimAeroForce(Vessel _vessel, Vector3 v_wrld_vel, Vector3 position)
         {
@@ -110,7 +110,7 @@ namespace Trajectories
                 return Vector3.zero;
             }
             // dynamic pressure for standard drag equation
-            double dyn_pressure = 0.0005 * GetDensity(position,body) * v_wrld_vel.sqrMagnitude;
+            double dyn_pressure = 0.0005 * GetDensity(position, body) * v_wrld_vel.sqrMagnitude;
             double rho = GetDensity(altitude, latitude, body);
             //double pressure = _vessel.staticPressurekPa * 1000.0;
             double soundSpeed = _vessel.speedOfSound;
@@ -196,6 +196,7 @@ namespace Trajectories
 
             }
             // RETURN STUFF
+            Vector3 force = total_lift + total_drag;
             return force;
         }
     }

@@ -230,9 +230,9 @@ namespace Trajectories
             
             double maxAltitude = body_.atmosphereDepth;
             double currentAltitude = maxAltitude * (double)m / (double)(cachedFARForces.GetLength(2) - 1);
-            double pressure = FlightGlobals.getStaticPressure(currentAltitude, body_);
-            double temperature = FlightGlobals.getExternalTemperature(currentAltitude, body_);
-            double stockRho = FlightGlobals.getAtmDensity(pressure, temperature);
+            double pressure = StockAeroUtil.GetPressure(currentAltitude, 0.0f, body_); // 0.0 latitude, approximate for now.
+            double temperature = StockAeroUtil.GetTemperature(currentAltitude, 0.0f, body_); // 0.0 latitude, approximate for now.
+            double stockRho = StockAeroUtil.GetDensity(currentAltitude, 0.0f, body_); // 0.0 latitude, approximate for now.
             double rho = useNEAR ? stockRho : (double)FARAeroUtil_GetCurrentDensity.Invoke(null, new object[] { body_, currentAltitude, false });
             if (rho < 0.0000000001)
                 return new Vector2(0, 0);
@@ -317,10 +317,10 @@ namespace Trajectories
             }
 
             Vector2 res = sample3d(vFloor, vFrac, aFloor, aFrac, mFloor, mFrac);
-            
-            double pressure = FlightGlobals.getStaticPressure(altitudeAboveSea, body_);
-            double temperature = FlightGlobals.getExternalTemperature(altitudeAboveSea, body_);
-            double stockRho = FlightGlobals.getAtmDensity(pressure, temperature);
+
+            double pressure = StockAeroUtil.GetPressure(altitudeAboveSea, 0.0f, body_); // 0.0 latitude, approximate for now.
+            double temperature = StockAeroUtil.GetTemperature(altitudeAboveSea, 0.0f, body_); // 0.0 latitude, approximate for now.
+            double stockRho = StockAeroUtil.GetDensity(altitudeAboveSea, 0.0f, body_); // 0.0 latitude, approximate for now.
             double rho = useNEAR ? stockRho : (double)FARAeroUtil_GetCurrentDensity.Invoke(null, new object[] { body_, altitudeAboveSea, false });
 
             res = res * (float)(velocity * velocity * rho);
@@ -341,12 +341,13 @@ namespace Trajectories
         private Vector3d computeForces_StockDrag(CelestialBody body, Vector3d bodySpacePosition, Vector3d airVelocity, double dt)
         {
             double altitudeAboveSea = bodySpacePosition.magnitude - body.Radius;
-            double pressure = FlightGlobals.getStaticPressure(altitudeAboveSea, body);
-            double temperature = FlightGlobals.getExternalTemperature(altitudeAboveSea, body);
+            double pressure = StockAeroUtil.GetPressure(altitudeAboveSea, 0.0f, body_); // 0.0 latitude, approximate for now.
+            double temperature = StockAeroUtil.GetTemperature(altitudeAboveSea, 0.0f, body_); // 0.0 latitude, approximate for now.
+            
             if (pressure <= 0)
                 return Vector3d.zero;
 
-            double rho = FlightGlobals.getAtmDensity(pressure, temperature);
+            double rho = StockAeroUtil.GetDensity(altitudeAboveSea, 0.0f, body_); // 0.0 latitude, approximate for now.
 
             double velocityMag = airVelocity.magnitude;
 
