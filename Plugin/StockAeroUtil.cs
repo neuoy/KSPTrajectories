@@ -102,19 +102,28 @@ namespace Trajectories
             CelestialBody body = _vessel.mainBody;
             double latitude = body.GetLatitude(position) / 180.0 * Math.PI;
             double altitude = (position - body.position).magnitude - body.Radius;
+            double pressure = StockAeroUtil.GetPressure(position, body);
             // Lift and drag for force accumulation.
             Vector3d total_lift = Vector3d.zero;
             Vector3d total_drag = Vector3d.zero;
+
             if (altitude > body.atmosphereDepth)
             {
                 return Vector3.zero;
             }
+
             // dynamic pressure for standard drag equation
             double dyn_pressure = 0.0005 * GetDensity(position, body) * v_wrld_vel.sqrMagnitude;
             double rho = GetDensity(altitude, latitude, body);
+            if (rho < 0.00000001)
+            {
+                return Vector3.zero;
+            }
+
             //double pressure = _vessel.staticPressurekPa * 1000.0;
-            double soundSpeed = _vessel.speedOfSound;
+            double soundSpeed = body.GetSpeedOfSound(pressure, rho);
             double mach = v_wrld_vel.magnitude / soundSpeed;
+            if (mach > 25.0) { mach = 25.0; }
 
             // Loop through all parts, accumulating drag and lift.
             for (int i = 0; i < _vessel.Parts.Count; ++i)

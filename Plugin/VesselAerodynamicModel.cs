@@ -333,26 +333,81 @@ namespace Trajectories
         public Vector3d computeForces(CelestialBody body, Vector3d bodySpacePosition, Vector3d airVelocity, double angleOfAttack, double dt)
         {
             if(useStockModel)
-                return computeForces_StockDrag(body, bodySpacePosition, airVelocity, dt); // TODO: compute stock lift
+                return computeForces_StockAero(body, bodySpacePosition, new Vector3(0, 1, 0), angleOfAttack, airVelocity, dt); // TODO: cache?
             else
                 return computeForces_FAR(body, bodySpacePosition, airVelocity, angleOfAttack, dt);
         }
 
-        private Vector3d computeForces_StockDrag(CelestialBody body, Vector3d bodySpacePosition, Vector3d airVelocity, double dt)
+        private Vector3d computeForces_StockAero(CelestialBody body, Vector3d bodySpacePosition, Vector3d vup, double angleOfAttack, Vector3d airVelocity, double dt)
         {
+            Transform vesselTransform = vessel_.ReferenceTransform;
+
+            // this is weird, but the vessel orientation does not match the reference transform (up is forward), this code fixes it but I don't know if it'll work in all cases
+            Vector3d vesselBackward = (Vector3d)(-vesselTransform.up.normalized);
+            Vector3d vesselForward = -vesselBackward;
+            Vector3d vesselUp = (Vector3d)(-vesselTransform.forward.normalized);
+            Vector3d vesselRight = Vector3d.Cross(vesselUp, vesselBackward).normalized;
+
+            Vector3d airVelocityForFixedAoA = (vesselForward * Math.Cos(-angleOfAttack) + vesselUp * Math.Sin(-angleOfAttack)) * airVelocity.magnitude;
+
             double altitudeAboveSea = bodySpacePosition.magnitude - body.Radius;
             double pressure = StockAeroUtil.GetPressure(altitudeAboveSea, 0.0f, body_); // 0.0 latitude, approximate for now.
             double temperature = StockAeroUtil.GetTemperature(altitudeAboveSea, 0.0f, body_); // 0.0 latitude, approximate for now.
-            
-            if (pressure <= 0)
+
+            if (altitudeAboveSea >= body_.atmosphereDepth)
                 return Vector3d.zero;
 
-            double rho = StockAeroUtil.GetDensity(altitudeAboveSea, 0.0f, body_); // 0.0 latitude, approximate for now.
+            Vector3 aero_pos = (Vector3)bodySpacePosition + body.position;
+            //airVelocityForFixedAoA += body.getRFrmVel(aero_pos);
 
-            double velocityMag = airVelocity.magnitude;
+            Vector3 aero_force = StockAeroUtil.SimAeroForce(vessel_, (Vector3)airVelocityForFixedAoA, aero_pos);
+            Util.PostSingleScreenMessage("aeroforce", String.Format("aero_force = {0}",aero_force));
 
-            double crossSectionalArea = PhysicsGlobals.DragMultiplier * mass_;
-            return airVelocity * (-0.5 * rho * velocityMag * stockDragCoeff_ * crossSectionalArea);
+            Vector3d totalForce = (Vector3d)aero_force;
+            if (Double.IsNaN(totalForce.x) || Double.IsNaN(totalForce.y) || Double.IsNaN(totalForce.z))
+            {
+                Debug.Log("Trajectories: WARNING: StockAero totalForce is NAN (altitude=" + altitudeAboveSea + ", airVelocity=" + airVelocity.magnitude + ", angleOfAttack=" + angleOfAttack);
+                return new Vector3d(0, 0, 0); // Don't send NaN into the simulation as it would cause bad things (infinite loops, crash, etc.). I think this case only happens at the atmosphere edge, so the total force should be 0 anyway.
+            }
+
+            // convert the force computed by FAR (depends on the current vessel orientation, which is irrelevant for the prediction) to the predicted vessel orientation (which depends on the predicted velocity)
+            Vector3d localForce = new Vector3d(Vector3d.Dot(vesselRight, totalForce), Vector3d.Dot(vesselUp, totalForce), Vector3d.Dot(vesselBackward, totalForce));
+
+            //if (Double.IsNaN(localForce.x) || Double.IsNaN(localForce.y) || Double.IsNaN(localForce.z))
+            //    throw new Exception("localForce is NAN");
+
+            Vector3d velForward = airVelocity.normalized;
+            Vector3d velBackward = -velForward;
+            Vector3d velRight = Vector3d.Cross(vup, velBackward);
+            if (velRight.sqrMagnitude < 0.001)
+            {
+                velRight = Vector3d.Cross(vesselUp, velBackward);
+                if (velRight.sqrMagnitude < 0.001)
+                {
+                    velRight = Vector3d.Cross(vesselBackward, velBackward).normalized;
+                }
+                else
+                {
+                    velRight = velRight.normalized;
+                }
+            }
+            else
+                velRight = velRight.normalized;
+            Vector3d velUp = Vector3d.Cross(velBackward, velRight).normalized;
+
+            Vector3d predictedVesselForward = velForward * Math.Cos(angleOfAttack) + velUp * Math.Sin(angleOfAttack);
+            Vector3d predictedVesselBackward = -predictedVesselForward;
+            Vector3d predictedVesselRight = velRight;
+            Vector3d predictedVesselUp = Vector3d.Cross(predictedVesselBackward, predictedVesselRight).normalized;
+
+            Vector3d res = predictedVesselRight * localForce.x + predictedVesselUp * localForce.y + predictedVesselBackward * localForce.z;
+            if (Double.IsNaN(res.x) || Double.IsNaN(res.y) || Double.IsNaN(res.z))
+            {
+                Debug.Log("Trajectories: res is NaN (altitude=" + altitudeAboveSea + ", airVelocity=" + airVelocity.magnitude + ", angleOfAttack=" + angleOfAttack);
+                return new Vector3d(0, 0, 0); // Don't send NaN into the simulation as it would cause bad things (infinite loops, crash, etc.). I think this case only happens at the atmosphere edge, so the total force should be 0 anyway.
+            }
+            return res;
+
         }
 
         public Vector3d computeForces_FAR(double altitude, Vector3d airVelocity, Vector3d vup, double angleOfAttack, double dt)
