@@ -341,7 +341,7 @@ namespace Trajectories
         private Vector3d computeForces_StockAero(CelestialBody body, Vector3d bodySpacePosition, Vector3d vup, double angleOfAttack, Vector3d airVelocity, double dt)
         {
             Transform vesselTransform = vessel_.ReferenceTransform;
-
+            //TODO:  This is the same code as FAR call, so clearly it can be common in computeForces
             // this is weird, but the vessel orientation does not match the reference transform (up is forward), this code fixes it but I don't know if it'll work in all cases
             Vector3d vesselBackward = (Vector3d)(-vesselTransform.up.normalized);
             Vector3d vesselForward = -vesselBackward;
@@ -478,14 +478,14 @@ namespace Trajectories
         {
             double altitudeAboveSea = bodySpacePosition.magnitude - body.Radius;
 
-            double pressure = FlightGlobals.getStaticPressure(altitudeAboveSea, body);
+            double pressure = StockAeroUtil.GetPressure(altitudeAboveSea, 0.0, body);
             if (pressure <= 0) {
                 return Vector3d.zero;
             }
-                
-            double temperature = FlightGlobals.getExternalTemperature(altitudeAboveSea, body);
-            
-            double stockRho = FlightGlobals.getAtmDensity(pressure, temperature);
+
+            double temperature = StockAeroUtil.GetTemperature(altitudeAboveSea, 0.0, body);
+
+            double stockRho = StockAeroUtil.GetDensity(altitudeAboveSea, 0.0, body);
 
 
             double rho = useNEAR ? stockRho : (double)FARAeroUtil_GetCurrentDensity.Invoke(null, new object[] { body, altitudeAboveSea, false });

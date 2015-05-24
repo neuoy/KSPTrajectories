@@ -115,12 +115,7 @@ namespace Trajectories
             // dynamic pressure for standard drag equation
             double dyn_pressure = 0.0005 * GetDensity(position, body) * v_wrld_vel.sqrMagnitude;
             double rho = GetDensity(altitude, latitude, body);
-            if (rho < 0.00000001)
-            {
-                return Vector3.zero;
-            }
 
-            //double pressure = _vessel.staticPressurekPa * 1000.0;
             double soundSpeed = body.GetSpeedOfSound(pressure, rho);
             double mach = v_wrld_vel.magnitude / soundSpeed;
             if (mach > 25.0) { mach = 25.0; }
@@ -145,9 +140,25 @@ namespace Trajectories
                     Vector3 sim_dragVectorDirLocal = -(p.transform.InverseTransformDirection(v_wrld_vel.normalized));
 
                     DragCubeList cubes = p.DragCubes;
+
                     DragCubeList.CubeData p_drag_data;
+                    
                     // negative local air velocity should go into AddSurfaceDragDirection
-                    p_drag_data = cubes.AddSurfaceDragDirection(-sim_dragVectorDirLocal, (float)mach);
+                    try
+                    {
+                        p_drag_data = cubes.AddSurfaceDragDirection(-sim_dragVectorDirLocal, (float)mach);
+                    }
+                    catch (Exception e)
+                    {
+                        cubes.SetDrag(sim_dragVectorDirLocal, (float)mach);
+                        cubes.ForceUpdate(true, true);
+                        p_drag_data = cubes.AddSurfaceDragDirection(-sim_dragVectorDirLocal, (float)mach);
+                        //Debug.Log(String.Format("Trajectories: Caught NRE on Drag Initialization.  Should be fixed now.  {0}", e));
+                    }
+                    // NRE occurs in AddSurfaceDragDirection call if SetDrag isn't run to initialize.
+                    // ForceUpdate may not be necessary.
+                    // Runs the risk of something else throwing an NRE, but what are you going to do?
+                    // Logging disabled for performance - if someone is bug hunting turn it back on.
 
                     float areaDrag = p_drag_data.areaDrag;
                     float area = p_drag_data.area;
