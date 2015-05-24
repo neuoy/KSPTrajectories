@@ -405,7 +405,7 @@ namespace Trajectories
                 return Vector3d.zero;
 
             Vector3 aero_force = StockAeroUtil.SimAeroForce(vessel_, (Vector3)airVelocityForFixedAoA, altitude);
-            Util.PostSingleScreenMessage("aeroforce", String.Format("aero_force = {0}",aero_force));
+            //Util.PostSingleScreenMessage("aeroforce", String.Format("aero_force = {0}",aero_force));
 
             Vector3d totalForce = (Vector3d)aero_force;
             if (Double.IsNaN(totalForce.x) || Double.IsNaN(totalForce.y) || Double.IsNaN(totalForce.z))
@@ -466,12 +466,12 @@ namespace Trajectories
 
             Vector3d airVelocityForFixedAoA = (vesselForward * Math.Cos(-angleOfAttack) + vesselUp * Math.Sin(-angleOfAttack)) * airVelocity.magnitude;
 
-            Debug.Log("Trajectories: getting FAR forces");
+            //Debug.Log("Trajectories: getting FAR forces");
             Vector3 worldAirVel = new Vector3((float)airVelocityForFixedAoA.x, (float)airVelocityForFixedAoA.y, (float)airVelocityForFixedAoA.z);
             var parameters = new object[] { vessel_, new Vector3(), new Vector3(), worldAirVel, altitude };
             FARAPI_CalculateVesselAeroForces.Invoke(null, parameters);
             Vector3d totalForce = (Vector3)parameters[1];
-            Debug.Log("Trajectories: got FAR forces");
+            //Debug.Log("Trajectories: got FAR forces");
 
             if (Double.IsNaN(totalForce.x) || Double.IsNaN(totalForce.y) || Double.IsNaN(totalForce.z))
             {
