@@ -102,7 +102,15 @@ namespace Trajectories
             CelestialBody body = _vessel.mainBody;
             double latitude = body.GetLatitude(position) / 180.0 * Math.PI;
             double altitude = (position - body.position).magnitude - body.Radius;
-            double pressure = StockAeroUtil.GetPressure(position, body);
+
+            return SimAeroForce(_vessel, v_wrld_vel, altitude, latitude);
+        }
+
+        //*******************************************************
+        public static Vector3 SimAeroForce(Vessel _vessel, Vector3 v_wrld_vel, double altitude, double latitude = 0.0)
+        {
+            CelestialBody body = _vessel.mainBody;
+            double pressure = StockAeroUtil.GetPressure(altitude, latitude, body);
             // Lift and drag for force accumulation.
             Vector3d total_lift = Vector3d.zero;
             Vector3d total_drag = Vector3d.zero;
@@ -113,7 +121,7 @@ namespace Trajectories
             }
 
             // dynamic pressure for standard drag equation
-            double dyn_pressure = 0.0005 * GetDensity(position, body) * v_wrld_vel.sqrMagnitude;
+            double dyn_pressure = 0.0005 * GetDensity(altitude, latitude, body) * v_wrld_vel.sqrMagnitude;
             double rho = GetDensity(altitude, latitude, body);
 
             double soundSpeed = body.GetSpeedOfSound(pressure, rho);
@@ -142,7 +150,7 @@ namespace Trajectories
                     DragCubeList cubes = p.DragCubes;
 
                     DragCubeList.CubeData p_drag_data;
-                    
+
                     // negative local air velocity should go into AddSurfaceDragDirection
                     try
                     {
@@ -219,6 +227,6 @@ namespace Trajectories
             Vector3 force = total_lift + total_drag;
             return force;
         }
-    }
+    } //StockAeroUtil
 }
 
