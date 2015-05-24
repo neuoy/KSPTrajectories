@@ -222,10 +222,6 @@ namespace Trajectories
 
         private Vector2 computeCacheEntry(int v, int a, int m)
         {
-            // Disabled for now since StockAero can use this.
-            //if (!isFARInitialized())
-            //    throw new Exception("Internal error");
-
             double vel = maxFARVelocity * (double)v / (double)(cachedFARForces.GetLength(0) - 1);
             double v2 = Math.Max(1.0, vel * vel);
 
@@ -237,8 +233,10 @@ namespace Trajectories
             double temperature = StockAeroUtil.GetTemperature(currentAltitude, 0.0f, body_); // 0.0 latitude, approximate for now.
             double stockRho = StockAeroUtil.GetDensity(currentAltitude, 0.0f, body_); // 0.0 latitude, approximate for now.
             double rho = stockRho;
-            if (isFARInitialized())
+            if (!useStockModel)
             {
+                if (!isFARInitialized())
+                    throw new Exception("Internal error");
                 rho = useNEAR ? stockRho : (double)FARAeroUtil_GetCurrentDensity.Invoke(null, new object[] { body_, currentAltitude, false });
             }
             if (rho < 0.0000000001)
@@ -249,13 +247,13 @@ namespace Trajectories
             
             Vector3d force;
 
-            if (isFARInitialized())
-            {
-                force = computeForces_FAR(currentAltitude, velocity, new Vector3(0, 1, 0), AoA, 0.25) * invScale;
-            }
-            else // stock:
+            if (useStockModel)
             {
                 force = computeForces_StockAero(currentAltitude, velocity, new Vector3(0, 1, 0), AoA, 0.25) * invScale;
+            }
+            else
+            {
+                force = computeForces_FAR(currentAltitude, velocity, new Vector3(0, 1, 0), AoA, 0.25) * invScale;
             }
             return cachedFARForces[v, a, m] = new Vector2((float)force.x, (float)force.y);
         }
@@ -271,10 +269,6 @@ namespace Trajectories
 
         private Vector2 getCachedFARForce(int v, int a, int m)
         {
-            // Disabled for now since StockAero can use this.
-            //if (!isFARInitialized())
-            //    return new Vector2(0, 0);
-
             #if PRECOMPUTE_CACHE
             return cachedFARForces[v,a,m];
             #else
@@ -341,7 +335,7 @@ namespace Trajectories
             double temperature = StockAeroUtil.GetTemperature(altitudeAboveSea, 0.0f, body_); // 0.0 latitude, approximate for now.
             double stockRho = StockAeroUtil.GetDensity(altitudeAboveSea, 0.0f, body_); // 0.0 latitude, approximate for now.
             double rho = stockRho;
-            if (isFARInitialized())
+            if (!useStockModel)
             {
                 rho = useNEAR ? stockRho : (double)FARAeroUtil_GetCurrentDensity.Invoke(null, new object[] { body_, altitudeAboveSea, false });
             }
@@ -531,7 +525,7 @@ namespace Trajectories
 
             double stockRho = StockAeroUtil.GetDensity(altitudeAboveSea, 0.0, body);
             double rho = stockRho;
-            if (isFARInitialized())
+            if (!useStockModel)
             {
                 rho = useNEAR ? stockRho : (double)FARAeroUtil_GetCurrentDensity.Invoke(null, new object[] { body, altitudeAboveSea, false });
             }

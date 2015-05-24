@@ -156,7 +156,7 @@ namespace Trajectories
                     {
                         p_drag_data = cubes.AddSurfaceDragDirection(-sim_dragVectorDirLocal, (float)mach);
                     }
-                    catch (Exception e)
+                    catch (Exception)
                     {
                         cubes.SetDrag(sim_dragVectorDirLocal, (float)mach);
                         cubes.ForceUpdate(true, true);
