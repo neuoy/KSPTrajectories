@@ -67,6 +67,7 @@
     <Compile Include="NavBallOverlay.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Settings.cs" />
+    <Compile Include="StockAeroUtil.cs" />
     <Compile Include="TrajectoriesVesselSettings.cs" />
     <Compile Include="Trajectory.cs" />
     <Compile Include="Util.cs" />
