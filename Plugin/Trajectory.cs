@@ -461,6 +461,13 @@ namespace Trajectories
                 }
                 else
                 {
+                    if (patch.startingState.referenceBody != vessel_.mainBody)
+                    {
+                        // in current aerodynamic prediction code, we can't handle predictions for another body, so we stop here
+                        AddPatch_outState = null;
+                        yield break;
+                    }
+
                     // simulate atmospheric flight (drag and lift), until landing (more likely to be a crash as we don't predict user piloting) or atmosphere exit (typically for an aerobraking maneuver)
                     // the simulation assumes a constant angle of attack
 
@@ -558,7 +565,7 @@ namespace Trajectories
                         //Util.PostSingleScreenMessage("prediction vel", "prediction vel = " + vel);
                         Vector3d airVelocity = vel - body.getRFrmVel(body.position + pos);
                         double angleOfAttack = profile.GetAngleOfAttack(body, pos, airVelocity);
-                        Vector3d aerodynamicForce = aerodynamicModel_.computeForces(body, pos, airVelocity, angleOfAttack, dt);
+                        Vector3d aerodynamicForce = aerodynamicModel_.getForces(body, pos, airVelocity, angleOfAttack, dt);
                         Vector3d acceleration = gravityAccel + aerodynamicForce / aerodynamicModel_.mass;
 
                         // acceleration in the vessel reference frame is acceleration - gravityAccel
