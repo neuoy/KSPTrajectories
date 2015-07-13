@@ -48,7 +48,8 @@ namespace Trajectories
         private MethodInfo FARAPI_CalculateVesselAeroForces;
 		private MethodInfo FARAeroUtil_GetCurrentDensity;
 
-        public bool Verbose { get; set; }
+        public static bool Verbose { get; set; }
+        public static bool DisableCache { get; set; }
 
         public VesselAerodynamicModel(Vessel vessel, CelestialBody body)
         {
@@ -81,7 +82,7 @@ namespace Trajectories
             if (vessel != vessel_ || body_ != body)
                 return false;
 
-            if (!useStockModel && Settings.fetch.AutoUpdateAerodynamicModel)
+            if (Settings.fetch.AutoUpdateAerodynamicModel)
             {
                 double newRefDrag = computeFARReferenceDrag();
                 if (referenceDrag == 0)
@@ -90,7 +91,9 @@ namespace Trajectories
                 if (ratio > 1.2 && DateTime.Now > nextAllowedAutomaticUpdate)
                 {
                     nextAllowedAutomaticUpdate = DateTime.Now.AddSeconds(10); // limit updates frequency (could make the game almost unresponsive on some computers)
-                    //ScreenMessages.PostScreenMessage("Trajectory aerodynamic model auto-updated");
+                    #if DEBUG
+                    ScreenMessages.PostScreenMessage("Trajectory aerodynamic model auto-updated");
+                    #endif
                     isValid = false;
                 }
             }
@@ -110,8 +113,11 @@ namespace Trajectories
 
         public double computeFARReferenceDrag()
         {
-            if (useStockModel) { return -1.0; }
-            Vector3 forces = computeForces_FAR(3000, new Vector3d(3000.0, 0, 0), new Vector3(0, 1, 0), 0, 0.25);
+            Vector3 forces;
+            if (useStockModel)
+                forces = computeForces_StockAero(3000, new Vector3d(3000.0, 0, 0), new Vector3(0, 1, 0), 0, 0.25);
+            else
+                forces = computeForces_FAR(3000, new Vector3d(3000.0, 0, 0), new Vector3(0, 1, 0), 0, 0.25);
             return forces.sqrMagnitude;
         }
 
@@ -177,7 +183,7 @@ namespace Trajectories
             maxFARAngleOfAttack = 180.0 / 180.0 * Math.PI;
 
             int velocityResolution = 32;
-            int angleOfAttackResolution = 32;
+            int angleOfAttackResolution = 33; // even number to include exactly 0°
             int altitudeResolution = 32;
 
             cachedFARForces = new Vector2[velocityResolution, angleOfAttackResolution, altitudeResolution];
@@ -274,7 +280,7 @@ namespace Trajectories
             #else
             Vector2 f = cachedFARForces[v, a, m];
 
-            if(float.IsNaN(f.x))
+            if(float.IsNaN(f.x) || DisableCache)
             {
                 f = computeCacheEntry(v,a,m); 
             }
