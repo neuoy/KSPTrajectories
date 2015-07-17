@@ -57,7 +57,7 @@ namespace Trajectories
             body_ = body;
 
             updateVesselInfo();
-
+            
             initFARModel();
         }
 
