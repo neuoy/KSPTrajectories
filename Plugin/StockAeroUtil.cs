@@ -24,76 +24,84 @@ namespace Trajectories
     // this class provides several methods to access stock aero information
     public static class StockAeroUtil
     {
-        public static double GetTemperature(double altitude, double latitude, CelestialBody body)
+        /// <summary>
+        /// This function should return exactly the same value as Vessel.atmDensity, but is more generic because you don't need an actual vessel updated by KSP to get a value at the desired location.
+        /// Computations are performed for the current body position, which means it's theoritically wrong if you want to know the temperature in the future, but since body rotation is not used (position is given in sun frame), you should get accurate results up to a few weeks.
+        /// </summary>
+        /// <param name="position"></param>
+        /// <param name="body"></param>
+        /// <returns></returns>
+        public static double GetTemperature(Vector3d position, CelestialBody body)
         {
-            double maxAltitude = body.atmosphereDepth;
-            double space_temp = PhysicsGlobals.SpaceTemperature;
-            double surfc_temp = body.atmosphereTemperatureSeaLevel;
-            if (altitude > maxAltitude)
-            {
+            if (!body.atmosphere)
                 return PhysicsGlobals.SpaceTemperature;
-            }
-            double base_temp = body.GetTemperature(altitude);
-            double lat_bias = body.latitudeTemperatureBiasCurve.Evaluate((float)latitude);
-            double lat_mult = body.latitudeTemperatureSunMultCurve.Evaluate((float)latitude);
-            double altitude_temp_mult = body.atmosphereTemperatureSunMultCurve.Evaluate((float)altitude);
-            double axial_temp_mult = body.axialTemperatureSunMultCurve.Evaluate(0);
-            // Solar effect too complicated, worth ~4 degrees sea level Kerbin?
-            double solar_effect = 1.0;
-            double atmo_factor = (lat_bias + lat_mult * solar_effect + axial_temp_mult) * altitude_temp_mult;
-            return base_temp + atmo_factor;
-        }
 
-        public static double GetTemperature(Vector3 position, CelestialBody body)
-        {
-            double latitude = body.GetLatitude(position) / 180.0 * Math.PI;
             double altitude = (position - body.position).magnitude - body.Radius;
-            return GetTemperature(altitude, latitude, body);
+            if (altitude > body.atmosphereDepth)
+                return PhysicsGlobals.SpaceTemperature;
 
-        }
-
-        public static double GetPressure(double altitude, double latitude, CelestialBody body)
-        {
-            // Get pressure
-            if (!body.atmosphere) { return 0.0d; }
-            if (altitude >= body.atmosphereDepth) { return 0.0d; }
-            if (!body.atmosphereUsePressureCurve)
+            Vector3 up = (position - body.position).normalized;
+            float polarAngle = Mathf.Acos(Vector3.Dot(body.bodyTransform.up, up));
+            if (polarAngle > Mathf.PI / 2.0f)
             {
-                return body.atmospherePressureSeaLevel * Math.Pow(1 - body.atmosphereTemperatureLapseRate * altitude / body.atmosphereTemperatureSeaLevel, body.atmosphereGasMassLapseRate);
+                polarAngle = Mathf.PI - polarAngle;
             }
-            if (!body.atmospherePressureCurveIsNormalized)
-            {
-                return body.atmospherePressureCurve.Evaluate((float)altitude);
-            }
-            return Mathf.Lerp(0f, (float)body.atmospherePressureSeaLevel, body.atmospherePressureCurve.Evaluate((float)(altitude / body.atmosphereDepth)));
+            float time = (Mathf.PI / 2.0f - polarAngle) * 57.29578f;
+
+            Vector3 sunVector = (FlightGlobals.Bodies[0].position - position).normalized;
+            float sunAxialDot = Vector3.Dot(sunVector, body.bodyTransform.up);
+            float bodyPolarAngle = Mathf.Acos(Vector3.Dot(body.bodyTransform.up, up));
+            float sunPolarAngle = Mathf.Acos(sunAxialDot);
+            float sunBodyMaxDot = (1.0f + Mathf.Cos(sunPolarAngle - bodyPolarAngle)) * 0.5f;
+            float sunBodyMinDot = (1.0f + Mathf.Cos(sunPolarAngle + bodyPolarAngle)) * 0.5f;
+            float sunDotCorrected = (1.0f + Vector3.Dot(sunVector, Quaternion.AngleAxis(-45f * Mathf.Sign((float)body.rotationPeriod), body.bodyTransform.up) * up)) * 0.5f;
+            float sunDotNormalized = (sunDotCorrected - sunBodyMinDot) / (sunBodyMaxDot - sunBodyMinDot);
+            double atmosphereTemperatureOffset = (double)body.latitudeTemperatureBiasCurve.Evaluate(time) + (double)body.latitudeTemperatureSunMultCurve.Evaluate(time) * sunDotNormalized + (double)body.axialTemperatureSunMultCurve.Evaluate(sunAxialDot);
+            double temperature = body.GetTemperature(altitude) + (double)body.atmosphereTemperatureSunMultCurve.Evaluate((float)altitude) * atmosphereTemperatureOffset;
+
+            return temperature;
         }
 
-        public static double GetPressure(Vector3 position, CelestialBody body)
+        /// <summary>
+        /// Gets the air density (rho) for the specified altitude on the specified body.
+        /// This is an approximation, because actual calculations, taking sun exposure into account to compute air temperature, require to know the actual point on the body where the density is to be computed (knowing the altitude is not enough).
+        /// However, the difference is small for high altitudes, so it makes very little difference for trajectory prediction.
+        /// </summary>
+        /// <param name="altitude">Altitude above sea level (in meters)</param>
+        /// <param name="body"></param>
+        /// <returns></returns>
+        public static double GetDensity(double altitude, CelestialBody body)
         {
-            double latitude = body.GetLatitude(position) / 180.0 * Math.PI;
+            if (!body.atmosphere)
+                return 0;
+
+            if (altitude > body.atmosphereDepth)
+                return 0;
+
+            double pressure = body.GetPressure(altitude);
+
+            // get an average day/night temperature at the equator
+            double sunDot = 0.5;
+            float sunAxialDot = 0;
+            double atmosphereTemperatureOffset = (double)body.latitudeTemperatureBiasCurve.Evaluate(0) + (double)body.latitudeTemperatureSunMultCurve.Evaluate(0) * sunDot + (double)body.axialTemperatureSunMultCurve.Evaluate(sunAxialDot);
+            double temperature = body.GetTemperature(altitude) + (double)body.atmosphereTemperatureSunMultCurve.Evaluate((float)altitude) * atmosphereTemperatureOffset;
+
+            return body.GetDensity(pressure, temperature);
+        }
+
+        public static double GetDensity(Vector3d position, CelestialBody body)
+        {
+            if (!body.atmosphere)
+                return 0;
+
             double altitude = (position - body.position).magnitude - body.Radius;
-            return GetPressure(altitude, latitude, body);
+            if (altitude > body.atmosphereDepth)
+                return 0;
 
-        }
+            double pressure = body.GetPressure(altitude);
+            double temperature = GetTemperature(position, body);
 
-        public static double GetDensity(double altitude, double latitude, CelestialBody body)
-        {
-
-            if (!body.atmosphere) { return 0.0d; }
-            if (altitude >= body.atmosphereDepth) { return 0.0d; }
-
-            double temp = GetTemperature(altitude, latitude, body);
-            double pressure = GetPressure(altitude, latitude, body);
-
-            return FlightGlobals.getAtmDensity(pressure, temp, body);
-        }
-
-        public static double GetDensity(Vector3 position, CelestialBody body)
-        {
-            double latitude = body.GetLatitude(position) / 180.0 * Math.PI;
-            double altitude = (position - body.position).magnitude - body.Radius;
-            return GetDensity(altitude, latitude, body);
-
+            return body.GetDensity(pressure, temperature);
         }
 
         //*******************************************************
@@ -110,19 +118,19 @@ namespace Trajectories
         public static Vector3 SimAeroForce(Vessel _vessel, Vector3 v_wrld_vel, double altitude, double latitude = 0.0)
         {
             CelestialBody body = _vessel.mainBody;
-            double pressure = StockAeroUtil.GetPressure(altitude, latitude, body);
+            double pressure = body.GetPressure(altitude);
             // Lift and drag for force accumulation.
             Vector3d total_lift = Vector3d.zero;
             Vector3d total_drag = Vector3d.zero;
 
-            if (altitude > body.atmosphereDepth)
+            // dynamic pressure for standard drag equation
+            double rho = GetDensity(altitude, body);
+            double dyn_pressure = 0.0005 * rho * v_wrld_vel.sqrMagnitude;
+
+            if (rho <= 0)
             {
                 return Vector3.zero;
             }
-
-            // dynamic pressure for standard drag equation
-            double dyn_pressure = 0.0005 * GetDensity(altitude, latitude, body) * v_wrld_vel.sqrMagnitude;
-            double rho = GetDensity(altitude, latitude, body);
 
             double soundSpeed = body.GetSpeedOfSound(pressure, rho);
             double mach = v_wrld_vel.magnitude / soundSpeed;
@@ -133,94 +141,88 @@ namespace Trajectories
             {
                 // need checks on shielded components
                 Part p = _vessel.Parts[i];
-                if (p.ShieldedFromAirstream)
+                if (p.ShieldedFromAirstream || p.Rigidbody == null)
                 {
                     continue;
                 }
-                if (p.rb == null)
+                
+                // Get Drag
+                Vector3 sim_dragVectorDir = v_wrld_vel.normalized;
+                Vector3 sim_dragVectorDirLocal = -(p.transform.InverseTransformDirection(v_wrld_vel.normalized));
+
+                DragCubeList cubes = p.DragCubes;
+
+                DragCubeList.CubeData p_drag_data;
+
+                // negative local air velocity should go into AddSurfaceDragDirection
+                try
                 {
-                    continue;
+                    p_drag_data = cubes.AddSurfaceDragDirection(-sim_dragVectorDirLocal, (float)mach);
                 }
-                if (true)
+                catch (Exception)
                 {
-                    // Get Drag
-                    Vector3 sim_dragVectorDir = v_wrld_vel.normalized;
-                    Vector3 sim_dragVectorDirLocal = -(p.transform.InverseTransformDirection(v_wrld_vel.normalized));
+                    cubes.SetDrag(sim_dragVectorDirLocal, (float)mach);
+                    cubes.ForceUpdate(true, true);
+                    p_drag_data = cubes.AddSurfaceDragDirection(-sim_dragVectorDirLocal, (float)mach);
+                    //Debug.Log(String.Format("Trajectories: Caught NRE on Drag Initialization.  Should be fixed now.  {0}", e));
+                }
+                // NRE occurs in AddSurfaceDragDirection call if SetDrag isn't run to initialize.
+                // ForceUpdate may not be necessary.
+                // Runs the risk of something else throwing an NRE, but what are you going to do?
+                // Logging disabled for performance - if someone is bug hunting turn it back on.
 
-                    DragCubeList cubes = p.DragCubes;
+                float areaDrag = p_drag_data.areaDrag;
+                float area = p_drag_data.area;
+                float dragCoeff = p_drag_data.dragCoeff;
+                Vector3 dragVector = p_drag_data.dragVector;
+                Vector3 liftForce = p_drag_data.liftForce;
 
-                    DragCubeList.CubeData p_drag_data;
+                double sim_dragScalar = dyn_pressure * (double)areaDrag * PhysicsGlobals.DragCubeMultiplier * PhysicsGlobals.DragMultiplier;
 
-                    // negative local air velocity should go into AddSurfaceDragDirection
-                    try
+                // If it isn't a wing or lifter, get body lift.
+                if (!p.hasLiftModule)
+                {
+                    float simbodyLiftScalar = p.bodyLiftMultiplier * PhysicsGlobals.BodyLiftMultiplier * (float)dyn_pressure;
+                    simbodyLiftScalar *= PhysicsGlobals.GetLiftingSurfaceCurve("BodyLift").liftMachCurve.Evaluate((float)mach);
+                    Vector3 bodyLift = p.transform.rotation * (simbodyLiftScalar * liftForce);
+                    bodyLift = Vector3.ProjectOnPlane(bodyLift, sim_dragVectorDir);
+                    // Only accumulate forces for non-LiftModules
+                    total_lift += bodyLift;
+                    total_drag += -(Vector3d)sim_dragVectorDir * sim_dragScalar;
+                }
+
+                // Find ModuleLifingSurface for wings and liftforce.
+                // Should catch control surface as it is a subclass
+                for (int j = 0; j < p.Modules.Count; ++j)
+                {
+                    var m = p.Modules[j];
+                    float mcs_mod;
+                    if (m is ModuleLiftingSurface)
                     {
-                        p_drag_data = cubes.AddSurfaceDragDirection(-sim_dragVectorDirLocal, (float)mach);
+                        mcs_mod = 1.0f;
+                        double liftQ = dyn_pressure * 1000;
+                        ModuleLiftingSurface wing = (ModuleLiftingSurface)m;
+                        Vector3 nVel = Vector3.zero;
+                        Vector3 liftVector = Vector3.zero;
+                        float liftdot;
+                        float absdot;
+                        wing.SetupCoefficients(v_wrld_vel, rho, out nVel, out liftVector, out liftdot, out absdot);
+
+                        float simLiftScalar = Mathf.Sign(liftdot) * wing.liftCurve.Evaluate(absdot) * wing.liftMachCurve.Evaluate((float)mach);
+                        simLiftScalar *= wing.deflectionLiftCoeff;
+                        simLiftScalar = (float)(liftQ * (double)(PhysicsGlobals.LiftMultiplier * simLiftScalar));
+
+                        float simdragScalar = wing.dragCurve.Evaluate(absdot) * wing.dragMachCurve.Evaluate((float)mach);
+                        simdragScalar *= wing.deflectionLiftCoeff;
+                        simdragScalar = (float)(liftQ * (double)(simdragScalar * PhysicsGlobals.LiftDragMultiplier));
+
+                        Vector3 local_lift = mcs_mod * wing.GetLiftVector(liftVector, liftdot, absdot, liftQ, (float)mach);
+                        Vector3 local_drag = mcs_mod * wing.GetDragVector(nVel, absdot, liftQ);
+
+                        total_lift += local_lift;
+                        total_drag += local_drag;
                     }
-                    catch (Exception)
-                    {
-                        cubes.SetDrag(sim_dragVectorDirLocal, (float)mach);
-                        cubes.ForceUpdate(true, true);
-                        p_drag_data = cubes.AddSurfaceDragDirection(-sim_dragVectorDirLocal, (float)mach);
-                        //Debug.Log(String.Format("Trajectories: Caught NRE on Drag Initialization.  Should be fixed now.  {0}", e));
-                    }
-                    // NRE occurs in AddSurfaceDragDirection call if SetDrag isn't run to initialize.
-                    // ForceUpdate may not be necessary.
-                    // Runs the risk of something else throwing an NRE, but what are you going to do?
-                    // Logging disabled for performance - if someone is bug hunting turn it back on.
-
-                    float areaDrag = p_drag_data.areaDrag;
-                    float area = p_drag_data.area;
-                    float dragCoeff = p_drag_data.dragCoeff;
-                    Vector3 dragVector = p_drag_data.dragVector;
-                    Vector3 liftForce = p_drag_data.liftForce;
-
-                    double sim_dragScalar = dyn_pressure * (double)areaDrag * PhysicsGlobals.DragCubeMultiplier * PhysicsGlobals.DragMultiplier;
-
-                    // If it isn't a wing or lifter, get body lift.
-                    if (!p.hasLiftModule)
-                    {
-                        float simbodyLiftScalar = p.bodyLiftMultiplier * PhysicsGlobals.BodyLiftMultiplier * (float)dyn_pressure;
-                        simbodyLiftScalar *= PhysicsGlobals.GetLiftingSurfaceCurve("BodyLift").liftMachCurve.Evaluate((float)mach);
-                        Vector3 bodyLift = p.transform.rotation * (simbodyLiftScalar * liftForce);
-                        bodyLift = Vector3.ProjectOnPlane(bodyLift, sim_dragVectorDir);
-                        // Only accumulate forces for non-LiftModules
-                        total_lift += bodyLift;
-                        total_drag += -(Vector3d)sim_dragVectorDir * sim_dragScalar;
-                    }
-
-                    // Find ModuleLifingSurface for wings and liftforce.
-                    // Should catch control surface as it is a subclass
-                    for (int j = 0; j < p.Modules.Count; ++j)
-                    {
-                        var m = p.Modules[j];
-                        float mcs_mod;
-                        if (m is ModuleLiftingSurface)
-                        {
-                            mcs_mod = 1.0f;
-                            double liftQ = dyn_pressure * 1000;
-                            ModuleLiftingSurface wing = (ModuleLiftingSurface)m;
-                            Vector3 nVel = Vector3.zero;
-                            Vector3 liftVector = Vector3.zero;
-                            float liftdot;
-                            float absdot;
-                            wing.SetupCoefficients(v_wrld_vel, rho, out nVel, out liftVector, out liftdot, out absdot);
-
-                            float simLiftScalar = Mathf.Sign(liftdot) * wing.liftCurve.Evaluate(absdot) * wing.liftMachCurve.Evaluate((float)mach);
-                            simLiftScalar *= wing.deflectionLiftCoeff;
-                            simLiftScalar = (float)(liftQ * (double)(PhysicsGlobals.LiftMultiplier * simLiftScalar));
-
-                            float simdragScalar = wing.dragCurve.Evaluate(absdot) * wing.dragMachCurve.Evaluate((float)mach);
-                            simdragScalar *= wing.deflectionLiftCoeff;
-                            simdragScalar = (float)(liftQ * (double)(simdragScalar * PhysicsGlobals.LiftDragMultiplier));
-
-                            Vector3 local_lift = mcs_mod * wing.GetLiftVector(liftVector, liftdot, absdot, liftQ, (float)mach);
-                            Vector3 local_drag = mcs_mod * wing.GetDragVector(nVel, absdot, liftQ);
-
-                            total_lift += local_lift;
-                            total_drag += local_drag;
-                        }
-                    } // module loop
-                } //shielded
+                }
 
             }
             // RETURN STUFF
