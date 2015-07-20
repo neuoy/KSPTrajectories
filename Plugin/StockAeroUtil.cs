@@ -148,36 +148,53 @@ namespace Trajectories
                 
                 // Get Drag
                 Vector3 sim_dragVectorDir = v_wrld_vel.normalized;
-                Vector3 sim_dragVectorDirLocal = -(p.transform.InverseTransformDirection(v_wrld_vel.normalized));
+                Vector3 sim_dragVectorDirLocal = -(p.transform.InverseTransformDirection(sim_dragVectorDir));
 
-                DragCubeList cubes = p.DragCubes;
+                Vector3 liftForce = new Vector3(0, 0, 0);
 
-                DragCubeList.CubeData p_drag_data;
-
-                // negative local air velocity should go into AddSurfaceDragDirection
-                try
+                switch(p.dragModel)
                 {
-                    p_drag_data = cubes.AddSurfaceDragDirection(-sim_dragVectorDirLocal, (float)mach);
-                }
-                catch (Exception)
-                {
-                    cubes.SetDrag(sim_dragVectorDirLocal, (float)mach);
-                    cubes.ForceUpdate(true, true);
-                    p_drag_data = cubes.AddSurfaceDragDirection(-sim_dragVectorDirLocal, (float)mach);
-                    //Debug.Log(String.Format("Trajectories: Caught NRE on Drag Initialization.  Should be fixed now.  {0}", e));
-                }
-                // NRE occurs in AddSurfaceDragDirection call if SetDrag isn't run to initialize.
-                // ForceUpdate may not be necessary.
-                // Runs the risk of something else throwing an NRE, but what are you going to do?
-                // Logging disabled for performance - if someone is bug hunting turn it back on.
+                    case Part.DragModel.DEFAULT:
+                    case Part.DragModel.CUBE:
+                        DragCubeList cubes = p.DragCubes;
 
-                float areaDrag = p_drag_data.areaDrag;
-                float area = p_drag_data.area;
-                float dragCoeff = p_drag_data.dragCoeff;
-                Vector3 dragVector = p_drag_data.dragVector;
-                Vector3 liftForce = p_drag_data.liftForce;
+                        DragCubeList.CubeData p_drag_data;
 
-                double sim_dragScalar = dyn_pressure * (double)areaDrag * PhysicsGlobals.DragCubeMultiplier * PhysicsGlobals.DragMultiplier;
+                        try
+                        {
+                            p_drag_data = cubes.AddSurfaceDragDirection(-sim_dragVectorDirLocal, (float)mach);
+                        }
+                        catch (Exception)
+                        {
+                            cubes.SetDrag(sim_dragVectorDirLocal, (float)mach);
+                            cubes.ForceUpdate(true, true);
+                            p_drag_data = cubes.AddSurfaceDragDirection(-sim_dragVectorDirLocal, (float)mach);
+                            //Debug.Log(String.Format("Trajectories: Caught NRE on Drag Initialization.  Should be fixed now.  {0}", e));
+                        }
+
+                        double sim_dragScalar = dyn_pressure * (double)p_drag_data.areaDrag * PhysicsGlobals.DragCubeMultiplier * PhysicsGlobals.DragMultiplier;
+                        total_drag += -(Vector3d)sim_dragVectorDir * sim_dragScalar;
+
+                        liftForce = p_drag_data.liftForce;
+
+                        break;
+
+                    case Part.DragModel.SPHERICAL:
+                        total_drag += -(Vector3d)sim_dragVectorDir * (double)p.maximum_drag;
+                        break;
+
+                    case Part.DragModel.CYLINDRICAL:
+                        total_drag += -(Vector3d)sim_dragVectorDir * (double)Mathf.Lerp(p.minimum_drag, p.maximum_drag, Mathf.Abs(Vector3.Dot(p.partTransform.TransformDirection(p.dragReferenceVector), sim_dragVectorDir)));
+                        break;
+
+                    case Part.DragModel.CONIC:
+                        total_drag += -(Vector3d)sim_dragVectorDir * (double)Mathf.Lerp(p.minimum_drag, p.maximum_drag, Vector3.Angle(p.partTransform.TransformDirection(p.dragReferenceVector), sim_dragVectorDir) / 180f);
+                        break;
+
+                    default:
+                        // no drag to apply
+                        break;
+                }
 
                 // If it isn't a wing or lifter, get body lift.
                 if (!p.hasLiftModule)
@@ -188,7 +205,6 @@ namespace Trajectories
                     bodyLift = Vector3.ProjectOnPlane(bodyLift, sim_dragVectorDir);
                     // Only accumulate forces for non-LiftModules
                     total_lift += bodyLift;
-                    total_drag += -(Vector3d)sim_dragVectorDir * sim_dragScalar;
                 }
 
                 // Find ModuleLifingSurface for wings and liftforce.
