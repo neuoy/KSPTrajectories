@@ -459,6 +459,9 @@ namespace Trajectories
 
         public Vector3d computeForces_FAR(double altitude, Vector3d airVelocity, Vector3d vup, double angleOfAttack, double dt)
         {
+            if (!vessel_.mainBody.atmosphere)
+                return new Vector3d(0, 0, 0);
+
             Transform vesselTransform = vessel_.ReferenceTransform;
 
             // this is weird, but the vessel orientation does not match the reference transform (up is forward), this code fixes it but I don't know if it'll work in all cases
