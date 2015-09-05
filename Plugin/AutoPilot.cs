@@ -75,7 +75,7 @@ namespace Trajectories
                     }
                     
                     callback = new FlightInputCallback((controls) => autoPilot(this, controls));
-                    activeVessel.OnFlyByWire += callback;
+                    //activeVessel.OnFlyByWire += callback; // this is disabled for now, because it breaks Remote Tech signal delay
                 }
             }
 
