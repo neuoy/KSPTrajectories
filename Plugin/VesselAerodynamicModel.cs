@@ -29,7 +29,6 @@ namespace Trajectories
 
         private Vessel vessel_;
         private CelestialBody body_;
-        private double stockDragCoeff_;
 
         private Vector2[,,] cachedFARForces; // cached aerodynamic forces in a two dimensional array : indexed by velocity magnitude, atmosphere density and angle of attack
         private double maxFARVelocity;
@@ -42,38 +41,39 @@ namespace Trajectories
         private bool cachePrecomputed = false;
         #endif
         private double referenceDrag = 0;
+        private int referencePartCount = 0;
         private DateTime nextAllowedAutomaticUpdate = DateTime.Now;
 
         private Type FARAPIType;
         private MethodInfo FARAPI_CalculateVesselAeroForces;
 		private MethodInfo FARAeroUtil_GetCurrentDensity;
 
-        public bool Verbose { get; set; }
+        public static bool Verbose { get; set; }
+        public static bool DisableCache { get; set; }
 
         public VesselAerodynamicModel(Vessel vessel, CelestialBody body)
         {
             vessel_ = vessel;
             body_ = body;
 
-            updateVesselInfo();
+            referencePartCount = vessel.Parts.Count;
 
+            updateVesselInfo();
+            
             initFARModel();
         }
 
         private void updateVesselInfo()
         {
-            stockDragCoeff_ = 0.0;
             mass_ = 0.0;
             foreach (var part in vessel_.Parts)
             {
                 if (part.physicalSignificance == Part.PhysicalSignificance.NONE)
                     continue;
 
-                float partMass = part.mass + part.GetResourceMass();
-                stockDragCoeff_ += part.maximum_drag * partMass;
+                float partMass = part.mass + part.GetResourceMass() + part.GetPhysicslessChildMass();
                 mass_ += partMass;
             }
-            stockDragCoeff_ /= mass_;
         }
 
         public bool isValidFor(Vessel vessel, CelestialBody body)
@@ -81,16 +81,20 @@ namespace Trajectories
             if (vessel != vessel_ || body_ != body)
                 return false;
 
-            if (!useStockModel && Settings.fetch.AutoUpdateAerodynamicModel)
+            if (Settings.fetch.AutoUpdateAerodynamicModel)
             {
                 double newRefDrag = computeFARReferenceDrag();
                 if (referenceDrag == 0)
+                {
                     referenceDrag = newRefDrag;
+                }
                 double ratio = Math.Max(newRefDrag, referenceDrag) / Math.Max(1, Math.Min(newRefDrag, referenceDrag));
-                if (ratio > 1.2 && DateTime.Now > nextAllowedAutomaticUpdate)
+                if (ratio > 1.2 && DateTime.Now > nextAllowedAutomaticUpdate || referencePartCount != vessel.Parts.Count)
                 {
                     nextAllowedAutomaticUpdate = DateTime.Now.AddSeconds(10); // limit updates frequency (could make the game almost unresponsive on some computers)
-                    //ScreenMessages.PostScreenMessage("Trajectory aerodynamic model auto-updated");
+                    #if DEBUG
+                    ScreenMessages.PostScreenMessage("Trajectory aerodynamic model auto-updated");
+                    #endif
                     isValid = false;
                 }
             }
@@ -110,8 +114,11 @@ namespace Trajectories
 
         public double computeFARReferenceDrag()
         {
-            if (useStockModel) { return -1.0; }
-            Vector3 forces = computeForces_FAR(3000, new Vector3d(3000.0, 0, 0), new Vector3(0, 1, 0), 0, 0.25);
+            Vector3 forces;
+            if (useStockModel)
+                forces = computeForces_StockAero(3000, new Vector3d(3000.0, 0, 0), new Vector3(0, 1, 0), 0, 0.25);
+            else
+                forces = computeForces_FAR(3000, new Vector3d(3000.0, 0, 0), new Vector3(0, 1, 0), 0, 0.25);
             return forces.sqrMagnitude;
         }
 
@@ -177,7 +184,7 @@ namespace Trajectories
             maxFARAngleOfAttack = 180.0 / 180.0 * Math.PI;
 
             int velocityResolution = 32;
-            int angleOfAttackResolution = 32;
+            int angleOfAttackResolution = 33; // even number to include exactly 0°
             int altitudeResolution = 32;
 
             cachedFARForces = new Vector2[velocityResolution, angleOfAttackResolution, altitudeResolution];
@@ -229,9 +236,7 @@ namespace Trajectories
             
             double maxAltitude = body_.atmosphereDepth;
             double currentAltitude = maxAltitude * (double)m / (double)(cachedFARForces.GetLength(2) - 1);
-            double pressure = StockAeroUtil.GetPressure(currentAltitude, 0.0f, body_); // 0.0 latitude, approximate for now.
-            double temperature = StockAeroUtil.GetTemperature(currentAltitude, 0.0f, body_); // 0.0 latitude, approximate for now.
-            double stockRho = StockAeroUtil.GetDensity(currentAltitude, 0.0f, body_); // 0.0 latitude, approximate for now.
+            double stockRho = StockAeroUtil.GetDensity(currentAltitude, body_);
             double rho = stockRho;
             if (!useStockModel)
             {
@@ -274,7 +279,7 @@ namespace Trajectories
             #else
             Vector2 f = cachedFARForces[v, a, m];
 
-            if(float.IsNaN(f.x))
+            if(float.IsNaN(f.x) || DisableCache)
             {
                 f = computeCacheEntry(v,a,m); 
             }
@@ -331,9 +336,7 @@ namespace Trajectories
 
             Vector2 res = sample3d(vFloor, vFrac, aFloor, aFrac, mFloor, mFrac);
 
-            double pressure = StockAeroUtil.GetPressure(altitudeAboveSea, 0.0f, body_); // 0.0 latitude, approximate for now.
-            double temperature = StockAeroUtil.GetTemperature(altitudeAboveSea, 0.0f, body_); // 0.0 latitude, approximate for now.
-            double stockRho = StockAeroUtil.GetDensity(altitudeAboveSea, 0.0f, body_); // 0.0 latitude, approximate for now.
+            double stockRho = StockAeroUtil.GetDensity(altitudeAboveSea, body_);
             double rho = stockRho;
             if (!useStockModel)
             {
@@ -360,8 +363,8 @@ namespace Trajectories
 
         public Vector3d getForces_StockAero(CelestialBody body, Vector3d bodySpacePosition, Vector3d airVelocity, double angleOfAttack, double dt)
         {
-            Vector3 position = body.position + bodySpacePosition;
-            double latitude = body.GetLatitude(position) / 180.0 * Math.PI;
+            Vector3d position = body.position + bodySpacePosition;
+            
             double altitude = (position - body.position).magnitude - body.Radius;
             if (altitude > body.atmosphereDepth)
             {
@@ -374,6 +377,12 @@ namespace Trajectories
             //Util.PostSingleScreenMessage("machNum", "machNumber = " + actualMachNumber + " ; approx machNumber = " + approxMachNumber);
 
             Vector2 force = getCachedForce(airVelocity.magnitude, altitude, angleOfAttack);
+
+            // adjust force using the more accurate air density that we can compute knowing where the vessel is relatively to the sun and body
+            double preciseRho = StockAeroUtil.GetDensity(position, body);
+            double approximateRho = StockAeroUtil.GetDensity(altitude, body);
+            if (approximateRho > 0)
+                force = force * (float)(preciseRho / approximateRho);
 
             Vector3d forward = airVelocity.normalized;
             Vector3d right = Vector3d.Cross(forward, bodySpacePosition).normalized;
@@ -394,9 +403,6 @@ namespace Trajectories
             Vector3d vesselRight = Vector3d.Cross(vesselUp, vesselBackward).normalized;
 
             Vector3d airVelocityForFixedAoA = (vesselForward * Math.Cos(-angleOfAttack) + vesselUp * Math.Sin(-angleOfAttack)) * airVelocity.magnitude;
-
-            double pressure = StockAeroUtil.GetPressure(altitude, 0.0f, body_); // 0.0 latitude, approximate for now.
-            double temperature = StockAeroUtil.GetTemperature(altitude, 0.0f, body_); // 0.0 latitude, approximate for now.
 
             if (altitude >= body_.atmosphereDepth)
                 return Vector3d.zero;
@@ -453,6 +459,9 @@ namespace Trajectories
 
         public Vector3d computeForces_FAR(double altitude, Vector3d airVelocity, Vector3d vup, double angleOfAttack, double dt)
         {
+            if (!vessel_.mainBody.atmosphere)
+                return new Vector3d(0, 0, 0);
+
             Transform vesselTransform = vessel_.ReferenceTransform;
 
             // this is weird, but the vessel orientation does not match the reference transform (up is forward), this code fixes it but I don't know if it'll work in all cases
@@ -522,14 +531,11 @@ namespace Trajectories
 
             double altitudeAboveSea = bodySpacePosition.magnitude - body.Radius;
 
-            double pressure = StockAeroUtil.GetPressure(altitudeAboveSea, 0.0, body);
-            if (pressure <= 0) {
+            double stockRho = StockAeroUtil.GetDensity(altitudeAboveSea, body);
+            if (stockRho <= 0)
+            {
                 return Vector3d.zero;
             }
-
-            double temperature = StockAeroUtil.GetTemperature(altitudeAboveSea, 0.0, body);
-
-            double stockRho = StockAeroUtil.GetDensity(altitudeAboveSea, 0.0, body);
             double rho = stockRho;
             
             rho = useNEAR ? stockRho : (double)FARAeroUtil_GetCurrentDensity.Invoke(null, new object[] { body, altitudeAboveSea, false });

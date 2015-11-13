@@ -662,26 +662,28 @@ namespace Trajectories
             return worldPos;
         }
 
-        #if DEBUG_COMPARE_FORCES
+        #if DEBUG
         public void FixedUpdate()
         {
             if (aerodynamicModel_ != null && vessel_ != null)
             {
-                Vector3d FARForce = FARBasicDragModel.debugForceAccumulator + FARWingAerodynamicModel.debugForceAccumulator;
-                FARBasicDragModel.debugForceAccumulator = new Vector3d(0, 0, 0);
-                FARWingAerodynamicModel.debugForceAccumulator = new Vector3d(0, 0, 0);
-
                 CelestialBody body = vessel_.orbit.referenceBody;
+
                 Vector3d bodySpacePosition = vessel_.GetWorldPos3D() - body.position;
                 Vector3d bodySpaceVelocity = vessel_.obt_velocity;
                 double altitudeAboveSea = bodySpacePosition.magnitude - body.Radius;
+
+                Vector3d airVelocity = bodySpaceVelocity - body.getRFrmVel(body.position + bodySpacePosition);
+
+                #if DEBUG_COMPARE_FORCES
+                Vector3d FARForce = FARBasicDragModel.debugForceAccumulator + FARWingAerodynamicModel.debugForceAccumulator;
+                FARBasicDragModel.debugForceAccumulator = new Vector3d(0, 0, 0);
+                FARWingAerodynamicModel.debugForceAccumulator = new Vector3d(0, 0, 0);
 
                 double rho = FARAeroUtil.GetCurrentDensity(body, altitudeAboveSea);
                 //double rho = vessel_.atmDensity;
                 //double pressure = FlightGlobals.getStaticPressure(altitudeAboveSea, body);
                 //double rho = FlightGlobals.getAtmDensity(pressure);
-
-                Vector3d airVelocity = bodySpaceVelocity - body.getRFrmVel(body.position + bodySpacePosition);
                 
                 
                 double machNumber = FARAeroUtil.GetMachNumber(body, altitudeAboveSea, airVelocity);
@@ -707,6 +709,12 @@ namespace Trajectories
 
                 Util.PostSingleScreenMessage("FAR/predict comparison", "air vel=" + Math.Floor(airVelocity.magnitude) + ", AoA=" + (AoA*180.0/Math.PI) + ", FAR force=" + localFARForce + ", predicted force=" + localPredictedForce);
                 Util.PostSingleScreenMessage("predict with cache", "predicted force with cache=" + localPredictedForceWithCache);
+                #endif
+
+                double approximateRho = StockAeroUtil.GetDensity(altitudeAboveSea, body);
+                double preciseRho = StockAeroUtil.GetDensity(vessel_.GetWorldPos3D(), body);
+                double actualRho = vessel_.atmDensity;
+                Util.PostSingleScreenMessage("rho info", "preciseRho=" + preciseRho.ToString("0.0000") + " ; approximateRho=" + approximateRho.ToString("0.0000") + " ; actualRho=" + actualRho.ToString("0.0000"));
             }
         }
         #endif

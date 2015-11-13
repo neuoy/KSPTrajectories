@@ -79,5 +79,15 @@ namespace Trajectories
         {
             return new Vector3(v.x, v.z, v.y);
         }
+
+        public static string ToString(this Vector3d v, string format = "0.000")
+        {
+            return "[" + v.x.ToString(format) + ", " + v.y.ToString(format) + ", " + v.z.ToString(format) + "]";
+        }
+
+        public static string ToString(this Vector3 v, string format = "0.000")
+        {
+            return "[" + v.x.ToString(format) + ", " + v.y.ToString(format) + ", " + v.z.ToString(format) + "]";
+        }
     }
 }
