@@ -222,7 +222,7 @@ namespace Trajectories
                         Vector3 liftVector = Vector3.zero;
                         float liftdot;
                         float absdot;
-                        wing.SetupCoefficients(v_wrld_vel, rho, out nVel, out liftVector, out liftdot, out absdot);
+                        wing.SetupCoefficients(v_wrld_vel, out nVel, out liftVector, out liftdot, out absdot);
 
                         float simLiftScalar = Mathf.Sign(liftdot) * wing.liftCurve.Evaluate(absdot) * wing.liftMachCurve.Evaluate((float)mach);
                         simLiftScalar *= wing.deflectionLiftCoeff;
