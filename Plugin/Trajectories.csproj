@@ -75,7 +75,8 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>if $(ConfigurationName)==Release ("$(ProjectDir)..\build\build-package.bat")</PostBuildEvent>
+    <PostBuildEvent>if $(ConfigurationName)==Debug ("$(ProjectDir)..\build\prepare-debug.bat" "$(OutDir)")
+if $(ConfigurationName)==Release ("$(ProjectDir)..\build\build-package.bat")</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
