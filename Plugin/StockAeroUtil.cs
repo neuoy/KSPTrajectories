@@ -160,22 +160,32 @@ namespace Trajectories
 
                         DragCubeList.CubeData p_drag_data;
 
-                        try
+                        float drag;
+                        if (cubes.None) // since 1.0.5, some parts don't have drag cubes (for example fuel lines and struts)
                         {
-                            p_drag_data = cubes.AddSurfaceDragDirection(-sim_dragVectorDirLocal, (float)mach);
+                            drag = p.maximum_drag;
                         }
-                        catch (Exception)
+                        else
                         {
-                            cubes.SetDrag(sim_dragVectorDirLocal, (float)mach);
-                            cubes.ForceUpdate(true, true);
-                            p_drag_data = cubes.AddSurfaceDragDirection(-sim_dragVectorDirLocal, (float)mach);
-                            //Debug.Log(String.Format("Trajectories: Caught NRE on Drag Initialization.  Should be fixed now.  {0}", e));
+                            try
+                            {
+                                p_drag_data = cubes.AddSurfaceDragDirection(-sim_dragVectorDirLocal, (float)mach);
+                            }
+                            catch (Exception)
+                            {
+                                cubes.SetDrag(sim_dragVectorDirLocal, (float)mach);
+                                cubes.ForceUpdate(true, true);
+                                p_drag_data = cubes.AddSurfaceDragDirection(-sim_dragVectorDirLocal, (float)mach);
+                                //Debug.Log(String.Format("Trajectories: Caught NRE on Drag Initialization.  Should be fixed now.  {0}", e));
+                            }
+
+                            drag = p_drag_data.areaDrag * PhysicsGlobals.DragCubeMultiplier;
+
+                            liftForce = p_drag_data.liftForce;
                         }
 
-                        double sim_dragScalar = dyn_pressure * (double)p_drag_data.areaDrag * PhysicsGlobals.DragCubeMultiplier * PhysicsGlobals.DragMultiplier;
+                        double sim_dragScalar = dyn_pressure * (double)drag * PhysicsGlobals.DragMultiplier;
                         total_drag += -(Vector3d)sim_dragVectorDir * sim_dragScalar;
-
-                        liftForce = p_drag_data.liftForce;
 
                         break;
 
@@ -222,7 +232,7 @@ namespace Trajectories
                         Vector3 liftVector = Vector3.zero;
                         float liftdot;
                         float absdot;
-                        wing.SetupCoefficients(v_wrld_vel, rho, out nVel, out liftVector, out liftdot, out absdot);
+                        wing.SetupCoefficients(v_wrld_vel, out nVel, out liftVector, out liftdot, out absdot);
 
                         float simLiftScalar = Mathf.Sign(liftdot) * wing.liftCurve.Evaluate(absdot) * wing.liftMachCurve.Evaluate((float)mach);
                         simLiftScalar *= wing.deflectionLiftCoeff;
