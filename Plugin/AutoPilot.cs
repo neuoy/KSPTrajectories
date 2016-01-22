@@ -151,7 +151,7 @@ namespace Trajectories
                 Vector3? targetPosition = Trajectory.fetch.targetPosition;
                 var patch = Trajectory.fetch.patches.LastOrDefault();
                 CelestialBody body = Trajectory.fetch.targetBody;
-                if (!targetPosition.HasValue || patch == null || !patch.impactPosition.HasValue || patch.startingState.referenceBody != body)
+				if (!targetPosition.HasValue || patch == null || !patch.impactPosition.HasValue || patch.startingState.referenceBody != body || !patch.isAtmospheric)
                     return new Vector2(0, 0);
 
                 // Get impact position, or, if some point over the trajectory has not enough clearance, smoothly interpolate to that point depending on how much clearance is missing
