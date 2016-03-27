@@ -114,11 +114,6 @@ namespace Trajectories
             isValid = false;
         }
 
-        public void ToggleCache(bool value)
-        {
-            UseCache = value;
-        }
-
         private double ComputeReferenceDrag()
         {
             Vector3 forces = ComputeForces(3000, new Vector3d(3000.0, 0, 0), new Vector3(0, 1, 0), 0);
