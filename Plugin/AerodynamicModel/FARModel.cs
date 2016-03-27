@@ -25,11 +25,11 @@ namespace Trajectories
             return (Vector3)parameters[1];
         }
 
-        protected override Vector3d GetForces_Model(CelestialBody body, Vector3d bodySpacePosition, Vector3d airVelocity, double angleOfAttack, bool useCache)
+        protected override Vector3d GetForces_Model(CelestialBody body, Vector3d bodySpacePosition, Vector3d airVelocity, double angleOfAttack)
         {
             double altitudeAboveSea = bodySpacePosition.magnitude - body.Radius;
 
-            if (!useCache)
+            if (!UseCache)
                 return ComputeForces(altitudeAboveSea, airVelocity, bodySpacePosition, angleOfAttack);
             //double approxMachNumber = useNEAR ? 0.0 : (double)FARAeroUtil_GetMachNumber.Invoke(null, new object[] { body_, body.maxAtmosphereAltitude * 0.5, new Vector3d((float)airVelocity.magnitude, 0, 0) });
             //Util.PostSingleScreenMessage("machNum", "machNumber = " + actualMachNumber + " ; approx machNumber = " + approxMachNumber);

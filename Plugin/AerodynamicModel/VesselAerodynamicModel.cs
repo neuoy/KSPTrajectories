@@ -30,6 +30,7 @@ namespace Trajectories
         private int referencePartCount = 0;
         private DateTime nextAllowedAutomaticUpdate = DateTime.Now;
 
+        public bool UseCache { get { return Settings.fetch.UseCache; } }
         protected AeroForceCache cachedForces;
 
         public static bool Verbose { get; set; }
@@ -113,6 +114,11 @@ namespace Trajectories
             isValid = false;
         }
 
+        public void ToggleCache(bool value)
+        {
+            UseCache = value;
+        }
+
         private double ComputeReferenceDrag()
         {
             Vector3 forces = ComputeForces(3000, new Vector3d(3000.0, 0, 0), new Vector3(0, 1, 0), 0);
@@ -121,12 +127,12 @@ namespace Trajectories
 
         // returns the total aerodynamic forces that would be applied on the vessel if it was at bodySpacePosition with bodySpaceVelocity relatively to the specified celestial body
         // dt is the time delta during which the force will be applied, so if the model supports it, it can compute an average force (to be more accurate than a simple instantaneous force)
-        public Vector3d getForces(CelestialBody body, Vector3d bodySpacePosition, Vector3d airVelocity, double angleOfAttack, bool useCache)
+        public Vector3d getForces(CelestialBody body, Vector3d bodySpacePosition, Vector3d airVelocity, double angleOfAttack)
         {
             if (body != vessel_.mainBody)
                 throw new Exception("Can't predict aerodynamic forces on another body in current implementation");
 
-            return GetForces_Model(body, bodySpacePosition, airVelocity, angleOfAttack, useCache);
+            return GetForces_Model(body, bodySpacePosition, airVelocity, angleOfAttack);
         }
 
         protected Vector3d ComputeForces(double altitude, Vector3d airVelocity, Vector3d vup, double angleOfAttack)
@@ -193,7 +199,7 @@ namespace Trajectories
             return res;
         }
 
-        protected abstract Vector3d GetForces_Model(CelestialBody body, Vector3d bodySpacePosition, Vector3d airVelocity, double angleOfAttack, bool useCache);
+        protected abstract Vector3d GetForces_Model(CelestialBody body, Vector3d bodySpacePosition, Vector3d airVelocity, double angleOfAttack);
         protected abstract Vector3d ComputeForces_Model(Vector3d airVelocity, double altitude, double absoluteVelocity);
     }
 }

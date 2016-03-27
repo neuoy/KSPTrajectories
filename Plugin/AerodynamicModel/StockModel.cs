@@ -11,10 +11,14 @@ namespace Trajectories
 
         protected override Vector3d ComputeForces_Model(Vector3d airVelocity, double altitude, double absoluteVelocity)
         {
-            return ApplyForceCorrection((Vector3d)StockAeroUtil.SimAeroForce(vessel_, (Vector3)airVelocity, altitude), altitude, absoluteVelocity);
+            var res = (Vector3d)StockAeroUtil.SimAeroForce(vessel_, (Vector3)airVelocity, altitude);
+            if (UseCache)
+                res = ApplyForceCorrection(res, altitude, absoluteVelocity);
+
+            return res;
         }
 
-        protected override Vector3d GetForces_Model(CelestialBody body, Vector3d bodySpacePosition, Vector3d airVelocity, double angleOfAttack, bool useCache)
+        protected override Vector3d GetForces_Model(CelestialBody body, Vector3d bodySpacePosition, Vector3d airVelocity, double angleOfAttack)
         {
             Vector3d position = body.position + bodySpacePosition;
 
@@ -24,7 +28,7 @@ namespace Trajectories
                 return Vector3d.zero;
             }
 
-            if (!useCache)
+            if (!UseCache)
                 return ComputeForces(altitude, airVelocity, new Vector3(0, 1, 0), angleOfAttack);
             //double approxMachNumber = useNEAR ? 0.0 : (double)FARAeroUtil_GetMachNumber.Invoke(null, new object[] { body_, body.maxAtmosphereAltitude * 0.5, new Vector3d((float)airVelocity.magnitude, 0, 0) });
             //Util.PostSingleScreenMessage("machNum", "machNumber = " + actualMachNumber + " ; approx machNumber = " + approxMachNumber);
