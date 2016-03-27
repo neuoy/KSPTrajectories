@@ -113,6 +113,7 @@ namespace Trajectories
 
         private Vessel vessel_;
         private VesselAerodynamicModel aerodynamicModel_;
+        public string AerodynamicModelName { get { return aerodynamicModel_.AerodynamicModelName; } }
         private List<Patch> patches_ = new List<Patch>();
         private List<Patch> patchesBackBuffer_ = new List<Patch>();
         public List<Patch> patches { get { return patches_; } }
@@ -266,7 +267,7 @@ namespace Trajectories
         private IEnumerable<bool> computeTrajectoryIncrement(Vessel vessel, DescentProfile profile)
         {
             if (aerodynamicModel_ == null || !aerodynamicModel_.isValidFor(vessel, vessel.mainBody))
-                aerodynamicModel_ = new VesselAerodynamicModel(vessel, vessel.mainBody);
+                aerodynamicModel_ = AerodynamicModelFactory.GetModel(vessel, vessel.mainBody);
             else
                 aerodynamicModel_.IncrementalUpdate();
 

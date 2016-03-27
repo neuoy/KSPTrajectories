@@ -242,7 +242,7 @@ namespace Trajectories
                     GUILayout.EndHorizontal();
                 }
 
-                GUILayout.Label("Aerodynamic model: " + VesselAerodynamicModel.AerodynamicModelName);
+                GUILayout.Label("Aerodynamic model: " + traj.AerodynamicModelName);
                 GUILayout.BeginHorizontal();
                 GUILayout.Label("Perf: " + (traj.ComputationTime * 1000.0f).ToString("0.0") + "ms (" + (traj.ComputationTime/traj.GameFrameTime*100.0f).ToString("0") + "%)", GUILayout.Width(120));
                 GUILayout.Label(traj.ErrorCount + " error(s)", GUILayout.Width(80));
