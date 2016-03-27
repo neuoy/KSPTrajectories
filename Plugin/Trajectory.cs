@@ -565,7 +565,7 @@ namespace Trajectories
                         //Util.PostSingleScreenMessage("prediction vel", "prediction vel = " + vel);
                         Vector3d airVelocity = vel - body.getRFrmVel(body.position + pos);
                         double angleOfAttack = profile.GetAngleOfAttack(body, pos, airVelocity);
-                        Vector3d aerodynamicForce = aerodynamicModel_.getForces(body, pos, airVelocity, angleOfAttack, dt);
+                        Vector3d aerodynamicForce = aerodynamicModel_.getForces(body, pos, airVelocity, angleOfAttack, Settings.fetch.UseCache);
                         Vector3d acceleration = gravityAccel + aerodynamicForce / aerodynamicModel_.mass;
 
                         // acceleration in the vessel reference frame is acceleration - gravityAccel

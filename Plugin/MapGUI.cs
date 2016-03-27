@@ -214,6 +214,10 @@ namespace Trajectories
                 GUILayout.EndHorizontal();
 
                 GUILayout.BeginHorizontal();
+                Settings.fetch.UseCache = GUILayout.Toggle(Settings.fetch.UseCache, new GUIContent("Use Cache", "Toggle cache usage. Trajectory will be more precise when cache disabled, but computation time will be higher. It's not recommended to keep it unchecked, unless your CPU can handle the load."), GUILayout.Width(80));
+                GUILayout.EndHorizontal();
+
+                GUILayout.BeginHorizontal();
                 Settings.fetch.AutoUpdateAerodynamicModel = GUILayout.Toggle(Settings.fetch.AutoUpdateAerodynamicModel, new GUIContent("Auto update", "Auto-update of the aerodynamic model. For example if a part is decoupled, the model needs to be updated. This is independent from trajectory update."));
                 if (GUILayout.Button("Update now"))
                     traj.InvalidateAerodynamicModel();

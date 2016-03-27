@@ -9,8 +9,6 @@ StockAeroUtil by atomicfury
 */
 
 //#define PRECOMPUTE_CACHE
-#define USE_CACHE
-
 using System;
 using System.Collections.Generic;
 using System.IO;

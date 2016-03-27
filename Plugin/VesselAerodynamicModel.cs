@@ -6,8 +6,6 @@ This file is part of Trajectories, under MIT license.
 */
 
 //#define PRECOMPUTE_CACHE
-#define USE_CACHE
-
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -116,9 +114,9 @@ namespace Trajectories
         {
             Vector3 forces;
             if (useStockModel)
-                forces = computeForces_StockAero(3000, new Vector3d(3000.0, 0, 0), new Vector3(0, 1, 0), 0, 0.25);
+                forces = computeForces_StockAero(3000, new Vector3d(3000.0, 0, 0), new Vector3(0, 1, 0), 0);
             else
-                forces = computeForces_FAR(3000, new Vector3d(3000.0, 0, 0), new Vector3(0, 1, 0), 0, 0.25);
+                forces = computeForces_FAR(3000, new Vector3d(3000.0, 0, 0), new Vector3(0, 1, 0), 0);
             return forces.sqrMagnitude;
         }
 
@@ -254,11 +252,11 @@ namespace Trajectories
 
             if (useStockModel)
             {
-                force = computeForces_StockAero(currentAltitude, velocity, new Vector3(0, 1, 0), AoA, 0.25) * invScale;
+                force = computeForces_StockAero(currentAltitude, velocity, new Vector3(0, 1, 0), AoA) * invScale;
             }
             else
             {
-                force = computeForces_FAR(currentAltitude, velocity, new Vector3(0, 1, 0), AoA, 0.25) * invScale;
+                force = computeForces_FAR(currentAltitude, velocity, new Vector3(0, 1, 0), AoA) * invScale;
             }
             return cachedFARForces[v, a, m] = new Vector2((float)force.x, (float)force.y);
         }
@@ -350,18 +348,18 @@ namespace Trajectories
 
         // returns the total aerodynamic forces that would be applied on the vessel if it was at bodySpacePosition with bodySpaceVelocity relatively to the specified celestial body
         // dt is the time delta during which the force will be applied, so if the model supports it, it can compute an average force (to be more accurate than a simple instantaneous force)
-        public Vector3d getForces(CelestialBody body, Vector3d bodySpacePosition, Vector3d airVelocity, double angleOfAttack, double dt)
+        public Vector3d getForces(CelestialBody body, Vector3d bodySpacePosition, Vector3d airVelocity, double angleOfAttack, bool useCache)
         {
             if (body != vessel_.mainBody)
                 throw new Exception("Can't predict aerodynamic forces on another body in current implementation");
 
             if(useStockModel)
-                return getForces_StockAero(body, bodySpacePosition, airVelocity, angleOfAttack, dt);
+                return getForces_StockAero(body, bodySpacePosition, airVelocity, angleOfAttack, useCache);
             else
-                return getForces_FAR(body, bodySpacePosition, airVelocity, angleOfAttack, dt);
+                return getForces_FAR(body, bodySpacePosition, airVelocity, angleOfAttack, useCache);
         }
 
-        public Vector3d getForces_StockAero(CelestialBody body, Vector3d bodySpacePosition, Vector3d airVelocity, double angleOfAttack, double dt)
+        public Vector3d getForces_StockAero(CelestialBody body, Vector3d bodySpacePosition, Vector3d airVelocity, double angleOfAttack, bool useCache)
         {
             Vector3d position = body.position + bodySpacePosition;
             
@@ -370,9 +368,10 @@ namespace Trajectories
             {
                 return Vector3d.zero;
             }
-#if !USE_CACHE
-            return computeForces_StockAero(altitude, airVelocity, new Vector3(0, 1, 0), angleOfAttack, dt);
-#else
+    
+            if (!useCache)
+                return computeForces_StockAero(altitude, airVelocity, new Vector3(0, 1, 0), angleOfAttack);
+
             //double approxMachNumber = useNEAR ? 0.0 : (double)FARAeroUtil_GetMachNumber.Invoke(null, new object[] { body_, body.maxAtmosphereAltitude * 0.5, new Vector3d((float)airVelocity.magnitude, 0, 0) });
             //Util.PostSingleScreenMessage("machNum", "machNumber = " + actualMachNumber + " ; approx machNumber = " + approxMachNumber);
 
@@ -389,10 +388,9 @@ namespace Trajectories
             Vector3d up = Vector3d.Cross(right, forward).normalized;
 
             return forward * force.x + up * force.y;
-#endif
         }
 
-        public Vector3d computeForces_StockAero(double altitude, Vector3d airVelocity, Vector3d vup, double angleOfAttack, double dt)
+        public Vector3d computeForces_StockAero(double altitude, Vector3d airVelocity, Vector3d vup, double angleOfAttack)
         {
             Transform vesselTransform = vessel_.ReferenceTransform;
             //TODO:  This is the same code as FAR call, so clearly it can be common in computeForces
@@ -457,7 +455,7 @@ namespace Trajectories
 
         }
 
-        public Vector3d computeForces_FAR(double altitude, Vector3d airVelocity, Vector3d vup, double angleOfAttack, double dt)
+        public Vector3d computeForces_FAR(double altitude, Vector3d airVelocity, Vector3d vup, double angleOfAttack)
         {
             if (!vessel_.mainBody.atmosphere)
                 return new Vector3d(0, 0, 0);
@@ -524,7 +522,7 @@ namespace Trajectories
             return res;
         }
 
-        private Vector3d getForces_FAR(CelestialBody body, Vector3d bodySpacePosition, Vector3d airVelocity, double angleOfAttack, double dt)
+        private Vector3d getForces_FAR(CelestialBody body, Vector3d bodySpacePosition, Vector3d airVelocity, double angleOfAttack, bool useCache)
         {
             if (!isFARInitialized())
                 return new Vector3d(0, 0, 0);
@@ -540,9 +538,9 @@ namespace Trajectories
             
             rho = useNEAR ? stockRho : (double)FARAeroUtil_GetCurrentDensity.Invoke(null, new object[] { body, altitudeAboveSea, false });
 
-#if !USE_CACHE
-            return computeForces_FAR(altitudeAboveSea, airVelocity, bodySpacePosition, angleOfAttack, dt);
-#else
+            if(!useCache)
+                return computeForces_FAR(altitudeAboveSea, airVelocity, bodySpacePosition, angleOfAttack);
+
             //double approxMachNumber = useNEAR ? 0.0 : (double)FARAeroUtil_GetMachNumber.Invoke(null, new object[] { body_, body.maxAtmosphereAltitude * 0.5, new Vector3d((float)airVelocity.magnitude, 0, 0) });
             //Util.PostSingleScreenMessage("machNum", "machNumber = " + actualMachNumber + " ; approx machNumber = " + approxMachNumber);
 
@@ -553,7 +551,6 @@ namespace Trajectories
             Vector3d up = Vector3d.Cross(right, forward).normalized;
 
             return forward * force.x + up * force.y;
-#endif
         }
     }
 }
