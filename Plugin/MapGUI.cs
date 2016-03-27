@@ -147,7 +147,7 @@ namespace Trajectories
             {
                 GUI.enabled = traj.targetPosition.HasValue;
                 if (GUILayout.Button("Unset target"))
-                    Trajectory.SetTarget();
+                    traj.SetTarget();
                 GUI.enabled = true;
 
                 GUILayout.BeginHorizontal();
@@ -155,7 +155,7 @@ namespace Trajectories
                 GUI.enabled = (patch != null && patch.impactPosition.HasValue);
                 if (GUILayout.Button("Set current impact", GUILayout.Width(150)))
                 {
-                    Trajectory.SetTarget(patch.startingState.referenceBody, patch.impactPosition);
+                    traj.SetTarget(patch.startingState.referenceBody, patch.impactPosition);
                 }
                 GUI.enabled = true;
                 if (GUILayout.Button("Set KSC", GUILayout.Width(70)))
@@ -164,7 +164,7 @@ namespace Trajectories
                     if (body != null)
                     {
                         Vector3d worldPos = body.GetWorldSurfacePosition(-0.04860002, -74.72425635, 2.0);
-                        Trajectory.SetTarget(body, worldPos - body.position);
+                        traj.SetTarget(body, worldPos - body.position);
                     }
                 }
                 GUILayout.EndHorizontal();
@@ -181,7 +181,7 @@ namespace Trajectories
                         if(Double.TryParse(latLng[0].Trim(), out lat) && Double.TryParse(latLng[1].Trim(), out lng))
                         {
                             Vector3d worldPos = body.GetWorldSurfacePosition(lat, lng, 2.0);
-                            Trajectory.SetTarget(body, worldPos - body.position);
+                            traj.SetTarget(body, worldPos - body.position);
                         }
                     }
                 }

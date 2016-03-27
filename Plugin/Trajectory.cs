@@ -139,26 +139,26 @@ namespace Trajectories
         private static float averageGameFrameTime_;
         public float GameFrameTime { get { return averageGameFrameTime_ * 0.001f; } }
 
-        public static void SetTarget(CelestialBody body = null, Vector3? relativePosition = null)
+        public void SetTarget(CelestialBody body = null, Vector3? relativePosition = null)
         {
             if (body != null && relativePosition.HasValue)
             {
-                fetch.targetBody_ = body;
-                fetch.targetPosition_ = body.transform.InverseTransformDirection((Vector3)relativePosition);
+                targetBody_ = body;
+                targetPosition_ = body.transform.InverseTransformDirection((Vector3)relativePosition);
             }
             else
             {
-                fetch.targetBody_ = null;
-                fetch.targetPosition_ = null;
+                targetBody_ = null;
+                targetPosition_ = null;
             }
 
             if (FlightGlobals.ActiveVessel != null)
             {
                 foreach (var module in FlightGlobals.ActiveVessel.Parts.SelectMany(p => p.Modules.OfType<TrajectoriesVesselSettings>()))
                 {
-                    module.hasTarget = fetch.targetPosition_ != null;
-                    module.targetLocation = fetch.targetPosition_.HasValue ? fetch.targetPosition_.Value : new Vector3();
-                    module.targetReferenceBody = fetch.targetBody_ == null ? "" : fetch.targetBody_.name;
+                    module.hasTarget = targetPosition_ != null;
+                    module.targetLocation = targetPosition_.HasValue ? targetPosition_.Value : new Vector3();
+                    module.targetReferenceBody = targetBody_ == null ? "" : targetBody_.name;
                 }
             }
         }
