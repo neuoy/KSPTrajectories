@@ -113,6 +113,7 @@ namespace Trajectories
 
         private Vessel vessel_;
         private VesselAerodynamicModel aerodynamicModel_;
+        public string AerodynamicModelName { get { return aerodynamicModel_.AerodynamicModelName; } }
         private List<Patch> patches_ = new List<Patch>();
         private List<Patch> patchesBackBuffer_ = new List<Patch>();
         public List<Patch> patches { get { return patches_; } }
@@ -138,26 +139,26 @@ namespace Trajectories
         private static float averageGameFrameTime_;
         public float GameFrameTime { get { return averageGameFrameTime_ * 0.001f; } }
 
-        public static void SetTarget(CelestialBody body = null, Vector3? relativePosition = null)
+        public void SetTarget(CelestialBody body = null, Vector3? relativePosition = null)
         {
             if (body != null && relativePosition.HasValue)
             {
-                fetch.targetBody_ = body;
-                fetch.targetPosition_ = body.transform.InverseTransformDirection((Vector3)relativePosition);
+                targetBody_ = body;
+                targetPosition_ = body.transform.InverseTransformDirection((Vector3)relativePosition);
             }
             else
             {
-                fetch.targetBody_ = null;
-                fetch.targetPosition_ = null;
+                targetBody_ = null;
+                targetPosition_ = null;
             }
 
             if (FlightGlobals.ActiveVessel != null)
             {
                 foreach (var module in FlightGlobals.ActiveVessel.Parts.SelectMany(p => p.Modules.OfType<TrajectoriesVesselSettings>()))
                 {
-                    module.hasTarget = fetch.targetPosition_ != null;
-                    module.targetLocation = fetch.targetPosition_.HasValue ? fetch.targetPosition_.Value : new Vector3();
-                    module.targetReferenceBody = fetch.targetBody_ == null ? "" : fetch.targetBody_.name;
+                    module.hasTarget = targetPosition_ != null;
+                    module.targetLocation = targetPosition_.HasValue ? targetPosition_.Value : new Vector3();
+                    module.targetReferenceBody = targetBody_ == null ? "" : targetBody_.name;
                 }
             }
         }
@@ -266,7 +267,7 @@ namespace Trajectories
         private IEnumerable<bool> computeTrajectoryIncrement(Vessel vessel, DescentProfile profile)
         {
             if (aerodynamicModel_ == null || !aerodynamicModel_.isValidFor(vessel, vessel.mainBody))
-                aerodynamicModel_ = new VesselAerodynamicModel(vessel, vessel.mainBody);
+                aerodynamicModel_ = AerodynamicModelFactory.GetModel(vessel, vessel.mainBody);
             else
                 aerodynamicModel_.IncrementalUpdate();
 
@@ -565,7 +566,7 @@ namespace Trajectories
                         //Util.PostSingleScreenMessage("prediction vel", "prediction vel = " + vel);
                         Vector3d airVelocity = vel - body.getRFrmVel(body.position + pos);
                         double angleOfAttack = profile.GetAngleOfAttack(body, pos, airVelocity);
-                        Vector3d aerodynamicForce = aerodynamicModel_.getForces(body, pos, airVelocity, angleOfAttack, dt);
+                        Vector3d aerodynamicForce = aerodynamicModel_.getForces(body, pos, airVelocity, angleOfAttack);
                         Vector3d acceleration = gravityAccel + aerodynamicForce / aerodynamicModel_.mass;
 
                         // acceleration in the vessel reference frame is acceleration - gravityAccel
