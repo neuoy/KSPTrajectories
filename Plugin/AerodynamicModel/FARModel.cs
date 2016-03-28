@@ -16,7 +16,7 @@ namespace Trajectories
             FARAPI_CalculateVesselAeroForces = CalculateVesselAeroForces;
         }
 
-        protected override Vector3d ComputeForces_Model(Vector3d airVelocity, double altitude, double absoluteVelocity)
+        protected override Vector3d ComputeForces_Model(Vector3d airVelocity, double altitude)
         {
             //Debug.Log("Trajectories: getting FAR forces");
             Vector3 worldAirVel = new Vector3((float)airVelocity.x, (float)airVelocity.y, (float)airVelocity.z);
@@ -25,22 +25,23 @@ namespace Trajectories
             return (Vector3)parameters[1];
         }
 
-        protected override Vector3d GetForces_Model(CelestialBody body, Vector3d bodySpacePosition, Vector3d airVelocity, double angleOfAttack)
+        public override Vector2 PackForces(Vector3d forces, double altitudeAboveSea, double velocity)
         {
-            double altitudeAboveSea = bodySpacePosition.magnitude - body.Radius;
+            double rho = StockAeroUtil.GetDensity(altitudeAboveSea, body_); // would be even better to use FAR method of computing the air density (which also depends on velocity), but this is already better than nothing
 
-            if (!UseCache)
-                return ComputeForces(altitudeAboveSea, airVelocity, bodySpacePosition, angleOfAttack);
-            //double approxMachNumber = useNEAR ? 0.0 : (double)FARAeroUtil_GetMachNumber.Invoke(null, new object[] { body_, body.maxAtmosphereAltitude * 0.5, new Vector3d((float)airVelocity.magnitude, 0, 0) });
-            //Util.PostSingleScreenMessage("machNum", "machNumber = " + actualMachNumber + " ; approx machNumber = " + approxMachNumber);
+            if (rho < 0.0000000001)
+                return new Vector2(0, 0);
+            double invScale = 1.0 / (rho * Math.Max(1.0, velocity * velocity));
+            forces *= invScale;
+            return new Vector2((float)forces.x, (float)forces.y);
+        }
 
-            Vector2 force = cachedForces.GetForce(airVelocity.magnitude, angleOfAttack, altitudeAboveSea);
+        public override Vector3d UnpackForces(Vector2 packedForces, double altitudeAboveSea, double velocity)
+        {
+            double rho = StockAeroUtil.GetDensity(altitudeAboveSea, body_);
+            double scale = velocity * velocity * rho;
 
-            Vector3d forward = airVelocity.normalized;
-            Vector3d right = Vector3d.Cross(forward, bodySpacePosition).normalized;
-            Vector3d up = Vector3d.Cross(right, forward).normalized;
-
-            return forward * force.x + up * force.y;
+            return new Vector3d((double)packedForces.x * scale, (double)packedForces.y * scale, 0.0);
         }
     }
 }
