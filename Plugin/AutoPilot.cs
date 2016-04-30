@@ -12,35 +12,7 @@ namespace Trajectories
         private static AutoPilot fetch_;
         public static AutoPilot fetch { get { return fetch_; } }
 
-        public bool IsAvailable { get { return Settings.fetch.AutoPilotAvailable; } }
-
-        private bool enabled_;
-        public bool Enabled
-        {
-            get
-            {
-                return IsAvailable && enabled_;
-            }
-
-            set
-            {
-                if (enabled_ == value)
-                    return;
-                enabled_ = value;
-                if(attachedVessel == null)
-                    enabled_ = false;
-                if (enabled_)
-                {
-                    // disable stock auto-pilot when ours is active
-                    attachedVessel.ActionGroups.SetGroup(KSPActionGroup.SAS, false);
-                }
-            }
-        }
-        public float Strength { get; set; }
-        public float Smoothness { get; set; }
-
         private Vessel attachedVessel;
-        private FlightInputCallback callback;
 
         public void Start()
         {
@@ -49,74 +21,7 @@ namespace Trajectories
 
         public void Update()
         {
-            Vessel activeVessel = HighLogic.LoadedScene == GameScenes.FLIGHT ? FlightGlobals.ActiveVessel : null;
-
-            if (attachedVessel != activeVessel)
-            {
-                if (callback != null)
-                {
-                    attachedVessel.OnFlyByWire -= callback;
-                    callback = null;
-                }
-
-                attachedVessel = activeVessel;
-
-                if (attachedVessel != null)
-                {
-                    Strength = 5.0f;
-                    Enabled = false;
-                    TrajectoriesVesselSettings module = attachedVessel.Parts.SelectMany(p => p.Modules.OfType<TrajectoriesVesselSettings>()).FirstOrDefault();
-                    if (module != null)
-                    {
-                        Enabled = module.AutoPilotEnabled;
-                        Strength = module.AutoPilotStrength;
-                        if (Strength < 0.5f)
-                            Strength = 5.0f;
-                    }
-                    
-                    callback = new FlightInputCallback((controls) => autoPilot(this, controls));
-                    //activeVessel.OnFlyByWire += callback; // this is disabled for now, because it breaks Remote Tech signal delay
-                }
-            }
-
-            Save();
-        }
-
-        public void OnGUI()
-        {
-            if (attachedVessel == null || !IsAvailable)
-                return;
-
-            if (HighLogic.LoadedScene != GameScenes.FLIGHT)
-                return;
-
-            // get stock KSP buttons position
-            VesselAutopilotUI aui = (VesselAutopilotUI)FindObjectOfType(typeof(VesselAutopilotUI));
-            Vector2 stabilityAssistButtonCenter = new Vector2(aui.modeButtons[0].sprite.transform.position.x + Screen.width / 2, -aui.modeButtons[0].sprite.transform.position.y + Screen.height / 2);
-            int x0 = (int)stabilityAssistButtonCenter.x - 10;
-            int y0 = (int)stabilityAssistButtonCenter.y - 35;
-
-            Enabled = GUI.Toggle(new Rect(x0, y0, 60, 30), Enabled, new GUIContent("Traj.", "Enable trajectory auto-pilot (atmospheric flight) ; touch controls or engage SAS to disable"));
-            if (Enabled)
-            {
-                GUI.Label(new Rect(x0, y0+30, 60, 30), "Strong");
-                Strength = GUI.VerticalSlider(new Rect(x0 + 10, y0 + 50, 30, 70), Strength, 10.0f, 0.5f);
-                GUI.Label(new Rect(x0, y0 + 120, 60, 30), "Smooth");
-
-                Smoothness = 10.5f - Strength;
-            }
-        }
-
-        private void Save()
-        {
-            if (attachedVessel == null)
-                return;
-
-            foreach (var module in attachedVessel.Parts.SelectMany(p => p.Modules.OfType<TrajectoriesVesselSettings>()))
-            {
-                module.AutoPilotEnabled = Enabled;
-                module.AutoPilotStrength = Strength;
-            }
+            attachedVessel = FlightGlobals.ActiveVessel;
         }
 
         public Vector3 PlannedDirection
@@ -189,7 +94,7 @@ namespace Trajectories
                 if (plannedAngleOfAttack < Math.PI * 0.5f)
                     offsetDir.y = -offsetDir.y; // behavior is different for prograde or retrograde entry
 
-                float maxCorrection = Math.Min(0.7f, 1.0f / Smoothness);
+                float maxCorrection = 1.0f;
                 offsetDir.x = Mathf.Clamp(offsetDir.x, -maxCorrection, maxCorrection);
                 offsetDir.y = Mathf.Clamp(offsetDir.y, -maxCorrection, maxCorrection);
 
@@ -221,60 +126,6 @@ namespace Trajectories
 
                 return referenceVector + refUp * offsetDir.y + refRight * offsetDir.x;
             }
-        }
-
-        private void autoPilot(AutoPilot pilot, FlightCtrlState controls)
-        {
-            controls.killRot = false;
-            if (!controls.isIdle)
-                Enabled = false;
-
-            if (attachedVessel == null || !Enabled)
-                return;
-
-            Vessel vessel = attachedVessel;
-
-            CelestialBody body = vessel.mainBody;
-            Vector3d pos = vessel.GetWorldPos3D() - body.position;
-            Vector3d airVelocity = vessel.obt_velocity - body.getRFrmVel(body.position + pos);
-
-            Transform vesselTransform = vessel.ReferenceTransform;
-
-            Vector3d vesselBackward = (Vector3d)(-vesselTransform.up.normalized);
-            Vector3d vesselForward = -vesselBackward;
-            Vector3d vesselUp = (Vector3d)(-vesselTransform.forward.normalized);
-            Vector3d vesselRight = Vector3d.Cross(vesselUp, vesselBackward).normalized;
-
-            Vector3d localVel = new Vector3d(Vector3d.Dot(vesselRight, airVelocity), Vector3d.Dot(vesselUp, airVelocity), Vector3d.Dot(vesselBackward, airVelocity));
-            Vector3d prograde = localVel.normalized;
-
-            Vector3d localGravityUp = new Vector3d(Vector3d.Dot(vesselRight, pos), Vector3d.Dot(vesselUp, pos), Vector3d.Dot(vesselBackward, pos)).normalized;
-            Vector3d localProgradeRight = Vector3d.Cross(prograde, localGravityUp).normalized;
-            localGravityUp = Vector3d.Cross(localProgradeRight, prograde);
-
-            Vector3d vel = vessel.obt_velocity - body.getRFrmVel(body.position + pos); // air velocity
-            double AoA = (float)DescentProfile.fetch.GetAngleOfAttack(body, pos, vel);
-            Vector3d worldTargetDirection = CorrectedDirection;
-            Vector3d targetDirection = new Vector3d(Vector3d.Dot(vesselRight, worldTargetDirection), Vector3d.Dot(vesselUp, worldTargetDirection), Vector3d.Dot(vesselBackward, worldTargetDirection));
-            Vector3d targetUp = prograde * (-Math.Sin(AoA)) + localGravityUp * Math.Cos(AoA);
-
-            Vector2 correction = Correction;
-
-            float dirx = targetDirection.z > 0.0f ? Mathf.Sign((float)targetDirection.x) : (float)targetDirection.x;
-            float diry = targetDirection.z > 0.0f ? Mathf.Sign((float)targetDirection.y) : (float)targetDirection.y;
-            float dirz = targetUp.y < 0.0f ? Mathf.Sign((float)targetUp.x) : (float)targetUp.x;
-
-            if(targetUp.y > 0.0f)
-            {
-                dirz += correction.x; // in case the craft has wings, roll it to use lift for left/right correction
-            }
-
-            float maxSteer = Mathf.Clamp(2.0f - Smoothness*0.2f, 0.1f, 1.0f);
-
-            float warpDamp = 1.0f / TimeWarp.CurrentRate;
-            controls.pitch = Mathf.Clamp(diry * Strength + vessel.angularVelocity.x * Smoothness, -maxSteer, maxSteer) * warpDamp;
-            controls.yaw = Mathf.Clamp(-dirx * Strength + vessel.angularVelocity.z * Smoothness, -maxSteer, maxSteer) * warpDamp;
-            controls.roll = Mathf.Clamp(-dirz * Strength + vessel.angularVelocity.y * Smoothness, -maxSteer, maxSteer) * warpDamp;
         }
     }
 }

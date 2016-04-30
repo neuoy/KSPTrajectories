@@ -38,7 +38,7 @@ namespace Trajectories
                     //HighLogic.SaveFolder = "default";
                     //HighLogic.LoadScene(GameScenes.TRACKSTATION);
 
-                    CheatOptions.InfiniteFuel = true;
+                    CheatOptions.InfinitePropellant = true;
                 }
             }
         }

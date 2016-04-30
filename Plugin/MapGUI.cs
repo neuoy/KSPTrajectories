@@ -1,4 +1,5 @@
-﻿using System;
+﻿using KSP.UI.Screens;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -227,9 +228,6 @@ namespace Trajectories
                 {
                     Settings.fetch.UseBlizzyToolbar = GUILayout.Toggle(Settings.fetch.UseBlizzyToolbar, new GUIContent("Use Blizzy's toolbar", "Will take effect after restart"));
                 }
-
-                //Settings.fetch.AutoPilotAvailable = GUILayout.Toggle(Settings.fetch.AutoPilotAvailable, new GUIContent("Unlock auto-pilot (EXPERIMENTAL)", "Enables the auto-pilot interface. This is experimental, subject to change, and might crash your spaceplanes more often than not."));
-                Settings.fetch.AutoPilotAvailable = false; // auto-pilot disabled because it's incompatible with Remote Tech in its current implementation (and has some other bugs anyway)
 
                 if(FlightGlobals.ActiveVessel != null)
                 {

@@ -39,12 +39,6 @@ namespace Trajectories
         public bool RetrogradeEntry;
 
         [KSPField(isPersistant = true, guiActive = false)]
-        public bool AutoPilotEnabled;
-
-        [KSPField(isPersistant = true, guiActive = false)]
-        public float AutoPilotStrength;
-
-        [KSPField(isPersistant = true, guiActive = false)]
         public bool hasTarget;
 
         [KSPField(isPersistant = true, guiActive = false)]

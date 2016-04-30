@@ -115,7 +115,7 @@ namespace Trajectories
                 newMesh.AddComponent<MeshFilter>();
                 var renderer = newMesh.AddComponent<MeshRenderer>();
                 renderer.enabled = displayEnabled;
-                renderer.castShadows = false;
+                //renderer.castShadows = false;
                 renderer.receiveShadows = false;
                 newMesh.layer = 10;
 
@@ -124,7 +124,7 @@ namespace Trajectories
                 obj = newMesh;
             }
 
-            obj.renderer.sharedMaterial = material;
+            //obj.renderer.sharedMaterial = material;
 
             return obj;
         }
@@ -146,7 +146,7 @@ namespace Trajectories
 
             // material from RemoteTech
             if(lineMaterial == null)
-                lineMaterial = new Material("Shader \"Vertex Colors/Alpha\" {Category{Tags {\"Queue\"=\"Transparent\" \"IgnoreProjector\"=\"True\" \"RenderType\"=\"Transparent\"}SubShader {Cull Off ZWrite On Blend SrcAlpha OneMinusSrcAlpha Pass {BindChannels {Bind \"Color\", color Bind \"Vertex\", vertex}}}}}");
+                lineMaterial = new Material(Shader.Find("Diffuse"));
 
             foreach (var patch in Trajectory.fetch.patches)
             {
