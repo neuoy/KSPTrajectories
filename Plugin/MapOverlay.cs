@@ -377,7 +377,7 @@ namespace Trajectories
             Vector3 crossV1 = Vector3.Cross(impactPosition, Vector3.right).normalized;
             Vector3 crossV2 = Vector3.Cross(impactPosition, crossV1).normalized;
             
-            float crossThickness = Mathf.Min(lineWidth * Vector3.Distance(camPos, impactPosition), 6000.0f);
+            float crossThickness = Mathf.Min(lineWidth * 0.001f * Vector3.Distance(camPos, impactPosition), 6000.0f);
             float crossSize = crossThickness * 10.0f;
 
             vertices[0] = impactPosition - crossV1 * crossSize + crossV2 * crossThickness; uvs[0] = new Vector2(0.8f, 1);
