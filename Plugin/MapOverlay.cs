@@ -33,7 +33,7 @@ namespace Trajectories
         private bool displayEnabled = false;
         
         private Material lineMaterial;
-        private float lineWidth = 0.002f;
+        private float lineWidth = 3.0f;
 
         private void DetachCamera()
         {
@@ -186,11 +186,48 @@ namespace Trajectories
             }
         }
 
+        private void MakeRibbonEdge(Vector3d prevPos, Vector3d edgeCenter, float width, Vector3[] vertices, int startIndex)
+        {
+            // Code taken from RemoteTech mod
+
+            var camera = PlanetariumCamera.Camera;
+
+            var start = camera.WorldToScreenPoint(ScaledSpace.LocalToScaledSpace(prevPos));
+            var end = camera.WorldToScreenPoint(ScaledSpace.LocalToScaledSpace(edgeCenter));
+
+            var segment = new Vector3(end.y - start.y, start.x - end.x, 0).normalized * (width  * 0.5f);
+
+            if (!MapView.Draw3DLines)
+            {
+                var dist = Screen.height / 2 + 0.01f;
+                start.z = start.z >= 0.15f ? dist : -dist;
+                end.z = end.z >= 0.15f ? dist : -dist;
+            }
+
+            Vector3 p0 = (end + segment);
+            Vector3 p1 = (end - segment);
+
+            if(MapView.Draw3DLines)
+            {
+                p0 = camera.ScreenToWorldPoint(p0);
+                p1 = camera.ScreenToWorldPoint(p1);
+            }
+            
+            vertices[startIndex + 0] = p0;
+            vertices[startIndex + 1] = p1;
+
+            // in 2D mode, if one point is in front of the screen and the other is behind, we don't draw the segment (to achieve this, we draw degenerated triangles, i.e. triangles that have two identical vertices which make them "flat")
+            if (!MapView.Draw3DLines && (start.z > 0) != (end.z > 0))
+            {
+                vertices[startIndex + 0] = vertices[startIndex + 1];
+                if (startIndex >= 2)
+                    vertices[startIndex - 2] = vertices[startIndex - 1];
+            }
+        }
+
         private void initMeshFromOrbit(Vector3 bodyPosition, Mesh mesh, Orbit orbit, double startTime, double duration, Color color)
         {
             int steps = 128;
-
-            Vector3 camPos = ScaledSpace.ScaledToLocalSpace(PlanetariumCamera.Camera.transform.position) - bodyPosition;
 
             double prevTA = orbit.TrueAnomalyAtUT(startTime);
             double prevTime = startTime;
@@ -236,7 +273,7 @@ namespace Trajectories
             var uvs = new Vector2[utIdx * 2 + 2];
             var triangles = new int[utIdx * 6];
 
-            Vector3 prevMeshPos = Util.SwapYZ(orbit.getRelativePositionAtUT(startTime - duration / (double)steps));
+            Vector3 prevMeshPos = Util.SwapYZ(orbit.getRelativePositionAtUT(startTime - duration / (double)steps)) + bodyPosition;
             for(int i = 0; i < utIdx; ++i)
             {
                 double time = stepUT[i];
@@ -245,13 +282,10 @@ namespace Trajectories
                 if (Settings.fetch.BodyFixedMode) {
                     curMeshPos = Trajectory.calculateRotatedPosition(orbit.referenceBody, curMeshPos, time);
                 }
-
-                // compute an "up" vector that is orthogonal to the trajectory orientation and to the camera vector (used to correctly orient quads to always face the camera)
-                Vector3 up = Vector3.Cross(curMeshPos - prevMeshPos, camPos - curMeshPos).normalized * (lineWidth * Vector3.Distance(camPos, curMeshPos));
+                curMeshPos += bodyPosition;
 
                 // add a segment to the trajectory mesh
-                vertices[i * 2 + 0] = curMeshPos - up;
-                vertices[i * 2 + 1] = curMeshPos + up;
+                MakeRibbonEdge(prevMeshPos, curMeshPos, lineWidth, vertices, i * 2);
                 uvs[i * 2 + 0] = new Vector2(0.8f, 0);
                 uvs[i * 2 + 1] = new Vector2(0.8f, 1);
 
@@ -279,11 +313,6 @@ namespace Trajectories
                     colors[i] = new Color(0, (float)i / (float)colors.Length, 1.0f - (float)i / (float)colors.Length);*/
             }
 
-            for (int i = 0; i < vertices.Length; ++i)
-            {
-                vertices[i] = ScaledSpace.LocalToScaledSpace(vertices[i] + bodyPosition);
-            }
-
             mesh.Clear();
             mesh.vertices = vertices;
             mesh.uv = uvs;
@@ -299,20 +328,14 @@ namespace Trajectories
             var uvs = new Vector2[trajectory.Length * 2];
             var triangles = new int[(trajectory.Length-1) * 6];
 
-            Vector3 camPos = ScaledSpace.ScaledToLocalSpace(PlanetariumCamera.Camera.transform.position) - bodyPosition;
-
-            Vector3 prevMeshPos = trajectory[0].pos - (trajectory[1].pos-trajectory[0].pos);
+            Vector3 prevMeshPos = trajectory[0].pos - (trajectory[1].pos-trajectory[0].pos) + bodyPosition;
             for(int i = 0; i < trajectory.Length; ++i)
             {
-                Vector3 curMeshPos = trajectory[i].pos;
                 // the fixed-body rotation transformation has already been applied in AddPatch.
-
-                // compute an "up" vector that is orthogonal to the trajectory orientation and to the camera vector (used to correctly orient quads to always face the camera)
-                Vector3 up = Vector3.Cross(curMeshPos - prevMeshPos, camPos - curMeshPos).normalized * (lineWidth * Vector3.Distance(camPos, curMeshPos));
+                Vector3 curMeshPos = trajectory[i].pos + bodyPosition;
 
                 // add a segment to the trajectory mesh
-                vertices[i * 2 + 0] = curMeshPos - up;
-                vertices[i * 2 + 1] = curMeshPos + up;
+                MakeRibbonEdge(prevMeshPos, curMeshPos, lineWidth, vertices, i * 2);
                 uvs[i * 2 + 0] = new Vector2(0.8f, 0);
                 uvs[i * 2 + 1] = new Vector2(0.8f, 1);
 
@@ -334,11 +357,6 @@ namespace Trajectories
             var colors = new Color[vertices.Length];
             for (int i = 0; i < colors.Length; ++i)
                 colors[i] = color;
-
-            for (int i = 0; i < vertices.Length; ++i)
-            {
-                vertices[i] = ScaledSpace.LocalToScaledSpace(vertices[i] + bodyPosition);
-            }
 
             mesh.Clear();
             mesh.vertices = vertices;
@@ -392,7 +410,8 @@ namespace Trajectories
 
             for (int i = 0; i < vertices.Length; ++i)
             {
-                vertices[i] = ScaledSpace.LocalToScaledSpace(vertices[i] + bodyPosition);
+                // in current implementation, impact positions are displayed only if MapView is in 3D mode (i.e. not zoomed out too far)
+                vertices[i] = MapView.Draw3DLines ? (Vector3)ScaledSpace.LocalToScaledSpace(vertices[i] + bodyPosition) : new Vector3(0,0,0);
             }
 
             mesh.Clear();
