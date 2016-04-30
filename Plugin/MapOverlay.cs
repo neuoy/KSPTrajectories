@@ -31,7 +31,7 @@ namespace Trajectories
         private CameraListener listener;
         private List<GameObject> meshes = new List<GameObject>();
         private bool displayEnabled = false;
-
+        
         private Material lineMaterial;
         private float lineWidth = 0.002f;
 
@@ -49,28 +49,28 @@ namespace Trajectories
 
         public void Update()
         {
-            setDisplayEnabled((HighLogic.LoadedScene == GameScenes.FLIGHT || HighLogic.LoadedScene == GameScenes.TRACKSTATION) && MapView.MapIsEnabled && MapView.MapCamera != null);
+            setDisplayEnabled((HighLogic.LoadedScene == GameScenes.FLIGHT || HighLogic.LoadedScene == GameScenes.TRACKSTATION) && MapView.MapIsEnabled && PlanetariumCamera.Camera != null);
 
-            if (attachedCamera != null && (MapView.MapCamera == null || MapView.MapCamera.gameObject != attachedCamera))
+            if (attachedCamera != null && (PlanetariumCamera.Camera == null || PlanetariumCamera.Camera.gameObject != attachedCamera))
             {
                 DetachCamera();
             }
 
-            if ((HighLogic.LoadedScene != GameScenes.FLIGHT && HighLogic.LoadedScene != GameScenes.TRACKSTATION) || !MapView.MapIsEnabled || MapView.MapCamera == null)
+            if ((HighLogic.LoadedScene != GameScenes.FLIGHT && HighLogic.LoadedScene != GameScenes.TRACKSTATION) || !MapView.MapIsEnabled || PlanetariumCamera.Camera == null)
                 return;
 
             if (listener == null)
             {
                 Debug.Log("Trajectories: attaching camera listener");
-                listener = MapView.MapCamera.gameObject.AddComponent<CameraListener>();
+                listener = PlanetariumCamera.Camera.gameObject.AddComponent<CameraListener>();
                 listener.overlay = this;
-                attachedCamera = MapView.MapCamera.gameObject;
+                attachedCamera = PlanetariumCamera.Camera.gameObject;
             }
         }
 
         public void Render()
         {
-            if ((HighLogic.LoadedScene != GameScenes.FLIGHT && HighLogic.LoadedScene != GameScenes.TRACKSTATION) || !MapView.MapIsEnabled || MapView.MapCamera == null)
+            if ((HighLogic.LoadedScene != GameScenes.FLIGHT && HighLogic.LoadedScene != GameScenes.TRACKSTATION) || !MapView.MapIsEnabled || PlanetariumCamera.Camera == null)
             {
                 setDisplayEnabled(false);
                 return;
@@ -117,14 +117,14 @@ namespace Trajectories
                 renderer.enabled = displayEnabled;
                 //renderer.castShadows = false;
                 renderer.receiveShadows = false;
-                newMesh.layer = 10;
+                newMesh.layer = 31;
 
                 meshes.Add(newMesh);
 
                 obj = newMesh;
             }
 
-            //obj.renderer.sharedMaterial = material;
+            obj.GetComponent<Renderer>().sharedMaterial = material;
 
             return obj;
         }
@@ -145,8 +145,9 @@ namespace Trajectories
             }
 
             // material from RemoteTech
-            if(lineMaterial == null)
-                lineMaterial = new Material(Shader.Find("Diffuse"));
+            if (lineMaterial == null)
+                //    lineMaterial = new Material("Shader \"Vertex Colors/Alpha\" {Category{Tags {\"Queue\"=\"Transparent\" \"IgnoreProjector\"=\"True\" \"RenderType\"=\"Transparent\"}SubShader {Cull Off ZWrite On Blend SrcAlpha OneMinusSrcAlpha Pass {BindChannels {Bind \"Color\", color Bind \"Vertex\", vertex}}}}}");
+                lineMaterial = MapView.fetch.orbitLinesMaterial;
 
             foreach (var patch in Trajectory.fetch.patches)
             {
@@ -189,7 +190,7 @@ namespace Trajectories
         {
             int steps = 128;
 
-            Vector3 camPos = ScaledSpace.ScaledToLocalSpace(MapView.MapCamera.transform.position) - bodyPosition;
+            Vector3 camPos = ScaledSpace.ScaledToLocalSpace(PlanetariumCamera.Camera.transform.position) - bodyPosition;
 
             double prevTA = orbit.TrueAnomalyAtUT(startTime);
             double prevTime = startTime;
@@ -232,6 +233,7 @@ namespace Trajectories
             stepUT[utIdx++] = startTime + duration;
 
             var vertices = new Vector3[utIdx * 2 + 2];
+            var uvs = new Vector2[utIdx * 2 + 2];
             var triangles = new int[utIdx * 6];
 
             Vector3 prevMeshPos = Util.SwapYZ(orbit.getRelativePositionAtUT(startTime - duration / (double)steps));
@@ -250,6 +252,8 @@ namespace Trajectories
                 // add a segment to the trajectory mesh
                 vertices[i * 2 + 0] = curMeshPos - up;
                 vertices[i * 2 + 1] = curMeshPos + up;
+                uvs[i * 2 + 0] = new Vector2(0.8f, 0);
+                uvs[i * 2 + 1] = new Vector2(0.8f, 1);
 
                 if (i > 0)
                 {
@@ -282,17 +286,20 @@ namespace Trajectories
 
             mesh.Clear();
             mesh.vertices = vertices;
+            mesh.uv = uvs;
             mesh.colors = colors;
             mesh.triangles = triangles;
             mesh.RecalculateBounds();
+            mesh.MarkDynamic();
         }
 
         private void initMeshFromTrajectory(Vector3 bodyPosition, Mesh mesh, Trajectory.Point[] trajectory, Color color)
         {
             var vertices = new Vector3[trajectory.Length * 2];
+            var uvs = new Vector2[trajectory.Length * 2];
             var triangles = new int[(trajectory.Length-1) * 6];
 
-            Vector3 camPos = ScaledSpace.ScaledToLocalSpace(MapView.MapCamera.transform.position) - bodyPosition;
+            Vector3 camPos = ScaledSpace.ScaledToLocalSpace(PlanetariumCamera.Camera.transform.position) - bodyPosition;
 
             Vector3 prevMeshPos = trajectory[0].pos - (trajectory[1].pos-trajectory[0].pos);
             for(int i = 0; i < trajectory.Length; ++i)
@@ -306,6 +313,8 @@ namespace Trajectories
                 // add a segment to the trajectory mesh
                 vertices[i * 2 + 0] = curMeshPos - up;
                 vertices[i * 2 + 1] = curMeshPos + up;
+                uvs[i * 2 + 0] = new Vector2(0.8f, 0);
+                uvs[i * 2 + 1] = new Vector2(0.8f, 1);
 
                 if (i > 0)
                 {
@@ -333,6 +342,7 @@ namespace Trajectories
 
             mesh.Clear();
             mesh.vertices = vertices;
+            mesh.uv = uvs;
             mesh.colors = colors;
             mesh.triangles = triangles;
             mesh.RecalculateBounds();
@@ -341,9 +351,10 @@ namespace Trajectories
         private void initMeshFromImpact(Vector3 bodyPosition, Mesh mesh, Vector3 impactPosition, Color color)
         {
             var vertices = new Vector3[8];
+            var uvs = new Vector2[8];
             var triangles = new int[12];
 
-            Vector3 camPos = ScaledSpace.ScaledToLocalSpace(MapView.MapCamera.transform.position) - bodyPosition;
+            Vector3 camPos = ScaledSpace.ScaledToLocalSpace(PlanetariumCamera.Camera.transform.position) - bodyPosition;
 
             Vector3 crossV1 = Vector3.Cross(impactPosition, Vector3.right).normalized;
             Vector3 crossV2 = Vector3.Cross(impactPosition, crossV1).normalized;
@@ -351,10 +362,10 @@ namespace Trajectories
             float crossThickness = Mathf.Min(lineWidth * Vector3.Distance(camPos, impactPosition), 6000.0f);
             float crossSize = crossThickness * 10.0f;
 
-            vertices[0] = impactPosition - crossV1 * crossSize + crossV2 * crossThickness;
-            vertices[1] = impactPosition - crossV1 * crossSize - crossV2 * crossThickness;
-            vertices[2] = impactPosition + crossV1 * crossSize + crossV2 * crossThickness;
-            vertices[3] = impactPosition + crossV1 * crossSize - crossV2 * crossThickness;
+            vertices[0] = impactPosition - crossV1 * crossSize + crossV2 * crossThickness; uvs[0] = new Vector2(0.8f, 1);
+            vertices[1] = impactPosition - crossV1 * crossSize - crossV2 * crossThickness; uvs[1] = new Vector2(0.8f, 0);
+            vertices[2] = impactPosition + crossV1 * crossSize + crossV2 * crossThickness; uvs[2] = new Vector2(0.8f, 1);
+            vertices[3] = impactPosition + crossV1 * crossSize - crossV2 * crossThickness; uvs[3] = new Vector2(0.8f, 0);
 
             triangles[0] = 0;
             triangles[1] = 1;
@@ -363,10 +374,10 @@ namespace Trajectories
             triangles[4] = 3;
             triangles[5] = 2;
 
-            vertices[4] = impactPosition - crossV2 * crossSize - crossV1 * crossThickness;
-            vertices[5] = impactPosition - crossV2 * crossSize + crossV1 * crossThickness;
-            vertices[6] = impactPosition + crossV2 * crossSize - crossV1 * crossThickness;
-            vertices[7] = impactPosition + crossV2 * crossSize + crossV1 * crossThickness;
+            vertices[4] = impactPosition - crossV2 * crossSize - crossV1 * crossThickness; uvs[4] = new Vector2(0.8f, 0);
+            vertices[5] = impactPosition - crossV2 * crossSize + crossV1 * crossThickness; uvs[5] = new Vector2(0.8f, 1);
+            vertices[6] = impactPosition + crossV2 * crossSize - crossV1 * crossThickness; uvs[6] = new Vector2(0.8f, 0);
+            vertices[7] = impactPosition + crossV2 * crossSize + crossV1 * crossThickness; uvs[7] = new Vector2(0.8f, 1);
 
             triangles[6] = 4;
             triangles[7] = 5;
@@ -386,6 +397,7 @@ namespace Trajectories
 
             mesh.Clear();
             mesh.vertices = vertices;
+            mesh.uv = uvs;
             mesh.colors = colors;
             mesh.triangles = triangles;
             mesh.RecalculateBounds();

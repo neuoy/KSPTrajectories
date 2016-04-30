@@ -68,7 +68,7 @@ namespace Trajectories
             if (HighLogic.LoadedScene != GameScenes.FLIGHT)
                 return;
 
-            if (!MapView.MapIsEnabled || MapView.MapCamera == null)
+            if (!MapView.MapIsEnabled || PlanetariumCamera.Camera == null)
                 return;
 
             Settings.fetch.MapGUIWindowPos = new Rect(Settings.fetch.MapGUIWindowPos.xMin, Settings.fetch.MapGUIWindowPos.yMin, Settings.fetch.MapGUIWindowPos.width, Settings.fetch.MapGUIWindowPos.height - 1);
