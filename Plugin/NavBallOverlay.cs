@@ -36,14 +36,14 @@ namespace Trajectories
 
         private void SetDisplayEnabled(bool enabled)
         {
+            if (trajectoryGuide == null || trajectoryReference == null)
+                return;
+
             var guideRenderer = trajectoryGuide.GetComponent<Renderer>();
             var referenceRenderer = trajectoryReference.GetComponent<Renderer>();
 
-            if (trajectoryGuide != null)
-                guideRenderer.enabled = enabled;
-
-            if (trajectoryReference != null)
-                referenceRenderer.enabled = enabled;
+            guideRenderer.enabled = enabled;
+            referenceRenderer.enabled = enabled;
         }
 
         private void Init()
@@ -78,9 +78,9 @@ namespace Trajectories
 
             
             
-            GameObject navballGameObject = GameObject.Find("NavBall");
+            GameObject navballGameObject = FlightUIModeController.Instance.navBall.gameObject;
             Transform vectorsPivotTransform = navballGameObject.transform.FindChild("vectorsPivot");
-            navball = navballGameObject.GetComponent<NavBall>();
+            navball = navballGameObject.GetComponentInChildren<NavBall>();
 
             trajectoryGuide = GameObject.CreatePrimitive(PrimitiveType.Sphere);
             trajectoryGuide.layer = 12;
