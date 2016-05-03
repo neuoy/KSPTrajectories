@@ -5,6 +5,7 @@ Copyright 2014, Youen Toupin
 This file is part of Trajectories, under MIT license.
 */
 
+using KSP.UI.Screens.Flight;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -35,11 +36,14 @@ namespace Trajectories
 
         private void SetDisplayEnabled(bool enabled)
         {
-            if(trajectoryGuide != null)
-                trajectoryGuide.renderer.enabled = enabled;
+            if (trajectoryGuide == null || trajectoryReference == null)
+                return;
 
-            if (trajectoryReference != null)
-                trajectoryReference.renderer.enabled = enabled;
+            var guideRenderer = trajectoryGuide.GetComponent<Renderer>();
+            var referenceRenderer = trajectoryReference.GetComponent<Renderer>();
+
+            guideRenderer.enabled = enabled;
+            referenceRenderer.enabled = enabled;
         }
 
         private void Init()
@@ -74,9 +78,9 @@ namespace Trajectories
 
             
             
-            GameObject navballGameObject = GameObject.Find("NavBall");
+            GameObject navballGameObject = FlightUIModeController.Instance.navBall.gameObject;
             Transform vectorsPivotTransform = navballGameObject.transform.FindChild("vectorsPivot");
-            navball = navballGameObject.GetComponent<NavBall>();
+            navball = navballGameObject.GetComponentInChildren<NavBall>();
 
             trajectoryGuide = GameObject.CreatePrimitive(PrimitiveType.Sphere);
             trajectoryGuide.layer = 12;

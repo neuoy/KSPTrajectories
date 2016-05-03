@@ -55,9 +55,6 @@ namespace Trajectories
         [Persistent(Default: true)]
         public bool UseCache { get; set; }
 
-        [Persistent(Default: false)]
-        public bool AutoPilotAvailable { get; set; }
-
         private KSP.IO.PluginConfiguration config;
 
         public Settings()

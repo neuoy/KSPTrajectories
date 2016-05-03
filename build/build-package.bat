@@ -1,6 +1,6 @@
 @echo off
 
-SET MODMANAGER_VERSION=2.6.13
+SET MODMANAGER_VERSION=2.6.24
 
 rem make sure the initial working directory is the one containing the current script
 SET scriptPath=%~dp0

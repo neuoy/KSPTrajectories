@@ -156,7 +156,7 @@ namespace Trajectories
                     case Part.DragModel.CUBE:
                         DragCubeList cubes = p.DragCubes;
 
-                        DragCubeList.CubeData p_drag_data;
+                        DragCubeList.CubeData p_drag_data = new DragCubeList.CubeData();
 
                         float drag;
                         if (cubes.None) // since 1.0.5, some parts don't have drag cubes (for example fuel lines and struts)
@@ -167,13 +167,13 @@ namespace Trajectories
                         {
                             try
                             {
-                                p_drag_data = cubes.AddSurfaceDragDirection(-sim_dragVectorDirLocal, (float)mach);
+                                cubes.AddSurfaceDragDirection(-sim_dragVectorDirLocal, (float)mach, ref p_drag_data);
                             }
                             catch (Exception)
                             {
                                 cubes.SetDrag(sim_dragVectorDirLocal, (float)mach);
                                 cubes.ForceUpdate(true, true);
-                                p_drag_data = cubes.AddSurfaceDragDirection(-sim_dragVectorDirLocal, (float)mach);
+                                cubes.AddSurfaceDragDirection(-sim_dragVectorDirLocal, (float)mach, ref p_drag_data);
                                 //Debug.Log(String.Format("Trajectories: Caught NRE on Drag Initialization.  Should be fixed now.  {0}", e));
                             }
 
