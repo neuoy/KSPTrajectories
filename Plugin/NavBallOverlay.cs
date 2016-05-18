@@ -83,14 +83,14 @@ namespace Trajectories
             navball = navballGameObject.GetComponentInChildren<NavBall>();
 
             trajectoryGuide = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-            trajectoryGuide.layer = 12;
-            trajectoryGuide.transform.parent = navball.transform.FindChild("vectorsPivot");
-            trajectoryGuide.transform.localScale = Vector3.one * 0.004f;
+            trajectoryGuide.layer = navball.progradeVector.gameObject.layer;
+            trajectoryGuide.transform.parent = navball.progradeVector.gameObject.transform.parent;
+            trajectoryGuide.transform.localScale = Vector3.one * 10.0f;
 
             trajectoryReference = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            trajectoryReference.layer = 12;
-            trajectoryReference.transform.parent = navball.transform.FindChild("vectorsPivot");
-            trajectoryReference.transform.localScale = Vector3.one * 0.004f;
+            trajectoryReference.layer = navball.progradeVector.gameObject.layer;
+            trajectoryReference.transform.parent = navball.progradeVector.gameObject.transform.parent;
+            trajectoryReference.transform.localScale = Vector3.one * 10.0f;
         }
 
         private void UpdateNavBall()
@@ -113,11 +113,11 @@ namespace Trajectories
                 navBallRadius = navball.progradeVector.localPosition.magnitude;
 
             Vector3 referenceVector = GetPlannedDirection();
-            trajectoryReference.transform.localPosition = (navball.attitudeGymbal * referenceVector).normalized * navBallRadius;
+            trajectoryReference.transform.localPosition = navball.attitudeGymbal * referenceVector * navball.VectorUnitScale;
             trajectoryReference.SetActive(trajectoryReference.transform.localPosition.z > 0); // hide if behind navball
 
             Vector3 guideDir = GetCorrectedDirection();
-            trajectoryGuide.transform.localPosition = (navball.attitudeGymbal * guideDir).normalized * navBallRadius;
+            trajectoryGuide.transform.localPosition = navball.attitudeGymbal * guideDir * navball.VectorUnitScale;
             trajectoryGuide.SetActive(trajectoryGuide.transform.localPosition.z > 0); // hide if behind navball
         }
 
@@ -219,7 +219,7 @@ namespace Trajectories
 
             Vector2 offsetDir = GetCorrection();
 
-            return referenceVector + refUp * offsetDir.y + refRight * offsetDir.x;
+            return (referenceVector + refUp * offsetDir.y + refRight * offsetDir.x).normalized;
         }
     }
 }
