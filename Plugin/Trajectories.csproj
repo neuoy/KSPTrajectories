@@ -71,7 +71,6 @@
     <Compile Include="AerodynamicModel\AeroForceCache.cs" />
     <Compile Include="AerodynamicModel\FARModel.cs" />
     <Compile Include="AerodynamicModel\StockModel.cs" />
-    <Compile Include="AutoPilot.cs" />
     <Compile Include="DebugFastStart.cs" />
     <Compile Include="DescentProfile.cs" />
     <Compile Include="MapGUI.cs" />
