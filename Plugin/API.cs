@@ -5,9 +5,19 @@ namespace Trajectories
     //This class only returns correct values for the "active vessel."
     public static class API
     {
+        public static bool alwaysUpdate
+        {
+            get
+            {
+                return Settings.fetch.AlwaysUpdate;
+            }
+            set
+            {
+                Settings.fetch.AlwaysUpdate = value;
+            }
+        }
         public static Vector3? getImpactPosition()
         {
-            updateTrajectory();
             foreach (var patch in Trajectory.fetch.patches)
             {
                 if (patch.impactPosition != null)
@@ -17,12 +27,10 @@ namespace Trajectories
         }
         public static Vector3 plannedDirection()
         {
-            updateTrajectory();
             return AutoPilot.fetch.PlannedDirection;
         }
         public static Vector3 correctedDirection()
         {
-            updateTrajectory();
             return AutoPilot.fetch.CorrectedDirection;
         }
         public static void setTarget(double lat,double lon,double alt = 2.0)
