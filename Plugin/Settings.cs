@@ -32,6 +32,9 @@ namespace Trajectories
         public bool DisplayTrajectories { get; set; }
 
         [Persistent(Default: false)]
+        public bool AlwaysUpdate { get; set; } //Compute trajectory even if DisplayTrajectories && MapView.MapIsEnabled == false.
+
+        [Persistent(Default: false)]
         public bool DisplayCompleteTrajectory { get; set; }
 
         [Persistent(Default: false)]
