@@ -39,6 +39,7 @@ namespace Trajectories
                     //HighLogic.LoadScene(GameScenes.TRACKSTATION);
 
                     CheatOptions.InfinitePropellant = true;
+					CheatOptions.IgnoreMaxTemperature = true;
                 }
             }
         }
