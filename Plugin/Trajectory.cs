@@ -330,6 +330,38 @@ namespace Trajectories
             return orbit;
         }
 
+		private double FindOrbitBodyIntersection(Orbit orbit, double startTime, double endTime, double bodyAltitude)
+		{
+			// binary search of entry time in atmosphere
+			// I guess an analytic solution could be found, but I'm too lazy to search it
+
+			double from = startTime;
+			double to = endTime;
+
+			int loopCount = 0;
+			while (to - from > 0.1)
+			{
+				++loopCount;
+				if (loopCount > 1000)
+				{
+					UnityEngine.Debug.Log("WARNING: infinite loop? (Trajectories.Trajectory.AddPatch, atmosphere limit search)");
+					++errorCount_;
+					break;
+				}
+				double middle = (from + to) * 0.5;
+				if (orbit.getRelativePositionAtUT(middle).magnitude < bodyAltitude)
+				{
+					to = middle;
+				}
+				else
+				{
+					from = middle;
+				}
+			}
+
+			return to;
+		}
+
         private VesselState AddPatch_outState;
         private IEnumerable<bool> AddPatch(VesselState startingState, DescentProfile profile)
         {
@@ -378,6 +410,10 @@ namespace Trajectories
             }
 
             double maxAtmosphereAltitude = RealMaxAtmosphereAltitude(body);
+			if(!body.atmosphere)
+			{
+				maxAtmosphereAltitude = body.pqsController.mapMaxHeight;
+			}
 
             double minAltitude = patch.spaceOrbit.PeA;
             if (patch.endTime < startingState.time + patch.spaceOrbit.timeToPe)
@@ -394,43 +430,17 @@ namespace Trajectories
                 }
                 else
                 {
-                    // binary search of entry time in atmosphere
-                    // I guess an analytic solution could be found, but I'm too lazy to search it
-                    double from = startingState.time;
-                    double to = from + patch.spaceOrbit.timeToPe;
+					entryTime = FindOrbitBodyIntersection(patch.spaceOrbit, startingState.time, startingState.time + patch.spaceOrbit.timeToPe, body.Radius + maxAtmosphereAltitude);
+				}
 
-                    int loopCount = 0;
-                    while (to - from > 0.1)
-                    {
-                        ++loopCount;
-                        if (loopCount > 1000)
-                        {
-                            UnityEngine.Debug.Log("WARNING: infinite loop? (Trajectories.Trajectory.AddPatch, atmosphere limit search)");
-                            ++errorCount_;
-                            break;
-                        }
-                        double middle = (from + to) * 0.5;
-                        if (patch.spaceOrbit.getRelativePositionAtUT(middle).magnitude < body.Radius + maxAtmosphereAltitude)
-                        {
-                            to = middle;
-                        }
-                        else
-                        {
-                            from = middle;
-                        }
-                    }
-
-                    entryTime = to;
-                }
-
-                if (entryTime > startingState.time + 0.1)
+                if (entryTime > startingState.time + 0.1 || !body.atmosphere)
                 {
-                    // add the space patch before atmospheric entry
-                    patch.endTime = entryTime;
-
                     if (body.atmosphere)
                     {
-                        patchesBackBuffer_.Add(patch);
+						// add the space patch before atmospheric entry
+
+						patch.endTime = entryTime;
+						patchesBackBuffer_.Add(patch);
                         AddPatch_outState = new VesselState
                         {
                             position = Util.SwapYZ(patch.spaceOrbit.getRelativePositionAtUT(entryTime)),
@@ -442,22 +452,60 @@ namespace Trajectories
                     }
                     else
                     {
-                        // the body has no atmosphere, so what we actually computed is the impact on the body surface
-                        // now, go back in time until the impact point is above the ground to take ground height in account
-                        // we assume the ground is horizontal around the impact position
-                        double groundAltitude = GetGroundAltitude(body, calculateRotatedPosition(body, Util.SwapYZ(patch.spaceOrbit.getRelativePositionAtUT(entryTime)), entryTime)) + body.Radius;
+						// the body has no atmosphere, so what we actually computed is the entry inside the "ground sphere" (defined by the maximal ground altitude)
+						// now we iterate until the inner ground sphere (minimal altitude), and check if we hit the ground along the way
 
-                        double iterationSize = 1.0;
-                        while (entryTime > startingState.time + iterationSize && patch.spaceOrbit.getRelativePositionAtUT(entryTime).magnitude < groundAltitude)
-                            entryTime -= iterationSize;
+						double groundRangeExit = FindOrbitBodyIntersection(patch.spaceOrbit, startingState.time, startingState.time + patch.spaceOrbit.timeToPe, body.Radius - maxAtmosphereAltitude);
+						if (groundRangeExit <= entryTime)
+							groundRangeExit = startingState.time + patch.spaceOrbit.timeToPe;
 
-                        patch.endTime = entryTime;
-                        patch.rawImpactPosition = Util.SwapYZ(patch.spaceOrbit.getRelativePositionAtUT(entryTime));
-                        patch.impactPosition = calculateRotatedPosition(body, patch.rawImpactPosition.Value, entryTime);
-                        patch.impactVelocity = Util.SwapYZ(patch.spaceOrbit.getOrbitalVelocityAtUT(entryTime));
-                        patchesBackBuffer_.Add(patch);
-                        AddPatch_outState = null;
-                        yield break;
+						double iterationSize = (groundRangeExit - entryTime) / 100.0;
+						double t;
+						bool groundImpact = false;
+						for(t = entryTime; t < groundRangeExit; t += iterationSize)
+						{
+							Vector3d pos = patch.spaceOrbit.getRelativePositionAtUT(t);
+							double groundAltitude = GetGroundAltitude(body, calculateRotatedPosition(body, Util.SwapYZ(pos), t)) + body.Radius;
+							if (pos.magnitude < groundAltitude)
+							{
+								t -= iterationSize;
+								groundImpact = true;
+								break;
+							}
+						}
+
+						if (groundImpact)
+						{
+							patch.endTime = t;
+							patch.rawImpactPosition = Util.SwapYZ(patch.spaceOrbit.getRelativePositionAtUT(t));
+							patch.impactPosition = calculateRotatedPosition(body, patch.rawImpactPosition.Value, t);
+							patch.impactVelocity = Util.SwapYZ(patch.spaceOrbit.getOrbitalVelocityAtUT(t));
+							patchesBackBuffer_.Add(patch);
+							AddPatch_outState = null;
+							yield break;
+						}
+						else
+						{
+							// no impact, just add the space orbit
+							patchesBackBuffer_.Add(patch);
+							if (nextStockPatch != null)
+							{
+								AddPatch_outState = new VesselState
+								{
+									position = Util.SwapYZ(patch.spaceOrbit.getRelativePositionAtUT(patch.endTime)),
+									velocity = Util.SwapYZ(patch.spaceOrbit.getOrbitalVelocityAtUT(patch.endTime)),
+									referenceBody = nextStockPatch == null ? body : nextStockPatch.referenceBody,
+									time = patch.endTime,
+									stockPatch = nextStockPatch
+								};
+								yield break;
+							}
+							else
+							{
+								AddPatch_outState = null;
+								yield break;
+							}
+						}
                     }
                 }
                 else

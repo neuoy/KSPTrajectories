@@ -33,7 +33,8 @@ namespace Trajectories
         private bool displayEnabled = false;
         
         private Material lineMaterial;
-        private float lineWidth = 3.0f;
+
+		private float lineWidth = 3.0f;
 
         private void DetachCamera()
         {
@@ -144,10 +145,13 @@ namespace Trajectories
                 mesh.SetActive(false);
             }
 
-            // material from RemoteTech
-            if (lineMaterial == null)
-                //    lineMaterial = new Material("Shader \"Vertex Colors/Alpha\" {Category{Tags {\"Queue\"=\"Transparent\" \"IgnoreProjector\"=\"True\" \"RenderType\"=\"Transparent\"}SubShader {Cull Off ZWrite On Blend SrcAlpha OneMinusSrcAlpha Pass {BindChannels {Bind \"Color\", color Bind \"Vertex\", vertex}}}}}");
-                lineMaterial = MapView.fetch.orbitLinesMaterial;
+			// material from RemoteTech
+			if (lineMaterial == null)
+			{
+				//    lineMaterial = new Material("Shader \"Vertex Colors/Alpha\" {Category{Tags {\"Queue\"=\"Transparent\" \"IgnoreProjector\"=\"True\" \"RenderType\"=\"Transparent\"}SubShader {Cull Off ZWrite On Blend SrcAlpha OneMinusSrcAlpha Pass {BindChannels {Bind \"Color\", color Bind \"Vertex\", vertex}}}}}");
+				lineMaterial = MapView.fetch.orbitLinesMaterial;
+			}
+			
 
             foreach (var patch in Trajectory.fetch.patches)
             {
@@ -173,7 +177,7 @@ namespace Trajectories
                 {
                     obj = GetMesh(patch.startingState.referenceBody, lineMaterial);
                     mesh = obj.GetComponent<MeshFilter>().mesh;
-                    initMeshFromImpact(patch.startingState.referenceBody.position, mesh, patch.impactPosition.Value, Color.red);
+                    initMeshFromImpact(patch.startingState.referenceBody, mesh, patch.impactPosition.Value, Color.red);
                 }
             }
 
@@ -182,7 +186,7 @@ namespace Trajectories
             {
                 var obj = GetMesh(Trajectory.fetch.targetBody, lineMaterial);
                 var mesh = obj.GetComponent<MeshFilter>().mesh;
-                initMeshFromImpact(Trajectory.fetch.targetBody.position, mesh, targetPosition.Value, Color.green);
+                initMeshFromImpact(Trajectory.fetch.targetBody, mesh, targetPosition.Value, Color.green);
             }
         }
 
@@ -366,15 +370,20 @@ namespace Trajectories
             mesh.RecalculateBounds();
         }
 
-        private void initMeshFromImpact(Vector3 bodyPosition, Mesh mesh, Vector3 impactPosition, Color color)
+        private void initMeshFromImpact(CelestialBody body, Mesh mesh, Vector3 impactPosition, Color color)
         {
             var vertices = new Vector3[8];
             var uvs = new Vector2[8];
             var triangles = new int[12];
 
-            Vector3 camPos = ScaledSpace.ScaledToLocalSpace(PlanetariumCamera.Camera.transform.position) - bodyPosition;
+            Vector3 camPos = ScaledSpace.ScaledToLocalSpace(PlanetariumCamera.Camera.transform.position) - body.position;
 
-            Vector3 crossV1 = Vector3.Cross(impactPosition, Vector3.right).normalized;
+			double impactDistFromBody = impactPosition.magnitude;
+			double altitude = impactDistFromBody - body.Radius;
+			altitude = altitude * 1.0 + 1200; // hack to avoid the cross being hidden under the ground in map view
+			impactPosition *= (float)((body.Radius + altitude) / impactDistFromBody);
+
+			Vector3 crossV1 = Vector3.Cross(impactPosition, Vector3.right).normalized;
             Vector3 crossV2 = Vector3.Cross(impactPosition, crossV1).normalized;
             
             float crossThickness = Mathf.Min(lineWidth * 0.001f * Vector3.Distance(camPos, impactPosition), 6000.0f);
@@ -411,7 +420,7 @@ namespace Trajectories
             for (int i = 0; i < vertices.Length; ++i)
             {
                 // in current implementation, impact positions are displayed only if MapView is in 3D mode (i.e. not zoomed out too far)
-                vertices[i] = MapView.Draw3DLines ? (Vector3)ScaledSpace.LocalToScaledSpace(vertices[i] + bodyPosition) : new Vector3(0,0,0);
+                vertices[i] = MapView.Draw3DLines ? (Vector3)ScaledSpace.LocalToScaledSpace(vertices[i] + body.position) : new Vector3(0,0,0);
             }
 
             mesh.Clear();
