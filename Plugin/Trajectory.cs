@@ -301,7 +301,7 @@ namespace Trajectories
 
         // relativePosition is in world frame, but relative to the body (i.e. inertial body space)
         // returns the altitude above sea level (can be negative for bodies without ocean)
-        private double GetGroundAltitude(CelestialBody body, Vector3 relativePosition)
+        public static double GetGroundAltitude(CelestialBody body, Vector3 relativePosition)
         {
             if (body.pqsController == null)
                 return 0;
