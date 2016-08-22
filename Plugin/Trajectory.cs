@@ -327,6 +327,9 @@ namespace Trajectories
         {
             var orbit = new Orbit();
             orbit.UpdateFromStateVectors(Util.SwapYZ(state.position), Util.SwapYZ(state.velocity), state.referenceBody, state.time);
+			var pars = new PatchedConics.SolverParameters();
+			pars.FollowManeuvers = false;
+			PatchedConics.CalculatePatch(orbit, new Orbit(), state.time, pars, null);
             return orbit;
         }
 
@@ -394,19 +397,23 @@ namespace Trajectories
             }
 
 
-            Orbit nextStockPatch = null;
-            if (startingState.stockPatch != null)
+            Orbit nextPatch = null;
+            if (startingState.stockPatch == null)
+			{
+				nextPatch = patch.spaceOrbit.nextPatch;
+			}
+			else
             {
                 int planIdx = flightPlan.IndexOf(startingState.stockPatch);
                 if (planIdx >= 0 && planIdx < flightPlan.Count - 1)
                 {
-                    nextStockPatch = flightPlan[planIdx + 1];
+                    nextPatch = flightPlan[planIdx + 1];
                 }
             }
 
-            if (nextStockPatch != null)
+            if (nextPatch != null)
             {
-                patch.endTime = nextStockPatch.StartUT;
+                patch.endTime = nextPatch.StartUT;
             }
 
             double maxAtmosphereAltitude = RealMaxAtmosphereAltitude(body);
@@ -416,9 +423,9 @@ namespace Trajectories
 			}
 
             double minAltitude = patch.spaceOrbit.PeA;
-            if (patch.endTime < startingState.time + patch.spaceOrbit.timeToPe)
+            if (patch.spaceOrbit.timeToPe < 0 || patch.endTime < startingState.time + patch.spaceOrbit.timeToPe)
             {
-                minAltitude = patch.spaceOrbit.getRelativePositionAtUT(patch.endTime).magnitude;
+                minAltitude = Math.Min(patch.spaceOrbit.getRelativePositionAtUT(patch.endTime).magnitude, patch.spaceOrbit.getRelativePositionAtUT(patch.startingState.time + 1.0).magnitude) - body.Radius;
             }
             if (minAltitude < maxAtmosphereAltitude)
             {
@@ -488,15 +495,15 @@ namespace Trajectories
 						{
 							// no impact, just add the space orbit
 							patchesBackBuffer_.Add(patch);
-							if (nextStockPatch != null)
+							if (nextPatch != null)
 							{
 								AddPatch_outState = new VesselState
 								{
 									position = Util.SwapYZ(patch.spaceOrbit.getRelativePositionAtUT(patch.endTime)),
 									velocity = Util.SwapYZ(patch.spaceOrbit.getOrbitalVelocityAtUT(patch.endTime)),
-									referenceBody = nextStockPatch == null ? body : nextStockPatch.referenceBody,
+									referenceBody = nextPatch == null ? body : nextPatch.referenceBody,
 									time = patch.endTime,
-									stockPatch = nextStockPatch
+									stockPatch = nextPatch
 								};
 								yield break;
 							}
@@ -676,15 +683,15 @@ namespace Trajectories
             {
                 // no atmospheric entry, just add the space orbit
                 patchesBackBuffer_.Add(patch);
-                if (nextStockPatch != null)
+                if (nextPatch != null)
                 {
                     AddPatch_outState = new VesselState
                     {
                         position = Util.SwapYZ(patch.spaceOrbit.getRelativePositionAtUT(patch.endTime)),
                         velocity = Util.SwapYZ(patch.spaceOrbit.getOrbitalVelocityAtUT(patch.endTime)),
-                        referenceBody = nextStockPatch == null ? body : nextStockPatch.referenceBody,
+                        referenceBody = nextPatch == null ? body : nextPatch.referenceBody,
                         time = patch.endTime,
-                        stockPatch = nextStockPatch
+                        stockPatch = nextPatch
                     };
                     yield break;
                 }
