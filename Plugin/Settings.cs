@@ -60,10 +60,45 @@ namespace Trajectories
 
         private KSP.IO.PluginConfiguration config;
 
+		private static bool ConfigError = false;
+
         public Settings()
         {
             config = KSP.IO.PluginConfiguration.CreateForType<Settings>();
-            config.load();
+			try
+			{
+				config.load();
+			}
+			catch (System.Xml.XmlException e)
+			{
+				if (ConfigError)
+					throw; // if previous error handling failed, we give up
+
+				ConfigError = true;
+
+				Debug.Log("Error loading Trajectories config: " + e.ToString());
+
+				string TrajPluginPath = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
+				Debug.Log("Trajectories installed in: " + TrajPluginPath);
+				if (System.IO.File.Exists(TrajPluginPath + "/PluginData/Trajectories/config.xml"))
+				{
+					Debug.Log("Clearing config file...");
+					int idx = 1;
+					while (System.IO.File.Exists(TrajPluginPath + "/PluginData/Trajectories/config.xml.bak." + idx))
+						++idx;
+					System.IO.File.Move(TrajPluginPath + "/PluginData/Trajectories/config.xml", TrajPluginPath + "/PluginData/Trajectories/config.xml.bak." + idx);
+
+					Debug.Log("Creating new config...");
+					config.load();
+
+					Debug.Log("New config created");
+				}
+				else
+				{
+					Debug.Log("No config file exists");
+					throw;
+				}
+			}
 
             Serialize(false);
 
