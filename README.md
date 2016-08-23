@@ -22,13 +22,8 @@ Features
 Supported Aerodynamic models
 ----------------------------
 
-- Stock Kerbal Space Program drag model (lift not computed yet)
-(Ferram Aerospace Research and NEAR are not supported yet)
-
-Currently supporter KSP version
--------------------------------
-
-- 0.90 (other versions have not been tested)
+- Stock Kerbal Space Program aerodynamic model
+- Ferram Aerospace Research
 
 Installation
 ------------
