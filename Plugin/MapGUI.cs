@@ -269,7 +269,7 @@ namespace Trajectories
                 Debug.Log("Using Blizzy toolbar for Trajectories GUI");
                 GUIToggleButtonBlizzy = ToolbarManager.Instance.add("Trajectories", "ToggleUI");
                 GUIToggleButtonBlizzy.Visibility = FlightMapVisibility.Instance;
-                GUIToggleButtonBlizzy.TexturePath = "Trajectories/Textures/icon-blizzy";
+                GUIToggleButtonBlizzy.TexturePath = "Trajectories/Textures/icon-blizzy1";
                 GUIToggleButtonBlizzy.ToolTip = "Right click toggles Trajectories window";
                 GUIToggleButtonBlizzy.OnClick += OnToggleGUIBlizzy;
             }
