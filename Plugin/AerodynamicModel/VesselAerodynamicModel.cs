@@ -32,7 +32,9 @@ namespace Trajectories
 
         public static bool Verbose { get; set; }
 
-        public VesselAerodynamicModel(Vessel vessel, CelestialBody body)
+		public static bool DebugParts { get; set; }
+
+		public VesselAerodynamicModel(Vessel vessel, CelestialBody body)
         {
             vessel_ = vessel;
             body_ = body;
