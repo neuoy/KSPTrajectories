@@ -110,7 +110,7 @@ namespace Trajectories
 
         private Vessel vessel_;
         private VesselAerodynamicModel aerodynamicModel_;
-        public string AerodynamicModelName { get { return aerodynamicModel_.AerodynamicModelName; } }
+        public string AerodynamicModelName { get { return aerodynamicModel_ == null ? "Not loaded" : aerodynamicModel_.AerodynamicModelName; } }
         private List<Patch> patches_ = new List<Patch>();
         private List<Patch> patchesBackBuffer_ = new List<Patch>();
         public List<Patch> patches { get { return patches_; } }
@@ -727,6 +727,9 @@ namespace Trajectories
 		private static double PreviousFrameTime = 0;
         public void FixedUpdate()
         {
+			if (HighLogic.LoadedScene != GameScenes.FLIGHT)
+				return;
+
 			double now = Planetarium.GetUniversalTime();
 			double dt = now - PreviousFrameTime;
 
