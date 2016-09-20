@@ -16,6 +16,7 @@ namespace Trajectories
                 Settings.fetch.AlwaysUpdate = value;
             }
         }
+
         public static Vector3? getImpactPosition()
         {
             foreach (var patch in Trajectory.fetch.patches)
@@ -25,14 +26,17 @@ namespace Trajectories
             }
             return null;
         }
+
         public static Vector3 plannedDirection()
         {
-            return AutoPilot.fetch.PlannedDirection;
+            return NavBallOverlay.GetPlannedDirection();
         }
+
         public static Vector3 correctedDirection()
         {
-            return AutoPilot.fetch.CorrectedDirection;
+            return NavBallOverlay.GetCorrectedDirection();
         }
+
         public static void setTarget(double lat,double lon,double alt = 2.0)
         {
             var body = FlightGlobals.Bodies.SingleOrDefault(b => b.isHomeWorld);
@@ -42,6 +46,7 @@ namespace Trajectories
                 Trajectory.fetch.SetTarget(body, worldPos - body.position);
             }
         }
+
         private static void updateTrajectory()
         {
             Trajectory.fetch.ComputeTrajectory(FlightGlobals.ActiveVessel, DescentProfile.fetch, true);

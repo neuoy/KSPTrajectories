@@ -75,6 +75,7 @@
     <Compile Include="AerodynamicModel\AeroForceCache.cs" />
     <Compile Include="AerodynamicModel\FARModel.cs" />
     <Compile Include="AerodynamicModel\StockModel.cs" />
+    <Compile Include="API.cs" />
     <Compile Include="Debug\DebugFastStart.cs" />
     <Compile Include="Debug\TrajectoriesDebug.cs" />
     <Compile Include="DescentProfile.cs" />

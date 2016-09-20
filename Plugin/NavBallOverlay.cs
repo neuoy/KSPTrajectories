@@ -121,7 +121,7 @@ namespace Trajectories
             trajectoryGuide.SetActive(trajectoryGuide.transform.localPosition.z > 0); // hide if behind navball
         }
 
-        private Vector3 GetPlannedDirection()
+        public static Vector3 GetPlannedDirection()
         {
             var vessel = FlightGlobals.ActiveVessel;
 
@@ -142,7 +142,7 @@ namespace Trajectories
             return vel.normalized * Mathf.Cos(plannedAngleOfAttack) + velUp * Mathf.Sin(plannedAngleOfAttack);
         }
 
-        private Vector2 GetCorrection()
+        private static Vector2 GetCorrection()
         {
             var vessel = FlightGlobals.ActiveVessel;
 
@@ -197,7 +197,7 @@ namespace Trajectories
             return offsetDir;
         }
 
-        private Vector3 GetCorrectedDirection()
+        public static Vector3 GetCorrectedDirection()
         {
             var vessel = FlightGlobals.ActiveVessel;
 
