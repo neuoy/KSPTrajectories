@@ -31,11 +31,18 @@ namespace Trajectories
         {
             foreach (var patch in Trajectory.fetch.patches)
             {
+                if (patch.startingState.stockPatch != null)
+                    continue;
+		    
+		if (patch.isAtmospheric)
+                    continue;
+
                 if (patch.spaceOrbit != null)
-                    return patch.spaceOrbit;
+                	return patch.spaceOrbit;
             }
             return null;	
 	}
+	    
         public static Vector3 getImpactVelocity()
         {
             foreach (var patch in Trajectory.fetch.patches)
