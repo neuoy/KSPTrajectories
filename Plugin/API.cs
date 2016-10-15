@@ -36,6 +36,9 @@ namespace Trajectories
             }
             return null;	
 	}
+
+#if false
+
         public static Vector3 getImpactVelocity()
         {
             foreach (var patch in Trajectory.fetch.patches)
@@ -45,6 +48,7 @@ namespace Trajectories
             }
             return null;
         }	
+#endif
 
         public static Vector3 plannedDirection()
         {
