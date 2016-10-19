@@ -69,7 +69,7 @@ namespace Trajectories
             public Orbit spaceOrbit { get; set; } // only used when isAtmospheric is false
             public Vector3? impactPosition { get; set; }
             public Vector3? rawImpactPosition { get; set; }
-            public Vector3 impactVelocity { get; set; }
+            public Vector3? impactVelocity { get; set; }
 
             public Point GetInfo(float altitudeAboveSeaLevel)
             {

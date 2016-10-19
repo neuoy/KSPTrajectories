@@ -177,7 +177,7 @@ namespace Trajectories
                 }
             }
 
-            Vector3 right = Vector3.Cross(patch.impactVelocity, impactPosition).normalized;
+            Vector3 right = Vector3.Cross(patch.impactVelocity.Value, impactPosition).normalized;
             Vector3 behind = Vector3.Cross(right, impactPosition).normalized;
 
             Vector3 offset = targetPosition.Value - impactPosition;
