@@ -132,7 +132,7 @@ namespace Trajectories
             if (lastPatch != null && lastPatch.impactPosition.HasValue)
             {
                 Vector3 up = lastPatch.impactPosition.Value.normalized;
-                Vector3 vel = lastPatch.impactVelocity - lastPatch.startingState.referenceBody.getRFrmVel(lastPatch.impactPosition.Value + lastPatch.startingState.referenceBody.position);
+                Vector3 vel = lastPatch.impactVelocity.Value - lastPatch.startingState.referenceBody.getRFrmVel(lastPatch.impactPosition.Value + lastPatch.startingState.referenceBody.position);
                 float vVelMag = Vector3.Dot(vel, up);
                 Vector3 vVel = up * vVelMag;
                 float hVelMag = (vel - vVel).magnitude;

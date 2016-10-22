@@ -14,13 +14,13 @@
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
     <StartAction>Program</StartAction>
-    <StartProgram>D:\Jeux\KSP_1_1_0\KSP.exe</StartProgram>
+    <StartProgram>D:\Jeux\KSP_1_2_0_dev\KSP_x64.exe</StartProgram>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>D:\Jeux\KSP_1_1_3_dev\GameData\Trajectories\Plugin\</OutputPath>
+    <OutputPath>D:\Jeux\KSP_1_2_0_dev\GameData\Trajectories\Plugin\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -40,17 +40,12 @@
   <ItemGroup>
     <Reference Include="Assembly-CSharp, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>D:\Jeux\KSP_1_1_3_dev\KSP_x64_Data\Managed\Assembly-CSharp.dll</HintPath>
+      <HintPath>D:\Jeux\KSP_1_2_0_dev\KSP_x64_Data\Managed\Assembly-CSharp.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Assembly-CSharp-firstpass, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>D:\Jeux\KSP_1_1_3_dev\KSP_x64_Data\Managed\Assembly-CSharp-firstpass.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="KSPUtil, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>D:\Jeux\KSP_1_1_3_dev\KSP_x64_Data\Managed\KSPUtil.dll</HintPath>
+      <HintPath>D:\Jeux\KSP_1_2_0_dev\KSP_x64_Data\Managed\Assembly-CSharp-firstpass.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="System" />
@@ -61,11 +56,11 @@
     <Reference Include="System.Xml" />
     <Reference Include="UnityEngine, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>D:\Jeux\KSP_1_1_3_dev\KSP_x64_Data\Managed\UnityEngine.dll</HintPath>
+      <HintPath>D:\Jeux\KSP_1_2_0_dev\KSP_x64_Data\Managed\UnityEngine.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="UnityEngine.UI">
-      <HintPath>..\..\..\..\Jeux\KSP_1_1_3\KSP_Data\Managed\UnityEngine.UI.dll</HintPath>
+      <HintPath>..\..\..\..\Jeux\KSP_1_2_0_dev\KSP_x64_Data\Managed\UnityEngine.UI.dll</HintPath>
       <Private>False</Private>
     </Reference>
   </ItemGroup>
@@ -75,7 +70,9 @@
     <Compile Include="AerodynamicModel\AeroForceCache.cs" />
     <Compile Include="AerodynamicModel\FARModel.cs" />
     <Compile Include="AerodynamicModel\StockModel.cs" />
-    <Compile Include="DebugFastStart.cs" />
+    <Compile Include="API.cs" />
+    <Compile Include="Debug\DebugFastStart.cs" />
+    <Compile Include="Debug\TrajectoriesDebug.cs" />
     <Compile Include="DescentProfile.cs" />
     <Compile Include="MapGUI.cs" />
     <Compile Include="MapOverlay.cs" />
