@@ -31,7 +31,7 @@ namespace Trajectories
         }
     }
 
-    [KSPAddon(KSPAddon.Startup.EveryScene, false)]
+    [KSPAddon(KSPAddon.Startup.Flight, false)]
     class MapGUI : MonoBehaviour
     {
         private static readonly int GUIId = 934824;
@@ -264,7 +264,10 @@ namespace Trajectories
 
         public void Awake()
         {
-            if (ToolbarManager.ToolbarAvailable && Settings.fetch.UseBlizzyToolbar)
+			if (HighLogic.LoadedScene != GameScenes.FLIGHT)
+				return;
+
+			if (ToolbarManager.ToolbarAvailable && Settings.fetch.UseBlizzyToolbar)
             {
                 Debug.Log("Using Blizzy toolbar for Trajectories GUI");
                 GUIToggleButtonBlizzy = ToolbarManager.Instance.add("Trajectories", "ToggleUI");
@@ -276,28 +279,25 @@ namespace Trajectories
             else
             {
                 Debug.Log("Using stock toolbar for Trajectories GUI");
-                GameEvents.onGUIApplicationLauncherReady.Add(OnGUIAppLauncherReady);
-                GameEvents.onGUIApplicationLauncherDestroyed.Add(OnGUIAppLauncherDestroyed);
-                GameEvents.onGameSceneLoadRequested.Remove(OnGameSceneLoadRequestedForAppLauncher);
+                GameEvents.onGUIApplicationLauncherReady.Add(CreateStockToolbarButton);
+                GameEvents.onGUIApplicationLauncherUnreadifying.Add(DestroyStockToolbarButton);
             }
         }
         
         void DummyVoid() { }
         
-        void RemoveFromAppLauncher()
+        void DestroyStockToolbarButton(GameScenes scene)
         {
             if (GUIToggleButton != null)
             {
-                ApplicationLauncher.Instance.RemoveApplication(GUIToggleButton);
-                GameEvents.onGUIApplicationLauncherReady.Remove(OnGUIAppLauncherReady);
-                GameEvents.onGUIApplicationLauncherReady.Remove(OnGUIAppLauncherDestroyed);
-                GameEvents.onGameSceneLoadRequested.Remove(OnGameSceneLoadRequestedForAppLauncher);
-            }
+                ApplicationLauncher.Instance.RemoveModApplication(GUIToggleButton);
+				GUIToggleButton = null;
+			}
         }
         
-        void OnGUIAppLauncherReady()
+        void CreateStockToolbarButton()
         {
-            if (ApplicationLauncher.Ready && GUIToggleButton == null)
+            if (GUIToggleButton == null)
             {
                 GUIToggleButton = ApplicationLauncher.Instance.AddModApplication(
                     OnToggleOn,
@@ -311,22 +311,6 @@ namespace Trajectories
 
                 if(Settings.fetch.GUIEnabled)
                     GUIToggleButton.SetTrue(false);
-            }
-        }
-        
-        void OnGUIAppLauncherDestroyed()
-        {
-            if (GUIToggleButton != null)
-            {
-                RemoveFromAppLauncher();
-            }
-        }
-
-        void OnGameSceneLoadRequestedForAppLauncher(GameScenes _scene)
-        {
-            if (GUIToggleButton != null)
-            {
-                RemoveFromAppLauncher();
             }
         }
 
@@ -374,7 +358,6 @@ namespace Trajectories
 
         void OnDestroy()
         {
-            RemoveFromAppLauncher();
             if (GUIToggleButtonBlizzy != null)
                 GUIToggleButtonBlizzy.Destroy();
         }
