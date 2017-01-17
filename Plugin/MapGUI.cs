@@ -170,6 +170,20 @@ namespace Trajectories
                 }
                 GUILayout.EndHorizontal();
 
+                Vessel targetVessel = FlightGlobals.fetch.VesselTarget?.GetVessel();
+                GUI.enabled = (patch != null && targetVessel != null && targetVessel.Landed
+                    // && targetVessel.lastBody == patch.startingState.referenceBody
+                );
+                if (GUILayout.Button("Set target vessel"))
+                {
+                    Vector3d worldpos3d = targetVessel.GetWorldPos3D() - targetVessel.lastBody.position;
+                    traj.SetTarget(targetVessel.lastBody, worldpos3d);
+
+                    ScreenMessages.PostScreenMessage("Targeting vessel " + targetVessel.GetName());
+                }
+                GUI.enabled = true;
+
+
                 GUILayout.BeginHorizontal();
                 coords = GUILayout.TextField(coords, GUILayout.Width(170));
                 if (GUILayout.Button(new GUIContent("Set", "Enter target latitude and longitude, separated by a comma, in decimal format (with a dot for decimal separator)"), GUILayout.Width(50)))
