@@ -174,15 +174,23 @@ namespace Trajectories
                 GUI.enabled = (patch != null && targetVessel != null && targetVessel.Landed
                     // && targetVessel.lastBody == patch.startingState.referenceBody
                 );
-                if (GUILayout.Button("Set target vessel"))
+                if (GUILayout.Button("Target vessel"))
                 {
-                    Vector3d worldpos3d = targetVessel.GetWorldPos3D() - targetVessel.lastBody.position;
-                    traj.SetTarget(targetVessel.lastBody, worldpos3d);
-
+                    traj.SetTarget(targetVessel.lastBody, targetVessel.GetWorldPos3D() - targetVessel.lastBody.position);
                     ScreenMessages.PostScreenMessage("Targeting vessel " + targetVessel.GetName());
                 }
-                GUI.enabled = true;
 
+                FinePrint.Waypoint navigationWaypoint = FlightGlobals.ActiveVessel?.navigationWaypoint;
+                GUI.enabled = (navigationWaypoint != null);
+                if (GUILayout.Button("Active waypoint"))
+                {
+                    traj.SetTarget(navigationWaypoint.celestialBody, 
+                        navigationWaypoint.celestialBody.GetRelSurfacePosition(navigationWaypoint.latitude, navigationWaypoint.longitude, navigationWaypoint.altitude));
+                    ScreenMessages.PostScreenMessage("Targeting waypoint " + navigationWaypoint.name);
+                }
+
+
+                GUI.enabled = true;
 
                 GUILayout.BeginHorizontal();
                 coords = GUILayout.TextField(coords, GUILayout.Width(170));
