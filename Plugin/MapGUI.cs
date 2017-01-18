@@ -203,6 +203,8 @@ namespace Trajectories
                 }
                 GUILayout.EndHorizontal();
 
+                GUILayout.BeginHorizontal();
+
                 Vessel targetVessel = FlightGlobals.fetch.VesselTarget?.GetVessel();
                 GUI.enabled = (patch != null && targetVessel != null && targetVessel.Landed
                     // && targetVessel.lastBody == patch.startingState.referenceBody
@@ -221,7 +223,7 @@ namespace Trajectories
                         navigationWaypoint.celestialBody.GetRelSurfacePosition(navigationWaypoint.latitude, navigationWaypoint.longitude, navigationWaypoint.altitude));
                     ScreenMessages.PostScreenMessage("Targeting waypoint " + navigationWaypoint.name);
                 }
-
+                GUILayout.EndHorizontal();
 
                 GUI.enabled = true;
 
