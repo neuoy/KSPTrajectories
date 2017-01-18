@@ -43,6 +43,9 @@ namespace Trajectories
 
         private string coords = "";
 
+        private Vector3d impactPos = new Vector3d();
+        private Vector3d targetPos = new Vector3d();
+
         /// <summary>
         /// Check if patched conics are available in the current save.
         /// </summary>
@@ -105,7 +108,9 @@ namespace Trajectories
         private void MainWindow(int id)
         {
             Trajectory traj = Trajectory.fetch;
-            var lastPatch = traj.patches.LastOrDefault();
+            Trajectory.Patch lastPatch = traj.patches.LastOrDefault();
+            CelestialBody lastPatchBody = lastPatch?.startingState.referenceBody;
+            CelestialBody targetBody = traj.targetBody;
 
             GUILayout.BeginHorizontal();
             Settings.fetch.DisplayTrajectories = GUILayout.Toggle(Settings.fetch.DisplayTrajectories, "Display trajectory", GUILayout.Width(125));
@@ -132,7 +137,7 @@ namespace Trajectories
             if (lastPatch != null && lastPatch.impactPosition.HasValue)
             {
                 Vector3 up = lastPatch.impactPosition.Value.normalized;
-                Vector3 vel = lastPatch.impactVelocity.Value - lastPatch.startingState.referenceBody.getRFrmVel(lastPatch.impactPosition.Value + lastPatch.startingState.referenceBody.position);
+                Vector3 vel = lastPatch.impactVelocity.Value - lastPatchBody.getRFrmVel(lastPatch.impactPosition.Value + lastPatchBody.position);
                 float vVelMag = Vector3.Dot(vel, up);
                 Vector3 vVel = up * vVelMag;
                 float hVelMag = (vel - vVel).magnitude;
@@ -144,9 +149,37 @@ namespace Trajectories
             }
             GUILayout.Space(10);
 
+
             if (Settings.fetch.DisplayTargetGUI = ToggleGroup(Settings.fetch.DisplayTargetGUI, "Target"))
             {
                 GUI.enabled = traj.targetPosition.HasValue;
+
+                float targetDistance = float.NaN;
+                if (lastPatchBody != null && targetBody != null && lastPatch.impactPosition.HasValue  
+                    && lastPatchBody == targetBody && traj.targetPosition.HasValue)
+                {
+                    // Set Vector3d (required by CelestialBody.GetLanLonAlt) coordinates by impactPosition
+                    // impactPosition is in Body-relative World frame, but CelestialBody.GetLanLonAlt needs the absolute world frame.
+                    impactPos.x = lastPatch.impactPosition.Value.x + lastPatchBody.position.x;
+                    impactPos.y = lastPatch.impactPosition.Value.y + lastPatchBody.position.y;
+                    impactPos.z = lastPatch.impactPosition.Value.z + lastPatchBody.position.z;
+
+                    double impactLat, impatLon, impactAlt;
+                    lastPatchBody.GetLatLonAlt(impactPos, out impactLat, out impatLon, out impactAlt);
+
+                    targetPos.x = traj.targetPosition.Value.x + targetBody.position.x;
+                    targetPos.y = traj.targetPosition.Value.y + targetBody.position.y;
+                    targetPos.z = traj.targetPosition.Value.z + targetBody.position.z;
+
+                    double targetLat, targetLon, targetAlt;
+                    targetBody.GetLatLonAlt(targetPos, out targetLat, out targetLon, out targetAlt);
+
+                    targetDistance = (float) (Util.distanceFromLatitudeAndLongitude(targetBody.Radius + impactAlt,
+                        impactLat, impatLon, targetLat, targetLon) / 1e3);
+                }
+
+                GUILayout.Label("Impact distance to target = " + targetDistance.ToString("0.0") + " km");
+
                 if (GUILayout.Button("Unset target"))
                     traj.SetTarget();
                 GUI.enabled = true;

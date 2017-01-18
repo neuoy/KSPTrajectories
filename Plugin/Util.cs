@@ -89,5 +89,33 @@ namespace Trajectories
         {
             return "[" + v.x.ToString(format) + ", " + v.y.ToString(format) + ", " + v.z.ToString(format) + "]";
         }
+
+        /// <summary>
+        /// Calculate the shortest great-circle distance between two points on a sphere which are given by latitude and longitude.
+        ///
+        /// 
+        /// https://en.wikipedia.org/wiki/Haversine_formula
+        /// </summary>
+        /// <param name="bodyRadius"></param> Radius of the sphere in meters
+        /// <param name="originLatidue"></param>Latitude of the origin of the distance
+        /// <param name="originLongitude"></param>Longitude of the origin of the distance
+        /// <param name="destinationLatitude"></param>Latitude of the destination of the distance
+        /// <param name="destinationLongitude"></param>Longitude of the destination of the distance
+        /// <returns>Distance between origin and source in meters</returns>
+        public static double distanceFromLatitudeAndLongitude(
+            double bodyRadius,
+            double originLatidue, double originLongitude,
+            double destinationLatitude, double destinationLongitude)
+        {
+            double sin1 = Math.Sin(Math.PI / 180.0 * (originLatidue - destinationLatitude) / 2);
+            double sin2 = Math.Sin(Math.PI / 180.0 * (originLongitude - destinationLongitude) / 2);
+            double cos1 = Math.Cos(Math.PI / 180.0 * destinationLatitude);
+            double cos2 = Math.Cos(Math.PI / 180.0 * originLatidue);
+
+            double lateralDist = 2 * bodyRadius *
+                Math.Asin(Math.Sqrt(sin1 * sin1 + cos1 * cos2 * sin2 * sin2));
+
+            return lateralDist;
+        }
     }
 }
