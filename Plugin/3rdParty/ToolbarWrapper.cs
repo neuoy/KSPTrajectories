@@ -25,7 +25,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
 using UnityEngine;
 
@@ -725,23 +724,14 @@ namespace Trajectories {
 			button = new ButtonTypes(iButtonType);
 		}
 
-        internal static Type getType(string name)
-        {
-            foreach (AssemblyLoader.LoadedAssembly assembly in AssemblyLoader.loadedAssemblies)
-            {
-                try
-                {
-                    var type = assembly.assembly.GetExportedTypes().SingleOrDefault(t => t.FullName == name);
-                    if (type != null)
-                    {
-                        return type;
-                    }
-                }
-                catch (InvalidOperationException)
-                {
-                }
-            }
-            return null;
+		internal static Type getType(string name) {
+			Type type = null;
+			AssemblyLoader.loadedAssemblies.TypeOperation(t => {
+				if (t.FullName == name) {
+					type = t;
+				}
+			});
+			return type;
 		}
 
 		internal static PropertyInfo getProperty(Type type, string name) {
