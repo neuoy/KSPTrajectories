@@ -5,11 +5,11 @@ using UnityEngine;
 
 namespace Trajectories
 {
-    class FlightMapVisibility : IVisibility
+    class GUIToggleButtonBlizzyVisibility : IVisibility
     {
-        internal static FlightMapVisibility Instance
+        internal static GUIToggleButtonBlizzyVisibility Instance
         {
-            get { return new FlightMapVisibility(); }
+            get { return new GUIToggleButtonBlizzyVisibility(); }
         }
         
         private static IVisibility FLIGHT_VISIBILITY;
@@ -18,11 +18,11 @@ namespace Trajectories
         {
             get
             {
-                return FLIGHT_VISIBILITY.Visible && MapView.MapIsEnabled;
+                return FLIGHT_VISIBILITY.Visible;
             }
         }
 
-        private FlightMapVisibility()
+        private GUIToggleButtonBlizzyVisibility()
         {
             if (FLIGHT_VISIBILITY == null)
                 FLIGHT_VISIBILITY = new GameScenesVisibility(GameScenes.FLIGHT);
@@ -326,7 +326,7 @@ namespace Trajectories
             {
                 Debug.Log("Using Blizzy toolbar for Trajectories GUI");
                 GUIToggleButtonBlizzy = ToolbarManager.Instance.add("Trajectories", "ToggleUI");
-                GUIToggleButtonBlizzy.Visibility = FlightMapVisibility.Instance;
+                GUIToggleButtonBlizzy.Visibility = GUIToggleButtonBlizzyVisibility.Instance;
                 GUIToggleButtonBlizzy.TexturePath = "Trajectories/Textures/icon-blizzy1";
                 GUIToggleButtonBlizzy.ToolTip = "Right click toggles Trajectories window";
                 GUIToggleButtonBlizzy.OnClick += OnToggleGUIBlizzy;
