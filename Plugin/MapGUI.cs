@@ -1,8 +1,6 @@
 ﻿using KSP.UI.Screens;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using UnityEngine;
 
 namespace Trajectories
@@ -71,7 +69,7 @@ namespace Trajectories
             if (HighLogic.LoadedScene != GameScenes.FLIGHT)
                 return;
 
-            if (!MapView.MapIsEnabled || PlanetariumCamera.Camera == null)
+            if (PlanetariumCamera.Camera == null)
                 return;
 
             Settings.fetch.MapGUIWindowPos = new Rect(Settings.fetch.MapGUIWindowPos.xMin, Settings.fetch.MapGUIWindowPos.yMin, Settings.fetch.MapGUIWindowPos.width, Settings.fetch.MapGUIWindowPos.height - 1);
@@ -363,7 +361,7 @@ namespace Trajectories
                     DummyVoid,
                     DummyVoid,
                     DummyVoid,
-                    ApplicationLauncher.AppScenes.MAPVIEW,
+                    ApplicationLauncher.AppScenes.MAPVIEW | ApplicationLauncher.AppScenes.FLIGHT,
                     (Texture)GameDatabase.Instance.GetTexture("Trajectories/Textures/icon", false));
 
                 if(Settings.fetch.GUIEnabled)
