@@ -19,20 +19,26 @@
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>D:\Jeux\KSP_1_2_0_dev\GameData\Trajectories\Plugin\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <Optimize>true</Optimize>
+    <OutputPath>..\..\..\..\..\KSP_Dev\GameData\Trajectories\Plugin\</OutputPath>
+    <DefineConstants>TRACE;DEBUG;DEVELOPMENT;ENABLE_PROFILER</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <FileAlignment>4096</FileAlignment>
+    <RunCodeAnalysis>false</RunCodeAnalysis>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DebugType>pdbonly</DebugType>
+    <DebugType>none</DebugType>
     <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
+    <OutputPath>..\..\..\..\..\KSP_Dev\GameData\Trajectories\Plugin\</OutputPath>
+    <DefineConstants>
+    </DefineConstants>
+    <ErrorReport>none</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <FileAlignment>4096</FileAlignment>
+    <DebugSymbols>false</DebugSymbols>
+    <RunCodeAnalysis>false</RunCodeAnalysis>
   </PropertyGroup>
   <PropertyGroup>
     <RunPostBuildEvent>OnBuildSuccess</RunPostBuildEvent>
@@ -48,12 +54,22 @@
       <HintPath>D:\Jeux\KSP_1_2_0_dev\KSP_x64_Data\Managed\Assembly-CSharp-firstpass.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="System" />
-    <Reference Include="System.Core" />
+    <Reference Include="Newtonsoft.Json, Version=10.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.10.0.2\lib\net35\Newtonsoft.Json.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="System">
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="System.Core">
+      <Private>False</Private>
+    </Reference>
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="System.Data" />
-    <Reference Include="System.Xml" />
+    <Reference Include="System.Xml">
+      <Private>False</Private>
+    </Reference>
     <Reference Include="UnityEngine, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>D:\Jeux\KSP_1_2_0_dev\KSP_x64_Data\Managed\UnityEngine.dll</HintPath>
@@ -85,10 +101,13 @@
     <Compile Include="Util.cs" />
     <Compile Include="AerodynamicModel\VesselAerodynamicModel.cs" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>if $(ConfigurationName)==Debug ("$(ProjectDir)..\build\prepare-debug.bat" "$(OutDir)")
-if $(ConfigurationName)==Release ("$(ProjectDir)..\build\build-package.bat")</PostBuildEvent>
+    <PostBuildEvent>if $(ConfigurationName)==Debug (call "$(ProjectDir)..\misc\VisualStudio\buildscripts\UnityDebug\prepare-debug.bat" $(TargetName))
+if $(ConfigurationName)==Release (call "$(ProjectDir)..\misc\VisualStudio\buildscripts\ZipPack\build-package.bat" $(TargetName) -v1.6.6)</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
