@@ -81,4 +81,4 @@ if $(ConfigurationName)==Release (call "$(ProjectDir)..\misc\VisualStudio\builds
 
 For extra information see the KSP Forum thread [KSP Plugin debugging and profiling for Visual Studio and Monodevelop on all OS](http://forum.kerbalspaceprogram.com/index.php?/topic/102909-ksp-plugin-debugging-and-profiling-for-visual-studio-and-monodevelop-on-all-os/&page=1).
 
-##### Readme, VS Project files and Scripts by [PiezPiedPy](https://github.com/PiezPiedPy)
+##### Readme, Updated VS Project files and Overhauled Scripts by [PiezPiedPy](https://github.com/PiezPiedPy)
