@@ -21,7 +21,7 @@
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>$(KSPDIR)\GameData\Trajectories\Plugin\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DefineConstants>DEBUG;TRACE;TRAJECTORIES_PROFILER</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
@@ -84,6 +84,7 @@
     <Compile Include="Trajectory.cs" />
     <Compile Include="Util.cs" />
     <Compile Include="AerodynamicModel\VesselAerodynamicModel.cs" />
+    <Compile Include="Utilities\Profiler.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
