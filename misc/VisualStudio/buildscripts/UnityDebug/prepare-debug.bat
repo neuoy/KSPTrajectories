@@ -1,6 +1,6 @@
 rem Generate the MDB file needed by UnityVS and Monodevelop for debugging
 rem For information on how to setup your debugging environment.
-rem see https://github.com/PiezPiedPy/KSPTrajectories/tree/master/misc/VisualStudio/Readme.md
+rem see https://github.com/neuoy/KSPTrajectories/tree/master/misc/VisualStudio/Readme.md
 
 @echo off
 

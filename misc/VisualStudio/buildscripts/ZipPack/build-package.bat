@@ -1,6 +1,6 @@
 rem Generate the zip Release package.
 rem For information on how to setup your environment.
-rem see https://github.com/PiezPiedPy/KSPTrajectories/tree/master/misc/VisualStudio/Readme.md
+rem see https://github.com/neuoy/KSPTrajectories/tree/master/misc/VisualStudio/Readme.md
 
 @echo off
 
@@ -25,8 +25,8 @@ cd package
 
 mkdir GameData
 cd GameData
-xcopy /y ..\..\misc\3rdParty\ModuleManager.%MODMANAGER_VERSION%.dll .
-xcopy /y ..\..\misc\3rdParty\ModuleManager-License.txt .
+xcopy /y ..\..\3rdParty\ModuleManager.%MODMANAGER_VERSION%.dll .
+xcopy /y ..\..\3rdParty\ModuleManager-License.txt .
 
 mkdir %TargetName%
 cd %TargetName%
