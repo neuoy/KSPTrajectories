@@ -6,6 +6,8 @@ This file is part of Trajectories, under MIT license.
 */
 
 //#define DEBUG_COMPARE_FORCES
+//#define DEBUG_COMPARE_DENSITY
+//#define DEBUG_COMPARE_TEMPERATURE
 
 using System;
 using System.Collections.Generic;
@@ -748,7 +750,7 @@ namespace Trajectories
 
                     Vector3d airVelocity = bodySpaceVelocity - body.getRFrmVel(body.position + bodySpacePosition);
 
-                    #if DEBUG_COMPARE_FORCES
+#if DEBUG_COMPARE_FORCES
                     double R = PreviousFramePos.magnitude;
                     Vector3d gravityForce = PreviousFramePos * (-body.gravParameter / (R * R * R) * vessel_.totalMass);
 
@@ -792,12 +794,38 @@ namespace Trajectories
                     //Util.PostSingleScreenMessage("vel from pos", "vel from pos=" + ((bodySpacePosition - PreviousFramePos) / dt).ToString("0.000") + " (mag=" + ((bodySpacePosition - PreviousFramePos) / dt).magnitude.ToString("0.00") + ")");
                     Util.PostSingleScreenMessage("force diff", "force ratio=" + (localActualForce.z / localPredictedForce.z).ToString("0.000"));
                     Util.PostSingleScreenMessage("drag", "physics drag=" + vessel_.rootPart.rb.drag);
-                    #endif
+#endif
+
+#if DEBUG_COMPARE_DENSITY
 
                     double approximateRho = StockAeroUtil.GetDensity(altitudeAboveSea, body);
                     double preciseRho = StockAeroUtil.GetDensity(vessel_.GetWorldPos3D(), body);
                     double actualRho = vessel_.atmDensity;
-                    Util.PostSingleScreenMessage("rho info", /*"preciseRho=" + preciseRho.ToString("0.0000") + " ; " +*/ "rho=" + approximateRho.ToString("0.0000") + " ; actual=" + actualRho.ToString("0.0000") + " ; ratio=" + (actualRho / approximateRho).ToString("0.00"));
+
+                    Util.PostSingleScreenMessage("rho_actual", "rho_actual = " + actualRho.ToString("e3"));
+
+                    Util.PostSingleScreenMessage("rho_approx",
+                        "rho_approx=" + approximateRho.ToString("e3")
+                        + "; ratio=" + (actualRho / approximateRho).ToString("0.000")
+                        + "; ratio_diff=" + (1.0d - actualRho / approximateRho).ToString("e3")
+                        );
+
+                    Util.PostSingleScreenMessage("rho_precise",
+                        "rho_prec=" + preciseRho.ToString("e3")
+                        + "; ratio=" + (actualRho / preciseRho).ToString("0.000")
+                        + "; ratio_diff=" + (1.0d - actualRho / preciseRho).ToString("e3"));
+#endif
+
+#if DEBUG_COMPARE_TEMPERATURE
+                    double calcTemp = StockAeroUtil.GetTemperature(vessel_.GetWorldPos3D(), body);
+                    double actualTemp = vessel_.atmosphericTemperature;
+
+                    Util.PostSingleScreenMessage("temp info",
+                        "calcTemp=" + calcTemp.ToString("0.000")
+                        + " ; actualTemp=" + actualTemp.ToString("0.0000")
+                        + " ; ratio=" + (actualTemp / calcTemp).ToString("0.00")
+                        + " ; ratio_diff=" + (1.0d - actualTemp / calcTemp).ToString("e3"));
+#endif
                 }
 
                 PreviousFrameVelocity = bodySpaceVelocity;
