@@ -17,6 +17,16 @@ namespace Trajectories
             }
         }
 
+        public static double? getEndTime()
+        {
+            foreach (var patch in Trajectory.fetch.patches)
+            {
+                if (patch.impactPosition.HasValue)
+                    return patch.endTime;
+            }
+            return null;
+        }
+
         public static Vector3? getImpactPosition()
         {
             foreach (var patch in Trajectory.fetch.patches)
