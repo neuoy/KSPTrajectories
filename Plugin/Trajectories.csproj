@@ -11,32 +11,32 @@
     <RootNamespace>Trajectories</RootNamespace>
     <AssemblyName>Trajectories</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
-    <FileAlignment>4096</FileAlignment>
+    <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
     <StartAction>Program</StartAction>
-    <StartProgram>..\..\..\..\..\KSP_Dev\KSP_x64.exe</StartProgram>
+    <StartProgram>$(KSPDIR)\KSP_x64.exe</StartProgram>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>..\..\..\..\..\KSP_Dev\GameData\Trajectories\Plugin\</OutputPath>
+    <OutputPath>$(KSPDIR)\GameData\Trajectories\Plugin\</OutputPath>
     <DefineConstants>TRACE;DEBUG;DEVELOPMENT;ENABLE_PROFILER</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <FileAlignment>4096</FileAlignment>
+    <FileAlignment>512</FileAlignment>
     <RunCodeAnalysis>false</RunCodeAnalysis>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>none</DebugType>
     <Optimize>true</Optimize>
-    <OutputPath>..\..\..\..\..\KSP_Dev\GameData\Trajectories\Plugin\</OutputPath>
+    <OutputPath>$(KSPDIR)\GameData\Trajectories\Plugin\</OutputPath>
     <DefineConstants>
     </DefineConstants>
     <ErrorReport>none</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <FileAlignment>4096</FileAlignment>
+    <FileAlignment>512</FileAlignment>
     <DebugSymbols>false</DebugSymbols>
     <RunCodeAnalysis>false</RunCodeAnalysis>
   </PropertyGroup>
@@ -46,12 +46,12 @@
   <ItemGroup>
     <Reference Include="Assembly-CSharp, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\..\KSP_Dev\KSP_x64_Data\Managed\Assembly-CSharp.dll</HintPath>
+      <HintPath>$(KSPDIR)\KSP_x64_Data\Managed\Assembly-CSharp.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Assembly-CSharp-firstpass, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\..\KSP_Dev\KSP_x64_Data\Managed\Assembly-CSharp-firstpass.dll</HintPath>
+      <HintPath>$(KSPDIR)\KSP_x64_Data\Managed\Assembly-CSharp-firstpass.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="System">
@@ -68,11 +68,11 @@
     </Reference>
     <Reference Include="UnityEngine, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\..\KSP_Dev\KSP_x64_Data\Managed\UnityEngine.dll</HintPath>
+      <HintPath>$(KSPDIR)\KSP_x64_Data\Managed\UnityEngine.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="UnityEngine.UI">
-      <HintPath>..\..\..\..\..\KSP_Dev\KSP_x64_Data\Managed\UnityEngine.UI.dll</HintPath>
+      <HintPath>$(KSPDIR)\KSP_x64_Data\Managed\UnityEngine.UI.dll</HintPath>
       <Private>False</Private>
     </Reference>
   </ItemGroup>
@@ -83,8 +83,8 @@
     <Compile Include="AerodynamicModel\FARModel.cs" />
     <Compile Include="AerodynamicModel\StockModel.cs" />
     <Compile Include="API.cs" />
-    <Compile Include="Debug\DebugFastStart.cs" />
-    <Compile Include="Debug\TrajectoriesDebug.cs" />
+    <Compile Include="Utilities\DebugFastStart.cs" />
+    <Compile Include="Utilities\TrajectoriesDebug.cs" />
     <Compile Include="DescentProfile.cs" />
     <Compile Include="MapGUI.cs" />
     <Compile Include="MapOverlay.cs" />
@@ -100,7 +100,7 @@
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>if $(ConfigurationName)==Debug (call "$(ProjectDir)..\misc\VisualStudio\buildscripts\UnityDebug\prepare-debug.bat" $(TargetName))
-if $(ConfigurationName)==Release (call "$(ProjectDir)..\misc\VisualStudio\buildscripts\ZipPack\build-package.bat" $(TargetName) -v1.6.6)</PostBuildEvent>
+if $(ConfigurationName)==Release (call "$(ProjectDir)..\misc\VisualStudio\buildscripts\ZipPack\build-package.bat" $(TargetName) -v1.6.7)</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
