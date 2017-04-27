@@ -14,24 +14,14 @@
     <FileAlignment>4096</FileAlignment>
     <TargetFrameworkProfile />
     <StartAction>Program</StartAction>
-<<<<<<< HEAD
     <StartProgram>..\..\..\..\..\KSP_Dev\KSP_x64.exe</StartProgram>
-=======
-    <StartProgram>$(KSPDIR)\KSP_x64.exe</StartProgram>
->>>>>>> refs/remotes/neuoy/master
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
-<<<<<<< HEAD
-    <Optimize>true</Optimize>
+    <Optimize>false</Optimize>
     <OutputPath>..\..\..\..\..\KSP_Dev\GameData\Trajectories\Plugin\</OutputPath>
     <DefineConstants>TRACE;DEBUG;DEVELOPMENT;ENABLE_PROFILER</DefineConstants>
-=======
-    <Optimize>false</Optimize>
-    <OutputPath>$(KSPDIR)\GameData\Trajectories\Plugin\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
->>>>>>> refs/remotes/neuoy/master
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <FileAlignment>4096</FileAlignment>
@@ -56,16 +46,11 @@
   <ItemGroup>
     <Reference Include="Assembly-CSharp, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-<<<<<<< HEAD
       <HintPath>..\..\..\..\..\KSP_Dev\KSP_x64_Data\Managed\Assembly-CSharp.dll</HintPath>
-=======
-      <HintPath>$(KSPDIR)\KSP_x64_Data\Managed\Assembly-CSharp.dll</HintPath>
->>>>>>> refs/remotes/neuoy/master
       <Private>False</Private>
     </Reference>
     <Reference Include="Assembly-CSharp-firstpass, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-<<<<<<< HEAD
       <HintPath>..\..\..\..\..\KSP_Dev\KSP_x64_Data\Managed\Assembly-CSharp-firstpass.dll</HintPath>
       <Private>False</Private>
     </Reference>
@@ -73,9 +58,6 @@
       <Private>False</Private>
     </Reference>
     <Reference Include="System.Core">
-=======
-      <HintPath>$(KSPDIR)\KSP_x64_Data\Managed\Assembly-CSharp-firstpass.dll</HintPath>
->>>>>>> refs/remotes/neuoy/master
       <Private>False</Private>
     </Reference>
     <Reference Include="System.Xml.Linq" />
@@ -86,19 +68,11 @@
     </Reference>
     <Reference Include="UnityEngine, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-<<<<<<< HEAD
       <HintPath>..\..\..\..\..\KSP_Dev\KSP_x64_Data\Managed\UnityEngine.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="UnityEngine.UI">
       <HintPath>..\..\..\..\..\KSP_Dev\KSP_x64_Data\Managed\UnityEngine.UI.dll</HintPath>
-=======
-      <HintPath>$(KSPDIR)\KSP_x64_Data\Managed\UnityEngine.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="UnityEngine.UI">
-      <HintPath>$(KSPDIR)\KSP_x64_Data\Managed\UnityEngine.UI.dll</HintPath>
->>>>>>> refs/remotes/neuoy/master
       <Private>False</Private>
     </Reference>
   </ItemGroup>
@@ -125,13 +99,8 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-<<<<<<< HEAD
     <PostBuildEvent>if $(ConfigurationName)==Debug (call "$(ProjectDir)..\misc\VisualStudio\buildscripts\UnityDebug\prepare-debug.bat" $(TargetName))
 if $(ConfigurationName)==Release (call "$(ProjectDir)..\misc\VisualStudio\buildscripts\ZipPack\build-package.bat" $(TargetName) -v1.6.6)</PostBuildEvent>
-=======
-    <PostBuildEvent>if $(ConfigurationName)==Debug ("$(ProjectDir)..\build\prepare-debug.bat")
-if $(ConfigurationName)==Release ("$(ProjectDir)..\build\build-package.bat")</PostBuildEvent>
->>>>>>> refs/remotes/neuoy/master
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
