@@ -9,17 +9,17 @@ A set of instructions and files to help set up KSPTrajectories for:
 #
 ### SETUP
 For building and/or debugging KSPTrajectories with Visual Studio or Unity Editor you will need to download and install the exact version of Unity Editor that was used to build the version of KSP you are working with.
-  - The Unity Editor for **KSP v1.2.2** is **Unity v5.4.0.p4** and can be downloaded here: [UnitySetup64-5.4.0p4.exe](http://beta.unity3d.com/download/b15b5ae035b7/Windows64EditorInstaller/UnitySetup64-5.4.0p4.exe)
+  - The Unity Editor for **KSP v1.3.0** is **Unity v5.4.0.p4** and can be downloaded here: [UnitySetup64-5.4.0p4.exe](http://beta.unity3d.com/download/b15b5ae035b7/Windows64EditorInstaller/UnitySetup64-5.4.0p4.exe)
   
   If you want to debug with Visual Studio then you will need the **UnityVS Extension** which you can download and install by using the **Tools->Extensions and Updates** window in Visual Studio.
   
-  If you don't have a KSP dev install then make one by copying a clean install of KSP into a new folder and then install any needed mods into it. If you have copied from a steam install then you will want to copy the [steam_appid.txt](https://github.com/PiezPiedPy/KSPTrajectories/tree/master/misc/VisualStudio/steam_appid.txt) file into your KSP dev install folder.
+  If you don't have a KSP dev install then make one by copying a clean install of KSP into a new folder and then install any needed mods into it. If you have copied from a steam install then you will want to copy the [steam_appid.txt](https://github.com/neuoy/KSPTrajectories/tree/master/misc/VisualStudio/steam_appid.txt) file into your KSP dev install folder.
   
   For debugging you will have to copy a couple of files, mainly the Unity debug player and its symbol file into your KSP development install.
 
   - First is to copy the *"player_win.exe"* and *"player_win_development_x64.pdb"* files into your KSP development install folder (copy them next to the KSP.exe file).  they can be found in your Unity install folder *"Unity\Editor\Data\PlaybackEngines\windowsstandalonesupport\Variations\win64_development_mono"*.
   - Rename the copied file *"player_win.exe"* now in your KSP dev install folder to *"KSP_x64_Dbg.exe"*.
-  - Create a junction in your KSP dev install folder named *"KSP_x64_Dbg_Data"* linking to your KSP dev *"KSP_x64_Data"*.
+  - Create a junction in your KSP dev install folder named *"KSP_x64_Dbg_Data"* linking to your KSP dev *"KSP_x64_Data"* folder.
     - You can create the junction by opening a command prompt in your KSP dev install folder and entering *"mklink /J KSP_x64_Dbg_Data KSP_x64_Data"*.
   - Download the [PlayerConnectionConfigFile](https://www.sarbian.com/sarbian/PlayerConnectionConfigFile) file and put it into your KSP dev *"KSP_x64_Data"* folder.
 #### Visual Studio and UnityVS extension:
@@ -71,7 +71,7 @@ if $(ConfigurationName)==Release (call "$(ProjectDir)..\misc\VisualStudio\builds
     refreshMesh();
     Profiler.EndSample();
     ```
-    **Note:** There is a simple 'frame-based' profiler included in the KSPTrajectories code base [here](https://github.com/PiezPiedPy/KSPTrajectories/tree/master/Plugin/Utility/Profiler.cs), that is appropriate for performance measurements.
+    **Note:** There is a simple 'frame-based' profiler included in the KSPTrajectories code base [here](https://github.com/neuoy/KSPTrajectories/tree/master/Plugin/Utility/Profiler.cs), that is appropriate for performance measurements.
     
   - For Monodevelop debugging you need the .mdb files and will have to attach to the KSP dev install debug executable, to do this start Monodevelop and then start your KSP dev install debug executable, now use Monodevelop's **Run Menu->Attach to Process** option to open the process attach window. *Unity Debugger* should be selected in the lower left selection box, now you can select KSP's process called *"WindowsPlayer"* and click OK to attach to it. Monodevelop should now switch into debugging mode.
 
