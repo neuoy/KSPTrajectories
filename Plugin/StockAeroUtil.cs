@@ -76,8 +76,13 @@ namespace Trajectories
             // get an average day/night temperature at the equator
             double sunDot = 0.5;
             float sunAxialDot = 0;
-            double atmosphereTemperatureOffset = (double)body.latitudeTemperatureBiasCurve.Evaluate(0) + (double)body.latitudeTemperatureSunMultCurve.Evaluate(0) * sunDot + (double)body.axialTemperatureSunMultCurve.Evaluate(sunAxialDot);
-            double temperature = body.GetTemperature(altitude) + (double)body.atmosphereTemperatureSunMultCurve.Evaluate((float)altitude) * atmosphereTemperatureOffset;
+            double atmosphereTemperatureOffset = (double)body.latitudeTemperatureBiasCurve.Evaluate(0)
+                + (double)body.latitudeTemperatureSunMultCurve.Evaluate(0) * sunDot
+                + (double)body.axialTemperatureSunMultCurve.Evaluate(sunAxialDot);
+            double temperature = // body.GetFullTemperature(altitude, atmosphereTemperatureOffset);
+                body.GetTemperature(altitude)
+                + (double)body.atmosphereTemperatureSunMultCurve.Evaluate((float)altitude) * atmosphereTemperatureOffset;
+
 
             return body.GetDensity(pressure, temperature);
         }
@@ -92,7 +97,8 @@ namespace Trajectories
                 return 0;
 
             double pressure = body.GetPressure(altitude);
-            double temperature = GetTemperature(position, body);
+            double temperature = // body.GetFullTemperature(position);
+                GetTemperature(position, body);
 
             return body.GetDensity(pressure, temperature);
         }
