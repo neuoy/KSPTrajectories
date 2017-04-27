@@ -29,7 +29,7 @@ For building and/or debugging KSPTrajectories with Visual Studio or Unity Editor
   - Enter the code below into the **Post-build event command line** box and change the version number to what you want attached to the zip package.
   ```
 if $(ConfigurationName)==Debug (call "$(ProjectDir)..\misc\VisualStudio\buildscripts\UnityDebug\prepare-debug.bat" $(TargetName))
-if $(ConfigurationName)==Release (call "$(ProjectDir)..\misc\VisualStudio\buildscripts\ZipPack\build-package.bat" $(TargetName) -v1.6.6)
+if $(ConfigurationName)==Release (call "$(ProjectDir)..\misc\VisualStudio\buildscripts\ZipPack\build-package.bat" $(TargetName) -v@(VersionNumber))
   ```
   - Change to the **Reference Paths** tab and add a path to your KSP dev install *"\KSP_x64_Data\Managed"* folder.
   - Goto **Debug Menu->Options** and clear the **Enable Edit and Continue** checkbox.
