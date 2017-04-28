@@ -13,3 +13,5 @@
 
 ### For Developers
   * KSP directory path is not hardcoded anymore. You can set up an environment variable in your Operating System named KSPDIR that points to the KSP installation directory.
+  * Revamped build scripts for Visual Studio. Thanks to PiezPiedPy!
+  * Added simple profiler class. Thanks to PiezPiedPy!
