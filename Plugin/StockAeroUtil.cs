@@ -134,16 +134,16 @@ namespace Trajectories
             {
                 // need checks on shielded components
                 Part p = _vessel.Parts[i];
-				#if DEBUG
-				TrajectoriesDebug partDebug = VesselAerodynamicModel.DebugParts ? p.FindModuleImplementing<TrajectoriesDebug>() : null;
-				if (partDebug != null)
-				{
-					partDebug.Drag = 0;
-					partDebug.Lift = 0;
-				}
-				#endif
+                #if DEBUG
+                TrajectoriesDebug partDebug = VesselAerodynamicModel.DebugParts ? p.FindModuleImplementing<TrajectoriesDebug>() : null;
+                if (partDebug != null)
+                {
+                    partDebug.Drag = 0;
+                    partDebug.Lift = 0;
+                }
+                #endif
 
-				if (p.ShieldedFromAirstream || p.Rigidbody == null)
+                if (p.ShieldedFromAirstream || p.Rigidbody == null)
                 {
                     continue;
                 }
@@ -153,7 +153,7 @@ namespace Trajectories
                 Vector3 sim_dragVectorDirLocal = -(p.transform.InverseTransformDirection(sim_dragVectorDir));
 
                 Vector3 liftForce = new Vector3(0, 0, 0);
-				Vector3d dragForce;
+                Vector3d dragForce;
 
                 switch(p.dragModel)
                 {
@@ -188,38 +188,38 @@ namespace Trajectories
                         }
 
                         double sim_dragScalar = dyn_pressure * (double)drag * PhysicsGlobals.DragMultiplier;
-						dragForce = -(Vector3d)sim_dragVectorDir * sim_dragScalar;
+                        dragForce = -(Vector3d)sim_dragVectorDir * sim_dragScalar;
 
                         break;
 
                     case Part.DragModel.SPHERICAL:
-						dragForce = -(Vector3d)sim_dragVectorDir * (double)p.maximum_drag;
+                        dragForce = -(Vector3d)sim_dragVectorDir * (double)p.maximum_drag;
                         break;
 
                     case Part.DragModel.CYLINDRICAL:
-						dragForce = -(Vector3d)sim_dragVectorDir * (double)Mathf.Lerp(p.minimum_drag, p.maximum_drag, Mathf.Abs(Vector3.Dot(p.partTransform.TransformDirection(p.dragReferenceVector), sim_dragVectorDir)));
+                        dragForce = -(Vector3d)sim_dragVectorDir * (double)Mathf.Lerp(p.minimum_drag, p.maximum_drag, Mathf.Abs(Vector3.Dot(p.partTransform.TransformDirection(p.dragReferenceVector), sim_dragVectorDir)));
                         break;
 
                     case Part.DragModel.CONIC:
-						dragForce = -(Vector3d)sim_dragVectorDir * (double)Mathf.Lerp(p.minimum_drag, p.maximum_drag, Vector3.Angle(p.partTransform.TransformDirection(p.dragReferenceVector), sim_dragVectorDir) / 180f);
+                        dragForce = -(Vector3d)sim_dragVectorDir * (double)Mathf.Lerp(p.minimum_drag, p.maximum_drag, Vector3.Angle(p.partTransform.TransformDirection(p.dragReferenceVector), sim_dragVectorDir) / 180f);
                         break;
 
                     default:
-						// no drag to apply
-						dragForce = new Vector3d();
-						break;
+                        // no drag to apply
+                        dragForce = new Vector3d();
+                        break;
                 }
 
-				#if DEBUG
-				if (partDebug != null)
-				{
-					partDebug.Drag += (float)dragForce.magnitude;
-				}
-				#endif
-				total_drag += dragForce;
+                #if DEBUG
+                if (partDebug != null)
+                {
+                    partDebug.Drag += (float)dragForce.magnitude;
+                }
+                #endif
+                total_drag += dragForce;
 
-				// If it isn't a wing or lifter, get body lift.
-				if (!p.hasLiftModule)
+                // If it isn't a wing or lifter, get body lift.
+                if (!p.hasLiftModule)
                 {
                     float simbodyLiftScalar = p.bodyLiftMultiplier * PhysicsGlobals.BodyLiftMultiplier * (float)dyn_pressure;
                     simbodyLiftScalar *= PhysicsGlobals.GetLiftingSurfaceCurve("BodyLift").liftMachCurve.Evaluate((float)mach);
@@ -246,22 +246,22 @@ namespace Trajectories
                         float absdot;
                         wing.SetupCoefficients(v_wrld_vel, out nVel, out liftVector, out liftdot, out absdot);
 
-						double prevMach = p.machNumber;
-						p.machNumber = mach;
+                        double prevMach = p.machNumber;
+                        p.machNumber = mach;
                         Vector3 local_lift = mcs_mod * wing.GetLiftVector(liftVector, liftdot, absdot, liftQ, (float)mach);
                         Vector3 local_drag = mcs_mod * wing.GetDragVector(nVel, absdot, liftQ);
-						p.machNumber = prevMach;
+                        p.machNumber = prevMach;
 
                         total_lift += local_lift;
                         total_drag += local_drag;
 
-						#if DEBUG
-						if (partDebug != null)
-						{
-							partDebug.Lift += (float)local_lift.magnitude;
-							partDebug.Drag += (float)local_drag.magnitude;
-						}
-						#endif
+                        #if DEBUG
+                        if (partDebug != null)
+                        {
+                            partDebug.Lift += (float)local_lift.magnitude;
+                            partDebug.Drag += (float)local_drag.magnitude;
+                        }
+                        #endif
                     }
                 }
 

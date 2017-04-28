@@ -237,7 +237,7 @@ namespace Trajectories
                         if(Double.TryParse(latLng[0].Trim(), out lat) && Double.TryParse(latLng[1].Trim(), out lng))
                         {
                             Vector3d relPos = body.GetWorldSurfacePosition(lat, lng, 2.0) - body.position;
-							double altitude = Trajectory.GetGroundAltitude(body, relPos) + body.Radius;
+                            double altitude = Trajectory.GetGroundAltitude(body, relPos) + body.Radius;
                             traj.SetTarget(body, relPos * (altitude / relPos.magnitude));
                         }
                     }
@@ -319,10 +319,10 @@ namespace Trajectories
 
         public void Awake()
         {
-			if (HighLogic.LoadedScene != GameScenes.FLIGHT)
-				return;
+            if (HighLogic.LoadedScene != GameScenes.FLIGHT)
+                return;
 
-			if (ToolbarManager.ToolbarAvailable && Settings.fetch.UseBlizzyToolbar)
+            if (ToolbarManager.ToolbarAvailable && Settings.fetch.UseBlizzyToolbar)
             {
                 Debug.Log("Using Blizzy toolbar for Trajectories GUI");
                 GUIToggleButtonBlizzy = ToolbarManager.Instance.add("Trajectories", "ToggleUI");
@@ -346,8 +346,8 @@ namespace Trajectories
             if (GUIToggleButton != null)
             {
                 ApplicationLauncher.Instance.RemoveModApplication(GUIToggleButton);
-				GUIToggleButton = null;
-			}
+                GUIToggleButton = null;
+            }
         }
 
         void CreateStockToolbarButton()

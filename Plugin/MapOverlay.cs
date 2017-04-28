@@ -31,7 +31,7 @@ namespace Trajectories
 
         private Material lineMaterial;
 
-		private float lineWidth = 3.0f;
+        private float lineWidth = 3.0f;
 
         private void DetachCamera()
         {
@@ -142,12 +142,12 @@ namespace Trajectories
                 mesh.SetActive(false);
             }
 
-			// material from RemoteTech
-			if (lineMaterial == null)
-			{
-				//    lineMaterial = new Material("Shader \"Vertex Colors/Alpha\" {Category{Tags {\"Queue\"=\"Transparent\" \"IgnoreProjector\"=\"True\" \"RenderType\"=\"Transparent\"}SubShader {Cull Off ZWrite On Blend SrcAlpha OneMinusSrcAlpha Pass {BindChannels {Bind \"Color\", color Bind \"Vertex\", vertex}}}}}");
-				lineMaterial = MapView.fetch.orbitLinesMaterial;
-			}
+            // material from RemoteTech
+            if (lineMaterial == null)
+            {
+                //    lineMaterial = new Material("Shader \"Vertex Colors/Alpha\" {Category{Tags {\"Queue\"=\"Transparent\" \"IgnoreProjector\"=\"True\" \"RenderType\"=\"Transparent\"}SubShader {Cull Off ZWrite On Blend SrcAlpha OneMinusSrcAlpha Pass {BindChannels {Bind \"Color\", color Bind \"Vertex\", vertex}}}}}");
+                lineMaterial = MapView.fetch.orbitLinesMaterial;
+            }
 
 
             foreach (var patch in Trajectory.fetch.patches)
@@ -375,12 +375,12 @@ namespace Trajectories
 
             Vector3 camPos = ScaledSpace.ScaledToLocalSpace(PlanetariumCamera.Camera.transform.position) - body.position;
 
-			double impactDistFromBody = impactPosition.magnitude;
-			double altitude = impactDistFromBody - body.Radius;
-			altitude = altitude * 1.0 + 1200; // hack to avoid the cross being hidden under the ground in map view
-			impactPosition *= (float)((body.Radius + altitude) / impactDistFromBody);
+            double impactDistFromBody = impactPosition.magnitude;
+            double altitude = impactDistFromBody - body.Radius;
+            altitude = altitude * 1.0 + 1200; // hack to avoid the cross being hidden under the ground in map view
+            impactPosition *= (float)((body.Radius + altitude) / impactDistFromBody);
 
-			Vector3 crossV1 = Vector3.Cross(impactPosition, Vector3.right).normalized;
+            Vector3 crossV1 = Vector3.Cross(impactPosition, Vector3.right).normalized;
             Vector3 crossV2 = Vector3.Cross(impactPosition, crossV1).normalized;
 
             float crossThickness = Mathf.Min(lineWidth * 0.001f * Vector3.Distance(camPos, impactPosition), 6000.0f);
