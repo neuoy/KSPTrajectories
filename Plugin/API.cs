@@ -1,5 +1,6 @@
 ﻿using System.Linq;
 using UnityEngine;
+
 namespace Trajectories
 {
     //This class only returns correct values for the "active vessel."

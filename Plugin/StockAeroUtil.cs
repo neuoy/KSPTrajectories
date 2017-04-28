@@ -10,12 +10,7 @@ StockAeroUtil by atomicfury
 
 //#define PRECOMPUTE_CACHE
 using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
 using UnityEngine;
-using System.Reflection;
 
 namespace Trajectories
 {

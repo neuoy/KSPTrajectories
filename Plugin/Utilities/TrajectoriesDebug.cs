@@ -1,12 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
-namespace Trajectories
+﻿namespace Trajectories
 {
-	#if DEBUG
-	public class TrajectoriesDebug : PartModule
+#if DEBUG
+    public class TrajectoriesDebug : PartModule
 	{
 		[KSPField(isPersistant = false, guiActive = true)]
 		public float Drag;

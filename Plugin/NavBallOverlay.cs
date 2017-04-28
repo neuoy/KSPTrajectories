@@ -7,9 +7,7 @@ This file is part of Trajectories, under MIT license.
 
 using KSP.UI.Screens.Flight;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using UnityEngine;
 
 namespace Trajectories
