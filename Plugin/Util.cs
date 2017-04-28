@@ -10,11 +10,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using System.Diagnostics;
 using UnityEngine;
 
 namespace Trajectories
 {
-    static class Util
+    public static class Util
     {
         private static Dictionary<string, ScreenMessage> messages = new Dictionary<string, ScreenMessage>();
 
@@ -89,6 +90,115 @@ namespace Trajectories
         {
             return "[" + v.x.ToString(format) + ", " + v.y.ToString(format) + ", " + v.z.ToString(format) + "]";
         }
+
+
+
+    // --------------------------------------------------------------------------
+    // --- TIME -----------------------------------------------------------------
+
+    // return hours in a day
+    public static double HoursInDay()
+    {
+      return GameSettings.KERBIN_TIME ? 6.0 : 24.0;
+    }
+
+    // return year length
+    public static double DaysInYear()
+    {
+      if (!FlightGlobals.ready)
+        return 426.0;
+      return Math.Floor(FlightGlobals.GetHomeBody().orbit.period / (HoursInDay() * 60.0 * 60.0));
+    }
+
+    // get current time
+    public static UInt64 Clocks()
+    {
+      return (UInt64)Stopwatch.GetTimestamp();
+    }
+
+    // convert from clocks to microseconds
+    public static double Microseconds(UInt64 clocks)
+    {
+      return (double)clocks * 1000000.0 / (double)Stopwatch.Frequency;
+    }
+
+
+    public static double Milliseconds(UInt64 clocks)
+    {
+      return (double)clocks * 1000.0 / (double)Stopwatch.Frequency;
+    }
+
+
+    public static double Seconds(UInt64 clocks)
+    {
+      return (double)clocks / (double)Stopwatch.Frequency;
+    }
+
+
+
+    // --------------------------------------------------------------------------
+    // --- GAME LOGIC -----------------------------------------------------------
+
+    // return true if the current scene is flight
+    public static bool IsFlight()
+    {
+      return HighLogic.LoadedSceneIsFlight;
+    }
+
+    // return true if the current scene is editor
+    public static bool IsEditor()
+    {
+      return HighLogic.LoadedSceneIsEditor;
+    }
+
+    // return true if the current scene is not the main menu
+    public static bool IsGame()
+    {
+      return HighLogic.LoadedSceneIsGame;
+    }
+
+    // return true if game is paused
+    public static bool IsPaused()
+    {
+      return FlightDriver.Pause || Planetarium.Pause;
+    }
+
+
+
+    // --------------------------------------------------------------------------
+    // --- RANDOM ---------------------------------------------------------------
+
+    // store the random number generator
+    static System.Random rng = new System.Random();
+
+    // return random integer
+    public static int RandomInt(int max_value)
+    {
+      return rng.Next(max_value);
+    }
+
+    // return random float [0..1]
+    public static float RandomFloat()
+    {
+      return (float)rng.NextDouble();
+    }
+
+    // return random double [0..1]
+    public static double RandomDouble()
+    {
+      return rng.NextDouble();
+    }
+
+    // return random float in [-1,+1] range
+    // note: it is less random than the c# RNG, but is way faster
+    static int fast_float_seed = 1;
+    public static float FastRandomFloat()
+    {
+      fast_float_seed *= 16807;
+      return (float)fast_float_seed * 4.6566129e-010f;
+    }
+
+
 
         /// <summary>
         /// Calculate the shortest great-circle distance between two points on a sphere which are given by latitude and longitude.
