@@ -26,7 +26,7 @@ For building and/or debugging KSPTrajectories with Visual Studio or Unity Editor
   
   You will first have to Open your Visual Studio solution file in your working repository and configure its properties page.
   - Open the *"Trajectories.sln"* file with Visual Studio and then open the **Properties** page and goto the **Build Events** tab.
-  - Enter the code below into the **Post-build event command line** box and change the version number to what you want attached to the zip package.
+  - Enter the code below into the **Post-build event command line** box.
   ```
 if $(ConfigurationName)==Debug (call "$(ProjectDir)..\misc\VisualStudio\buildscripts\UnityDebug\prepare-debug.bat" $(TargetName))
 if $(ConfigurationName)==Release (call "$(ProjectDir)..\misc\VisualStudio\buildscripts\ZipPack\build-package.bat" $(TargetName) -v@(VersionNumber))
