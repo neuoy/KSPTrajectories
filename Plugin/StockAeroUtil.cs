@@ -147,7 +147,7 @@ namespace Trajectories
                 {
                     continue;
                 }
-                
+
                 // Get Drag
                 Vector3 sim_dragVectorDir = v_wrld_vel.normalized;
                 Vector3 sim_dragVectorDirLocal = -(p.transform.InverseTransformDirection(sim_dragVectorDir));

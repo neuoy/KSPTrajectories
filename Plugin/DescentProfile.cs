@@ -51,7 +51,7 @@ namespace Trajectories
                     sliderPos = -sliderPos;
             }
         }
-        
+
         private Node entry = new Node { name = "Entry", description = "Spacecraft angle when entering the atmosphere" };
         private Node highAltitude = new Node { name = "High", description = "Spacecraft angle at 50% of atmosphere height" };
         private Node lowAltitude = new Node { name = "Low", description = "Spacecraft angle at 25% of atmosphere height" };
@@ -238,7 +238,7 @@ namespace Trajectories
 
             Node a, b;
             double aCoeff;
-            
+
             if (altitudeRatio > 0.5)
             {
                 a = entry;

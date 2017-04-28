@@ -4,17 +4,17 @@ A set of instructions and files to help set up KSPTrajectories for:
   - Building and debugging with Visual Studio and the UnityVS extension.
   - Unity Editor profiler and Monodevelop debugging.
   - A Trajectories.zip packager.
-  
+
   Uses Visual Studio's Post Build Event script handling to run scripts to create *.mdb* files for UnityVS and Monodevelop debugging. For Release building, packages the *Trajectories.dll* and also any required files into a *Trajectories.zip* file.
 #
 ### SETUP
 For building and/or debugging KSPTrajectories with Visual Studio or Unity Editor you will need to download and install the exact version of Unity Editor that was used to build the version of KSP you are working with.
   - The Unity Editor for **KSP v1.3.0** is **Unity v5.4.0.p4** and can be downloaded here: [UnitySetup64-5.4.0p4.exe](http://beta.unity3d.com/download/b15b5ae035b7/Windows64EditorInstaller/UnitySetup64-5.4.0p4.exe)
-  
+
   If you want to debug with Visual Studio then you will need the **UnityVS Extension** which you can download and install by using the **Tools->Extensions and Updates** window in Visual Studio.
-  
+
   If you don't have a KSP dev install then make one by copying a clean install of KSP into a new folder and then install any needed mods into it. If you have copied from a steam install then you will want to copy the [steam_appid.txt](https://github.com/neuoy/KSPTrajectories/tree/master/misc/VisualStudio/steam_appid.txt) file into your KSP dev install folder.
-  
+
   For debugging you will have to copy a couple of files, mainly the Unity debug player and its symbol file into your KSP development install.
 
   - First is to copy the *"player_win.exe"* and *"player_win_development_x64.pdb"* files into your KSP development install folder (copy them next to the KSP.exe file).  they can be found in your Unity install folder *"Unity\Editor\Data\PlaybackEngines\windowsstandalonesupport\Variations\win64_development_mono"*.
@@ -23,7 +23,7 @@ For building and/or debugging KSPTrajectories with Visual Studio or Unity Editor
     - You can create the junction by opening a command prompt in your KSP dev install folder and entering *"mklink /J KSP_x64_Dbg_Data KSP_x64_Data"*.
   - Download the [PlayerConnectionConfigFile](https://www.sarbian.com/sarbian/PlayerConnectionConfigFile) file and put it into your KSP dev *"KSP_x64_Data"* folder.
 #### Visual Studio and UnityVS extension:
-  
+
   You will first have to Open your Visual Studio solution file in your working repository and configure its properties page.
   - Open the *"Trajectories.sln"* file with Visual Studio and then open the **Properties** page and goto the **Build Events** tab.
   - Enter the code below into the **Post-build event command line** box.
@@ -42,7 +42,7 @@ if $(ConfigurationName)==Release (call "$(ProjectDir)..\misc\VisualStudio\builds
   - Clear the **Check for arithmetic overflow/underflow** checkbox, close the **Advanced Build Settings** window.
   - Now you need to change to the **Debug** tab and set the **Start Action** to **Start external program** and enter your KSP dev install debug executable file *"KSP_x64_Dbg.exe"* as the start-up program.
   - Change the **Working directory** field to point to your KSP dev install folder.
-  
+
 #### Here we set the Visual Studio **Release** Configuration:
   - Make sure the **Build** tab is selected and the **Configuration** is set to **Release**.
   - Remove from the **Conditional compilation symbols** field *DEVELOPMENT;ENABLE_PROFILER*.
@@ -72,7 +72,7 @@ if $(ConfigurationName)==Release (call "$(ProjectDir)..\misc\VisualStudio\builds
     Profiler.EndSample();
     ```
     **Note:** There is a simple 'frame-based' profiler included in the KSPTrajectories code base [here](https://github.com/neuoy/KSPTrajectories/tree/master/Plugin/Utility/Profiler.cs), that is appropriate for performance measurements.
-    
+
   - For Monodevelop debugging you need the .mdb files and will have to attach to the KSP dev install debug executable, to do this start Monodevelop and then start your KSP dev install debug executable, now use Monodevelop's **Run Menu->Attach to Process** option to open the process attach window. *Unity Debugger* should be selected in the lower left selection box, now you can select KSP's process called *"WindowsPlayer"* and click OK to attach to it. Monodevelop should now switch into debugging mode.
 
 **The Trajectories.zip packager.**

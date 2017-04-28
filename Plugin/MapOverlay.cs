@@ -28,7 +28,7 @@ namespace Trajectories
         private CameraListener listener;
         private List<GameObject> meshes = new List<GameObject>();
         private bool displayEnabled = false;
-        
+
         private Material lineMaterial;
 
 		private float lineWidth = 3.0f;
@@ -148,7 +148,7 @@ namespace Trajectories
 				//    lineMaterial = new Material("Shader \"Vertex Colors/Alpha\" {Category{Tags {\"Queue\"=\"Transparent\" \"IgnoreProjector\"=\"True\" \"RenderType\"=\"Transparent\"}SubShader {Cull Off ZWrite On Blend SrcAlpha OneMinusSrcAlpha Pass {BindChannels {Bind \"Color\", color Bind \"Vertex\", vertex}}}}}");
 				lineMaterial = MapView.fetch.orbitLinesMaterial;
 			}
-			
+
 
             foreach (var patch in Trajectory.fetch.patches)
             {
@@ -160,7 +160,7 @@ namespace Trajectories
 
                 var obj = GetMesh(patch.startingState.referenceBody, lineMaterial);
                 var mesh = obj.GetComponent<MeshFilter>().mesh;
-                
+
                 if (patch.isAtmospheric)
                 {
                     initMeshFromTrajectory(patch.startingState.referenceBody.position, mesh, patch.atmosphericTrajectory, Color.red);
@@ -213,7 +213,7 @@ namespace Trajectories
                 p0 = camera.ScreenToWorldPoint(p0);
                 p1 = camera.ScreenToWorldPoint(p1);
             }
-            
+
             vertices[startIndex + 0] = p0;
             vertices[startIndex + 1] = p1;
 
@@ -382,7 +382,7 @@ namespace Trajectories
 
 			Vector3 crossV1 = Vector3.Cross(impactPosition, Vector3.right).normalized;
             Vector3 crossV2 = Vector3.Cross(impactPosition, crossV1).normalized;
-            
+
             float crossThickness = Mathf.Min(lineWidth * 0.001f * Vector3.Distance(camPos, impactPosition), 6000.0f);
             float crossSize = crossThickness * 10.0f;
 

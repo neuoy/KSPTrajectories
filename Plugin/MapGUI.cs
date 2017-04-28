@@ -11,7 +11,7 @@ namespace Trajectories
         {
             get { return new GUIToggleButtonBlizzyVisibility(); }
         }
-        
+
         private static IVisibility FLIGHT_VISIBILITY;
 
         public bool Visible
@@ -55,7 +55,7 @@ namespace Trajectories
                 ScenarioUpgradeableFacilities.GetFacilityLevel(SpaceCenterFacility.TrackingStation);
 
             // Check if the tracking station knows Patched Conics
-            return 
+            return
                 GameVariables.Instance.GetOrbitDisplayMode(trackingstation_level).CompareTo(
                     GameVariables.OrbitDisplayMode.PatchedConics)
                 >= 0;
@@ -153,7 +153,7 @@ namespace Trajectories
                 GUI.enabled = traj.targetPosition.HasValue;
 
                 float targetDistance = float.NaN;
-                if (lastPatchBody != null && targetBody != null && lastPatch.impactPosition.HasValue  
+                if (lastPatchBody != null && targetBody != null && lastPatch.impactPosition.HasValue
                     && lastPatchBody == targetBody && traj.targetPosition.HasValue)
                 {
                     // Set Vector3d (required by CelestialBody.GetLanLonAlt) coordinates by impactPosition
@@ -217,7 +217,7 @@ namespace Trajectories
                 GUI.enabled = (navigationWaypoint != null);
                 if (GUILayout.Button("Active waypoint"))
                 {
-                    traj.SetTarget(navigationWaypoint.celestialBody, 
+                    traj.SetTarget(navigationWaypoint.celestialBody,
                         navigationWaypoint.celestialBody.GetRelSurfacePosition(navigationWaypoint.latitude, navigationWaypoint.longitude, navigationWaypoint.altitude));
                     ScreenMessages.PostScreenMessage("Targeting waypoint " + navigationWaypoint.name);
                 }
@@ -338,9 +338,9 @@ namespace Trajectories
                 GameEvents.onGUIApplicationLauncherUnreadifying.Add(DestroyStockToolbarButton);
             }
         }
-        
+
         void DummyVoid() { }
-        
+
         void DestroyStockToolbarButton(GameScenes scene)
         {
             if (GUIToggleButton != null)
@@ -349,7 +349,7 @@ namespace Trajectories
 				GUIToggleButton = null;
 			}
         }
-        
+
         void CreateStockToolbarButton()
         {
             if (GUIToggleButton == null)

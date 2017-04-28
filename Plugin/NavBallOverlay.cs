@@ -74,8 +74,8 @@ namespace Trajectories
             mesh.RecalculateBounds();
             mesh.Optimize();*/
 
-            
-            
+
+
             GameObject navballGameObject = FlightUIModeController.Instance.navBall.gameObject;
             Transform vectorsPivotTransform = navballGameObject.transform.FindChild("vectorsPivot");
             navball = navballGameObject.GetComponentInChildren<NavBall>();

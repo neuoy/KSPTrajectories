@@ -10,6 +10,6 @@
 
 ### Known Issues
   * Trajectory prediction is still fundamentally incorrect. See Issue #84.
-  
+
 ### For Developers
   * KSP directory path is not hardcoded anymore. You can set up an environment variable in your Operating System named KSPDIR that points to the KSP installation directory.

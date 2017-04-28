@@ -68,7 +68,7 @@ namespace Trajectories
 		        }
             }
 
-            return null;	
+            return null;
 	    }
 
         public static Vector3 plannedDirection()

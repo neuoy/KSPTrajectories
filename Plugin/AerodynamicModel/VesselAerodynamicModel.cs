@@ -136,7 +136,7 @@ namespace Trajectories
 
             if (!UseCache)
                 return ComputeForces(altitudeAboveSea, airVelocity, bodySpacePosition, angleOfAttack);
-            
+
             Vector3d force = cachedForces.GetForce(airVelocity.magnitude, angleOfAttack, altitudeAboveSea);
 
             // adjust force using the more accurate air density that we can compute knowing where the vessel is relatively to the sun and body

@@ -289,7 +289,7 @@ namespace Trajectories
                     foreach (var result in AddPatch(state, profile))
                         yield return false;
                 }
-                
+
                 state = AddPatch_outState;
             }
         }
@@ -372,7 +372,7 @@ namespace Trajectories
             CelestialBody body = startingState.referenceBody;
 
             var patch = new Patch();
-            patch.startingState = startingState;           
+            patch.startingState = startingState;
             patch.isAtmospheric = false;
             patch.spaceOrbit = startingState.stockPatch ?? createOrbitFromState(startingState);
             patch.endTime = patch.startingState.time + patch.spaceOrbit.period;
@@ -534,7 +534,7 @@ namespace Trajectories
                     var buffer = new List<Point[]>();
                     buffer.Add(new Point[chunkSize]);
                     int nextPosIdx = 0;
-                    
+
                     Vector3d pos = Util.SwapYZ(patch.spaceOrbit.getRelativePositionAtUT(entryTime));
                     Vector3d vel = Util.SwapYZ(patch.spaceOrbit.getOrbitalVelocityAtUT(entryTime));
 
@@ -617,7 +617,7 @@ namespace Trajectories
                         }
 
                         Vector3d gravityAccel = pos * (-body.gravParameter / (R * R * R));
-                        
+
                         //Util.PostSingleScreenMessage("prediction vel", "prediction vel = " + vel);
                         Vector3d airVelocity = vel - body.getRFrmVel(body.position + pos);
                         double angleOfAttack = profile.GetAngleOfAttack(body, pos, airVelocity);
@@ -631,7 +631,7 @@ namespace Trajectories
 
                         //vel += acceleration * dt;
                         //pos += vel * dt;
-                        
+
                         // Verlet integration (more precise than using the velocity)
                         Vector3d ppos = prevPos;
                         prevPos = pos;

@@ -201,7 +201,7 @@ namespace Trajectories
         /// <summary>
         /// Calculate the shortest great-circle distance between two points on a sphere which are given by latitude and longitude.
         ///
-        /// 
+        ///
         /// https://en.wikipedia.org/wiki/Haversine_formula
         /// </summary>
         /// <param name="bodyRadius"></param> Radius of the sphere in meters
