@@ -30,9 +30,6 @@ namespace Trajectories
                     if (windowPtr != null)
                         SetWindowText(windowPtr, "KSP - Trajectories Debug"); // this is handy to have AutoSizer or similar program correctly set the window position when launching
 
-                    if (AppDomain.CurrentDomain.GetAssemblies().Any(a => a.FullName.ToLower().Contains("testautomation")))
-                        return;
-
                     //HighLogic.SaveFolder = "default";
                     //HighLogic.LoadScene(GameScenes.TRACKSTATION);
 
