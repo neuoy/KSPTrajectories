@@ -1,17 +1,19 @@
 ﻿using System;
-using System.Linq;
 using System.Runtime.InteropServices;
 using UnityEngine;
 
+#if DEBUG && DEBUG_FASTSTART
+
 namespace Trajectories
 {
-#if DEBUG
+
     //This will kick us into the save called default and set the first vessel active
     [KSPAddon(KSPAddon.Startup.EveryScene, false)]
     public class DebugFastStart : MonoBehaviour
     {
         [DllImport("user32.dll", EntryPoint = "SetWindowText")]
         private static extern bool SetWindowText(System.IntPtr hwnd, System.String lpString);
+
         [DllImport("user32.dll", EntryPoint = "FindWindow")]
         private static extern System.IntPtr FindWindow(System.String className, System.String windowName);
 
@@ -28,46 +30,58 @@ namespace Trajectories
 
                     var windowPtr = FindWindow(null, "Kerbal Space Program");
                     if (windowPtr != null)
-                        SetWindowText(windowPtr, "KSP - Trajectories Debug"); // this is handy to have AutoSizer or similar program correctly set the window position when launching
+                        // this is handy to have AutoSizer or similar program correctly set the window position when launching
+                        SetWindowText(windowPtr, "KSP - Trajectories Debug");
 
-                    //HighLogic.SaveFolder = "default";
-                    //HighLogic.LoadScene(GameScenes.TRACKSTATION);
+                    HighLogic.SaveFolder = "default";
+                    HighLogic.LoadScene(GameScenes.SPACECENTER);
 
+                    // When debugging, we are dirty cheating alpacas.
+                    CheatOptions.InfiniteElectricity = true;
                     CheatOptions.InfinitePropellant = true;
                     CheatOptions.IgnoreMaxTemperature = true;
                 }
             }
         }
 
-        /*private static int loadedVessel = 100;
+        private static int loadedVessel = 100;
         public void Update()
         {
-            Util.PostSingleScreenMessage("debug fast start", "count: " + loadedVessel);
             if (HighLogic.LoadedScene == GameScenes.SPACECENTER && loadedVessel > 0)
             {
+                Util.PostSingleScreenMessage("debug fast start", "count: " + loadedVessel);
                 --loadedVessel;
                 if (loadedVessel == 0)
                 {
                     Game game = GamePersistence.LoadGame("persistent", HighLogic.SaveFolder, true, false);
-
                     if (game != null && game.flightState != null && game.compatible)
                     {
                         Int32 FirstVessel;
                         Boolean blnFoundVessel = false;
+                        VesselType vesselType;
+
                         for (FirstVessel = 0; FirstVessel < game.flightState.protoVessels.Count; FirstVessel++)
                         {
+                            vesselType = game.flightState.protoVessels[FirstVessel].vesselType;
+
                             //This logic finds the first non-asteroid vessel
-                            if (game.flightState.protoVessels[FirstVessel].vesselType != VesselType.SpaceObject &&
-                                game.flightState.protoVessels[FirstVessel].vesselType != VesselType.Unknown &&
-                                game.flightState.protoVessels[FirstVessel].vesselType != VesselType.Flag)
-                            {
-                                ////////////////////////////////////////////////////
-                                //PUT ANY OTHER LOGIC YOU WANT IN HERE//
-                                ////////////////////////////////////////////////////
-                                blnFoundVessel = true;
-                                break;
-                            }
+                            if (vesselType == VesselType.Flag)
+                                continue;
+                            if (vesselType == VesselType.Debris)
+                                continue;
+                            if (vesselType == VesselType.SpaceObject)
+                                continue;
+                            if (vesselType == VesselType.Unknown)
+                                continue;
+
+                            ////////////////////////////////////////////////////
+                            //PUT ANY OTHER LOGIC YOU WANT IN HERE//
+                            ////////////////////////////////////////////////////
+
+                            blnFoundVessel = true;
+                            break;
                         }
+
                         if (!blnFoundVessel)
                             FirstVessel = 0;
 
@@ -75,7 +89,8 @@ namespace Trajectories
                     }
                 }
             }
-        }*/
+        }
     }
-#endif
 }
+
+#endif
