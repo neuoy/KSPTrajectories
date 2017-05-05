@@ -153,6 +153,8 @@ namespace Trajectories
                 GUI.enabled = traj.targetPosition.HasValue;
 
                 float targetDistance = float.NaN;
+                float targetDistanceNorth = float.NaN;
+                float targetDistanceEast = float.NaN;
                 if (lastPatchBody != null && targetBody != null && lastPatch.impactPosition.HasValue
                     && lastPatchBody == targetBody && traj.targetPosition.HasValue)
                 {
@@ -174,9 +176,17 @@ namespace Trajectories
 
                     targetDistance = (float) (Util.distanceFromLatitudeAndLongitude(targetBody.Radius + impactAlt,
                         impactLat, impatLon, targetLat, targetLon) / 1e3);
+
+                    targetDistanceNorth = (float)(Util.distanceFromLatitudeAndLongitude(targetBody.Radius + impactAlt,
+                        impactLat, targetLon, targetLat, targetLon) / 1e3)* ((targetLat - impactLat) < 0 ? -1.0f : +1.0f);
+
+                    targetDistanceEast = (float)(Util.distanceFromLatitudeAndLongitude(targetBody.Radius + impactAlt,
+                        targetLat, impatLon, targetLat, targetLon) / 1e3) * ((targetLon - impatLon) < 0 ? -1.0f : +1.0f);
                 }
 
-                GUILayout.Label("Impact distance to target = " + targetDistance.ToString("0.0") + " km");
+                GUILayout.Label("D: " + targetDistance.ToString("0.0") + "km"
+                    + " /  N: " + targetDistanceNorth.ToString("0.0") + "km"
+                    +" / E: " + targetDistanceEast.ToString("0.0") + "km");
 
                 if (GUILayout.Button("Unset target"))
                     traj.SetTarget();
