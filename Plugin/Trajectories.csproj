@@ -83,6 +83,7 @@
     <Compile Include="AerodynamicModel\FARModel.cs" />
     <Compile Include="AerodynamicModel\StockModel.cs" />
     <Compile Include="API.cs" />
+    <Compile Include="FlightOverlay.cs" />
     <Compile Include="Utilities\DebugFastStart.cs" />
     <Compile Include="Utilities\Profiler.cs" />
     <Compile Include="Utilities\TrajectoriesDebug.cs" />
