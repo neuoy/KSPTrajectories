@@ -8,7 +8,7 @@ namespace Trajectories
     {
         private const int _defaultVertexCount = 32;
         private const float _lineWidth = 0.1f;
-        private const float _maxRaycastDistance = 1000.0f;
+        private const float _impactRaycastDistance = 300.0f;
 
         private Texture2D _crossTexture;
 
@@ -35,7 +35,7 @@ namespace Trajectories
 
         public void Start()
         {
-             _targetLayer = LayerMask.GetMask("TerrainColliders", "PhysicalObjects", "EVA", "Local Scenery", "Water");
+             _targetLayer = LayerMask.GetMask("TerrainColliders", "PhysicalObjects", "EVA", "Local Scenery");
 
             _crossTexture = GameDatabase.Instance.GetTexture("Trajectories/Textures/AimCross", false);
 			Line = gameObject.AddComponent<LineRenderer>();
@@ -91,26 +91,24 @@ namespace Trajectories
                 Line.SetPositions(vertices);
             }
 
+            Line.enabled = true;
+
             if (lastPatch.impactPosition != null)
             {
-                Vector3 impactPos = lastPatch.impactPosition ?? default(Vector3);
+                Vector3 impactPos = lastPatch.impactPosition.GetValueOrDefault();
+                Vector3 up = impactPos - bodyPosition;
+                up.Normalize();
 
                 RaycastHit hit;
-                bool hasHit;
 
-                hasHit = Physics.Raycast(impactPos + bodyPosition, -bodyPosition, out hit, _maxRaycastDistance, _targetLayer);
-                if (!hasHit)
-                    hasHit = Physics.Raycast(impactPos + bodyPosition, bodyPosition, out hit, _maxRaycastDistance, _targetLayer);
-
-                if (hasHit)
+                // raycast downwards to find terrain and update aiming cross if we have a hit
+                if (Physics.Raycast(impactPos + bodyPosition + up * _impactRaycastDistance,
+                    -up, out hit, 2.0f * _impactRaycastDistance, _targetLayer))
                 {
                     CrossTransform.position = hit.point + hit.normal * 0.16f;
                     CrossTransform.localEulerAngles = Quaternion.FromToRotation(Vector3.up, hit.normal).eulerAngles;
                 }
-
             }
-
-            Line.enabled = true;
         }
 
         public void OnDestroy()
