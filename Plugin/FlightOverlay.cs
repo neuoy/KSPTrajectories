@@ -79,11 +79,15 @@ namespace Trajectories
             {
                 Vector3[] vertices = new Vector3[_defaultVertexCount];
 
-                double time = lastPatch.endTime;
-                double time_increment = (lastPatch.endTime - lastPatch.startingState.time)/ _defaultVertexCount;
+                double time = lastPatch.startingState.time;
+                double time_increment = (lastPatch.endTime - lastPatch.startingState.time) / (float) _defaultVertexCount;
+                Orbit orbit = lastPatch.spaceOrbit;
                 for (uint i = 0; i < _defaultVertexCount; ++i)
                 {
-                    vertices[i] = lastPatch.spaceOrbit.getPositionAtUT(time);
+                    vertices[i] = orbit.getPositionAtUT(time);
+                    if (Settings.fetch.BodyFixedMode)
+                        vertices[i] = Trajectory.calculateRotatedPosition(orbit.referenceBody, vertices[i] + bodyPosition, time) - bodyPosition;
+
                     time += time_increment;
                 }
 

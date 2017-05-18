@@ -718,7 +718,7 @@ namespace Trajectories
             return bodyRotation * relativePosition;
         }
 
-        private Vector3d GetWorldPositionAtUT(Orbit orbit, double ut)
+        public static Vector3d GetWorldPositionAtUT(Orbit orbit, double ut)
         {
             Vector3d worldPos = Util.SwapYZ(orbit.getRelativePositionAtUT(ut));
             if (orbit.referenceBody != FlightGlobals.Bodies[0])
