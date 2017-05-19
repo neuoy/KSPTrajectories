@@ -44,6 +44,11 @@ namespace Trajectories
         private Vector3d impactPos = new Vector3d();
         private Vector3d targetPos = new Vector3d();
 
+        // click through locks
+        private bool clickThroughLocked = false;
+        private const ControlTypes FlightLockTypes = ControlTypes.MANNODE_ADDEDIT | ControlTypes.MANNODE_DELETE | ControlTypes.MAP_UI |
+            ControlTypes.CAMERACONTROLS | ControlTypes.TARGETING | ControlTypes.VESSEL_SWITCHING | ControlTypes.TWEAKABLES;
+
         /// <summary>
         /// Check if patched conics are available in the current save.
         /// </summary>
@@ -63,17 +68,11 @@ namespace Trajectories
 
         public void OnGUI()
         {
-            if(!Settings.fetch.GUIEnabled)
-                return;
-
-            if (HighLogic.LoadedScene != GameScenes.FLIGHT)
-                return;
-
-            if (PlanetariumCamera.Camera == null)
+            if (!Settings.fetch.GUIEnabled || !Util.IsFlight() || PlanetariumCamera.Camera == null)
                 return;
 
             Settings.fetch.MapGUIWindowPos = new Rect(Settings.fetch.MapGUIWindowPos.xMin, Settings.fetch.MapGUIWindowPos.yMin, Settings.fetch.MapGUIWindowPos.width, Settings.fetch.MapGUIWindowPos.height - 1);
-            Settings.fetch.MapGUIWindowPos = ClampToScreen( GUILayout.Window(GUIId + 1, Settings.fetch.MapGUIWindowPos, MainWindow, "Trajectories") );
+            Settings.fetch.MapGUIWindowPos = ClampToScreen(GUILayout.Window(GUIId + 1, Settings.fetch.MapGUIWindowPos, MainWindow, "Trajectories"));
 
             if (tooltip != "")
             {
@@ -84,6 +83,19 @@ namespace Trajectories
                 Rect tooltipRect = new Rect(mousePos.x - 50, mousePos.y + 10, tooltipWidth, tooltipHeight);
 
                 GUILayout.Window(GUIId + 2, ClampToScreen(tooltipRect), TooltipWindow, "");
+            }
+
+            // Disable Click through
+            bool mouse_over = Settings.fetch.MapGUIWindowPos.Contains(Event.current.mousePosition);
+            if (mouse_over && !clickThroughLocked)
+            {
+                InputLockManager.SetControlLock(FlightLockTypes, "TrajectoriesFlightLock");
+                clickThroughLocked = true;
+            }
+            if (!mouse_over && clickThroughLocked)
+            {
+                InputLockManager.RemoveControlLock("TrajectoriesFlightLock");
+                clickThroughLocked = false;
             }
         }
 
