@@ -7,7 +7,7 @@ namespace Trajectories
     public class FlightOverlay : MonoBehaviour
     {
         private const int _defaultVertexCount = 32;
-        private const float _lineWidth = 0.1f;
+        private const float _lineWidth = 2.0f;
         private const float _impactRaycastDistance = 300.0f;
 
         private Texture2D _crossTexture;
@@ -54,30 +54,28 @@ namespace Trajectories
                 return;
             }
             
-            var paches = Trajectory.fetch.patches;
-            if (paches.Count < 1)
+            if (Trajectory.fetch.patches.Count == 0)
             {
                 Line.enabled = false;
                 return;
             }
 
-            Trajectory.Patch lastPatch = paches[paches.Count - 1];
+            Vector3[] vertices;
+
+            Trajectory.Patch lastPatch = Trajectory.fetch.patches[Trajectory.fetch.patches.Count - 1];
             Vector3d bodyPosition = lastPatch.startingState.referenceBody.position;
             if (lastPatch.isAtmospheric)
             {
-                Vector3[] vertices = new Vector3[lastPatch.atmosphericTrajectory.Length];
+                vertices = new Vector3[lastPatch.atmosphericTrajectory.Length];
 
                 for (uint i = 0; i < lastPatch.atmosphericTrajectory.Length; ++i)
                 {
                     vertices[i] = lastPatch.atmosphericTrajectory[i].pos + bodyPosition;
                 }
-
-                Line.SetVertexCount(vertices.Length);
-                Line.SetPositions(vertices);
             }
             else
             {
-                Vector3[] vertices = new Vector3[_defaultVertexCount];
+                vertices = new Vector3[_defaultVertexCount];
 
                 double time = lastPatch.startingState.time;
                 double time_increment = (lastPatch.endTime - lastPatch.startingState.time) / (float) _defaultVertexCount;
@@ -90,10 +88,11 @@ namespace Trajectories
 
                     time += time_increment;
                 }
-
-                Line.SetVertexCount(_defaultVertexCount);
-                Line.SetPositions(vertices);
             }
+
+            // add vertices to line
+            Line.SetVertexCount(vertices.Length);
+            Line.SetPositions(vertices);
 
             Line.enabled = true;
 
@@ -118,7 +117,9 @@ namespace Trajectories
         public void OnDestroy()
         {
             if (_crossTransform != null)
-                _crossTransform.gameObject.DestroyGameObject();
+                Destroy(_crossTransform);
+            if (Line != null)
+                Destroy(Line);
         }
     }
 }
