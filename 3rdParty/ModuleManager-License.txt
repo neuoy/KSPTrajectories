@@ -1,3 +1,0 @@
-Module Manager is under a CC share-alike license.
-The version distributed here is maintained by sarbian here : https://github.com/sarbian/ModuleManager
-It is based on the original mod from ialdabaoth, see his forum thread here : http://forum.kerbalspaceprogram.com/threads/31342
