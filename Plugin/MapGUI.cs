@@ -47,7 +47,7 @@ namespace Trajectories
         // click through locks
         private bool clickThroughLocked = false;
         private const ControlTypes FlightLockTypes = ControlTypes.MANNODE_ADDEDIT | ControlTypes.MANNODE_DELETE | ControlTypes.MAP_UI |
-            ControlTypes.CAMERACONTROLS | ControlTypes.TARGETING | ControlTypes.VESSEL_SWITCHING | ControlTypes.TWEAKABLES;
+            ControlTypes.TARGETING | ControlTypes.VESSEL_SWITCHING | ControlTypes.TWEAKABLES;
 
         /// <summary>
         /// Check if patched conics are available in the current save.
