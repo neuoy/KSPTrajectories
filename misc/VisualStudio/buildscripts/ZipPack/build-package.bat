@@ -14,7 +14,7 @@ SET rootPath=%scriptPath%..\..\..\..\
 SET initialWD=%CD%
 
 rem current module manager version in misc\3rdParty\
-SET MODMANAGER_VERSION=2.7.6
+SET MODMANAGER_VERSION=2.8.0
 
 echo Generating %TargetName% Release Package...
 cd "%rootPath%"
@@ -26,7 +26,7 @@ cd package
 mkdir GameData
 cd GameData
 xcopy /y ..\..\3rdParty\ModuleManager.%MODMANAGER_VERSION%.dll .
-xcopy /y ..\..\3rdParty\ModuleManager-License.txt .
+xcopy /y ..\..\3rdParty\README.md .
 
 mkdir %TargetName%
 cd %TargetName%
