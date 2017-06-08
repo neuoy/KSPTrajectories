@@ -202,7 +202,12 @@ namespace Trajectories
                 }
             }
 
-            if (HighLogic.LoadedScene == GameScenes.FLIGHT && FlightGlobals.ActiveVessel != null && FlightGlobals.ActiveVessel.Parts.Count != 0 && ((MapView.MapIsEnabled && Settings.fetch.DisplayTrajectories) || Settings.fetch.AlwaysUpdate || targetPosition_.HasValue))
+            if (HighLogic.LoadedScene == GameScenes.FLIGHT
+                && FlightGlobals.ActiveVessel != null 
+                && FlightGlobals.ActiveVessel.Parts.Count != 0 
+                && ((Settings.fetch.DisplayTrajectories) 
+                    || Settings.fetch.AlwaysUpdate 
+                    || targetPosition_.HasValue))
             {
                 ComputeTrajectory(FlightGlobals.ActiveVessel, DescentProfile.fetch, true);
             }
@@ -713,7 +718,7 @@ namespace Trajectories
             return bodyRotation * relativePosition;
         }
 
-        private Vector3d GetWorldPositionAtUT(Orbit orbit, double ut)
+        public static Vector3d GetWorldPositionAtUT(Orbit orbit, double ut)
         {
             Vector3d worldPos = Util.SwapYZ(orbit.getRelativePositionAtUT(ut));
             if (orbit.referenceBody != FlightGlobals.Bodies[0])
