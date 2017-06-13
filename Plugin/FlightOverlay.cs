@@ -80,10 +80,8 @@ namespace Trajectories
                 up.Normalize();
 
                 RaycastHit hit;
-
-                // raycast downwards to find terrain and update aiming cross if we have a hit
                 if (Physics.Raycast(impactPos + bodyPosition + up * TargetingCross.impactRaycastDistance,
-                    -up, out hit, 2.0f * TargetingCross.impactRaycastDistance, targetingCross.targetLayer))
+                    -up, out hit))
                 {
                     targetingCross.CrossTransform.position = hit.point + hit.normal * 0.16f;
                     targetingCross.CrossTransform.localEulerAngles = Quaternion.FromToRotation(Vector3.up, hit.normal).eulerAngles;
@@ -106,7 +104,6 @@ namespace Trajectories
 
         private GameObject planeObject;
         private Renderer renderer;
-        public int targetLayer { get; private set; } 
 
         public Transform CrossTransform { get {
                 return planeObject?.transform;
@@ -114,10 +111,7 @@ namespace Trajectories
 
         public void Start()
         {
-            targetLayer = LayerMask.GetMask("TerrainColliders", "PhysicalObjects", "EVA", "Local Scenery");
-
             var crossTexture = GameDatabase.Instance.GetTexture("Trajectories/Textures/AimCross", false);
-
 
             planeObject = GameObject.CreatePrimitive(PrimitiveType.Plane);
             var mat = new Material(Shader.Find("Particles/Additive"));
@@ -134,12 +128,13 @@ namespace Trajectories
             if (renderer != null)
                 renderer.enabled = true;
         }
+
         public void OnDisable()
         {
             if (renderer != null)
                 renderer.enabled = false;
         }
-        
+
 
         public void OnDestroy()
         {
