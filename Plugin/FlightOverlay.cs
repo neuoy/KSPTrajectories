@@ -30,7 +30,9 @@ namespace Trajectories
 
         private void FixedUpdate()
         {
-            if (!Settings.fetch.DisplayTrajectories || Trajectory.fetch.patches.Count == 0)
+            if (!Settings.fetch.DisplayTrajectories
+                || !Settings.fetch.DisplayTrajectoriesInFlight
+                || Trajectory.fetch.patches.Count == 0)
             {
                 line.enabled = false;
                 targetingCross.enabled = false;

@@ -123,7 +123,10 @@ namespace Trajectories
             CelestialBody targetBody = traj.targetBody;
 
             GUILayout.BeginHorizontal();
-            Settings.fetch.DisplayTrajectories = GUILayout.Toggle(Settings.fetch.DisplayTrajectories, "Display trajectory", GUILayout.Width(125));
+
+            Settings.fetch.DisplayTrajectories = GUILayout.Toggle(Settings.fetch.DisplayTrajectories, "Show trajectory", GUILayout.Width(125));
+
+            Settings.fetch.DisplayTrajectoriesInFlight = GUILayout.Toggle(Settings.fetch.DisplayTrajectoriesInFlight, "In-Flight");
 
             // check that we have patched conics. If not, apologize to the user and return.
             if (Settings.fetch.DisplayTrajectories && !isPatchedConicsAvailable())
@@ -135,13 +138,18 @@ namespace Trajectories
                 return;
             }
 
+            GUILayout.EndHorizontal();
+
+            GUILayout.BeginHorizontal();
+
+            Settings.fetch.BodyFixedMode = GUILayout.Toggle(Settings.fetch.BodyFixedMode, "Body-fixed mode");
+
             if (Settings.fetch.DisplayTrajectories)
             {
                 Settings.fetch.DisplayCompleteTrajectory = GUILayout.Toggle(Settings.fetch.DisplayCompleteTrajectory, "complete", GUILayout.Width(70));
             }
-            GUILayout.EndHorizontal();
 
-            Settings.fetch.BodyFixedMode = GUILayout.Toggle(Settings.fetch.BodyFixedMode, "Body-fixed mode");
+            GUILayout.EndHorizontal();
 
             GUILayout.Label("Max G-force: " + (traj.MaxAccel / 9.81).ToString("0.00"));
             if (lastPatch != null && lastPatch.impactPosition.HasValue)
