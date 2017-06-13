@@ -6,57 +6,34 @@ namespace Trajectories
     [KSPAddon(KSPAddon.Startup.Flight, false)]
     public class FlightOverlay : MonoBehaviour
     {
-        private const int _defaultVertexCount = 32;
-        private const float _lineWidth = 2.0f;
-        private const float _impactRaycastDistance = 300.0f;
+        private const int defaultVertexCount = 32;
+        private const float lineWidth = 2.0f;
 
-        private Texture2D _crossTexture;
+        private LineRenderer line { get; set; }
 
-        private Transform _crossTransform;
-        private Transform CrossTransform
+        private TargetingCross targetingCross;
+
+        public void Awake()
         {
-            get
-            {
-                if (_crossTransform == null)
-                {
-                    var obj = GameObject.CreatePrimitive(PrimitiveType.Plane);
-                    var mat = new Material(Shader.Find("Particles/Additive"));
-                    mat.SetTexture("_MainTex", _crossTexture);
-                    obj.GetComponent<Renderer>().sharedMaterial = mat;
-                    obj.GetComponent<Collider>().enabled = false;
-                    _crossTransform = obj.transform;
-                }
-                return _crossTransform;
-            }
+            targetingCross = gameObject.AddComponent<TargetingCross>();
         }
-
-        private LayerMask _targetLayer;
-        private LineRenderer Line { get; set; }
 
         public void Start()
         {
-             _targetLayer = LayerMask.GetMask("TerrainColliders", "PhysicalObjects", "EVA", "Local Scenery");
-
-            _crossTexture = GameDatabase.Instance.GetTexture("Trajectories/Textures/AimCross", false);
-			Line = gameObject.AddComponent<LineRenderer>();
-            Line.useWorldSpace = false; // true;
-			Line.SetVertexCount(_defaultVertexCount);
-            Line.SetWidth(_lineWidth, _lineWidth);
-			Line.sharedMaterial = Resources.Load("DefaultLine3D") as Material;
-			Line.material.SetColor("_TintColor", new Color(0.1f, 1f, 0.1f));
-		}
+			line = gameObject.AddComponent<LineRenderer>();
+            line.useWorldSpace = false; // true;
+			line.SetVertexCount(defaultVertexCount);
+            line.SetWidth(lineWidth, lineWidth);
+			line.sharedMaterial = Resources.Load("DefaultLine3D") as Material;
+			line.material.SetColor("_TintColor", new Color(0.1f, 1f, 0.1f));
+        }
 
         private void FixedUpdate()
         {
-            if (!Settings.fetch.DisplayTrajectories)
+            if (!Settings.fetch.DisplayTrajectories || Trajectory.fetch.patches.Count == 0)
             {
-                Line.enabled = false;
-                return;
-            }
-            
-            if (Trajectory.fetch.patches.Count == 0)
-            {
-                Line.enabled = false;
+                line.enabled = false;
+                targetingCross.enabled = false;
                 return;
             }
 
@@ -75,12 +52,12 @@ namespace Trajectories
             }
             else
             {
-                vertices = new Vector3[_defaultVertexCount];
+                vertices = new Vector3[defaultVertexCount];
 
                 double time = lastPatch.startingState.time;
-                double time_increment = (lastPatch.endTime - lastPatch.startingState.time) / (float) _defaultVertexCount;
+                double time_increment = (lastPatch.endTime - lastPatch.startingState.time) / (float) defaultVertexCount;
                 Orbit orbit = lastPatch.spaceOrbit;
-                for (uint i = 0; i < _defaultVertexCount; ++i)
+                for (uint i = 0; i < defaultVertexCount; ++i)
                 {
                     vertices[i] = orbit.getPositionAtUT(time);
                     if (Settings.fetch.BodyFixedMode)
@@ -91,10 +68,10 @@ namespace Trajectories
             }
 
             // add vertices to line
-            Line.SetVertexCount(vertices.Length);
-            Line.SetPositions(vertices);
+            line.SetVertexCount(vertices.Length);
+            line.SetPositions(vertices);
 
-            Line.enabled = true;
+            line.enabled = true;
 
             if (lastPatch.impactPosition != null)
             {
@@ -105,21 +82,69 @@ namespace Trajectories
                 RaycastHit hit;
 
                 // raycast downwards to find terrain and update aiming cross if we have a hit
-                if (Physics.Raycast(impactPos + bodyPosition + up * _impactRaycastDistance,
-                    -up, out hit, 2.0f * _impactRaycastDistance, _targetLayer))
+                if (Physics.Raycast(impactPos + bodyPosition + up * TargetingCross.impactRaycastDistance,
+                    -up, out hit, 2.0f * TargetingCross.impactRaycastDistance, targetingCross.targetLayer))
                 {
-                    CrossTransform.position = hit.point + hit.normal * 0.16f;
-                    CrossTransform.localEulerAngles = Quaternion.FromToRotation(Vector3.up, hit.normal).eulerAngles;
+                    targetingCross.CrossTransform.position = hit.point + hit.normal * 0.16f;
+                    targetingCross.CrossTransform.localEulerAngles = Quaternion.FromToRotation(Vector3.up, hit.normal).eulerAngles;
+
+                    targetingCross.enabled = true;
                 }
             }
         }
 
         public void OnDestroy()
         {
-            if (_crossTransform != null)
-                Destroy(_crossTransform);
-            if (Line != null)
-                Destroy(Line);
+            if (line != null)
+                Destroy(line);
+        }
+    }
+
+    public class TargetingCross : MonoBehaviour
+    {
+        public const float impactRaycastDistance = 300.0f;
+
+        private GameObject planeObject;
+        private Renderer renderer;
+        public int targetLayer { get; private set; } 
+
+        public Transform CrossTransform { get {
+                return planeObject?.transform;
+            } }
+
+        public void Start()
+        {
+            targetLayer = LayerMask.GetMask("TerrainColliders", "PhysicalObjects", "EVA", "Local Scenery");
+
+            var crossTexture = GameDatabase.Instance.GetTexture("Trajectories/Textures/AimCross", false);
+
+
+            planeObject = GameObject.CreatePrimitive(PrimitiveType.Plane);
+            var mat = new Material(Shader.Find("Particles/Additive"));
+            mat.SetTexture("_MainTex", crossTexture);
+
+            renderer = planeObject.GetComponent<Renderer>();
+            renderer.sharedMaterial = mat;
+            renderer.enabled = false;
+            planeObject.GetComponent<Collider>().enabled = false;
+        }
+
+        public void OnEnable()
+        {
+            if (renderer != null)
+                renderer.enabled = true;
+        }
+        public void OnDisable()
+        {
+            if (renderer != null)
+                renderer.enabled = false;
+        }
+        
+
+        public void OnDestroy()
+        {
+            if (planeObject != null)
+                Destroy(planeObject);
         }
     }
 }
