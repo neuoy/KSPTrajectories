@@ -182,7 +182,9 @@ namespace Trajectories
                                 //Debug.Log(String.Format("Trajectories: Caught NRE on Drag Initialization.  Should be fixed now.  {0}", e));
                             }
 
-                            drag = p_drag_data.areaDrag * PhysicsGlobals.DragCubeMultiplier;
+                            float pseudoreynolds = (float)(rho * Mathf.Abs(v_wrld_vel.magnitude));
+                            float pseudoredragmult = PhysicsGlobals.DragCurvePseudoReynolds.Evaluate(pseudoreynolds);
+                            drag = p_drag_data.areaDrag * PhysicsGlobals.DragCubeMultiplier * pseudoredragmult;
 
                             liftForce = p_drag_data.liftForce;
                         }
