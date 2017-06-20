@@ -283,6 +283,17 @@ namespace Trajectories
                 if (Settings.fetch.BodyFixedMode) {
                     curMeshPos = Trajectory.calculateRotatedPosition(orbit.referenceBody, curMeshPos, time);
                 }
+
+                if (Settings.fetch.GroundTraceMode)
+                {
+                    Vector3 curMeshPosWorld = curMeshPos + bodyPosition;
+                    CelestialBody body = orbit.referenceBody;
+                    var latitude = body.GetLatitude(curMeshPosWorld);
+                    var longitude = body.GetLongitude(curMeshPosWorld);
+                    var NormalV = body.GetSurfaceNVector(latitude, longitude);
+                    curMeshPos -= (NormalV * (float)body.GetAltitude(curMeshPos + bodyPosition));
+                }
+
                 curMeshPos += bodyPosition;
 
                 // add a segment to the trajectory mesh

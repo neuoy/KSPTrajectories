@@ -41,6 +41,9 @@ namespace Trajectories
         [Persistent(Default: false)]
         public bool BodyFixedMode { get; set; }
 
+        [Persistent(Default: false)]
+        public bool GroundTraceMode { get; set; }
+
         [Persistent(Default: true)]
         public bool AutoUpdateAerodynamicModel { get; set; }
 
