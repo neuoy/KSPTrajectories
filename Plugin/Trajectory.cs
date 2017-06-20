@@ -266,6 +266,19 @@ namespace Trajectories
             }
         }
 
+        public static Vector3 projectToSurface(CelestialBody body, Vector3 curMeshPos, double time)
+        {
+            var bodyPosition = body.position;
+            var curMeshPosWorld = curMeshPos + bodyPosition;
+            var orbit = body.orbit;
+            var latitude = body.GetLatitude(curMeshPosWorld);
+            var longitude = body.GetLongitude(curMeshPosWorld);
+            var NormalV = body.GetSurfaceNVector(latitude, longitude);
+            var ScaledNormalVec = (NormalV * (float)body.GetAltitude(curMeshPosWorld));
+            var projectedMeshPos = curMeshPos - ScaledNormalVec;
+            return projectedMeshPos;
+        }
+
         private IEnumerable<bool> computeTrajectoryIncrement(Vessel vessel, DescentProfile profile)
         {
             if (aerodynamicModel_ == null || !aerodynamicModel_.isValidFor(vessel, vessel.mainBody))

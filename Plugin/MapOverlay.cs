@@ -286,12 +286,7 @@ namespace Trajectories
 
                 if (Settings.fetch.GroundTraceMode)
                 {
-                    Vector3 curMeshPosWorld = curMeshPos + bodyPosition;
-                    CelestialBody body = orbit.referenceBody;
-                    var latitude = body.GetLatitude(curMeshPosWorld);
-                    var longitude = body.GetLongitude(curMeshPosWorld);
-                    var NormalV = body.GetSurfaceNVector(latitude, longitude);
-                    curMeshPos -= (NormalV * (float)body.GetAltitude(curMeshPos + bodyPosition));
+                    curMeshPos = Trajectory.projectToSurface(orbit.referenceBody, curMeshPos, time);
                 }
 
                 curMeshPos += bodyPosition;
