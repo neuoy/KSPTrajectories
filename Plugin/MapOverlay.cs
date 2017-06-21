@@ -295,7 +295,7 @@ namespace Trajectories
                 double time = stepUT[i];
 
                 Vector3 curMeshPos = Util.SwapYZ(orbit.getRelativePositionAtUT(time));
-                if (Settings.fetch.BodyFixedMode) {
+                if (Settings.fetch.BodyFixedMode || groundTrace) {
                     curMeshPos = Trajectory.calculateRotatedPosition(orbit.referenceBody, curMeshPos, time);
                 }
 
