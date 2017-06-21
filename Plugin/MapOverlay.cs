@@ -33,6 +33,8 @@ namespace Trajectories
 
         private float lineWidth = 3.0f;
 
+        private GameObject groundTraceObj;
+
         private void DetachCamera()
         {
             if (attachedCamera == null)
@@ -80,6 +82,8 @@ namespace Trajectories
 
         private void setDisplayEnabled(bool enabled)
         {
+            groundTraceObj.GetComponent<MeshRenderer>().enabled = Settings.fetch.GroundTraceMode;
+
             enabled = enabled && Settings.fetch.DisplayTrajectories;
 
             if (displayEnabled == enabled)
@@ -134,7 +138,7 @@ namespace Trajectories
                 GameObject.Destroy(mesh);
             }
         }
-
+        
         private void refreshMesh()
         {
             foreach (var mesh in meshes)
@@ -169,12 +173,16 @@ namespace Trajectories
                 {
                     initMeshFromOrbit(patch.startingState.referenceBody.position, mesh, patch.spaceOrbit, patch.startingState.time, patch.endTime - patch.startingState.time, Color.white);
 
-                    var groundTraceObj = GetMesh(patch.startingState.referenceBody, lineMaterial);
+                    groundTraceObj = GetMesh(patch.startingState.referenceBody, lineMaterial);
                     var groundTraceMesh = groundTraceObj.GetComponent<MeshFilter>().mesh;
 
                     if (Settings.fetch.GroundTraceMode)
                     {
                         initMeshFromOrbit(patch.startingState.referenceBody.position, groundTraceMesh, patch.spaceOrbit, patch.startingState.time, patch.endTime - patch.startingState.time, XKCDColors.Orange, true);
+
+                    } else
+                    {
+                        
                     }
                 }
 
