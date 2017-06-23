@@ -71,7 +71,7 @@ namespace Trajectories
             if (!Settings.fetch.GUIEnabled || !Util.IsFlight || PlanetariumCamera.Camera == null)
                 return;
 
-            Settings.fetch.MapGUIWindowPos = new Rect(Settings.fetch.MapGUIWindowPos.xMin, Settings.fetch.MapGUIWindowPos.yMin, Settings.fetch.MapGUIWindowPos.width, Settings.fetch.MapGUIWindowPos.height - 1);
+            Settings.fetch.MapGUIWindowPos = new Rect(Settings.fetch.MapGUIWindowPos.xMin, Settings.fetch.MapGUIWindowPos.yMin, Settings.fetch.MapGUIWindowPos.width, Settings.fetch.MapGUIWindowPos.height - 3);
             Settings.fetch.MapGUIWindowPos = ClampToScreen(GUILayout.Window(GUIId + 1, Settings.fetch.MapGUIWindowPos, MainWindow, "Trajectories"));
 
             if (tooltip != "")
