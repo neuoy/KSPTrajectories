@@ -33,7 +33,7 @@ namespace Trajectories
                     throw new Exception("method not found");
                 return res;
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 throw new Exception("Failed to GetMethod " + methodName + " on type " + type.FullName + " with flags " + flags + ":\n" + e.Message + "\n" + e.StackTrace);
             }
@@ -91,110 +91,131 @@ namespace Trajectories
 
 
 
-    // --------------------------------------------------------------------------
-    // --- TIME -----------------------------------------------------------------
+        // --------------------------------------------------------------------------
+        // --- TIME -----------------------------------------------------------------
 
-    // return hours in a day
-    public static double HoursInDay()
-    {
-      return GameSettings.KERBIN_TIME ? 6.0 : 24.0;
-    }
+        /// <summary> Return hours in a KSP day. </summary>
+        public static double HoursInDay
+        {
+            get
+            {
+                return GameSettings.KERBIN_TIME ? 6.0 : 24.0;
+            }
+        }
 
-    // return year length
-    public static double DaysInYear()
-    {
-      if (!FlightGlobals.ready)
-        return 426.0;
-      return Math.Floor(FlightGlobals.GetHomeBody().orbit.period / (HoursInDay() * 60.0 * 60.0));
-    }
+        /// <summary> Return days in a KSP year. </summary>
+        public static double DaysInYear
+        {
+            get
+            {
+                if (!FlightGlobals.ready)
+                    return 426.0;
+                return Math.Floor(FlightGlobals.GetHomeBody().orbit.period / (HoursInDay * 60.0 * 60.0));
+            }
+        }
 
-    // get current time
-    public static UInt64 Clocks()
-    {
-      return (UInt64)Stopwatch.GetTimestamp();
-    }
+        /// <summary> Get current time in clocks. </summary>
+        public static double Clocks
+        {
+            get
+            {
+                return Stopwatch.GetTimestamp();
+            }
+        }
 
-    // convert from clocks to microseconds
-    public static double Microseconds(UInt64 clocks)
-    {
-      return (double)clocks * 1000000.0 / (double)Stopwatch.Frequency;
-    }
+        /// <summary> Convert from clocks to microseconds. </summary>
+        public static double Microseconds(double clocks)
+        {
+            return clocks * 1000000.0 / Stopwatch.Frequency;
+        }
 
+        /// <summary> Convert from clocks to milliseconds. </summary>
+        public static double Milliseconds(double clocks)
+        {
+            return clocks * 1000.0 / Stopwatch.Frequency;
+        }
 
-    public static double Milliseconds(UInt64 clocks)
-    {
-      return (double)clocks * 1000.0 / (double)Stopwatch.Frequency;
-    }
-
-
-    public static double Seconds(UInt64 clocks)
-    {
-      return (double)clocks / (double)Stopwatch.Frequency;
-    }
-
-
-
-    // --------------------------------------------------------------------------
-    // --- GAME LOGIC -----------------------------------------------------------
-
-    // return true if the current scene is flight
-    public static bool IsFlight()
-    {
-      return HighLogic.LoadedSceneIsFlight;
-    }
-
-    // return true if the current scene is editor
-    public static bool IsEditor()
-    {
-      return HighLogic.LoadedSceneIsEditor;
-    }
-
-    // return true if the current scene is not the main menu
-    public static bool IsGame()
-    {
-      return HighLogic.LoadedSceneIsGame;
-    }
-
-    // return true if game is paused
-    public static bool IsPaused()
-    {
-      return FlightDriver.Pause || Planetarium.Pause;
-    }
+        /// <summary> Convert from clocks to seconds. </summary>
+        public static double Seconds(double clocks)
+        {
+            return clocks / Stopwatch.Frequency;
+        }
 
 
 
-    // --------------------------------------------------------------------------
-    // --- RANDOM ---------------------------------------------------------------
+        // --------------------------------------------------------------------------
+        // --- GAME LOGIC -----------------------------------------------------------
 
-    // store the random number generator
-    static System.Random rng = new System.Random();
+        /// <summary> Returns true if the current scene is flight. </summary>
+        public static bool IsFlight
+        {
+            get
+            {
+                return HighLogic.LoadedSceneIsFlight;
+            }
+        }
 
-    // return random integer
-    public static int RandomInt(int max_value)
-    {
-      return rng.Next(max_value);
-    }
+        /// <summary> Returns true if the current scene is editor. </summary>
+        public static bool IsEditor
+        {
+            get
+            {
+                return HighLogic.LoadedSceneIsEditor;
+            }
+        }
 
-    // return random float [0..1]
-    public static float RandomFloat()
-    {
-      return (float)rng.NextDouble();
-    }
+        /// <summary> Returns true if the current scene is not the main menu. </summary>
+        public static bool IsGame
+        {
+            get
+            {
+                return HighLogic.LoadedSceneIsGame;
+            }
+        }
 
-    // return random double [0..1]
-    public static double RandomDouble()
-    {
-      return rng.NextDouble();
-    }
+        /// <summary> Returns true if game is paused. </summary>
+        public static bool IsPaused
+        {
+            get
+            {
+                return FlightDriver.Pause || Planetarium.Pause;
+            }
+        }
 
-    // return random float in [-1,+1] range
-    // note: it is less random than the c# RNG, but is way faster
-    static int fast_float_seed = 1;
-    public static float FastRandomFloat()
-    {
-      fast_float_seed *= 16807;
-      return (float)fast_float_seed * 4.6566129e-010f;
-    }
+
+
+        // --------------------------------------------------------------------------
+        // --- RANDOM ---------------------------------------------------------------
+
+        /// <summary> Random number generator. </summary>
+        static System.Random rng = new System.Random();
+
+        /// <summary> Returns random integer in [0..max_value] range. </summary>
+        public static int RandomInt(int max_value)
+        {
+            return rng.Next(max_value);
+        }
+
+        /// <summary> Returns random float in [0..1] range. </summary>
+        public static float RandomFloat()
+        {
+            return (float)rng.NextDouble();
+        }
+
+        /// <summary> Returns random double in [0..1] range. </summary>
+        public static double RandomDouble()
+        {
+            return rng.NextDouble();
+        }
+
+        static int fast_float_seed = 1;
+        /// <summary> Returns random float in [-1,+1] range.
+        /// Note: it is less random than the c# RNG, but is way faster. </summary>
+        public static float FastRandomFloat()
+        {
+            fast_float_seed *= 16807;
+            return (float)fast_float_seed * 4.6566129e-010f;
+        }
 
 
 

@@ -68,7 +68,7 @@ namespace Trajectories
 
         public void OnGUI()
         {
-            if (!Settings.fetch.GUIEnabled || !Util.IsFlight() || PlanetariumCamera.Camera == null)
+            if (!Settings.fetch.GUIEnabled || !Util.IsFlight || PlanetariumCamera.Camera == null)
                 return;
 
             Settings.fetch.MapGUIWindowPos = new Rect(Settings.fetch.MapGUIWindowPos.xMin, Settings.fetch.MapGUIWindowPos.yMin, Settings.fetch.MapGUIWindowPos.width, Settings.fetch.MapGUIWindowPos.height - 1);
