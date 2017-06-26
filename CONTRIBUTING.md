@@ -6,7 +6,15 @@ Coming soon. For now, please ask on the [Forum thread](http://forum.kerbalspacep
 
 ## Code Style
 
-Coming soon.
+Please observe some basic style rules for your contributions:
+
+  - Follow the naming guidelines [put out by Microsoft](https://docs.microsoft.com/en-us/dotnet/standard/design-guidelines/naming-guidelines)
+  - Per indentation level, use 4 spaces and no tabs
+  - Use Carriage-Return & Line Feed (CRLF) line endings in all C# and Visual Studio source code files.
+    Source files or config files for tools that do not work on Windows and/or can't handle CRLF line endings are exempt.
+  - Avoid trailing whitespace
+  - Please document your code briefly with inline-comments. If you add new functions, provide summaries that explain parameters, return values and side effects.
+
 
 ## Using Git and GitHub
 
@@ -41,9 +49,20 @@ If you want to debug with Visual Studio then you will need the **Visual Studio T
 If you selected the "Game development with Unity" component above, this should already be installed.
 If it is not, you download and install by using the **Tools->Extensions and Updates** window in Visual Studio, selecting the "Online" tab on the left hand column and then searching for "Unity" in the search bar in the upper right corner.
 
-##### Editor Settings (only for Visual Studio 2015 and earlier)
+##### Editor Settings
 
-Coming soon.
+Please install the [Trailing Whitespace Visualizer Plugin](https://marketplace.visualstudio.com/items?itemName=MadsKristensen.TrailingWhitespaceVisualizer)
+and make sure that you don't add trailing whitespace.
+
+The Trajectories repository contains a file called `.editorconfig` which should configure your editor automatically if you use Visual Studio 2017.
+If you use Visual Studio 2015 or older, please set the following options in Visual Studio:
+
+Under Tools -> Options -> Text Editor -> C# -> Tabs:
+  - Indenting: Smart
+  - Tab Size: 4
+  - Indent Size: 4
+  - Insert Spaces
+
 
 #### Kerbal Space Program Install
 
