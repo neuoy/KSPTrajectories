@@ -1,4 +1,4 @@
-﻿#if TRAJECTORIES_PROFILER
+﻿#if DEBUG_PROFILER
 
 using System;
 using System.Collections.Generic;

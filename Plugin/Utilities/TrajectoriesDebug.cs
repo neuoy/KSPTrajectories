@@ -9,5 +9,5 @@
         [KSPField(isPersistant = false, guiActive = true)]
         public float Lift;
     }
-    #endif
+#endif
 }

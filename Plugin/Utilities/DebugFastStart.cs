@@ -1,8 +1,8 @@
-﻿using System;
+﻿#if DEBUG && DEBUG_FASTSTART
+
+using System;
 using System.Runtime.InteropServices;
 using UnityEngine;
-
-#if DEBUG && DEBUG_FASTSTART
 
 namespace Trajectories
 {

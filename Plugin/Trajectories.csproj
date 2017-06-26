@@ -22,7 +22,7 @@
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>$(KSPDIR)\GameData\Trajectories\Plugin\</OutputPath>
-    <DefineConstants>DEBUG;TRACE;DEVELOPMENT;ENABLE_PROFILER;TRAJECTORIES_PROFILER</DefineConstants>
+    <DefineConstants>TRACE;DEBUG</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <FileAlignment>512</FileAlignment>
