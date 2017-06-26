@@ -268,13 +268,14 @@ namespace Trajectories
 
         public static Vector3 projectToSurface(CelestialBody body, Vector3 curMeshPos, double time)
         {
+            float offset = 10000.0f;
             var bodyPosition = body.position;
             var curMeshPosWorld = curMeshPos + bodyPosition;
             var orbit = body.orbit;
             var latitude = body.GetLatitude(curMeshPosWorld);
             var longitude = body.GetLongitude(curMeshPosWorld);
             var NormalV = body.GetSurfaceNVector(latitude, longitude);
-            var ScaledNormalVec = (NormalV * (float)body.GetAltitude(curMeshPosWorld));
+            var ScaledNormalVec = NormalV * ( (float)body.GetAltitude(curMeshPosWorld) - offset) ;
             var projectedMeshPos = curMeshPos - ScaledNormalVec;
             return projectedMeshPos;
         }
