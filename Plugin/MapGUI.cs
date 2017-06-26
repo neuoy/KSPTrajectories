@@ -152,9 +152,12 @@ namespace Trajectories
             GUILayout.EndHorizontal();
 
             GUILayout.BeginHorizontal();
-            
-            Settings.fetch.GroundTraceMode = GUILayout.Toggle(Settings.fetch.GroundTraceMode, "Ground Trace mode");
-            
+
+            if (Settings.fetch.BodyFixedMode)
+            {
+                Settings.fetch.GroundTraceMode = GUILayout.Toggle(Settings.fetch.GroundTraceMode, "Ground Trace mode");
+            }
+
             GUILayout.EndHorizontal();
 
             GUILayout.Label("Max G-force: " + (traj.MaxAccel / 9.81).ToString("0.00"));
