@@ -5,10 +5,6 @@ Copyright 2014, Youen Toupin
 This file is part of Trajectories, under MIT license.
 */
 
-//#define DEBUG_COMPARE_FORCES
-//#define DEBUG_COMPARE_DENSITY
-//#define DEBUG_COMPARE_TEMPERATURE
-
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -169,6 +165,31 @@ namespace Trajectories
             aerodynamicModel_.Invalidate();
         }
 
+#if DEBUG && DEBUG_TELEMETRY
+
+        public void Awake()
+        {
+            // Add telemetry channels for real and predicted variable values
+            Telemetry.AddChannel<double>("ut");
+            Telemetry.AddChannel<double>("airspeed");
+            Telemetry.AddChannel<double>("aoa");
+            Telemetry.AddChannel<float>("drag");
+
+            Telemetry.AddChannel<double>("density");
+            Telemetry.AddChannel<double>("density_calc");
+            Telemetry.AddChannel<double>("density_calc_precise");
+
+            Telemetry.AddChannel<double>("temperature");
+            Telemetry.AddChannel<double>("temperature_calc");
+
+            Telemetry.AddChannel<double>("force_actual");
+            //Telemetry.AddChannel<double>("force_total");
+            Telemetry.AddChannel<double>("force_predicted");
+            Telemetry.AddChannel<double>("force_predicted_cache");
+            //Telemetry.AddChannel<double>("force_reference");
+        }
+#endif
+
         public void Start()
         {
             fetch_ = this;
@@ -203,10 +224,10 @@ namespace Trajectories
             }
 
             if (HighLogic.LoadedScene == GameScenes.FLIGHT
-                && FlightGlobals.ActiveVessel != null 
-                && FlightGlobals.ActiveVessel.Parts.Count != 0 
-                && ((Settings.fetch.DisplayTrajectories) 
-                    || Settings.fetch.AlwaysUpdate 
+                && FlightGlobals.ActiveVessel != null
+                && FlightGlobals.ActiveVessel.Parts.Count != 0
+                && ((Settings.fetch.DisplayTrajectories)
+                    || Settings.fetch.AlwaysUpdate
                     || targetPosition_.HasValue))
             {
                 ComputeTrajectory(FlightGlobals.ActiveVessel, DescentProfile.fetch, true);
@@ -726,11 +747,18 @@ namespace Trajectories
             return worldPos;
         }
 
-        #if DEBUG
+#if DEBUG && DEBUG_TELEMETRY
+        public void FixedUpdate()
+        {
+            DebugTelemetry();
+        }
+
         private static Vector3d PreviousFramePos;
         private static Vector3d PreviousFrameVelocity;
         private static double PreviousFrameTime = 0;
-        public void FixedUpdate()
+
+
+        public void DebugTelemetry()
         {
             if (HighLogic.LoadedScene != GameScenes.FLIGHT)
                 return;
@@ -740,7 +768,6 @@ namespace Trajectories
 
             if (dt > 0.5 || dt < 0.0)
             {
-
                 Vector3d bodySpacePosition = new Vector3d();
                 Vector3d bodySpaceVelocity = new Vector3d();
 
@@ -755,7 +782,6 @@ namespace Trajectories
 
                     Vector3d airVelocity = bodySpaceVelocity - body.getRFrmVel(body.position + bodySpacePosition);
 
-#if DEBUG_COMPARE_FORCES
                     double R = PreviousFramePos.magnitude;
                     Vector3d gravityForce = PreviousFramePos * (-body.gravParameter / (R * R * R) * vessel_.totalMass);
 
@@ -787,50 +813,54 @@ namespace Trajectories
                     Vector3d localPredictedForce = new Vector3d(Vector3d.Dot(predictedForce, vesselRight), Vector3d.Dot(predictedForce, vesselUp), Vector3d.Dot(predictedForce, vesselBackward));
                     Vector3d localPredictedForceWithCache = new Vector3d(Vector3d.Dot(predictedForceWithCache, vesselRight), Vector3d.Dot(predictedForceWithCache, vesselUp), Vector3d.Dot(predictedForceWithCache, vesselBackward));
 
-                    Util.PostSingleScreenMessage("actual/predict comparison", "air vel=" + Math.Floor(airVelocity.magnitude) + " ; AoA=" + (AoA * 180.0 / Math.PI));
-                    //Util.PostSingleScreenMessage("total force", "actual total force=" + localTotalForce.ToString("0.000"));
-                    Util.PostSingleScreenMessage("actual force", "actual force=" + localActualForce.ToString("0.000"));
-                    Util.PostSingleScreenMessage("predicted force", "predicted force=" + localPredictedForce.ToString("0.000"));
-                    Util.PostSingleScreenMessage("predict with cache", "predicted force with cache=" + localPredictedForceWithCache.ToString("0.000"));
+                    Telemetry.Send("ut", now);
 
-                    Util.PostSingleScreenMessage("reference force", "reference force=" + referenceForce.ToString("0.000"));
+                    Telemetry.Send("airspeed", Math.Floor(airVelocity.magnitude));
+                    Telemetry.Send("aoa", (AoA * 180.0 / Math.PI));
 
-                    Util.PostSingleScreenMessage("current vel", "current vel=" + bodySpaceVelocity.ToString("0.00") + " (mag=" + bodySpaceVelocity.magnitude.ToString("0.00") + ")");
-                    //Util.PostSingleScreenMessage("vel from pos", "vel from pos=" + ((bodySpacePosition - PreviousFramePos) / dt).ToString("0.000") + " (mag=" + ((bodySpacePosition - PreviousFramePos) / dt).magnitude.ToString("0.00") + ")");
-                    Util.PostSingleScreenMessage("force diff", "force ratio=" + (localActualForce.z / localPredictedForce.z).ToString("0.000"));
-                    Util.PostSingleScreenMessage("drag", "physics drag=" + vessel_.rootPart.rb.drag);
-#endif
+                    Telemetry.Send("force_actual", localActualForce.magnitude);
+                    //Telemetry.Send("force_actual.x", localActualForce.x);
+                    //Telemetry.Send("force_actual.y", localActualForce.y);
+                    //Telemetry.Send("force_actual.z", localActualForce.z);
 
-#if DEBUG_COMPARE_DENSITY
 
-                    double approximateRho = StockAeroUtil.GetDensity(altitudeAboveSea, body);
-                    double preciseRho = StockAeroUtil.GetDensity(vessel_.GetWorldPos3D(), body);
-                    double actualRho = vessel_.atmDensity;
+                    Telemetry.Send("force_total", localTotalForce.magnitude);
+                    //Telemetry.Send("force_total.x", localTotalForce.x);
+                    //Telemetry.Send("force_total.y", localTotalForce.y);
+                    //Telemetry.Send("force_total.z", localTotalForce.z);
 
-                    Util.PostSingleScreenMessage("rho_actual", "rho_actual = " + actualRho.ToString("e3"));
+                    Telemetry.Send("force_predicted", localPredictedForce.magnitude);
+                    //Telemetry.Send("force_predicted.x", localPredictedForce.x);
+                    //Telemetry.Send("force_predicted.y", localPredictedForce.y);
+                    //Telemetry.Send("force_predicted.z", localPredictedForce.z);
 
-                    Util.PostSingleScreenMessage("rho_approx",
-                        "rho_approx=" + approximateRho.ToString("e3")
-                        + "; ratio=" + (actualRho / approximateRho).ToString("0.000")
-                        + "; ratio_diff=" + (1.0d - actualRho / approximateRho).ToString("e3")
-                        );
+                    Telemetry.Send("force_predicted_cache", localPredictedForceWithCache.magnitude);
+                    //Telemetry.Send("force_predicted_cache.x", localPredictedForceWithCache.x);
+                    //Telemetry.Send("force_predicted_cache.y", localPredictedForceWithCache.y);
+                    //Telemetry.Send("force_predicted_cache.z", localPredictedForceWithCache.z);
 
-                    Util.PostSingleScreenMessage("rho_precise",
-                        "rho_prec=" + preciseRho.ToString("e3")
-                        + "; ratio=" + (actualRho / preciseRho).ToString("0.000")
-                        + "; ratio_diff=" + (1.0d - actualRho / preciseRho).ToString("e3"));
-#endif
+                    //Telemetry.Send("force_reference", referenceForce.magnitude);
+                    //Telemetry.Send("force_reference.x", referenceForce.x);
+                    //Telemetry.Send("force_reference.y", referenceForce.y);
+                    //Telemetry.Send("force_reference.z", referenceForce.z);
 
-#if DEBUG_COMPARE_TEMPERATURE
-                    double calcTemp = StockAeroUtil.GetTemperature(vessel_.GetWorldPos3D(), body);
-                    double actualTemp = vessel_.atmosphericTemperature;
+                    //Telemetry.Send("velocity.x", bodySpaceVelocity.x);
+                    //Telemetry.Send("velocity.y", bodySpaceVelocity.y);
+                    //Telemetry.Send("velocity.z", bodySpaceVelocity.z);
 
-                    Util.PostSingleScreenMessage("temp info",
-                        "calcTemp=" + calcTemp.ToString("0.000")
-                        + " ; actualTemp=" + actualTemp.ToString("0.0000")
-                        + " ; ratio=" + (actualTemp / calcTemp).ToString("0.00")
-                        + " ; ratio_diff=" + (1.0d - actualTemp / calcTemp).ToString("e3"));
-#endif
+                    //Vector3d velocity_pos = (bodySpacePosition - PreviousFramePos) / dt;
+                    //Telemetry.Send("velocity_pos.x", velocity_pos.x);
+                    //Telemetry.Send("velocity_pos.y", velocity_pos.y);
+                    //Telemetry.Send("velocity_pos.z", velocity_pos.z);
+
+                    Telemetry.Send("drag", vessel_.rootPart.rb.drag);
+
+                    Telemetry.Send("density", vessel_.atmDensity);
+                    Telemetry.Send("density_calc", StockAeroUtil.GetDensity(altitudeAboveSea, body));
+                    Telemetry.Send("density_calc_precise", StockAeroUtil.GetDensity(vessel_.GetWorldPos3D(), body));
+
+                    Telemetry.Send("temperature", vessel_.atmosphericTemperature);
+                    Telemetry.Send("temperature_calc", StockAeroUtil.GetTemperature(vessel_.GetWorldPos3D(), body));
                 }
 
                 PreviousFrameVelocity = bodySpaceVelocity;
@@ -838,6 +868,6 @@ namespace Trajectories
                 PreviousFrameTime = now;
             }
         }
-        #endif
+#endif
     }
 }
