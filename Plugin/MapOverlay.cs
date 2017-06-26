@@ -182,6 +182,10 @@ namespace Trajectories
                     if (Settings.fetch.GroundTraceMode)
                     {
                         initMeshFromOrbit(patch.startingState.referenceBody.position, groundTraceMesh, patch.spaceOrbit, patch.startingState.time, patch.endTime - patch.startingState.time, XKCDColors.Orange, true);
+
+                    } else
+                    {
+                        
                     }
                 }
 
