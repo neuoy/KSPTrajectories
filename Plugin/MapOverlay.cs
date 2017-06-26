@@ -167,7 +167,14 @@ namespace Trajectories
                 }
                 else
                 {
-                    initMeshFromOrbit(patch.startingState.referenceBody.position, mesh, patch.spaceOrbit, patch.startingState.time, patch.endTime - patch.startingState.time, Color.white);
+                    if (Settings.fetch.GroundTraceMode)
+                    {
+                        initMeshFromOrbit(patch.startingState.referenceBody.position, mesh, patch.spaceOrbit, patch.startingState.time, patch.endTime - patch.startingState.time, XKCDColors.Orange);
+                    }
+                    else
+                    {
+                        initMeshFromOrbit(patch.startingState.referenceBody.position, mesh, patch.spaceOrbit, patch.startingState.time, patch.endTime - patch.startingState.time, Color.white);
+                    }
                 }
 
                 if (patch.impactPosition.HasValue)
