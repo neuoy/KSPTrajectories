@@ -82,12 +82,9 @@ namespace Trajectories
 
         private void setDisplayEnabled(bool enabled)
         {
-            enabled = enabled && Settings.fetch.DisplayTrajectories;
+            groundTraceObj.GetComponent<MeshRenderer>().enabled = Settings.fetch.GroundTraceMode;
 
-            if (groundTraceObj)
-            {
-                groundTraceObj.GetComponent<MeshRenderer>().enabled = enabled && Settings.fetch.GroundTraceMode;
-            }
+            enabled = enabled && Settings.fetch.DisplayTrajectories;
 
             if (displayEnabled == enabled)
                 return;
