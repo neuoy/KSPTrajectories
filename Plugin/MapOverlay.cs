@@ -168,14 +168,6 @@ namespace Trajectories
                 else
                 {
                     initMeshFromOrbit(patch.startingState.referenceBody.position, mesh, patch.spaceOrbit, patch.startingState.time, patch.endTime - patch.startingState.time, Color.white);
-
-                    var groundTraceObj = GetMesh(patch.startingState.referenceBody, lineMaterial);
-                    var groundTraceMesh = groundTraceObj.GetComponent<MeshFilter>().mesh;
-
-                    if (Settings.fetch.GroundTraceMode)
-                    {
-                        initMeshFromOrbit(patch.startingState.referenceBody.position, groundTraceMesh, patch.spaceOrbit, patch.startingState.time, patch.endTime - patch.startingState.time, XKCDColors.Orange, true);
-                    }
                 }
 
                 if (patch.impactPosition.HasValue)
@@ -234,7 +226,7 @@ namespace Trajectories
             }
         }
 
-        private void initMeshFromOrbit(Vector3 bodyPosition, Mesh mesh, Orbit orbit, double startTime, double duration, Color color, bool groundTrace = false)
+        private void initMeshFromOrbit(Vector3 bodyPosition, Mesh mesh, Orbit orbit, double startTime, double duration, Color color)
         {
             int steps = 128;
 
@@ -246,7 +238,7 @@ namespace Trajectories
             double maxDT = Math.Max(1.0, duration / (double)steps);
             double maxDTA = 2.0 * Math.PI / (double)steps;
             stepUT[utIdx++] = startTime;
-            while (true)
+            while(true)
             {
                 double time = prevTime + maxDT;
                 for (int count = 0; count < 100; ++count)
@@ -264,7 +256,7 @@ namespace Trajectories
                     time = (prevTime + time) * 0.5;
                 }
 
-                if (time > startTime + duration - (time - prevTime) * 0.5)
+                if (time > startTime + duration - (time-prevTime) * 0.5)
                     break;
 
                 prevTime = time;
@@ -283,7 +275,7 @@ namespace Trajectories
             var triangles = new int[utIdx * 6];
 
             Vector3 prevMeshPos = Util.SwapYZ(orbit.getRelativePositionAtUT(startTime - duration / (double)steps)) + bodyPosition;
-            for (int i = 0; i < utIdx; ++i)
+            for(int i = 0; i < utIdx; ++i)
             {
                 double time = stepUT[i];
 
@@ -292,7 +284,7 @@ namespace Trajectories
                     curMeshPos = Trajectory.calculateRotatedPosition(orbit.referenceBody, curMeshPos, time);
                 }
 
-                if (groundTrace)
+                if (Settings.fetch.GroundTraceMode)
                 {
                     curMeshPos = Trajectory.projectToSurface(orbit.referenceBody, curMeshPos, time);
                 }
@@ -323,7 +315,7 @@ namespace Trajectories
             for (int i = 0; i < colors.Length; ++i)
             {
                 //if (color.g < 0.5)
-                colors[i] = color;
+                    colors[i] = color;
                 /*else
                     colors[i] = new Color(0, (float)i / (float)colors.Length, 1.0f - (float)i / (float)colors.Length);*/
             }
