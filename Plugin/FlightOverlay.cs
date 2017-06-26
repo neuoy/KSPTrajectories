@@ -1,5 +1,4 @@
 ﻿using UnityEngine;
-using Vectrosity;
 
 namespace Trajectories
 {
