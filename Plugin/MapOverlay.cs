@@ -156,16 +156,19 @@ namespace Trajectories
                 lineMaterial = MapView.fetch.orbitLinesMaterial;
             }
 
-            foreach (var patch in Trajectory.fetch.patches)
+            if (Settings.fetch.GroundTraceMode)
             {
-                if (Settings.fetch.GroundTraceMode)
+                foreach (var patch in Trajectory.fetch.patches)
                 {
                     groundTraceObj = GetMesh(patch.startingState.referenceBody, lineMaterial);
                     var groundTraceMesh = groundTraceObj.GetComponent<MeshFilter>().mesh;
 
                     initMeshFromOrbit(patch.startingState.referenceBody.position, groundTraceMesh, patch.spaceOrbit, patch.startingState.time, patch.endTime - patch.startingState.time, XKCDColors.Orange, true);
                 }
+            }
 
+            foreach (var patch in Trajectory.fetch.patches)
+            {
                 if (patch.startingState.stockPatch != null && !Settings.fetch.BodyFixedMode && !Settings.fetch.DisplayCompleteTrajectory)
                     continue;
 
