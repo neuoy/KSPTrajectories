@@ -156,20 +156,10 @@ namespace Trajectories
                 lineMaterial = MapView.fetch.orbitLinesMaterial;
             }
 
-            if (Settings.fetch.GroundTraceMode)
-            {
-                foreach (var patch in Trajectory.fetch.patches)
-                {
-                    groundTraceObj = GetMesh(patch.startingState.referenceBody, lineMaterial);
-                    var groundTraceMesh = groundTraceObj.GetComponent<MeshFilter>().mesh;
-
-                    initMeshFromOrbit(patch.startingState.referenceBody.position, groundTraceMesh, patch.spaceOrbit, patch.startingState.time, patch.endTime - patch.startingState.time, XKCDColors.Orange, true);
-                }
-            }
 
             foreach (var patch in Trajectory.fetch.patches)
             {
-                if (patch.startingState.stockPatch != null && !Settings.fetch.BodyFixedMode && !Settings.fetch.DisplayCompleteTrajectory)
+                if (patch.startingState.stockPatch != null && !Settings.fetch.GroundTraceMode && !Settings.fetch.BodyFixedMode && !Settings.fetch.DisplayCompleteTrajectory)
                     continue;
 
                 if (patch.isAtmospheric && patch.atmosphericTrajectory.Length < 2)
@@ -185,6 +175,14 @@ namespace Trajectories
                 else
                 {
                     initMeshFromOrbit(patch.startingState.referenceBody.position, mesh, patch.spaceOrbit, patch.startingState.time, patch.endTime - patch.startingState.time, Color.white);
+
+                    groundTraceObj = GetMesh(patch.startingState.referenceBody, lineMaterial);
+                    var groundTraceMesh = groundTraceObj.GetComponent<MeshFilter>().mesh;
+
+                    if (Settings.fetch.GroundTraceMode)
+                    {
+                        initMeshFromOrbit(patch.startingState.referenceBody.position, groundTraceMesh, patch.spaceOrbit, patch.startingState.time, patch.endTime - patch.startingState.time, XKCDColors.Orange, true);
+                    }
                 }
 
                 if (patch.impactPosition.HasValue)
