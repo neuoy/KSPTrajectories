@@ -171,6 +171,7 @@ namespace Trajectories
         {
             // Add telemetry channels for real and predicted variable values
             Telemetry.AddChannel<double>("ut");
+            Telemetry.AddChannel<double>("altitude");
             Telemetry.AddChannel<double>("airspeed");
             Telemetry.AddChannel<double>("aoa");
             Telemetry.AddChannel<float>("drag");
@@ -814,6 +815,7 @@ namespace Trajectories
                     Vector3d localPredictedForceWithCache = new Vector3d(Vector3d.Dot(predictedForceWithCache, vesselRight), Vector3d.Dot(predictedForceWithCache, vesselUp), Vector3d.Dot(predictedForceWithCache, vesselBackward));
 
                     Telemetry.Send("ut", now);
+                    Telemetry.Send("altitude", vessel_.altitude);
 
                     Telemetry.Send("airspeed", Math.Floor(airVelocity.magnitude));
                     Telemetry.Send("aoa", (AoA * 180.0 / Math.PI));
@@ -824,7 +826,7 @@ namespace Trajectories
                     //Telemetry.Send("force_actual.z", localActualForce.z);
 
 
-                    Telemetry.Send("force_total", localTotalForce.magnitude);
+                    //Telemetry.Send("force_total", localTotalForce.magnitude);
                     //Telemetry.Send("force_total.x", localTotalForce.x);
                     //Telemetry.Send("force_total.y", localTotalForce.y);
                     //Telemetry.Send("force_total.z", localTotalForce.z);
