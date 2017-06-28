@@ -116,12 +116,9 @@ namespace Trajectories
         }
 
         private string guistring_gForce = "";
-        private string guistring_impactVelocityHorizontal = "";
-        private string guistring_impactVelocityVertical = "";
+        private string guistring_impactVelocity = "";
 
         private string guistring_targetDistance = "";
-        private string guistring_targetDistanceNorth = "";
-        private string guistring_targetDistanceEast = "";
 
         string guistring_Latitude = "";
         string guistring_Longitude = "";
@@ -143,13 +140,11 @@ namespace Trajectories
                 Vector3 vVel = up * vVelMag;
                 float hVelMag = (vel - vVel).magnitude;
 
-                guistring_impactVelocityVertical = vVelMag.ToString("0.0");
-                guistring_impactVelocityHorizontal = hVelMag.ToString("0.0");
+                guistring_impactVelocity = String.Format("Impact: V = {0,6:F0}m/s, H = {1,6:F0}m/s", -vVelMag, hVelMag);
             }
             else
             {
-                guistring_impactVelocityVertical = "-";
-                guistring_impactVelocityHorizontal = "-";
+                guistring_impactVelocity = "";
             }
 
             if (Settings.fetch.DisplayTargetGUI)
@@ -157,31 +152,30 @@ namespace Trajectories
                 if (lastPatchBody != null && targetBody != null && lastPatch.impactPosition.HasValue
                     && lastPatchBody == targetBody && traj.targetPosition.HasValue)
                 {
-                    // Set Vector3d (required by CelestialBody.GetLanLonAlt) coordinates by impactPosition
-                    // impactPosition is in Body-relative World frame, but CelestialBody.GetLanLonAlt needs the absolute world frame.
-                    impactPos.x = lastPatch.impactPosition.Value.x + lastPatchBody.position.x;
-                    impactPos.y = lastPatch.impactPosition.Value.y + lastPatchBody.position.y;
-                    impactPos.z = lastPatch.impactPosition.Value.z + lastPatchBody.position.z;
-
+                    // Get Latitude and Longitude from impact position
+                    impactPos = lastPatch.impactPosition.Value + lastPatchBody.position;
                     lastPatchBody.GetLatLonAlt(impactPos, out double impactLat, out double impatLon, out double impactAlt);
 
-                    targetPos.x = traj.targetPosition.Value.x + targetBody.position.x;
-                    targetPos.y = traj.targetPosition.Value.y + targetBody.position.y;
-                    targetPos.z = traj.targetPosition.Value.z + targetBody.position.z;
-
+                    // Get Latitude and Longitude for target position
+                    targetPos = traj.targetPosition.Value + targetBody.position;
                     targetBody.GetLatLonAlt(targetPos, out double targetLat, out double targetLon, out double targetAlt);
 
                     float targetDistance = (float)(Util.distanceFromLatitudeAndLongitude(targetBody.Radius + impactAlt,
                         impactLat, impatLon, targetLat, targetLon) / 1e3);
-                    guistring_targetDistance = targetDistance.ToString("0.0");
 
                     float targetDistanceNorth = (float)(Util.distanceFromLatitudeAndLongitude(targetBody.Radius + impactAlt,
                         impactLat, targetLon, targetLat, targetLon) / 1e3) * ((targetLat - impactLat) < 0 ? -1.0f : +1.0f);
-                    guistring_targetDistanceNorth = targetDistanceNorth.ToString("0.0");
 
                     float targetDistanceEast = (float)(Util.distanceFromLatitudeAndLongitude(targetBody.Radius + impactAlt,
                         targetLat, impatLon, targetLat, targetLon) / 1e3) * ((targetLon - impatLon) < 0 ? -1.0f : +1.0f);
-                    guistring_targetDistanceEast = targetDistanceNorth.ToString("0.0");
+
+                    // format distance to target string
+                    guistring_targetDistance = String.Format("{0,6:F1}km | {1}: {2,6:F1}km | {3}: {4,6:F1}km",
+                        targetDistance,
+                        targetDistanceNorth > 0.0f ? 'N' : 'S',
+                        Math.Abs(targetDistanceNorth),
+                        targetDistanceEast > 0.0f ? 'E' : 'W',
+                        Math.Abs(targetDistanceEast));
                 }
             }
 
@@ -229,7 +223,7 @@ namespace Trajectories
 
             GUILayout.Label("Max G-force: " + guistring_gForce);
 
-            GUILayout.Label("Impact: V = " + guistring_impactVelocityVertical + "m/s, H = " + guistring_impactVelocityHorizontal);
+            GUILayout.Label(guistring_impactVelocity);
             GUILayout.Space(10);
 
 
@@ -238,9 +232,7 @@ namespace Trajectories
                 GUI.enabled = traj.targetPosition.HasValue;
             }
 
-            GUILayout.Label("D: " + guistring_targetDistance + "km"
-                + " /  N: " + guistring_targetDistanceNorth + "km"
-                +" / E: " + guistring_targetDistanceEast + "km");
+            GUILayout.Label(guistring_targetDistance);
 
             if (GUILayout.Button("Unset target"))
                 traj.SetTarget();
@@ -361,7 +353,10 @@ namespace Trajectories
 
                 GUILayout.Label("Aerodynamic model: " + traj.AerodynamicModelName);
                 GUILayout.BeginHorizontal();
-                GUILayout.Label("Perf: " + (traj.ComputationTime * 1000.0f).ToString("0.0") + "ms (" + (traj.ComputationTime/traj.GameFrameTime*100.0f).ToString("0") + "%)", GUILayout.Width(120));
+                GUILayout.Label(String.Format("Perf: {0,5:F1}ms ({1,4:F1})%",
+                        traj.ComputationTime * 1000.0f,
+                        traj.ComputationTime / traj.GameFrameTime * 100.0f
+                    ), GUILayout.Width(130));
                 GUILayout.Label(traj.ErrorCount + " error(s)", GUILayout.Width(80));
                 GUILayout.EndHorizontal();
             }
