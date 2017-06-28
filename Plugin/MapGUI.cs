@@ -177,6 +177,10 @@ namespace Trajectories
                         targetDistanceEast > 0.0f ? 'E' : 'W',
                         Math.Abs(targetDistanceEast));
                 }
+                else
+                {
+                    guistring_targetDistance = "";
+                }
             }
 
             if (FlightGlobals.ActiveVessel != null)
@@ -230,76 +234,76 @@ namespace Trajectories
             if (Settings.fetch.DisplayTargetGUI = ToggleGroup(Settings.fetch.DisplayTargetGUI, "Target"))
             {
                 GUI.enabled = traj.targetPosition.HasValue;
-            }
 
-            GUILayout.Label(guistring_targetDistance);
+                GUILayout.Label(guistring_targetDistance);
 
-            if (GUILayout.Button("Unset target"))
-                traj.SetTarget();
-            GUI.enabled = true;
+                if (GUILayout.Button("Unset target"))
+                    traj.SetTarget();
+                GUI.enabled = true;
 
-            GUILayout.BeginHorizontal();
-            var patch = traj.patches.LastOrDefault();
-            GUI.enabled = (patch != null && patch.impactPosition.HasValue);
-            if (GUILayout.Button("Set current impact", GUILayout.Width(150)))
-            {
-                traj.SetTarget(patch.startingState.referenceBody, patch.impactPosition);
-            }
-            GUI.enabled = true;
-            if (GUILayout.Button("Set KSC", GUILayout.Width(70)))
-            {
-                var body = FlightGlobals.Bodies.SingleOrDefault(b => b.isHomeWorld);
-                if (body != null)
+                GUILayout.BeginHorizontal();
+                var patch = traj.patches.LastOrDefault();
+                GUI.enabled = (patch != null && patch.impactPosition.HasValue);
+                if (GUILayout.Button("Set current impact", GUILayout.Width(150)))
                 {
-                    Vector3d worldPos = body.GetWorldSurfacePosition(-0.04860002, -74.72425635, 2.0);
-                    traj.SetTarget(body, worldPos - body.position);
+                    traj.SetTarget(patch.startingState.referenceBody, patch.impactPosition);
                 }
-            }
-            GUILayout.EndHorizontal();
-
-            GUILayout.BeginHorizontal();
-
-            Vessel targetVessel = FlightGlobals.fetch.VesselTarget?.GetVessel();
-            GUI.enabled = (patch != null && targetVessel != null && targetVessel.Landed
-                // && targetVessel.lastBody == patch.startingState.referenceBody
-            );
-            if (GUILayout.Button("Target vessel"))
-            {
-                traj.SetTarget(targetVessel.lastBody, targetVessel.GetWorldPos3D() - targetVessel.lastBody.position);
-                ScreenMessages.PostScreenMessage("Targeting vessel " + targetVessel.GetName());
-            }
-
-            FinePrint.Waypoint navigationWaypoint = FlightGlobals.ActiveVessel?.navigationWaypoint;
-            GUI.enabled = (navigationWaypoint != null);
-            if (GUILayout.Button("Active waypoint"))
-            {
-                traj.SetTarget(navigationWaypoint.celestialBody,
-                    navigationWaypoint.celestialBody.GetRelSurfacePosition(navigationWaypoint.latitude, navigationWaypoint.longitude, navigationWaypoint.altitude));
-                ScreenMessages.PostScreenMessage("Targeting waypoint " + navigationWaypoint.name);
-            }
-            GUILayout.EndHorizontal();
-
-            GUI.enabled = true;
-
-            GUILayout.BeginHorizontal();
-            coords = GUILayout.TextField(coords, GUILayout.Width(170));
-            if (GUILayout.Button(new GUIContent("Set",
-                    "Enter target latitude and longitude, separated by a comma, in decimal format (with a dot for decimal separator)"),
-                    GUILayout.Width(50)))
-            {
-                string[] latLng = coords.Split(new char[] { ',', ';' });
-                var body = FlightGlobals.currentMainBody;
-                if(latLng.Length == 2 && body != null)
+                GUI.enabled = true;
+                if (GUILayout.Button("Set KSC", GUILayout.Width(70)))
                 {
-                    if (Double.TryParse(latLng[0].Trim(), out double lat) && Double.TryParse(latLng[1].Trim(), out double lng))
+                    var body = FlightGlobals.Bodies.SingleOrDefault(b => b.isHomeWorld);
+                    if (body != null)
                     {
-                        Vector3d relPos = body.GetWorldSurfacePosition(lat, lng, 2.0) - body.position;
-                        double altitude = Trajectory.GetGroundAltitude(body, relPos) + body.Radius;
-                        traj.SetTarget(body, relPos * (altitude / relPos.magnitude));
+                        Vector3d worldPos = body.GetWorldSurfacePosition(-0.04860002, -74.72425635, 2.0);
+                        traj.SetTarget(body, worldPos - body.position);
                     }
                 }
+                GUILayout.EndHorizontal();
+
+                GUILayout.BeginHorizontal();
+
+                Vessel targetVessel = FlightGlobals.fetch.VesselTarget?.GetVessel();
+                GUI.enabled = (patch != null && targetVessel != null && targetVessel.Landed
+                // && targetVessel.lastBody == patch.startingState.referenceBody
+                );
+                if (GUILayout.Button("Target vessel"))
+                {
+                    traj.SetTarget(targetVessel.lastBody, targetVessel.GetWorldPos3D() - targetVessel.lastBody.position);
+                    ScreenMessages.PostScreenMessage("Targeting vessel " + targetVessel.GetName());
+                }
+
+                FinePrint.Waypoint navigationWaypoint = FlightGlobals.ActiveVessel?.navigationWaypoint;
+                GUI.enabled = (navigationWaypoint != null);
+                if (GUILayout.Button("Active waypoint"))
+                {
+                    traj.SetTarget(navigationWaypoint.celestialBody,
+                        navigationWaypoint.celestialBody.GetRelSurfacePosition(navigationWaypoint.latitude, navigationWaypoint.longitude, navigationWaypoint.altitude));
+                    ScreenMessages.PostScreenMessage("Targeting waypoint " + navigationWaypoint.name);
+                }
+                GUILayout.EndHorizontal();
+
+                GUI.enabled = true;
+
+                GUILayout.BeginHorizontal();
+                coords = GUILayout.TextField(coords, GUILayout.Width(170));
+                if (GUILayout.Button(new GUIContent("Set",
+                        "Enter target latitude and longitude, separated by a comma, in decimal format (with a dot for decimal separator)"),
+                        GUILayout.Width(50)))
+                {
+                    string[] latLng = coords.Split(new char[] { ',', ';' });
+                    var body = FlightGlobals.currentMainBody;
+                    if (latLng.Length == 2 && body != null)
+                    {
+                        if (Double.TryParse(latLng[0].Trim(), out double lat) && Double.TryParse(latLng[1].Trim(), out double lng))
+                        {
+                            Vector3d relPos = body.GetWorldSurfacePosition(lat, lng, 2.0) - body.position;
+                            double altitude = Trajectory.GetGroundAltitude(body, relPos) + body.Radius;
+                            traj.SetTarget(body, relPos * (altitude / relPos.magnitude));
+                        }
+                    }
+                }
+                GUILayout.EndHorizontal();
             }
-            GUILayout.EndHorizontal();
 
             GUILayout.Space(10);
 
