@@ -123,8 +123,17 @@ namespace Trajectories
         string guistring_Latitude = "";
         string guistring_Longitude = "";
 
+        float lastStringRenderTime = 0.0f;
+        const float stringRenderInterval = 0.5f;
+
         private void FixedUpdate()
         {
+            float t = Time.realtimeSinceStartup;
+            if (t < lastStringRenderTime + stringRenderInterval)
+                return;
+
+            lastStringRenderTime = t;
+
             Trajectory traj = Trajectory.fetch;
             Trajectory.Patch lastPatch = traj.patches.LastOrDefault();
             CelestialBody lastPatchBody = lastPatch?.startingState.referenceBody;
