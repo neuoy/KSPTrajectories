@@ -1,3 +1,27 @@
+## v1.7.0 for KSP 1.3.0
+ - 20xx-xx-xx
+
+### Changes since the last release
+
+ * Improved precision by accounting for reynolds number in drag. Fixes Issue #84.
+ * Prevent click-through in certain situations. Thanks to PiezPiedPy!
+ * Numbers in the user interface don't change as quickly anymore, allowing for better readability
+ * Deviation readout now switches from E to W and from N to S instead of just showing negative numbers
+
+### For Developers
+
+ * Added a bridge to the newly created [Telemetry](https://github.com/fat-lobyte/KSPTelemetry) module,
+   allowing for nice [graphs](https://user-images.githubusercontent.com/173609/27686194-febdbca6-5cd1-11e7-877d-1ab6e5069fb6.png)
+   and better debugging of prediction precision.
+ * Updated Profiler UI to new Canvas system. Thanks to PiezPiedPy!
+ * Added documentation for contributers in CONTRIBUTING.md file with style guidelines,
+   help for building, debugging and much more.
+
+### Known Issues
+
+  * In-Flight trajectory for non-atmospheric trajectories is incorrect and jumpy
+
+
 ## v1.6.8 for KSP 1.3.0
 
 - 2017-06-13
