@@ -4,9 +4,27 @@ Coming soon. For now, please read this: http://forum.kerbalspaceprogram.com/inde
 
 # How to Contribute
 
+Are you a pro and know all the things already? Here's are the links to the info specific to Trajectories:
+
+ - [Workflow for the Trajectories mod](#workflow-for-the-trajectories-mod)
+ - [How to submit pull requests](#how-to-submit-pull-requests)
+ - [Code Style](#code-style)
+
 ## Where to Start
 
-Coming soon. For now, please ask on the [Forum thread](http://forum.kerbalspaceprogram.com/index.php?/topic/94370-13) :smile:
+If you like using the Trajectories mod, please consider contributing!
+
+There are many ways to contribute to the mod:
+
+  - Write documentation! We could use a good manual, better code comments, an API documentation inside the code.
+  - Report bugs - but do it well. Well-written bug reports are very appreciated. Make sure to follow the guidelines [above](#how-to-report-bugs).
+  - Help testing, reproducing and narrowing down existing bugs
+  - Help with code-cleanup, make the code more readable, reduce inefficiencies (but make sure you don't break anything!)
+  - Write new features! We have a few much-requested features on our issue tracker that you could implement. Or, just solve your pet problem!
+
+Especially before writing new features, communication is paramount! Please visit our
+[development thread](http://forum.kerbalspaceprogram.com/index.php?/topic/94370-13), let other people know what you are working on,
+ask for Feedback, talk about the mod. This is crucial to avoid merge conflicts, duplicated or unnecessary work.
 
 ## Using Git and GitHub
 
