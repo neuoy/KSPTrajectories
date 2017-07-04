@@ -5,11 +5,14 @@ using UnityEngine;
 
 namespace Trajectories
 {
-    class GUIToggleButtonBlizzyVisibility : IVisibility
+    class GUIToggleButtonBlizzyVisibility: IVisibility
     {
         internal static GUIToggleButtonBlizzyVisibility Instance
         {
-            get { return new GUIToggleButtonBlizzyVisibility(); }
+            get
+            {
+                return new GUIToggleButtonBlizzyVisibility();
+            }
         }
 
         private static IVisibility FLIGHT_VISIBILITY;
@@ -30,7 +33,7 @@ namespace Trajectories
     }
 
     [KSPAddon(KSPAddon.Startup.Flight, false)]
-    class MapGUI : MonoBehaviour
+    class MapGUI: MonoBehaviour
     {
         private static readonly int GUIId = 934824;
 
@@ -162,12 +165,18 @@ namespace Trajectories
                     && lastPatchBody == targetBody && traj.targetPosition.HasValue)
                 {
                     // Get Latitude and Longitude from impact position
+                    double impactLat;
+                    double impatLon;
+                    double impactAlt;
                     impactPos = lastPatch.impactPosition.Value + lastPatchBody.position;
-                    lastPatchBody.GetLatLonAlt(impactPos, out double impactLat, out double impatLon, out double impactAlt);
+                    lastPatchBody.GetLatLonAlt(impactPos, out impactLat, out impatLon, out impactAlt);
 
                     // Get Latitude and Longitude for target position
+                    double targetLat;
+                    double targetLon;
+                    double targetAlt;
                     targetPos = traj.targetPosition.Value + targetBody.position;
-                    targetBody.GetLatLonAlt(targetPos, out double targetLat, out double targetLon, out double targetAlt);
+                    targetBody.GetLatLonAlt(targetPos, out targetLat, out targetLon, out targetAlt);
 
                     float targetDistance = (float)(Util.distanceFromLatitudeAndLongitude(targetBody.Radius + impactAlt,
                         impactLat, impatLon, targetLat, targetLon) / 1e3);
@@ -303,7 +312,9 @@ namespace Trajectories
                     var body = FlightGlobals.currentMainBody;
                     if (latLng.Length == 2 && body != null)
                     {
-                        if (Double.TryParse(latLng[0].Trim(), out double lat) && Double.TryParse(latLng[1].Trim(), out double lng))
+                        double lat;
+                        double lng;
+                        if (double.TryParse(latLng[0].Trim(), out lat) && double.TryParse(latLng[1].Trim(), out lng))
                         {
                             Vector3d relPos = body.GetWorldSurfacePosition(lat, lng, 2.0) - body.position;
                             double altitude = Trajectory.GetGroundAltitude(body, relPos) + body.Radius;
@@ -435,7 +446,7 @@ namespace Trajectories
                     ApplicationLauncher.AppScenes.MAPVIEW | ApplicationLauncher.AppScenes.FLIGHT,
                     (Texture)GameDatabase.Instance.GetTexture("Trajectories/Textures/icon", false));
 
-                if(Settings.fetch.GUIEnabled)
+                if (Settings.fetch.GUIEnabled)
                     GUIToggleButton.SetTrue(false);
             }
         }
