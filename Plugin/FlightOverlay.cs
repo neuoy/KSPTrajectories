@@ -1,10 +1,9 @@
 ﻿using UnityEngine;
-using Vectrosity;
 
 namespace Trajectories
 {
     [KSPAddon(KSPAddon.Startup.Flight, false)]
-    public class FlightOverlay : MonoBehaviour
+    public class FlightOverlay: MonoBehaviour
     {
         private const int defaultVertexCount = 32;
         private const float lineWidth = 2.0f;
@@ -20,24 +19,24 @@ namespace Trajectories
 
         public void Start()
         {
-			line = gameObject.AddComponent<LineRenderer>();
+            line = gameObject.AddComponent<LineRenderer>();
             line.useWorldSpace = false; // true;
-			line.SetVertexCount(defaultVertexCount);
+            line.SetVertexCount(defaultVertexCount);
             line.SetWidth(lineWidth, lineWidth);
-			line.sharedMaterial = Resources.Load("DefaultLine3D") as Material;
-			line.material.SetColor("_TintColor", new Color(0.1f, 1f, 0.1f));
+            line.sharedMaterial = Resources.Load("DefaultLine3D") as Material;
+            line.material.SetColor("_TintColor", new Color(0.1f, 1f, 0.1f));
         }
 
         private void FixedUpdate()
         {
+            line.enabled = false;
+            targetingCross.enabled = false;
+
             if (!Settings.fetch.DisplayTrajectories
+                || Util.IsMap
                 || !Settings.fetch.DisplayTrajectoriesInFlight
                 || Trajectory.fetch.patches.Count == 0)
-            {
-                line.enabled = false;
-                targetingCross.enabled = false;
                 return;
-            }
 
             Vector3[] vertices;
 
@@ -57,7 +56,7 @@ namespace Trajectories
                 vertices = new Vector3[defaultVertexCount];
 
                 double time = lastPatch.startingState.time;
-                double time_increment = (lastPatch.endTime - lastPatch.startingState.time) / (float) defaultVertexCount;
+                double time_increment = (lastPatch.endTime - lastPatch.startingState.time) / defaultVertexCount;
                 Orbit orbit = lastPatch.spaceOrbit;
                 for (uint i = 0; i < defaultVertexCount; ++i)
                 {
@@ -100,7 +99,7 @@ namespace Trajectories
         }
     }
 
-    public class TargetingCross : MonoBehaviour
+    public class TargetingCross: MonoBehaviour
     {
         public const float impactRaycastDistance = 300.0f;
 
