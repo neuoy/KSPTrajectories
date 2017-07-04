@@ -173,6 +173,24 @@ namespace Trajectories
             }
         }
 
+        /// <summary> Returns true if the current scene is tracking station. </summary>
+        public static bool IsTrackingStation
+        {
+            get
+            {
+                return (HighLogic.LoadedScene == GameScenes.TRACKSTATION);
+            }
+        }
+
+        /// <summary> Returns true if the current view is map. </summary>
+        public static bool IsMap
+        {
+            get
+            {
+                return MapView.MapIsEnabled;
+            }
+        }
+
         /// <summary> Returns true if game is paused. </summary>
         public static bool IsPaused
         {
