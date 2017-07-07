@@ -4,6 +4,7 @@
 ### Changes since the last release
 
  * Improved precision by accounting for reynolds number in drag. Fixes Issue #84.
+ * Fix crash when turning on In-Flight trajectory display while in Map view. Fixes Issue #102. Thanks to PiezPiedPy!
  * Prevent click-through in certain situations. Thanks to PiezPiedPy!
  * Numbers in the user interface don't change as quickly anymore, allowing for better readability
  * Deviation readout now switches from E to W and from N to S instead of just showing negative numbers
