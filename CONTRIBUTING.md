@@ -337,6 +337,7 @@ If you want to distribute your own version for testing, please do so by making i
   - Upload the `Trajectories-<version>.zip` file to GitHub, paste the changelog there
   - On SpaceDock, draft a new release and upload the `Trajectories-<version>.zip`.
   - On the KSP forums, create a new post with the changelog and links to both GitHub and SpaceDock.
+  - On http://ksp-avc.cybutek.net, update the version and compatibility numbers according to the AVC version file
 
 ### Versioning
 
