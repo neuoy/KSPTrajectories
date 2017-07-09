@@ -2,6 +2,105 @@
 
 Coming soon. For now, please read this: http://forum.kerbalspaceprogram.com/index.php?/topic/83212
 
+# How to Suggest Features
+
+While we value all input and suggestions for improvement, a few things should be considered to make sure that your suggestion is understood
+and to increase the chances of adoption.
+
+## Stay Polite!
+
+Never forget that all contributors and maintainers are doing this Mod for **fun**, and do **not get paid**. If you want a feature, it is
+in *your* best interest to remain on good terms with the contributors and keep them motivated to work on the project.
+
+Therefor, it is also in your best interest to not demand features, to not pressure us to implement a feature and not to insult any previous work - 
+that includes not  crapping on the current state of affairs, no matter how frustrated you might be.
+
+In German there is a saying:
+
+> Der Ton macht die Musik
+
+Which is literally translated to "the tone makes the music" and means that the tone of conversation is paramount to reach a good result.
+A demanding or bitter tone is a sure way to shut down even the best intentioned request. Stay polite and keep your tone positive.
+
+## Consider the workload
+
+As mentioned, none of us get paid to work on this project. Please consider this, when you try to suggest features that take a lot of work.
+Sometimes the idea might even be the best idea in the world - but there is simply noone who could implement it.
+
+Try to asses how much work a feature would be, and state that in your suggestion.
+
+What would be best, of course, is to implement the feature yourself and submit a pull request! We have a guide for new contributors [right here](#how-to-contribute).
+
+
+## Gather feedback from the community
+
+When you are requesting feature, even when it is for "personal use", it can still be good to bring in the community.
+Suggest the feature on the Forums, ask for Feedback from other users, create an issue on GitHub. Be responsive, and accept feedback and suggestions to make your suggestion even better ;)
+
+
+### Make sure that the feature is wanted
+
+An important part of gathering feedback is: **is your feature even necessary**? Sometimes when you think that you can't live without a certain feature or change,
+it is good to ask the community: is there a way to achieve the desired result with current tools?
+
+Ask other users if they also believe that this feature is necessary, and gather support. When many users claim that they want something, the chances of adoption increase
+(but there's still no guarantee!).
+
+
+## Consider the Impact
+
+Whenever a new feature is introduced, no matter how big the benefits, there are some drawbacks as well. This includes (but is not limited to) the following:
+
+  - Performance: every calculation takes time, needs a processor to execute it and consumes energy. Consider that your feature will potentially run on many users machines, for multiple hours, for around 30 times per second.
+    You don't want to be the guy who's responsible for melting our planets ice caps, are you? ;)
+    Sometimes this is negligable. Sometimes, it is not. Think about which it is when you suggest a feature.
+  - Changing workloads: People are creatures of habit, and so are this mods users. When you introduce a change in "the way they do things",
+    be aware that many people (who your are currently unaware of, because they are content and happy) will suddenly have to change their behaviour and that they
+	might not be as happy about the change as you are.
+  - Configuration complexity, explained [below](#why-cant-you-just-add-a-toggle)
+
+When you submit a feature request, please make sure to think about the drawbacks that your feature could have and specify and explain them clearly.
+
+### "Why can't you just add a toggle?"
+
+If your feature request would introduce a change that makes the Mod do something differently, you might be tempted to add toggles and switches
+to revert back to the old behaviour, or when your feature is rejected because of the impact it has, you might exclaim "why can't you just add a toggle?".
+No, generally we can't. Here is why:
+
+While it might make perfect sense from an individual point of view,
+where you consider one single feature and one single switch, changing the perspective to that of the maintainer makes things more complicated.
+
+A maintainer has to consider the *entirety* of all switches, options and toggles. What is "just one more switch" for you might be the twentyfirst switch to the maintainer.
+While there is undoubtedly value in a "configurable" product, it also incurs a cost!
+
+  - It's harder to learn how the mod works, harder to write manuals and therefor produces more support requests.
+  - Adding switches requires an increased amount of testing. If we had a testing matrix, adding switches increases the workload quadratically! (But we don't, so that point is a bit moot.)
+  - Adding switches increases the complexity of code, adds more corner situations, more potential for bugs and makes debugging harder (not least because it's yet another thing that users have to specify)
+  - A program full of toggle buttons, half of which are in the same state for most users for most of the time anyway is plain ugly.
+
+
+Last but not least, we have to consider the overall "usability" of the mod, the "feel" of the mod and the "user stories". When adding a feature, we should not take
+the cheap and easy way out ("just add a toggle"), but think about how people use the mod and how to make their lives better. Sometimes it might be better to change
+the user experience completely or even remove features to avoid confusion.
+
+
+## Where to suggest a feature
+
+Coming soon.
+
+
+## Learn to accept a No
+
+Sometimes, requests cannot be met - either because they don't match the Mods core idea or because their [impact](#consider-the-impact) is too high or simply because the contributors don't have enough time.
+
+Consider forking the project and implementing the feature into your private builds, and playing with it in your private game. With more experience and testing and even "finished" code,
+your case for adoption into the main mod is a lot stronger! Even if that doesn't work, you'll have the feature for yourself ;)
+
+If after all has been said and discussed and weighed the community or the maintainers have come to the conclusion that your suggestion doesn't fit the bill,
+please accept that and move on. Do not start to repeat yourself - this only serves to poison the discussion.
+
+This is not a reason to be discouraged, your suggestion is still considered valuable!
+
 # How to Contribute
 
 Are you a pro and know all the things already? Here's are the links to the info specific to Trajectories:
