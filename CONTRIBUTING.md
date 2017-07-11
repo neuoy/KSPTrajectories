@@ -83,10 +83,24 @@ Last but not least, we have to consider the overall "usability" of the mod, the 
 the cheap and easy way out ("just add a toggle"), but think about how people use the mod and how to make their lives better. Sometimes it might be better to change
 the user experience completely or even remove features to avoid confusion.
 
+## What not to suggest
+
+Some features have been suggested many times, but cannot be included for technical reasons.
+Below is a list of these features and the reasons why they will probably never make it into Trajectories.
+
+If you disagree with this assesment, the best way to convice me otherwise is to provide a working implementation that fits well with the rest of the mod.
+
+  - Predicting the trajectory after future staging events. We need the DragCubeList of a vessel to correctly calculate the drag it will produce. Currently, we get this DragCubeList from KSP as the one that is returned for the current vessel in the now. There is no way to create a "vessel after staging" or retrieve the "DragCubeList after staging". That means that we would have to duplicate a good deal of the KSP-internal staging and DragCube code, which is just not a good idea.
+
 
 ## Where to suggest a feature
 
-Coming soon.
+Please suggest features by posting both in the [development Forum thread](http://forum.kerbalspaceprogram.com/index.php?/topic/94370-13) (so that users can also participate in the discussion) and create a GitHub issue on [our tracker](https://github.com/neuoy/KSPTrajectories/issues).
+
+Make sure to explain the purpose of this feature, the advantages and the potential [impact](#consider-the-impact) on the mod.
+
+Please try to also think of a way *how* to implement the feature in a way that makes sense both from the users and the developers perspective.
+
 
 
 ## Learn to accept a No
@@ -428,7 +442,7 @@ If you want to distribute your own version for testing, please do so by making i
   - Bump the version number in `Trajectories.version` and `Plugin\Properties\AssemblyInfo.cs` according the the versioning rules [below](#versioning).
   - Check with Git that your working directory is clean. No Changes are allowed, everything must be commited.
   - Build the Project in release mode
-  - Clean out the `GameData` folder of your KSP install, only the ´Squad` folder should remain.
+  - Clean out the `GameData` folder of your KSP install, only the Â´Squad` folder should remain.
   - Extract the `Trajectories-<version>.zip` that was created during the Release build into your GameData folder
   - Launch KSP in the non-Developer mode and verify the functionality. Check the `output_log.txt` for errors.
   - Create a Tag with Git, push all commits and the tag to GitHub.
