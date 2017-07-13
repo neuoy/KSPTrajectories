@@ -14,7 +14,7 @@ namespace Trajectories
 
         public void Awake()
         {
-            targetingCross = gameObject.AddComponent<TargetingCross>();
+            targetingCross = FlightCamera.fetch.mainCamera.gameObject.AddComponent<TargetingCross>();
         }
 
         public void Start()
@@ -104,6 +104,7 @@ namespace Trajectories
     public class TargetingCross: MonoBehaviour
     {
         public const float impactRaycastDistance = 300.0f;
+        public const double markerSize = 50.0f; // in meters
 
         private GameObject planeObject;
         private Renderer renderer;
@@ -124,6 +125,22 @@ namespace Trajectories
             renderer.sharedMaterial = mat;
             renderer.enabled = false;
             planeObject.GetComponent<Collider>().enabled = false;
+        }
+
+        public void OnPostRender()
+        {
+            if (Trajectory.fetch.patches.Count == 0)
+                return;
+
+            Trajectory.Patch lastPatch = Trajectory.fetch.patches[Trajectory.fetch.patches.Count - 1];
+            CelestialBody lastPatchBody = lastPatch.startingState.referenceBody;
+
+            // get impact position, translate to latitude and longitude
+            Vector3 impactPos = lastPatch.impactPosition.GetValueOrDefault() + lastPatchBody.position;
+            lastPatchBody.GetLatLonAlt(impactPos, out double impactLat, out double impatLon, out double impactAlt);
+
+            // draw ground marker at this position
+            GLUtils.DrawGroundMarker(lastPatchBody, impactLat, impatLon, Color.red, false, 0, markerSize);
         }
 
         public void OnEnable()
