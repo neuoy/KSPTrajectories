@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using UnityEngine;
 
 namespace Trajectories
 {
@@ -10,10 +11,13 @@ namespace Trajectories
 
         private LineRenderer line { get; set; }
 
+        private TrajectoryLine trajectoryLine;
+
         private TargetingCross targetingCross;
 
         public void Awake()
         {
+            trajectoryLine = FlightCamera.fetch.mainCamera.gameObject.AddComponent<TrajectoryLine>();
             targetingCross = FlightCamera.fetch.mainCamera.gameObject.AddComponent<TargetingCross>();
         }
 
@@ -30,6 +34,7 @@ namespace Trajectories
         private void FixedUpdate()
         {
             line.enabled = false;
+            trajectoryLine.enabled = false;
             targetingCross.enabled = false;
 
             if (!Settings.fetch.DisplayTrajectories
@@ -39,6 +44,7 @@ namespace Trajectories
                 return;
 
             Vector3[] vertices;
+            trajectoryLine.Vertices.Clear();
 
             Trajectory.Patch lastPatch = Trajectory.fetch.patches[Trajectory.fetch.patches.Count - 1];
             Vector3d bodyPosition = lastPatch.startingState.referenceBody.position;
@@ -48,7 +54,9 @@ namespace Trajectories
 
                 for (uint i = 0; i < lastPatch.atmosphericTrajectory.Length; ++i)
                 {
-                    vertices[i] = lastPatch.atmosphericTrajectory[i].pos + bodyPosition;
+                    Vector3 vertex = lastPatch.atmosphericTrajectory[i].pos + bodyPosition;
+                    vertices[i] = vertex;
+                    trajectoryLine.Vertices.Add(vertices[i]);
                 }
             }
             else
@@ -60,11 +68,14 @@ namespace Trajectories
                 Orbit orbit = lastPatch.spaceOrbit;
                 for (uint i = 0; i < defaultVertexCount; ++i)
                 {
-                    vertices[i] = Util.SwapYZ(orbit.getRelativePositionAtUT(time));
+                    Vector3 vertex = Util.SwapYZ(orbit.getRelativePositionAtUT(time));
                     if (Settings.fetch.BodyFixedMode)
-                        vertices[i] = Trajectory.calculateRotatedPosition(orbit.referenceBody, vertices[i], time);
+                        vertex = Trajectory.calculateRotatedPosition(orbit.referenceBody, vertex, time);
 
-                    vertices[i] += bodyPosition;
+                    vertex += bodyPosition;
+
+                    vertices[i] = vertex;
+                    trajectoryLine.Vertices.Add(vertex);
 
                     time += time_increment;
                 }
@@ -75,6 +86,9 @@ namespace Trajectories
             line.SetPositions(vertices);
 
             line.enabled = true;
+
+            trajectoryLine.Body = lastPatch.startingState.referenceBody;
+            trajectoryLine.enabled = true;
 
             if (lastPatch.impactPosition != null)
             {
@@ -93,6 +107,20 @@ namespace Trajectories
         {
             if (line != null)
                 Destroy(line);
+        }
+    }
+
+    public class TrajectoryLine: MonoBehaviour
+    {
+        public List<Vector3d> Vertices = new List<Vector3d>();
+        public CelestialBody Body = null;
+
+        public void OnPostRender()
+        {
+            if (Body == null || Vertices == null || Vertices.Count == 0)
+                return;
+
+            GLUtils.DrawPath(Body, Vertices, Color.blue, false, true);
         }
     }
 
