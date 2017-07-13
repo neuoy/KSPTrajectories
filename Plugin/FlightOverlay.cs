@@ -78,19 +78,14 @@ namespace Trajectories
 
             if (lastPatch.impactPosition != null)
             {
-                Vector3 impactPos = lastPatch.impactPosition.GetValueOrDefault();
-                Vector3 up = impactPos - bodyPosition;
-                up.Normalize();
-
-                RaycastHit hit;
-                if (Physics.Raycast(impactPos + bodyPosition + up * TargetingCross.impactRaycastDistance,
-                    -up, out hit))
-                {
-                    targetingCross.CrossTransform.position = hit.point + hit.normal * 0.16f;
-                    targetingCross.CrossTransform.localEulerAngles = Quaternion.FromToRotation(Vector3.up, hit.normal).eulerAngles;
-
-                    targetingCross.enabled = true;
-                }
+                targetingCross.ImpactPosition = lastPatch.impactPosition.Value;
+                targetingCross.ImpactBody = lastPatch.startingState.referenceBody;
+                targetingCross.enabled = true;
+            }
+            else
+            {
+                targetingCross.ImpactPosition = null;
+                targetingCross.ImpactBody = null;
             }
         }
 
@@ -103,63 +98,25 @@ namespace Trajectories
 
     public class TargetingCross: MonoBehaviour
     {
-        public const float impactRaycastDistance = 300.0f;
         public const double markerSize = 50.0f; // in meters
 
-        private GameObject planeObject;
-        private Renderer renderer;
+        public Vector3? ImpactPosition { get; internal set; }
+        public CelestialBody ImpactBody { get; internal set; }
 
-        public Transform CrossTransform { get {
-                return planeObject?.transform;
-            } }
-
-        public void Start()
-        {
-            var crossTexture = GameDatabase.Instance.GetTexture("Trajectories/Textures/AimCross", false);
-
-            planeObject = GameObject.CreatePrimitive(PrimitiveType.Plane);
-            var mat = new Material(Shader.Find("Particles/Additive"));
-            mat.SetTexture("_MainTex", crossTexture);
-
-            renderer = planeObject.GetComponent<Renderer>();
-            renderer.sharedMaterial = mat;
-            renderer.enabled = false;
-            planeObject.GetComponent<Collider>().enabled = false;
-        }
 
         public void OnPostRender()
         {
-            if (Trajectory.fetch.patches.Count == 0)
+            if (ImpactPosition == null || ImpactBody == null)
                 return;
 
-            Trajectory.Patch lastPatch = Trajectory.fetch.patches[Trajectory.fetch.patches.Count - 1];
-            CelestialBody lastPatchBody = lastPatch.startingState.referenceBody;
+            double impactLat, impactLon, impactAlt;
 
             // get impact position, translate to latitude and longitude
-            Vector3 impactPos = lastPatch.impactPosition.GetValueOrDefault() + lastPatchBody.position;
-            lastPatchBody.GetLatLonAlt(impactPos, out double impactLat, out double impatLon, out double impactAlt);
+            ImpactBody.GetLatLonAlt(ImpactPosition.Value + ImpactBody.position, out impactLat, out impactLon, out impactAlt);
 
             // draw ground marker at this position
-            GLUtils.DrawGroundMarker(lastPatchBody, impactLat, impatLon, Color.red, false, 0, markerSize);
+            GLUtils.DrawGroundMarker(ImpactBody, impactLat, impactLon, Color.red, false, 0, markerSize);
         }
 
-        public void OnEnable()
-        {
-            if (renderer != null)
-                renderer.enabled = true;
-        }
-
-        public void OnDisable()
-        {
-            if (renderer != null)
-                renderer.enabled = false;
-        }
-
-
-        public void OnDestroy()
-        {
-            if (planeObject != null)
-                Destroy(planeObject);
-        }
     }
 }
