@@ -1,3 +1,10 @@
+## v1.7.1 for KSP 1.3.0
+ - 20xx-xx-xx
+
+### Changes since the last release
+
+ * Fixed In-Flight trajectory for non-atmospheric bodies
+
 ## v1.7.0 for KSP 1.3.0
  - 2017-07-08
 
