@@ -5,13 +5,14 @@
 
 ### GitHub
  - Finish CONTRIBUTING.md
+   - Bug reporting section
+   - Git/Newline section
+ - Rewrite README.md
 
 ### Forum Thread
 
  - Redo Imgur Album
  - Simplify and update "manual"
- - Redo contributor list
- - Redo "we're hiring" section
 
 ## Numerical
 
@@ -20,8 +21,13 @@
  - Extract implicit verlet integrator from the code, make it explicit
  - Add Runge-Kutta 4 integrator
  - Play around with time-delta. Make configurable?
+ - Implement binary search for impact position?
 
 ## Debugging
+
+### Performance
+
+ - Find worst offenders for cache-less computation. Maybe we can improve that.
 
 ### Telemetry
 
