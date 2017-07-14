@@ -60,9 +60,11 @@ namespace Trajectories
                 Orbit orbit = lastPatch.spaceOrbit;
                 for (uint i = 0; i < defaultVertexCount; ++i)
                 {
-                    vertices[i] = orbit.getPositionAtUT(time);
+                    vertices[i] = Util.SwapYZ(orbit.getRelativePositionAtUT(time));
                     if (Settings.fetch.BodyFixedMode)
-                        vertices[i] = Trajectory.calculateRotatedPosition(orbit.referenceBody, vertices[i] + bodyPosition, time) - bodyPosition;
+                        vertices[i] = Trajectory.calculateRotatedPosition(orbit.referenceBody, vertices[i], time);
+
+                    vertices[i] += bodyPosition;
 
                     time += time_increment;
                 }
