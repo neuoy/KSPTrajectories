@@ -93,7 +93,7 @@ namespace Trajectories
 
         private static void updateTrajectory()
         {
-            Trajectory.fetch.ComputeTrajectory(FlightGlobals.ActiveVessel, DescentProfile.fetch, true);
+            Trajectory.fetch.ComputeTrajectory(FlightGlobals.ActiveVessel, DescentProfile.fetch);
         }
     }
 }

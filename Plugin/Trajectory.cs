@@ -283,17 +283,17 @@ namespace Trajectories
                     || Settings.fetch.AlwaysUpdate
                     || targetPosition_.HasValue))
             {
-                ComputeTrajectory(FlightGlobals.ActiveVessel, DescentProfile.fetch, true);
+                ComputeTrajectory(FlightGlobals.ActiveVessel, DescentProfile.fetch);
             }
         }
 
-        public void ComputeTrajectory(Vessel vessel, float AoA, bool incremental)
+        public void ComputeTrajectory(Vessel vessel, float AoA)
         {
             DescentProfile profile = new DescentProfile(AoA);
-            ComputeTrajectory(vessel, profile, incremental);
+            ComputeTrajectory(vessel, profile);
         }
 
-        public void ComputeTrajectory(Vessel vessel, DescentProfile profile, bool incremental)
+        public void ComputeTrajectory(Vessel vessel, DescentProfile profile)
         {
             try
             {
