@@ -48,15 +48,7 @@ namespace Trajectories
 
         private void updateVesselInfo()
         {
-            mass_ = 0.0;
-            foreach (var part in vessel_.Parts)
-            {
-                if (part.physicalSignificance == Part.PhysicalSignificance.NONE)
-                    continue;
-
-                float partMass = part.mass + part.GetResourceMass() + part.GetPhysicslessChildMass();
-                mass_ += partMass;
-            }
+            mass_ = vessel_.totalMass;
         }
 
         private void InitCache()
