@@ -443,6 +443,22 @@ namespace Trajectories
 
         private VesselState AddPatch_outState;
 
+        struct SimulationState
+        {
+            public Vector3d position;
+            public Vector3d velocity;
+        }
+
+        static SimulationState VerletStep(SimulationState state, Vector3d prevPos, Vector3d acceleration, double dt)
+        {
+            SimulationState nextState;
+
+            nextState.position = 2.0 * state.position - prevPos + acceleration * (dt * dt);
+            nextState.velocity = (nextState.position - state.position) / dt;
+
+            return nextState;
+        }
+
         private IEnumerable<bool> AddPatch(VesselState startingState, DescentProfile profile)
         {
             if (null == vessel_.patchedConicSolver)
@@ -636,12 +652,15 @@ namespace Trajectories
                     buffer.Add(new Point[chunkSize]);
                     int nextPosIdx = 0;
 
-                    Vector3d pos = Util.SwapYZ(patch.spaceOrbit.getRelativePositionAtUT(entryTime));
-                    Vector3d vel = Util.SwapYZ(patch.spaceOrbit.getOrbitalVelocityAtUT(entryTime));
+                    SimulationState lastState, state;
+                    state.position = Util.SwapYZ(patch.spaceOrbit.getRelativePositionAtUT(entryTime));
+                    state.velocity = Util.SwapYZ(patch.spaceOrbit.getOrbitalVelocityAtUT(entryTime));
 
                     //Util.PostSingleScreenMessage("atmo start cond", "Atmospheric start: vel=" + vel.ToString("0.00") + " (mag=" + vel.magnitude.ToString("0.00") + ")");
 
-                    Vector3d prevPos = pos - vel * dt;
+                    lastState.position = state.position - state.velocity * dt;
+
+
                     double currentTime = entryTime;
                     double lastPositionStoredUT = 0;
                     Vector3d lastPositionStored = new Vector3d();
@@ -661,7 +680,7 @@ namespace Trajectories
                             incrementIterations = 0;
                         }
 
-                        double R = pos.magnitude;
+                        double R = state.position.magnitude;
                         double altitude = R - body.Radius;
                         double atmosphereCoeff = altitude / maxAtmosphereAltitude;
                         if (hitGround
@@ -672,9 +691,9 @@ namespace Trajectories
 
                             if (hitGround || atmosphereCoeff <= 0.0)
                             {
-                                patch.rawImpactPosition = pos;
+                                patch.rawImpactPosition = state.position;
                                 patch.impactPosition = calculateRotatedPosition(body, patch.rawImpactPosition.Value, currentTime);
-                                patch.impactVelocity = vel;
+                                patch.impactVelocity = state.velocity;
                             }
 
                             patch.endTime = Math.Min(currentTime, patch.endTime);
@@ -710,8 +729,8 @@ namespace Trajectories
                                 patchesBackBuffer_.Add(patch);
                                 AddPatch_outState = new VesselState
                                 {
-                                    position = pos,
-                                    velocity = vel,
+                                    position = state.position,
+                                    velocity = state.velocity,
                                     referenceBody = body,
                                     time = patch.endTime
                                 };
@@ -719,12 +738,12 @@ namespace Trajectories
                             }
                         }
 
-                        Vector3d gravityAccel = pos * (-body.gravParameter / (R * R * R));
+                        Vector3d gravityAccel = state.position * (-body.gravParameter / (R * R * R));
 
                         //Util.PostSingleScreenMessage("prediction vel", "prediction vel = " + vel);
-                        Vector3d airVelocity = vel - body.getRFrmVel(body.position + pos);
-                        double angleOfAttack = profile.GetAngleOfAttack(body, pos, airVelocity);
-                        Vector3d aerodynamicForce = aerodynamicModel_.GetForces(body, pos, airVelocity, angleOfAttack);
+                        Vector3d airVelocity = state.velocity - body.getRFrmVel(body.position + state.position);
+                        double angleOfAttack = profile.GetAngleOfAttack(body, state.position, airVelocity);
+                        Vector3d aerodynamicForce = aerodynamicModel_.GetForces(body, state.position, airVelocity, angleOfAttack);
                         accumulatedForces += aerodynamicForce.magnitude * dt;
                         Vector3d acceleration = gravityAccel + aerodynamicForce / aerodynamicModel_.mass;
 
@@ -733,34 +752,33 @@ namespace Trajectories
                             (float) (aerodynamicForce.magnitude / aerodynamicModel_.mass),
                             maxAccelBackBuffer_);
 
-
+                        // // Euler integration
                         //vel += acceleration * dt;
                         //pos += vel * dt;
 
                         // Verlet integration (more precise than using the velocity)
-                        Vector3d ppos = prevPos;
-                        prevPos = pos;
-                        pos = pos + pos - ppos + acceleration * (dt * dt);
-                        vel = (pos - prevPos) / dt;
+                        Vector3d ppos = lastState.position;
+                        lastState = state;
+                        state = VerletStep(state, ppos, acceleration, dt);
 
                         currentTime += dt;
 
                         double interval = altitude < 10000.0 ? trajectoryInterval * 0.1 : trajectoryInterval;
                         if (currentTime >= lastPositionStoredUT + interval)
                         {
-                            double groundAltitude = GetGroundAltitude(body, calculateRotatedPosition(body, pos, currentTime));
+                            double groundAltitude = GetGroundAltitude(body, calculateRotatedPosition(body, state.position, currentTime));
                             if (lastPositionStoredUT > 0)
                             {
                                 // check terrain collision, to detect impact on mountains etc.
                                 Vector3 rayOrigin = lastPositionStored;
-                                Vector3 rayEnd = pos;
+                                Vector3 rayEnd = state.position;
                                 double absGroundAltitude = groundAltitude + body.Radius;
                                 if (absGroundAltitude > rayEnd.magnitude)
                                 {
                                     hitGround = true;
                                     float coeff = Math.Max(0.01f, (float)((absGroundAltitude - rayOrigin.magnitude)
                                         / (rayEnd.magnitude - rayOrigin.magnitude)));
-                                    pos = rayEnd * coeff + rayOrigin * (1.0f - coeff);
+                                    state.position = rayEnd * coeff + rayOrigin * (1.0f - coeff);
                                     currentTime = currentTime * coeff + lastPositionStoredUT * (1.0f - coeff);
                                 }
                             }
@@ -771,17 +789,17 @@ namespace Trajectories
                                 buffer.Add(new Point[chunkSize]);
                                 nextPosIdx = 0;
                             }
-                            Vector3d nextPos = pos;
+                            Vector3d nextPos = state.position;
                             if (Settings.fetch.BodyFixedMode)
                             {
                                 nextPos = calculateRotatedPosition(body, nextPos, currentTime);
                             }
                             buffer.Last()[nextPosIdx].aerodynamicForce = aerodynamicForce;
-                            buffer.Last()[nextPosIdx].orbitalVelocity = vel;
+                            buffer.Last()[nextPosIdx].orbitalVelocity = state.velocity;
                             buffer.Last()[nextPosIdx].groundAltitude = (float)groundAltitude;
                             buffer.Last()[nextPosIdx].time = currentTime;
                             buffer.Last()[nextPosIdx++].pos = nextPos;
-                            lastPositionStored = pos;
+                            lastPositionStored = state.position;
                         }
                     }
                 }
