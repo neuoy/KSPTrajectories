@@ -449,9 +449,10 @@ namespace Trajectories
             public Vector3d velocity;
         }
 
-        static SimulationState VerletStep(SimulationState state, Vector3d prevPos, Vector3d acceleration, double dt)
+        static SimulationState VerletStep(SimulationState state, Vector3d acceleration, double dt)
         {
             SimulationState nextState;
+            Vector3d prevPos = state.position - dt * state.velocity;
 
             nextState.position = 2.0 * state.position - prevPos + acceleration * (dt * dt);
             nextState.velocity = (nextState.position - state.position) / dt;
@@ -652,14 +653,11 @@ namespace Trajectories
                     buffer.Add(new Point[chunkSize]);
                     int nextPosIdx = 0;
 
-                    SimulationState lastState, state;
+                    SimulationState state;
                     state.position = Util.SwapYZ(patch.spaceOrbit.getRelativePositionAtUT(entryTime));
                     state.velocity = Util.SwapYZ(patch.spaceOrbit.getOrbitalVelocityAtUT(entryTime));
 
                     //Util.PostSingleScreenMessage("atmo start cond", "Atmospheric start: vel=" + vel.ToString("0.00") + " (mag=" + vel.magnitude.ToString("0.00") + ")");
-
-                    lastState.position = state.position - state.velocity * dt;
-
 
                     double currentTime = entryTime;
                     double lastPositionStoredUT = 0;
@@ -668,7 +666,6 @@ namespace Trajectories
                     int iteration = 0;
                     int incrementIterations = 0;
                     int minIterationsPerIncrement = maxIterations / Settings.fetch.MaxFramesPerPatch;
-                    double accumulatedForces = 0;
                     while (true)
                     {
                         ++iteration;
@@ -744,7 +741,6 @@ namespace Trajectories
                         Vector3d airVelocity = state.velocity - body.getRFrmVel(body.position + state.position);
                         double angleOfAttack = profile.GetAngleOfAttack(body, state.position, airVelocity);
                         Vector3d aerodynamicForce = aerodynamicModel_.GetForces(body, state.position, airVelocity, angleOfAttack);
-                        accumulatedForces += aerodynamicForce.magnitude * dt;
                         Vector3d acceleration = gravityAccel + aerodynamicForce / aerodynamicModel_.mass;
 
                         // acceleration in the vessel reference frame is acceleration - gravityAccel
@@ -757,9 +753,7 @@ namespace Trajectories
                         //pos += vel * dt;
 
                         // Verlet integration (more precise than using the velocity)
-                        Vector3d ppos = lastState.position;
-                        lastState = state;
-                        state = VerletStep(state, ppos, acceleration, dt);
+                        state = VerletStep(state, acceleration, dt);
 
                         currentTime += dt;
 
