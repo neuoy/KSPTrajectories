@@ -735,27 +735,41 @@ namespace Trajectories
                             }
                         }
 
-                        Vector3d gravityAccel = state.position * (-body.gravParameter / (R * R * R));
+                        // function that calculates the acceleration under current parmeters
+                        Func<Vector3d, Vector3d, Vector3d> accelerationFunc = (position, velocity) =>
+                        {
+                            // gravity acceleration
+                            double R_ = position.magnitude;
+                            Vector3d accel_g = position * (-body.gravParameter / (R_ * R_ * R_));
 
-                        //Util.PostSingleScreenMessage("prediction vel", "prediction vel = " + vel);
-                        Vector3d airVelocity = state.velocity - body.getRFrmVel(body.position + state.position);
-                        double angleOfAttack = profile.GetAngleOfAttack(body, state.position, airVelocity);
-                        Vector3d aerodynamicForce = aerodynamicModel_.GetForces(body, state.position, airVelocity, angleOfAttack);
-                        Vector3d acceleration = gravityAccel + aerodynamicForce / aerodynamicModel_.mass;
+                            // aero force
+                            Vector3d vel_air = velocity - body.getRFrmVel(body.position + position);
+                            double aoa = profile.GetAngleOfAttack(body, position, vel_air);
+                            Vector3d force_aero = aerodynamicModel_.GetForces(body, position, vel_air, aoa);
 
-                        // acceleration in the vessel reference frame is acceleration - gravityAccel
-                        maxAccelBackBuffer_ = Math.Max(
-                            (float) (aerodynamicForce.magnitude / aerodynamicModel_.mass),
-                            maxAccelBackBuffer_);
+                            return accel_g + force_aero / aerodynamicModel_.mass;
+                        };
+
 
                         // // Euler integration
                         //vel += acceleration * dt;
                         //pos += vel * dt;
 
+                        SimulationState lastState = state;
+
                         // Verlet integration (more precise than using the velocity)
-                        state = VerletStep(state, acceleration, dt);
+                        state = VerletStep(state, accelerationFunc, dt);
 
                         currentTime += dt;
+
+
+                        Vector3d gravityAccel = lastState.position * (-body.gravParameter / (R * R * R));
+                        Vector3d aerodynamicForce = ((state.velocity - lastState.velocity) / dt - gravityAccel) / aerodynamicModel_.mass;
+
+                        // acceleration in the vessel reference frame is acceleration - gravityAccel
+                        maxAccelBackBuffer_ = Math.Max(
+                            (float)(aerodynamicForce.magnitude / aerodynamicModel_.mass),
+                            maxAccelBackBuffer_);
 
                         double interval = altitude < 10000.0 ? trajectoryInterval * 0.1 : trajectoryInterval;
                         if (currentTime >= lastPositionStoredUT + interval)
