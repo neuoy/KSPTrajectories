@@ -449,15 +449,41 @@ namespace Trajectories
             public Vector3d velocity;
         }
 
-        static SimulationState VerletStep(SimulationState state, Vector3d acceleration, double dt)
+        static SimulationState VerletStep(SimulationState state, Func<Vector3d, Vector3d, Vector3d> accelerationFunc, double dt)
         {
-            SimulationState nextState;
+            Vector3d acceleration = accelerationFunc(state.position, state.velocity);
             Vector3d prevPos = state.position - dt * state.velocity;
+
+            SimulationState nextState;
 
             nextState.position = 2.0 * state.position - prevPos + acceleration * (dt * dt);
             nextState.velocity = (nextState.position - state.position) / dt;
 
             return nextState;
+        }
+
+        static SimulationState RK4Step(SimulationState state, Func<Vector3d, Vector3d, Vector3d> accelerationFunc, double dt)
+        {
+            Vector3d p1 = state.position;
+            Vector3d v1 = state.velocity;
+            Vector3d a1 = accelerationFunc(p1, v1);
+
+            Vector3d p2 = state.position + 0.5 * v1 * dt;
+            Vector3d v2 = state.velocity + 0.5 * a1 * dt;
+            Vector3d a2 = accelerationFunc(p2, v2);
+
+            Vector3d p3 = state.position + 0.5 * v2 * dt;
+            Vector3d v3 = state.velocity + 0.5 * a2 * dt;
+            Vector3d a3 = accelerationFunc(p3, v3);
+
+            Vector3d p4 = state.position + v3 * dt;
+            Vector3d v4 = state.velocity + a3 * dt;
+            Vector3d a4 = accelerationFunc(p4, v4);
+
+            state.position = state.position + (dt / 6.0) * (v1 + 2.0 * v2 + 2.0 * v3 + v4);
+            state.velocity = state.velocity + (dt / 6.0) * (a1 + 2.0 * a2 + 2.0 * a3 + a4);
+
+            return state;
         }
 
         private IEnumerable<bool> AddPatch(VesselState startingState, DescentProfile profile)
@@ -759,6 +785,8 @@ namespace Trajectories
 
                         // Verlet integration (more precise than using the velocity)
                         state = VerletStep(state, accelerationFunc, dt);
+
+                        // state = RK4Step(state, accelerationFunc, dt);
 
                         currentTime += dt;
 
