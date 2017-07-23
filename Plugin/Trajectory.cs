@@ -451,7 +451,11 @@ namespace Trajectories
 
         static SimulationState VerletStep(SimulationState state, Func<Vector3d, Vector3d, Vector3d> accelerationFunc, double dt)
         {
+
+            Profiler.Start("accelerationFunc outside");
             Vector3d acceleration = accelerationFunc(state.position, state.velocity);
+            Profiler.Stop("accelerationFunc outside");
+
             Vector3d prevPos = state.position - dt * state.velocity;
 
             SimulationState nextState;
@@ -703,6 +707,7 @@ namespace Trajectories
                             incrementIterations = 0;
                         }
 
+
                         double R = state.position.magnitude;
                         double altitude = R - body.Radius;
                         double atmosphereCoeff = altitude / maxAtmosphereAltitude;
@@ -764,16 +769,25 @@ namespace Trajectories
                         // function that calculates the acceleration under current parmeters
                         Func<Vector3d, Vector3d, Vector3d> accelerationFunc = (position, velocity) =>
                         {
+                            Profiler.Start("accelerationFunc inside");
+
                             // gravity acceleration
                             double R_ = position.magnitude;
                             Vector3d accel_g = position * (-body.gravParameter / (R_ * R_ * R_));
 
                             // aero force
                             Vector3d vel_air = velocity - body.getRFrmVel(body.position + position);
-                            double aoa = profile.GetAngleOfAttack(body, position, vel_air);
-                            Vector3d force_aero = aerodynamicModel_.GetForces(body, position, vel_air, aoa);
 
-                            return accel_g + force_aero / aerodynamicModel_.mass;
+                            double aoa = profile.GetAngleOfAttack(body, position, vel_air);
+
+                            Profiler.Start("GetForces");
+                            Vector3d force_aero = aerodynamicModel_.GetForces(body, position, vel_air, aoa);
+                            Profiler.Stop("GetForces");
+
+                            Vector3d accel = accel_g + force_aero / aerodynamicModel_.mass;
+
+                            Profiler.Stop("accelerationFunc inside");
+                            return accel;
                         };
 
 
@@ -783,12 +797,18 @@ namespace Trajectories
 
                         SimulationState lastState = state;
 
+                        Profiler.Start("VerletStep");
+
                         // Verlet integration (more precise than using the velocity)
                         state = VerletStep(state, accelerationFunc, dt);
 
                         // state = RK4Step(state, accelerationFunc, dt);
 
+
+
                         currentTime += dt;
+
+                        Profiler.Stop("VerletStep");
 
 
                         Vector3d gravityAccel = lastState.position * (-body.gravParameter / (R * R * R));
@@ -798,6 +818,9 @@ namespace Trajectories
                         maxAccelBackBuffer_ = Math.Max(
                             (float)(aerodynamicForce.magnitude / aerodynamicModel_.mass),
                             maxAccelBackBuffer_);
+
+
+                        Profiler.Start("AddPatch#impact");
 
                         double interval = altitude < 10000.0 ? trajectoryInterval * 0.1 : trajectoryInterval;
                         if (currentTime >= lastPositionStoredUT + interval)
@@ -837,6 +860,8 @@ namespace Trajectories
                             buffer.Last()[nextPosIdx++].pos = nextPos;
                             lastPositionStored = state.position;
                         }
+
+                        Profiler.Stop("AddPatch#impact");
                     }
                 }
             }
