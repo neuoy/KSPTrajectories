@@ -1,6 +1,4 @@
-﻿#if DEBUG_PROFILER
-
-using System;
+﻿using System;
 using System.Collections.Generic;
 using KSP.Localization;
 using UnityEngine;
@@ -10,8 +8,9 @@ namespace Trajectories
 {
     /// <summary> Simple profiler for measuring the execution time of code placed between the Start and Stop methods. </summary>
     [KSPAddon(KSPAddon.Startup.MainMenu, true)]
-    public sealed class Profiler: MonoBehaviour
+    public sealed class Profiler : MonoBehaviour
     {
+#if DEBUG_PROFILER
         // constants
         private const float width = 400.0f;
         private const float height = 500.0f;
@@ -24,7 +23,7 @@ namespace Trajectories
         // visible flag
         private static bool visible;
 
-        // popup window 
+        // popup window
         private static MultiOptionDialog multi_dialog;
         private static PopupDialog popup_dialog;
         private static DialogGUIVerticalLayout dialog_items;
@@ -164,10 +163,13 @@ namespace Trajectories
             stack.Push(dialog_items.uiItem.gameObject.transform);
             dialog_items.children[dialog_items.children.Count - 1].Create(ref stack, HighLogic.UISkin);
         }
+#endif
 
+        [System.Diagnostics.Conditional("DEBUG_PROFILER")]
         /// <summary> Start a profiler entry. </summary>
         public static void Start(string e_name)
         {
+#if DEBUG_PROFILER
             if (instance == null)
                 return;
 
@@ -178,11 +180,14 @@ namespace Trajectories
             }
 
             instance.entries[e_name].start = Util.Clocks;
+#endif
         }
 
+        [System.Diagnostics.Conditional("DEBUG_PROFILER")]
         /// <summary> Stop a profiler entry. </summary>
         public static void Stop(string e_name)
         {
+#if DEBUG_PROFILER
             if (instance == null)
                 return;
 
@@ -190,27 +195,29 @@ namespace Trajectories
 
             ++e.calls;
             e.time += Util.Clocks - e.start;
+#endif
         }
-    }
 
+#if DEBUG_PROFILER
 
-    /// <summary> Profile a function scope. </summary>
-    public class ProfileScope: IDisposable
-    {
-        public ProfileScope(string name)
+        /// <summary> Profile a function scope. </summary>
+        public class ProfileScope : IDisposable
         {
-            this.name = name;
-            Profiler.Start(name);
+            public ProfileScope(string name)
+            {
+                this.name = name;
+                Profiler.Start(name);
+            }
+
+            public void Dispose()
+            {
+                Profiler.Stop(name);
+            }
+
+            private string name;
         }
 
-        public void Dispose()
-        {
-            Profiler.Stop(name);
-        }
-
-        private string name;
+#endif
     }
-
 
 } // Trajectories
-#endif
