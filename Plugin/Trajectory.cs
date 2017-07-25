@@ -667,7 +667,7 @@ namespace Trajectories
                     patch.startingState.stockPatch = null;
 
                     // lower dt would be more accurate, but a tradeoff has to be found between performances and accuracy
-                    double dt = 1.0;
+                    double dt = 2.0;
 
                     // some shallow entries can result in very long flight. For performances reasons,
                     // we limit the prediction duration
@@ -696,6 +696,34 @@ namespace Trajectories
                     int iteration = 0;
                     int incrementIterations = 0;
                     int minIterationsPerIncrement = maxIterations / Settings.fetch.MaxFramesPerPatch;
+
+                    // function that calculates the acceleration under current parmeters
+                    Func<Vector3d, Vector3d, Vector3d> accelerationFunc = (position, velocity) =>
+                    {
+                        Profiler.Start("accelerationFunc inside");
+
+                        // gravity acceleration
+                        double R_ = position.magnitude;
+                        Vector3d accel_g = position * (-body.gravParameter / (R_ * R_ * R_));
+
+                        // aero force
+                        Vector3d vel_air = velocity - body.getRFrmVel(body.position + position);
+
+                        double aoa = profile.GetAngleOfAttack(body, position, vel_air);
+
+                        Profiler.Start("GetForces");
+                        Vector3d force_aero = aerodynamicModel_.GetForces(body, position, vel_air, aoa);
+                        Profiler.Stop("GetForces");
+
+                        Vector3d accel = accel_g + force_aero / aerodynamicModel_.mass;
+
+                        Profiler.Stop("accelerationFunc inside");
+                        return accel;
+                    };
+
+                    Vector3d currentAccel;
+
+
                     while (true)
                     {
                         ++iteration;
@@ -766,30 +794,6 @@ namespace Trajectories
                             }
                         }
 
-                        // function that calculates the acceleration under current parmeters
-                        Func<Vector3d, Vector3d, Vector3d> accelerationFunc = (position, velocity) =>
-                        {
-                            Profiler.Start("accelerationFunc inside");
-
-                            // gravity acceleration
-                            double R_ = position.magnitude;
-                            Vector3d accel_g = position * (-body.gravParameter / (R_ * R_ * R_));
-
-                            // aero force
-                            Vector3d vel_air = velocity - body.getRFrmVel(body.position + position);
-
-                            double aoa = profile.GetAngleOfAttack(body, position, vel_air);
-
-                            Profiler.Start("GetForces");
-                            Vector3d force_aero = aerodynamicModel_.GetForces(body, position, vel_air, aoa);
-                            Profiler.Stop("GetForces");
-
-                            Vector3d accel = accel_g + force_aero / aerodynamicModel_.mass;
-
-                            Profiler.Stop("accelerationFunc inside");
-                            return accel;
-                        };
-
 
                         // // Euler integration
                         //vel += acceleration * dt;
@@ -804,14 +808,22 @@ namespace Trajectories
                         state = RK4Step(state, accelerationFunc, dt);
 
 
-
                         currentTime += dt;
 
                         Profiler.Stop("VerletStep");
 
+                        // calculate acceleration at current position
+                        currentAccel = accelerationFunc(state.position, state.velocity);
+
+                        // KSP presumably uses euler integration for position updates. Since RK4 is actually more precise than that,
+                        // we try to reintroduce an approximation of the error.
+                        // The local truncation error for euler integration is:
+                        // LTE = 1/2 * h^2 * y''(t)
+                        // https://en.wikipedia.org/wiki/Euler_method#Local_truncation_error
+                        state.position = state.position + 0.5 * TimeWarp.fixedDeltaTime * currentAccel * dt;
 
                         Vector3d gravityAccel = lastState.position * (-body.gravParameter / (R * R * R));
-                        Vector3d aerodynamicForce = ((state.velocity - lastState.velocity) / dt - gravityAccel) / aerodynamicModel_.mass;
+                        Vector3d aerodynamicForce = (currentAccel - gravityAccel) / aerodynamicModel_.mass;
 
                         // acceleration in the vessel reference frame is acceleration - gravityAccel
                         maxAccelBackBuffer_ = Math.Max(
