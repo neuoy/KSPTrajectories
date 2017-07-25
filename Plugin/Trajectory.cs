@@ -667,7 +667,7 @@ namespace Trajectories
                     patch.startingState.stockPatch = null;
 
                     // lower dt would be more accurate, but a tradeoff has to be found between performances and accuracy
-                    double dt = 0.1;
+                    double dt = 1.0;
 
                     // some shallow entries can result in very long flight. For performances reasons,
                     // we limit the prediction duration
@@ -800,9 +800,8 @@ namespace Trajectories
                         Profiler.Start("VerletStep");
 
                         // Verlet integration (more precise than using the velocity)
-                        state = VerletStep(state, accelerationFunc, dt);
-
-                        // state = RK4Step(state, accelerationFunc, dt);
+                        // state = VerletStep(state, accelerationFunc, dt);
+                        state = RK4Step(state, accelerationFunc, dt);
 
 
 
