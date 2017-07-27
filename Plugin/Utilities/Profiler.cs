@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using KSP.Localization;
 using UnityEngine;
 
@@ -18,7 +19,7 @@ namespace Trajectories
         private const float value_width = 65.0f;
 
         // permit global access
-        private static Profiler instance = null;
+        private static Profiler fetch_ = null;
 
         // visible flag
         private static bool visible;
@@ -36,19 +37,28 @@ namespace Trajectories
             public double time;         // time in current simulation step
             public double prev_calls;   // number of calls in previous simulation step
             public double prev_time;    // time in previous simulation step
-            public double tot_calls;    // number of calls in total
-            public double tot_time;     // total time
+            public double tot_calls;    // number of calls in total used for avg calculation
+            public double tot_time;     // total time used for avg calculation
+
+            public string last_txt = "";    // last call time display string
+            public string avg_txt = "";     // average call time display string
+            public string calls_txt = "";   // number of calls display string
         }
 
         // store all entries
         private Dictionary<string, entry> entries = new Dictionary<string, entry>();
 
+        // display update timer
+        private static double update_timer = Util.Clocks;
+        private static double update_fps = 10;  // Frames per second the entry values displayed will update.
+        private static bool calculate = true;
 
-        public static Profiler Instance
+
+        public static Profiler fetch
         {
             get
             {
-                return instance;
+                return fetch_;
             }
         }
 
@@ -56,7 +66,7 @@ namespace Trajectories
         public Profiler()
         {
             // enable global access
-            instance = this;
+            fetch_ = this;
 
             // create window
             dialog_items = new DialogGUIVerticalLayout();
@@ -68,6 +78,9 @@ namespace Trajectories
                new Rect(0.5f, 0.5f, width, height),
                new DialogGUIBase[]
                {
+                   // create average reset button
+                   new DialogGUIButton(Localizer.Format("#autoLOC_900305"),
+                           OnButtonClick_Reset, () => true, 75, 25, false),
                    // create header line
                    new DialogGUIHorizontalLayout(
                        new DialogGUILabel("<b>   NAME</b>", true),
@@ -103,7 +116,16 @@ namespace Trajectories
 
         private void FixedUpdate()
         {
-            foreach (var p in entries)
+            // skip updates for a smoother display
+            if (Util.Clocks - update_timer <= Stopwatch.Frequency / update_fps)
+                calculate = false;
+            else
+            {
+                update_timer = Util.Clocks;
+                calculate = true;
+            }
+
+            foreach (KeyValuePair<string, entry> p in fetch_.entries)
             {
                 entry e = p.Value;
                 e.prev_calls = e.calls;
@@ -112,12 +134,21 @@ namespace Trajectories
                 e.tot_time += e.time;
                 e.calls = 0;
                 e.time = 0;
+
+                if (calculate)
+                {
+                    e.last_txt = (e.prev_calls > 0 ? Util.Microseconds(e.prev_time /
+                                    e.prev_calls).ToString("F2") : "") + "ms";
+                    e.avg_txt = (e.tot_calls > 0 ? Util.Microseconds(e.tot_time /
+                                    e.tot_calls).ToString("F2") : "") + "ms";
+                    e.calls_txt = e.prev_calls.ToString();
+                }
             }
         }
 
         private void OnDestroy()
         {
-            instance = null;
+            fetch_ = null;
             popup_dialog.Dismiss();
             popup_dialog = null;
         }
@@ -137,26 +168,24 @@ namespace Trajectories
             }
         }
 
+        private static void OnButtonClick_Reset()
+        {
+            foreach (KeyValuePair<string, entry> e in fetch_.entries)
+            {
+                e.Value.tot_calls = 0;
+                e.Value.tot_time = 0;
+            }
+        }
+
         private void AddDialogItem(string e_name)
         {
             // add item
             dialog_items.AddChild(
                 new DialogGUIHorizontalLayout(
                     new DialogGUILabel("  " + e_name, true),
-                    new DialogGUILabel(() =>
-                    {
-                        return (entries[e_name].prev_calls > 0 ? Util.Microseconds(entries[e_name].prev_time /
-                                    entries[e_name].prev_calls).ToString("F2") : "") + "ms";
-                    }, value_width),
-                    new DialogGUILabel(() =>
-                    {
-                        return (entries[e_name].tot_calls > 0 ? Util.Microseconds(entries[e_name].tot_time /
-                                    entries[e_name].tot_calls).ToString("F2") : "") + "ms";
-                    }, value_width),
-                    new DialogGUILabel(() =>
-                    {
-                        return entries[e_name].prev_calls.ToString();
-                    }, value_width - 15)));
+                    new DialogGUILabel(() => { return entries[e_name].last_txt; }, value_width),
+                    new DialogGUILabel(() => { return entries[e_name].avg_txt; }, value_width),
+                    new DialogGUILabel(() => { return entries[e_name].calls_txt; }, value_width - 15)));
 
             // required to force the Gui creation
             Stack<Transform> stack = new Stack<Transform>();
@@ -170,16 +199,16 @@ namespace Trajectories
         public static void Start(string e_name)
         {
 #if DEBUG_PROFILER
-            if (instance == null)
+            if (fetch_ == null)
                 return;
 
-            if (!instance.entries.ContainsKey(e_name))
+            if (!fetch_.entries.ContainsKey(e_name))
             {
-                instance.entries.Add(e_name, new entry());
-                instance.AddDialogItem(e_name);
+                fetch_.entries.Add(e_name, new entry());
+                fetch_.AddDialogItem(e_name);
             }
 
-            instance.entries[e_name].start = Util.Clocks;
+            fetch_.entries[e_name].start = Util.Clocks;
 #endif
         }
 
@@ -188,10 +217,10 @@ namespace Trajectories
         public static void Stop(string e_name)
         {
 #if DEBUG_PROFILER
-            if (instance == null)
+            if (fetch_ == null)
                 return;
 
-            entry e = instance.entries[e_name];
+            entry e = fetch_.entries[e_name];
 
             ++e.calls;
             e.time += Util.Clocks - e.start;
