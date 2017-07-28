@@ -41,7 +41,6 @@ xcopy /y %initialWD%\%TargetName%.dll Plugin
 mkdir Textures
 xcopy /y ..\..\..\Textures\icon.png Textures
 xcopy /y ..\..\..\Textures\icon-blizzy1.png Textures
-xcopy /y ..\..\..\Textures\AimCross.png Textures
 
 echo.
 echo Compressing %TargetName% Release Package...
