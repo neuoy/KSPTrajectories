@@ -1,6 +1,58 @@
 # How to Report Bugs
 
-Coming soon. For now, please read this: http://forum.kerbalspaceprogram.com/index.php?/topic/83212
+Bug reports are a very valuable contribution to the development of this mod - but only if done right.
+
+"Trajectories doesn't work" is not a good bug report, because it sure works well for me. If it doesn't work for you, it is your responsibility to make clear which conditions lead to stuff going wrong.
+Good bug reports are effort and require time - but putting in that effort helps immensely to not waste developer time and get the bug fixed quickly.
+
+All bugs should be reported on GitHub, under this URL: https://github.com/neuoy/KSPTrajectories/issues
+
+You are free to mention any issues on the forum thread, but in the end, all issues must be registered on GitHub. This is because we use GitHub as a workflow management tool and the issues list as a checklist, and all the information and discussions for one specific issue are in one place as opposed to getting buried under posts in the forums.
+
+*All* bug reports *must* contain the following information:
+
+ - Which version of trajectories are you using? If in doubt, check out the `Trajectories.version` file in `GameData\Trajectories`
+ - Which version of KSP are you using? Which language are you using (check out the `buildID.txt` or `buildID64.txt`)? Are you using the 64-Bit version (`KSP_x64.exe`) or the 32-Bit version (`KSP.exe`)?
+ - Which mods are you running, and which versions do they have? Please note that when reporting a bug, you should only ever have the minimal amount of mods installed that are necessary to reproduce the bug (see [below](removing-mods-for-debugging) for tips on removing mods).
+ - Which aerodynamic model are you using? FAR? Stock with cubes? Stock spherical? (The default is cubes)
+ - The `output_log.txt` file, from the `KSP_x64_Data`or `KSP_Data` directory. You can either zip it and directly attach it to the bug report or upload to a pastebin service like https://gist.github.com/
+
+If you encounter problems with specific vessels, please attach the craft file and short instructions on how to use it. Remove parts from Mods so we can load them, unless the parts from Mods are crucial for reproducing the problem.
+
+It is recommended to attach Quicksave files that describe the situation. Again, make sure that we can load them and remove all non-Stock crafts (unless they are crucial for the reproduction).
+
+Make clear which conditions have led to the bug: what exactly did you do? What makes the bug go away (workaround), what makes it appear? Some experimentation on your part is very appreciated, so that we can find the problem more easily.
+
+When dealing with precision issues, some there are some additional considerations:
+ 
+ - Try turning off the cache in the settings. This will kill performance, but might increase precision.
+ - Are your settings correct? Did you set it to prograde/retrograde or set a descent profile? Do you follow your set profile accurately during flight?
+ - How big is the deviation and in which direction does it go? "Set target to impact" under the "Target" tab is very useful for this: set the target to impact before entering the atmosphere, then fly your entry and let the impact happen. Include the distance (and direction) to target in your bug report
+ - Craft files are mandatory except for the simplest test crafts. If you have a simple test craft, post a screenshot.
+ - Describe our entry situation, as detailed as possible (Body, periapsis, apoapsis, orientation). Preferrably, add a quicksave that leads to imprecise predictions.
+
+More on reporting bugs for KSP mods can be found in this forum topic: http://forum.kerbalspaceprogram.com/index.php?/topic/83212
+
+
+## Removing Mods for Debugging
+
+When reporting issues for any mod, your first action should be to cull the list of your mods to the minimal amount of mods where the issue still occurs. Most of the time, this means there will be **no** mods except Trajectories.
+
+The very first thing you should do is to **back up your save file**!!! We am not responsible for lost save files. To do this, go into the "saves" folder, right-click on your save with the right name, click Send To -> Zip Compressed folder. Don't do anything before you did that.
+
+Next, create a backup of your GameData folder (Excluding "Squad"), and delete all mods in there except for Trajectories and ModuleManager (and Squad obviously).
+
+Create a new Savegame, build a craft with Stock parts that triggers the problem and launch it. Don't be afraid to use the Cheat menu to get the craft into the situation that you need (Set orbit, rendez-vous, infinite fuel...). In the animal kingdom, Alpacas of the "dirty cheating" variety are the most successful when it comes to debugging.
+
+Most of the time the bug will occur with *only* trajectories installed.
+
+Sometimes, you will require other mods to reproduce it, such as FAR or RSS. In that case, try to delete all mods that are uninvolved and state clearly which mods (and which versions of them) are required.
+
+If you are sure that the problem doesn't happen with only Trajectories but don't know which is reponsible, you have to search for it.
+The simplest method is to add mods one by one. If you have few installed, you should do that.
+
+However, "binary search" is more effective: Add half your mods and see if the problem occurs. If not, add the other half. If yes, split the first half again and add the first quarter. If that doesn't cause the problem, remove it again and add the second quarter.
+Keep halving the number of mods that you are testing until you arrived at one single mod. This might sound complicated, but if you have a big number of mods, you will find the culprit a lot faster than by linear search.
 
 # How to Suggest Features
 
@@ -216,11 +268,6 @@ Please select "allow edits from maintainers" so that the maintainer can help you
 Adding commits after you submitted the pull request is not forbidden - after all, if you gotta change something, you gotta change something.
 However, please make sure that your pull request is complete and high-quality *before* submitting it. If you find an oversight after submitting it,
 please make abundantly clear what you changed after you add commits.
-
-
-### The deal with line endings
-
-Coming soon.
 
 
 ## Code Style
