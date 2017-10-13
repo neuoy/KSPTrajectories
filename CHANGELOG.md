@@ -1,9 +1,15 @@
-## v1.7.1 for KSP 1.3.0
- - 20xx-xx-xx
+## v1.7.1 for KSP 1.3.1
+ - 2017-10-13
 
 ### Changes since the last release
 
+ * In-Flight trajectory overlay now uses GLUtils from MechJeb2 for rendering.
  * Fixed In-Flight trajectory for non-atmospheric bodies
+
+### For Developers
+
+ * Added a Jupyter notebook for descent force analysis.
+ * Added the Bug Reporting section to CONTRIBUTING.md file.
 
 ## v1.7.0 for KSP 1.3.0
  - 2017-07-08
