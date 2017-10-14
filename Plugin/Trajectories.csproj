@@ -86,6 +86,7 @@
     <Compile Include="AerodynamicModel\StockModel.cs" />
     <Compile Include="API.cs" />
     <Compile Include="FlightOverlay.cs" />
+    <Compile Include="GLUtils.cs" />
     <Compile Include="Utilities\DebugFastStart.cs" />
     <Compile Include="Utilities\Profiler.cs" />
     <Compile Include="Utilities\TelemetryWrapper.cs" />

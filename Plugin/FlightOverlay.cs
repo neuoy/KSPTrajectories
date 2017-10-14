@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using UnityEngine;
 
 namespace Trajectories
 {
@@ -8,23 +9,19 @@ namespace Trajectories
         private const int defaultVertexCount = 32;
         private const float lineWidth = 2.0f;
 
-        private LineRenderer line { get; set; }
+        private TrajectoryLine line;
 
         private TargetingCross targetingCross;
 
         public void Awake()
         {
-            targetingCross = gameObject.AddComponent<TargetingCross>();
+            line = FlightCamera.fetch.mainCamera.gameObject.AddComponent<TrajectoryLine>();
+            targetingCross = FlightCamera.fetch.mainCamera.gameObject.AddComponent<TargetingCross>();
         }
 
         public void Start()
         {
-            line = gameObject.AddComponent<LineRenderer>();
-            line.useWorldSpace = false; // true;
-            line.SetVertexCount(defaultVertexCount);
-            line.SetWidth(lineWidth, lineWidth);
-            line.sharedMaterial = Resources.Load("DefaultLine3D") as Material;
-            line.material.SetColor("_TintColor", new Color(0.1f, 1f, 0.1f));
+
         }
 
         private void FixedUpdate()
@@ -38,111 +35,89 @@ namespace Trajectories
                 || Trajectory.fetch.patches.Count == 0)
                 return;
 
-            Vector3[] vertices;
+            line.Vertices.Clear();
 
             Trajectory.Patch lastPatch = Trajectory.fetch.patches[Trajectory.fetch.patches.Count - 1];
             Vector3d bodyPosition = lastPatch.startingState.referenceBody.position;
             if (lastPatch.isAtmospheric)
             {
-                vertices = new Vector3[lastPatch.atmosphericTrajectory.Length];
-
                 for (uint i = 0; i < lastPatch.atmosphericTrajectory.Length; ++i)
                 {
-                    vertices[i] = lastPatch.atmosphericTrajectory[i].pos + bodyPosition;
+                    Vector3 vertex = lastPatch.atmosphericTrajectory[i].pos + bodyPosition;
+                    line.Vertices.Add(vertex);
                 }
             }
             else
             {
-                vertices = new Vector3[defaultVertexCount];
-
                 double time = lastPatch.startingState.time;
                 double time_increment = (lastPatch.endTime - lastPatch.startingState.time) / defaultVertexCount;
                 Orbit orbit = lastPatch.spaceOrbit;
                 for (uint i = 0; i < defaultVertexCount; ++i)
                 {
-                    vertices[i] = Util.SwapYZ(orbit.getRelativePositionAtUT(time));
+                    Vector3 vertex = Util.SwapYZ(orbit.getRelativePositionAtUT(time));
                     if (Settings.fetch.BodyFixedMode)
-                        vertices[i] = Trajectory.calculateRotatedPosition(orbit.referenceBody, vertices[i], time);
+                        vertex = Trajectory.calculateRotatedPosition(orbit.referenceBody, vertex, time);
 
-                    vertices[i] += bodyPosition;
+                    vertex += bodyPosition;
+
+                    line.Vertices.Add(vertex);
 
                     time += time_increment;
                 }
             }
 
-            // add vertices to line
-            line.SetVertexCount(vertices.Length);
-            line.SetPositions(vertices);
-
+            line.Body = lastPatch.startingState.referenceBody;
             line.enabled = true;
 
             if (lastPatch.impactPosition != null)
             {
-                Vector3 impactPos = lastPatch.impactPosition.GetValueOrDefault();
-                Vector3 up = impactPos - bodyPosition;
-                up.Normalize();
-
-                RaycastHit hit;
-                if (Physics.Raycast(impactPos + bodyPosition + up * TargetingCross.impactRaycastDistance,
-                    -up, out hit))
-                {
-                    targetingCross.CrossTransform.position = hit.point + hit.normal * 0.16f;
-                    targetingCross.CrossTransform.localEulerAngles = Quaternion.FromToRotation(Vector3.up, hit.normal).eulerAngles;
-
-                    targetingCross.enabled = true;
-                }
+                targetingCross.ImpactPosition = lastPatch.impactPosition.Value;
+                targetingCross.ImpactBody = lastPatch.startingState.referenceBody;
+                targetingCross.enabled = true;
+            }
+            else
+            {
+                targetingCross.ImpactPosition = null;
+                targetingCross.ImpactBody = null;
             }
         }
+    }
 
-        public void OnDestroy()
+    public class TrajectoryLine: MonoBehaviour
+    {
+        public List<Vector3d> Vertices = new List<Vector3d>();
+        public CelestialBody Body = null;
+
+        public void OnPostRender()
         {
-            if (line != null)
-                Destroy(line);
+            if (Body == null || Vertices == null || Vertices.Count == 0)
+                return;
+
+            GLUtils.DrawPath(Body, Vertices, Color.blue, false, false);
         }
     }
 
     public class TargetingCross: MonoBehaviour
     {
-        public const float impactRaycastDistance = 300.0f;
+        public const double markerSize = 50.0f; // in meters
 
-        private GameObject planeObject;
-        private Renderer renderer;
+        public Vector3? ImpactPosition { get; internal set; }
+        public CelestialBody ImpactBody { get; internal set; }
 
-        public Transform CrossTransform { get {
-                return planeObject?.transform;
-            } }
 
-        public void Start()
+        public void OnPostRender()
         {
-            var crossTexture = GameDatabase.Instance.GetTexture("Trajectories/Textures/AimCross", false);
+            if (ImpactPosition == null || ImpactBody == null)
+                return;
 
-            planeObject = GameObject.CreatePrimitive(PrimitiveType.Plane);
-            var mat = new Material(Shader.Find("Particles/Additive"));
-            mat.SetTexture("_MainTex", crossTexture);
+            double impactLat, impactLon, impactAlt;
 
-            renderer = planeObject.GetComponent<Renderer>();
-            renderer.sharedMaterial = mat;
-            renderer.enabled = false;
-            planeObject.GetComponent<Collider>().enabled = false;
+            // get impact position, translate to latitude and longitude
+            ImpactBody.GetLatLonAlt(ImpactPosition.Value + ImpactBody.position, out impactLat, out impactLon, out impactAlt);
+
+            // draw ground marker at this position
+            GLUtils.DrawGroundMarker(ImpactBody, impactLat, impactLon, Color.red, false, 0, markerSize);
         }
 
-        public void OnEnable()
-        {
-            if (renderer != null)
-                renderer.enabled = true;
-        }
-
-        public void OnDisable()
-        {
-            if (renderer != null)
-                renderer.enabled = false;
-        }
-
-
-        public void OnDestroy()
-        {
-            if (planeObject != null)
-                Destroy(planeObject);
-        }
     }
 }

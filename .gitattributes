@@ -6,6 +6,9 @@
 # Custom for Visual Studio
 *.cs     diff=csharp
 
+# Jupyter notebooks: all line feeds, don't count towards language composition
+*.ipynb   text=auto eol=lf linguist-generated
+
 # Standard to msysgit
 *.doc	 diff=astextplain
 *.DOC	 diff=astextplain
