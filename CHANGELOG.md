@@ -1,3 +1,18 @@
+## v1.7.2 for KSP 1.3.1
+ - 20xx-xx-xx
+
+### Changes since the last release
+
+### For Developers
+
+ * Flickering entries bug in the Profiler is fixed :)
+ * Added Reset averages & Show zero calls buttons, a Framerate limiter, avg calls and frame counter to the Profiler.
+ 
+### Known Issues
+
+ * Sometimes multiple In-Flight trajectory vector lines appear and target marker can cover entire screen when camera is close.
+
+
 ## v1.7.1 for KSP 1.3.1
  - 2017-10-13
 
@@ -10,6 +25,7 @@
 
  * Added a Jupyter notebook for descent force analysis.
  * Added the Bug Reporting section to CONTRIBUTING.md file.
+
 
 ## v1.7.0 for KSP 1.3.0
  - 2017-07-08
