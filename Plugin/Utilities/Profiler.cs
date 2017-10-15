@@ -8,7 +8,7 @@ using UnityEngine;
 namespace Trajectories
 {
     /// <summary> Simple profiler for measuring the execution time of code placed between the Start and Stop methods. </summary>
-    [KSPAddon(KSPAddon.Startup.MainMenu, true)]
+    [KSPAddon(KSPAddon.Startup.EveryScene, false)]
     public sealed class Profiler : MonoBehaviour
     {
 #if DEBUG_PROFILER
@@ -18,11 +18,9 @@ namespace Trajectories
 
         private const float value_width = 65.0f;
 
-        // permit global access
-        private static Profiler fetch_ = null;
-
         // visible flag
-        private static bool visible;
+        private static bool visible = false;
+        private static bool show_zero = true;
 
         // popup window
         private static MultiOptionDialog multi_dialog;
@@ -30,43 +28,44 @@ namespace Trajectories
         private static DialogGUIVerticalLayout dialog_items;
 
         // an entry in the profiler
-        private class entry
+        private class Entry
         {
             public double start;        // used to measure call time
-            public double calls;        // number of calls in current simulation step
+            public long calls;          // number of calls in current simulation step
             public double time;         // time in current simulation step
-            public double prev_calls;   // number of calls in previous simulation step
+            public long prev_calls;     // number of calls in previous simulation step
             public double prev_time;    // time in previous simulation step
-            public double tot_calls;    // number of calls in total used for avg calculation
+            public long tot_calls;      // number of calls in total used for avg calculation
             public double tot_time;     // total time used for avg calculation
 
-            public string last_txt = "";    // last call time display string
-            public string avg_txt = "";     // average call time display string
-            public string calls_txt = "";   // number of calls display string
+            public string last_txt = "";        // last call time display string
+            public string avg_txt = "";         // average call time display string
+            public string calls_txt = "";       // number of calls display string
+            public string avg_calls_txt = "";   // number of average calls display string
         }
 
         // store all entries
-        private Dictionary<string, entry> entries = new Dictionary<string, entry>();
+        private Dictionary<string, Entry> entries = new Dictionary<string, Entry>();
 
         // display update timer
         private static double update_timer = Util.Clocks;
-        private static double update_fps = 10;  // Frames per second the entry values displayed will update.
-        private static bool calculate = true;
+        private static double timeout = Stopwatch.Frequency / update_fps;
+        private const double update_fps = 5.0;      // Frames per second the entry value display will update.
+        private static long tot_frames = 0;         // total physics frames used for avg calculation
+        private static string tot_frames_txt = "";  // total physics frames display string
 
 
-        public static Profiler fetch
+        // permit global access
+        public static Profiler Fetch
         {
-            get
-            {
-                return fetch_;
-            }
-        }
+            get; private set;
+        } = null;
 
         //  constructor
         public Profiler()
         {
             // enable global access
-            fetch_ = this;
+            Fetch = this;
 
             // create window
             dialog_items = new DialogGUIVerticalLayout();
@@ -78,15 +77,20 @@ namespace Trajectories
                new Rect(0.5f, 0.5f, width, height),
                new DialogGUIBase[]
                {
-                   // create average reset button
-                   new DialogGUIButton(Localizer.Format("#autoLOC_900305"),
-                           OnButtonClick_Reset, () => true, 75, 25, false),
-                   // create header line
-                   new DialogGUIHorizontalLayout(
-                       new DialogGUILabel("<b>   NAME</b>", true),
-                       new DialogGUILabel("<b>LAST</b>", value_width),
-                       new DialogGUILabel("<b>AVG</b>", value_width),
-                       new DialogGUILabel("<b>CALLS</b>", value_width - 15)),
+                   new DialogGUIVerticalLayout(false, false, 0, new RectOffset(), TextAnchor.UpperCenter,
+                       // create average reset and show zero calls buttons
+                       new DialogGUIHorizontalLayout(false, false,
+                           new DialogGUIButton(Localizer.Format("#autoLOC_900305"),
+                               OnButtonClick_Reset, () => true, 75, 25, false),
+                           new DialogGUIToggle(() => { return show_zero; },"Show zero calls", OnButtonClick_ShowZero),
+                           new DialogGUILabel(() => { return tot_frames_txt; }, value_width + 50)),
+                       // create header line
+                       new DialogGUIHorizontalLayout(
+                           new DialogGUILabel("<b>   NAME</b>", true),
+                           new DialogGUILabel("<b>LAST</b>", value_width),
+                           new DialogGUILabel("<b>AVG</b>", value_width),
+                           new DialogGUILabel("<b>CALLS</b>", value_width - 15),
+                           new DialogGUILabel("<b>AVG</b>", value_width - 15))),
                    // create scrollbox for entry data
                    new DialogGUIScrollList(new Vector2(), false, true, dialog_items)
                });
@@ -112,43 +116,59 @@ namespace Trajectories
                 visible = !visible;
                 popup_dialog.gameObject.SetActive(visible);
             }
+
+            // skip updates for a smoother display
+            if (((Util.Clocks - update_timer) > timeout) && visible)
+            {
+                update_timer = Util.Clocks;
+                Calculate();
+            }
+        }
+
+        private static void Calculate()
+        {
+            foreach (KeyValuePair<string, Entry> p in Fetch.entries)
+            {
+                Entry e = p.Value;
+
+                if (e.prev_calls > 0L)
+                {
+                    e.last_txt = Util.Microseconds(e.prev_time / e.prev_calls).ToString("F2") + "ms";
+                    e.calls_txt = e.prev_calls.ToString();
+                }
+                else if (show_zero)
+                {
+                    e.last_txt = "ms";
+                    e.calls_txt = "0";
+                }
+
+                e.avg_txt = (e.tot_calls > 0L ? Util.Microseconds(e.tot_time / e.tot_calls).ToString("F2") : "") + "ms";
+                e.avg_calls_txt = tot_frames > 0L ? ((float)e.tot_calls / (float)tot_frames).ToString("F3") : "0";
+            }
+
+            tot_frames_txt = tot_frames.ToString() + " Frames";
         }
 
         private void FixedUpdate()
         {
-            // skip updates for a smoother display
-            if (Util.Clocks - update_timer <= Stopwatch.Frequency / update_fps)
-                calculate = false;
-            else
+            foreach (KeyValuePair<string, Entry> p in Fetch.entries)
             {
-                update_timer = Util.Clocks;
-                calculate = true;
-            }
+                Entry e = p.Value;
 
-            foreach (KeyValuePair<string, entry> p in fetch_.entries)
-            {
-                entry e = p.Value;
                 e.prev_calls = e.calls;
                 e.prev_time = e.time;
                 e.tot_calls += e.calls;
                 e.tot_time += e.time;
-                e.calls = 0;
-                e.time = 0;
-
-                if (calculate)
-                {
-                    e.last_txt = (e.prev_calls > 0 ? Util.Microseconds(e.prev_time /
-                                    e.prev_calls).ToString("F2") : "") + "ms";
-                    e.avg_txt = (e.tot_calls > 0 ? Util.Microseconds(e.tot_time /
-                                    e.tot_calls).ToString("F2") : "") + "ms";
-                    e.calls_txt = e.prev_calls.ToString();
-                }
+                e.calls = 0L;
+                e.time = 0.0;
             }
+
+            ++tot_frames;
         }
 
         private void OnDestroy()
         {
-            fetch_ = null;
+            Fetch = null;
             popup_dialog.Dismiss();
             popup_dialog = null;
         }
@@ -170,11 +190,18 @@ namespace Trajectories
 
         private static void OnButtonClick_Reset()
         {
-            foreach (KeyValuePair<string, entry> e in fetch_.entries)
+            foreach (KeyValuePair<string, Entry> e in Fetch.entries)
             {
-                e.Value.tot_calls = 0;
-                e.Value.tot_time = 0;
+                e.Value.tot_calls = 0L;
+                e.Value.tot_time = 0.0;
             }
+
+            tot_frames = 0L;
+        }
+
+        private static void OnButtonClick_ShowZero(bool inState)
+        {
+            show_zero = inState;
         }
 
         private void AddDialogItem(string e_name)
@@ -185,7 +212,8 @@ namespace Trajectories
                     new DialogGUILabel("  " + e_name, true),
                     new DialogGUILabel(() => { return entries[e_name].last_txt; }, value_width),
                     new DialogGUILabel(() => { return entries[e_name].avg_txt; }, value_width),
-                    new DialogGUILabel(() => { return entries[e_name].calls_txt; }, value_width - 15)));
+                    new DialogGUILabel(() => { return entries[e_name].calls_txt; }, value_width - 15),
+                    new DialogGUILabel(() => { return entries[e_name].avg_calls_txt; }, value_width - 15)));
 
             // required to force the Gui creation
             Stack<Transform> stack = new Stack<Transform>();
@@ -199,16 +227,16 @@ namespace Trajectories
         public static void Start(string e_name)
         {
 #if DEBUG_PROFILER
-            if (fetch_ == null)
+            if (Fetch == null)
                 return;
 
-            if (!fetch_.entries.ContainsKey(e_name))
+            if (!Fetch.entries.ContainsKey(e_name))
             {
-                fetch_.entries.Add(e_name, new entry());
-                fetch_.AddDialogItem(e_name);
+                Fetch.entries.Add(e_name, new Entry());
+                Fetch.AddDialogItem(e_name);
             }
 
-            fetch_.entries[e_name].start = Util.Clocks;
+            Fetch.entries[e_name].start = Util.Clocks;
 #endif
         }
 
@@ -217,10 +245,10 @@ namespace Trajectories
         public static void Stop(string e_name)
         {
 #if DEBUG_PROFILER
-            if (fetch_ == null)
+            if (Fetch == null)
                 return;
 
-            entry e = fetch_.entries[e_name];
+            Entry e = Fetch.entries[e_name];
 
             ++e.calls;
             e.time += Util.Clocks - e.start;
