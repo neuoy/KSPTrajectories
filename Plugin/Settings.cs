@@ -48,6 +48,15 @@ namespace Trajectories
         public Rect MapGUIWindowPos { get; set; }
 
         [Persistent(Default: false)]
+        public bool MainGUIEnabled { get; set; }
+
+        [Persistent(Default: null)]
+        public Vector2 MainGUIWindowPos { get; set; }
+
+        [Persistent(Default: null)]
+        public int MainGUICurrentPage { get; set; }
+
+        [Persistent(Default: false)]
         public bool GUIEnabled { get; set; }
 
         [Persistent(Default: 4)]
