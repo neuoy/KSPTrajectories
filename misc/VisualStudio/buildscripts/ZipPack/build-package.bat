@@ -35,6 +35,9 @@ xcopy /y ..\..\..\%TargetName%.cfg .
 xcopy /y ..\..\..\%TargetName%.version .
 xcopy /y ..\..\..\README.md .
 
+mkdir Localization
+xcopy /y ..\..\..\Localization\TrajectoriesLocalization.cfg Localization
+
 mkdir Plugin
 xcopy /y %initialWD%\%TargetName%.dll Plugin
 
