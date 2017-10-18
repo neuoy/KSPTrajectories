@@ -10,9 +10,6 @@ namespace Trajectories
     {
         private static readonly int GUIId = 934824;
 
-        private static ApplicationLauncherButton GUIToggleButton = null;
-        private IButton GUIToggleButtonBlizzy;
-
         private string tooltip = String.Empty;
 
         private string coords = "";
@@ -355,58 +352,6 @@ namespace Trajectories
             GUILayout.Label(tooltip, toolTipStyle);
         }
 
-        public void Awake()
-        {
-            if (HighLogic.LoadedScene != GameScenes.FLIGHT)
-                return;
-
-            if (ToolbarManager.ToolbarAvailable && Settings.fetch.UseBlizzyToolbar)
-            {
-                Debug.Log("Using Blizzy toolbar for Trajectories GUI");
-                GUIToggleButtonBlizzy = ToolbarManager.Instance.add("Trajectories", "ToggleUI");
-                GUIToggleButtonBlizzy.Visibility = GUIToggleButtonBlizzyVisibility.Instance;
-                GUIToggleButtonBlizzy.TexturePath = "Trajectories/Textures/icon-blizzy";
-                GUIToggleButtonBlizzy.ToolTip = "Right click toggles Trajectories window";
-                GUIToggleButtonBlizzy.OnClick += OnToggleGUIBlizzy;
-            }
-            else
-            {
-                Debug.Log("Using stock toolbar for Trajectories GUI");
-                GameEvents.onGUIApplicationLauncherReady.Add(CreateStockToolbarButton);
-                GameEvents.onGUIApplicationLauncherUnreadifying.Add(DestroyStockToolbarButton);
-            }
-        }
-
-        void DummyVoid() { }
-
-        void DestroyStockToolbarButton(GameScenes scene)
-        {
-            if (GUIToggleButton != null)
-            {
-                ApplicationLauncher.Instance.RemoveModApplication(GUIToggleButton);
-                GUIToggleButton = null;
-            }
-        }
-
-        void CreateStockToolbarButton()
-        {
-            if (GUIToggleButton == null)
-            {
-                GUIToggleButton = ApplicationLauncher.Instance.AddModApplication(
-                    OnToggleOn,
-                    OnToggleOff,
-                    DummyVoid,
-                    DummyVoid,
-                    DummyVoid,
-                    DummyVoid,
-                    ApplicationLauncher.AppScenes.MAPVIEW | ApplicationLauncher.AppScenes.FLIGHT,
-                    (Texture)GameDatabase.Instance.GetTexture("Trajectories/Textures/icon", false));
-
-                if (Settings.fetch.GUIEnabled)
-                    GUIToggleButton.SetTrue(false);
-            }
-        }
-
         /// <summary>
         /// Determines if the current game scane is valid for the plugin.
         /// This plugin should be able to run in VAB/SPH, Flight, Space Center, and Tracking Station scenes.
@@ -415,44 +360,6 @@ namespace Trajectories
         Boolean IsValidScene()
         {
             return HighLogic.LoadedSceneIsEditor || HighLogic.LoadedSceneIsFlight || HighLogic.LoadedScene == GameScenes.SPACECENTER || HighLogic.LoadedScene == GameScenes.TRACKSTATION;
-        }
-
-        void OnToggleGUIBlizzy(ClickEvent e)
-        {
-            if (e.MouseButton == 0)
-            {
-                // check that we have patched conics. If not, apologize to the user and return.
-                if (!isPatchedConicsAvailable())
-                {
-                    ScreenMessages.PostScreenMessage(
-                        "Can't show trajectory because patched conics are not available." +
-                        " Please update your tracking station facility.");
-                    Settings.fetch.DisplayTrajectories = false;
-                    return;
-                }
-
-                Settings.fetch.DisplayTrajectories = !Settings.fetch.DisplayTrajectories;
-            }
-            else
-            {
-                Settings.fetch.GUIEnabled = !Settings.fetch.GUIEnabled;
-            }
-        }
-
-        void OnToggleOn()
-        {
-            Settings.fetch.GUIEnabled = true;
-        }
-
-        void OnToggleOff()
-        {
-            Settings.fetch.GUIEnabled = false;
-        }
-
-        void OnDestroy()
-        {
-            if (GUIToggleButtonBlizzy != null)
-                GUIToggleButtonBlizzy.Destroy();
         }
 
         private static Rect ClampToScreen(Rect window)
