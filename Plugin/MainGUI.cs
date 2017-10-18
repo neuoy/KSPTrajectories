@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using System.Collections.Generic;
+using System.Diagnostics;
 using KSP.Localization;
 using UnityEngine;
 
@@ -57,6 +58,10 @@ namespace Trajectories
         private static string aerodynamic_model_txt = "";
         private static string performance_txt = "";
         private static string num_errors_txt = "";
+
+        // display update timer
+        private static double update_timer = Util.Clocks;
+        private static double update_fps = 10;  // Frames per second the data values displayed in the Gui will update.
 
         public static MainGUI Instance
         {
@@ -349,6 +354,11 @@ namespace Trajectories
         /// <summary> Updates the strings used by the Gui components to display changing values/data </summary>
         private static void UpdatePages()
         {
+            // skip updates for a smoother display and increased performance
+            if (Util.Clocks - update_timer <= Stopwatch.Frequency / update_fps)
+                return;
+            update_timer = Util.Clocks;
+
             switch ((PageType)Settings.fetch.MainGUICurrentPage)
             {
                 case PageType.INFO:
