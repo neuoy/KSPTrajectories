@@ -85,6 +85,12 @@ namespace Trajectories
         private void OnDestroy()
         {
             instance = null;
+
+            // save popup position. Note. PopupDialog.RTrf is an offset from the center of the screeen.
+            Settings.fetch.MainGUIWindowPos = new Vector2(
+                ((Screen.width / 2) + popup_dialog.RTrf.position.x) / Screen.width,
+                ((Screen.height / 2) + popup_dialog.RTrf.position.y) / Screen.height);
+
             popup_dialog.Dismiss();
             popup_dialog = null;
             AppLauncherButton.Destroy();
@@ -96,6 +102,10 @@ namespace Trajectories
         /// </summary>
         private void Allocate()
         {
+            // default window to center of screen
+            if (Settings.fetch.MainGUIWindowPos.x <= 0 || Settings.fetch.MainGUIWindowPos.y <= 0)
+                Settings.fetch.MainGUIWindowPos = new Vector2(0.5f, 0.5f);
+
             // create buttons
             info_button = new DialogGUIButton(Localizer.Format("#autoLOC_900629"),
                 OnButtonClick_Info, ButtonEnabler_Info, button_width, button_height, false);
