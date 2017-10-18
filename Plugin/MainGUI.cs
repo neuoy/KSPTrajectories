@@ -16,6 +16,7 @@ namespace Trajectories
         private const float height = 250.0f;
         private const float button_width = 75.0f;
         private const float button_height = 25.0f;
+        private const int page_padding = 10;
 
         private enum PageType
         {
@@ -86,6 +87,16 @@ namespace Trajectories
         {
             // create and display App launch button
             AppLauncherButton.Create();
+
+            // set page padding
+            info_page.padding.left = page_padding;
+            info_page.padding.right = page_padding;
+            target_page.padding.left = page_padding;
+            target_page.padding.right = page_padding;
+            descent_page.padding.left = page_padding;
+            descent_page.padding.right = page_padding;
+            settings_page.padding.left = page_padding;
+            settings_page.padding.right = page_padding;
 
             // create popup dialog and hide it
             popup_dialog = PopupDialog.SpawnPopupDialog(multi_dialog, true, HighLogic.UISkin, false, "");
