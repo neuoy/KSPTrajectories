@@ -1,3 +1,4 @@
+﻿using System;
 using KSP.Localization;
 using UnityEngine;
 
@@ -38,6 +39,9 @@ namespace Trajectories
         private static DialogGUIButton settings_button;
 
         private static DialogGUIVerticalLayout info_page;
+        private static DialogGUIVerticalLayout target_page;
+        private static DialogGUIVerticalLayout descent_page;
+        private static DialogGUIVerticalLayout settings_page;
 
         public static MainGUI Instance
         {
@@ -121,9 +125,29 @@ namespace Trajectories
                 new DialogGUIHorizontalLayout(
                 );
 
+            target_page = new DialogGUIVerticalLayout(false, true, 0, new RectOffset(), TextAnchor.UpperCenter,
+                new DialogGUISpace(4),
+                new DialogGUILabel("<b>   Target Page</b>", true));
+
+            descent_page = new DialogGUIVerticalLayout(false, true, 0, new RectOffset(), TextAnchor.UpperCenter,
+                new DialogGUISpace(4),
+                new DialogGUILabel("<b>   Descent Page</b>", true));
+
+            settings_page = new DialogGUIVerticalLayout(false, true, 0, new RectOffset(), TextAnchor.UpperCenter,
+                );
+
             // create page box with current page inserted into page box
             switch ((PageType)Settings.fetch.MainGUICurrentPage)
             {
+                case PageType.TARGET:
+                    page_box = new DialogGUIBox(null, -1, -1, () => true, target_page);
+                    break;
+                case PageType.DESCENT:
+                    page_box = new DialogGUIBox(null, -1, -1, () => true, descent_page);
+                    break;
+                case PageType.SETTINGS:
+                    page_box = new DialogGUIBox(null, -1, -1, () => true, settings_page);
+                   break;
                 default:
                     page_box = new DialogGUIBox(null, -1, -1, () => true, info_page);
                     break;
@@ -201,18 +225,56 @@ namespace Trajectories
         #region  OnButtonClick methods called by the GuiButtons and Toggles
         private void OnButtonClick_Info()
         {
+            ChangePage(PageType.INFO);
         }
 
         private void OnButtonClick_Target()
         {
+            ChangePage(PageType.TARGET);
         }
 
         private void OnButtonClick_Descent()
         {
+            ChangePage(PageType.DESCENT);
         }
 
         private void OnButtonClick_Settings()
         {
+            ChangePage(PageType.SETTINGS);
         }
+
+        #region Page methods for changing/updating the pages in the Gui page box
+        /// <summary> Changes the page inside the page box. </summary>
+        private void ChangePage(PageType inpage)
+        {
+            Settings.fetch.MainGUICurrentPage = (int)inpage;
+
+            // remove current page from page box
+            page_box.children[0].uiItem.gameObject.DestroyGameObjectImmediate();
+            page_box.children.Clear();
+
+            // insert desired page into page box
+            switch (inpage)
+            {
+                case PageType.TARGET:
+                    page_box.children.Add(target_page);
+                    break;
+                case PageType.DESCENT:
+                    page_box.children.Add(descent_page);
+                    break;
+                case PageType.SETTINGS:
+                    page_box.children.Add(settings_page);
+                    break;
+                default:
+                    page_box.children.Add(info_page);
+                    break;
+            }
+
+            // required to force the Gui to update
+            Stack<Transform> stack = new Stack<Transform>();
+            stack.Push(page_box.uiItem.gameObject.transform);
+            page_box.children[0].Create(ref stack, HighLogic.UISkin);
+        }
+        #endregion
     }
 }
