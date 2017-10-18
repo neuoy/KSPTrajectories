@@ -59,6 +59,9 @@ namespace Trajectories
         [Persistent(Default: false)]
         public bool GUIEnabled { get; set; }
 
+        [Persistent(Default: true)]
+        public bool NewGui { get; set; }
+
         [Persistent(Default: 4)]
         public int MaxPatchCount { get; set; }
 

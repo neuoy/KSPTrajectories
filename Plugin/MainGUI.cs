@@ -16,6 +16,7 @@ namespace Trajectories
         private const float height = 250.0f;
         private const float button_width = 75.0f;
         private const float button_height = 25.0f;
+        private const float slider_width = 130.0f;
         private const int page_padding = 10;
 
         private enum PageType
@@ -183,6 +184,32 @@ namespace Trajectories
                 new DialogGUILabel("<b>   Descent Page</b>", true));
 
             settings_page = new DialogGUIVerticalLayout(false, true, 0, new RectOffset(), TextAnchor.UpperCenter,
+                new DialogGUIToggle(() => { return ToolbarManager.ToolbarAvailable ? Settings.fetch.UseBlizzyToolbar : false; },
+                    Localizer.Format("#autoLOC_Trajectories_UseBlizzyToolbar"), OnButtonClick_UseBlizzyToolbar),
+                new DialogGUIHorizontalLayout(false, false, 0, new RectOffset(), TextAnchor.MiddleCenter,
+                    new DialogGUIToggle(() => { return Settings.fetch.UseCache; },
+                        Localizer.Format("#autoLOC_Trajectories_UseCache"), OnButtonClick_UseCache),
+                    new DialogGUIToggle(() => { return Settings.fetch.AutoUpdateAerodynamicModel; },
+                        Localizer.Format("#autoLOC_Trajectories_AutoUpdate"), OnButtonClick_AutoUpdateAerodynamicModel),
+                    new DialogGUIButton(Localizer.Format("#autoLOC_Trajectories_Update"),
+                        OnButtonClick_Update, button_width, button_height, false)),
+                new DialogGUIHorizontalLayout(
+                    new DialogGUILabel(Localizer.Format("#autoLOC_Trajectories_MaxPatches"), true),
+                    new DialogGUISlider(() => { return Settings.fetch.MaxPatchCount; },
+                        3, 10, true, slider_width, -1, OnSliderSet_MaxPatches),
+                    new DialogGUILabel(() => { return Settings.fetch.MaxPatchCount.ToString(); }, 15)),
+                new DialogGUIHorizontalLayout(
+                    new DialogGUILabel(Localizer.Format("#autoLOC_Trajectories_MaxFramesPatch"), true),
+                    new DialogGUISlider(() => { return Settings.fetch.MaxFramesPerPatch; },
+                        1, 50, true, slider_width, -1, OnSliderSet_MaxFramesPatch),
+                    new DialogGUILabel(() => { return Settings.fetch.MaxFramesPerPatch.ToString(); }, 15)),
+                new DialogGUIHorizontalLayout(
+                    new DialogGUILabel(() => { return performance_txt; }, true),
+                    new DialogGUILabel(() => { return num_errors_txt; }, true)),
+                new DialogGUIHorizontalLayout(false, false,
+                    new DialogGUIToggle(() => { return Settings.fetch.ShowPerformance; },
+                        Localizer.Format("#autoLOC_Trajectories_ShowPerformance"), OnButtonClick_ShowPerformance, 125),
+                    new DialogGUIToggle(() => { return Settings.fetch.NewGui; }, "New Gui", OnButtonClick_NewGui))
                 );
 
             // create page box with current page inserted into page box
@@ -326,6 +353,52 @@ namespace Trajectories
         private void OnButtonClick_DisplayCompleteTrajectory(bool inState)
         {
             Settings.fetch.DisplayCompleteTrajectory = inState;
+        }
+
+        private void OnButtonClick_UseCache(bool inState)
+        {
+            Settings.fetch.UseCache = inState;
+        }
+
+        private void OnButtonClick_AutoUpdateAerodynamicModel(bool inState)
+        {
+            Settings.fetch.AutoUpdateAerodynamicModel = inState;
+        }
+
+        private void OnButtonClick_Update()
+        {
+            Trajectory.fetch.InvalidateAerodynamicModel();
+        }
+
+        private void OnButtonClick_UseBlizzyToolbar(bool inState)
+        {
+            if (ToolbarManager.ToolbarAvailable)
+                Settings.fetch.UseBlizzyToolbar = inState;
+        }
+
+        private void OnButtonClick_ShowPerformance(bool inState)
+        {
+            Settings.fetch.ShowPerformance = inState;
+        }
+
+        private void OnButtonClick_NewGui(bool inState)
+        {
+            Settings.fetch.NewGui = inState;
+            Settings.fetch.MainGUIEnabled = inState;
+            Settings.fetch.GUIEnabled = !inState;
+        }
+        #endregion
+
+        #region Callback methods for the Gui components
+        // Callback methods are used by the Gui to retrieve information it needs either for display or setting values.
+        private void OnSliderSet_MaxPatches(float invalue)
+        {
+            Settings.fetch.MaxPatchCount = (int)invalue;
+        }
+
+        private void OnSliderSet_MaxFramesPatch(float invalue)
+        {
+            Settings.fetch.MaxFramesPerPatch = (int)invalue;
         }
         #endregion
 

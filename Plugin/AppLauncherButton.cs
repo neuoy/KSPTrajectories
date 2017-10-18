@@ -130,17 +130,26 @@ namespace Trajectories
             }
             else
             {
+                if (Settings.fetch.NewGui)
+                    Settings.fetch.MainGUIEnabled = !Settings.fetch.MainGUIEnabled;
+                else
                     Settings.fetch.GUIEnabled = !Settings.fetch.GUIEnabled;
             }
         }
 
         private static void OnStockTrue()
         {
+            if (Settings.fetch.NewGui)
+                Settings.fetch.MainGUIEnabled = true;
+            else
                 Settings.fetch.GUIEnabled = true;
         }
 
         private static void OnStockFalse()
         {
+            if (Settings.fetch.NewGui)
+                Settings.fetch.MainGUIEnabled = false;
+            else
                 Settings.fetch.GUIEnabled = false;
         }
 
