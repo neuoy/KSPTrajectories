@@ -5,33 +5,6 @@ using UnityEngine;
 
 namespace Trajectories
 {
-    class GUIToggleButtonBlizzyVisibility: IVisibility
-    {
-        internal static GUIToggleButtonBlizzyVisibility Instance
-        {
-            get
-            {
-                return new GUIToggleButtonBlizzyVisibility();
-            }
-        }
-
-        private static IVisibility FLIGHT_VISIBILITY;
-
-        public bool Visible
-        {
-            get
-            {
-                return FLIGHT_VISIBILITY.Visible;
-            }
-        }
-
-        private GUIToggleButtonBlizzyVisibility()
-        {
-            if (FLIGHT_VISIBILITY == null)
-                FLIGHT_VISIBILITY = new GameScenesVisibility(GameScenes.FLIGHT);
-        }
-    }
-
     [KSPAddon(KSPAddon.Startup.Flight, false)]
     class MapGUI: MonoBehaviour
     {
