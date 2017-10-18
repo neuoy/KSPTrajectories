@@ -177,7 +177,7 @@ namespace Trajectories
             Settings.fetch.DisplayTrajectoriesInFlight = GUILayout.Toggle(Settings.fetch.DisplayTrajectoriesInFlight, "In-Flight");
 
             // check that we have patched conics. If not, apologize to the user and return.
-            if (Settings.fetch.DisplayTrajectories && !isPatchedConicsAvailable())
+            if (Settings.fetch.DisplayTrajectories && !Util.isPatchedConicsAvailable)
             {
                 ScreenMessages.PostScreenMessage(
                     "Can't show trajectory because patched conics are not available." +
