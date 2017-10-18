@@ -200,6 +200,21 @@ namespace Trajectories
             }
         }
 
+        /// <summary> Check if patched conics are available in the current save. </summary>
+        /// <returns>True if patched conics are available</returns>
+        public static bool isPatchedConicsAvailable
+        {
+            get
+            {
+                // Get our level of tracking station
+                float trackingstation_level = ScenarioUpgradeableFacilities.GetFacilityLevel(SpaceCenterFacility.TrackingStation);
+
+                // Check if the tracking station knows Patched Conics
+                return GameVariables.Instance.GetOrbitDisplayMode(trackingstation_level).CompareTo(
+                        GameVariables.OrbitDisplayMode.PatchedConics) >= 0;
+            }
+        }
+
 
 
         // --------------------------------------------------------------------------

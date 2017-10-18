@@ -25,23 +25,6 @@ namespace Trajectories
         private const ControlTypes FlightLockTypes = ControlTypes.MANNODE_ADDEDIT | ControlTypes.MANNODE_DELETE | ControlTypes.MAP_UI |
             ControlTypes.TARGETING | ControlTypes.VESSEL_SWITCHING | ControlTypes.TWEAKABLES;
 
-        /// <summary>
-        /// Check if patched conics are available in the current save.
-        /// </summary>
-        /// <returns>True if patched conics are available</returns>
-        private bool isPatchedConicsAvailable()
-        {
-            // Get our level of tracking station
-            float trackingstation_level =
-                ScenarioUpgradeableFacilities.GetFacilityLevel(SpaceCenterFacility.TrackingStation);
-
-            // Check if the tracking station knows Patched Conics
-            return
-                GameVariables.Instance.GetOrbitDisplayMode(trackingstation_level).CompareTo(
-                    GameVariables.OrbitDisplayMode.PatchedConics)
-                >= 0;
-        }
-
         public void OnGUI()
         {
             if (!Settings.fetch.GUIEnabled || !Util.IsFlight || PlanetariumCamera.Camera == null)
