@@ -283,10 +283,18 @@ namespace Trajectories
             {
                 ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_Trajectories_ConicsErr"));
                 Settings.fetch.DisplayTrajectories = false;
+                if (AppLauncherButton.IconStyle != AppLauncherButton.IconStyleType.NORMAL)
+                    AppLauncherButton.ChangeIcon(AppLauncherButton.IconStyleType.NORMAL);
                 return;
             }
 
             Settings.fetch.DisplayTrajectories = inState;
+            // change app toolbar button icon state
+            if (inState && (AppLauncherButton.IconStyle == AppLauncherButton.IconStyleType.NORMAL))
+                AppLauncherButton.ChangeIcon(AppLauncherButton.IconStyleType.ACTIVE);
+            else if (!inState && (AppLauncherButton.IconStyle != AppLauncherButton.IconStyleType.NORMAL))
+                AppLauncherButton.ChangeIcon(AppLauncherButton.IconStyleType.NORMAL);
+
         }
 
         private void OnButtonClick_DisplayTrajectoriesInFlight(bool inState)

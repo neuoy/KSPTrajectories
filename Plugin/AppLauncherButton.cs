@@ -42,11 +42,33 @@ namespace Trajectories
             }
         }
 
+        /// <summary> Toolbar button icon style</summary>
+        public enum IconStyleType
+        {
+            NORMAL = 0,
+            ACTIVE,
+            AUTO
+        }
+
+        private static IconStyleType current_iconstyle;
+
+        // Textures for icons (held here for better performance when switching icons on the stock toolbar)
         private static Texture2D normal_icon_texture;
+        private static Texture2D active_icon_texture;
+        private static Texture2D auto_icon_texture;
 
         // Toolbar buttons
         private static ApplicationLauncherButton stock_toolbar_button = null;
         private static IButton blizzy_toolbar_button = null;
+
+        /// <summary> Return the current style of the toolbar button icon </summary>
+        public static IconStyleType IconStyle
+        {
+            get
+            {
+                return current_iconstyle;
+            }
+        }
 
         /// <summary> Creates the toolbar button for either a KSP stock toolbar or Blizzy toolbar if available. </summary>
         public static void Create()
@@ -66,6 +88,14 @@ namespace Trajectories
                 // setup a toolbar button for the stock toolbar
                 Debug.Log("Using Stock toolbar for Trajectories");
                 normal_icon_texture = GameDatabase.Instance.GetTexture("Trajectories/Textures/icon", false);
+                active_icon_texture = GameDatabase.Instance.GetTexture("Trajectories/Textures/iconActive", false);
+                auto_icon_texture = GameDatabase.Instance.GetTexture("Trajectories/Textures/iconAuto", false);
+
+                if (Settings.fetch.DisplayTrajectories)
+                    current_iconstyle = IconStyleType.ACTIVE;
+                else
+                    current_iconstyle = IconStyleType.NORMAL;
+
                 GameEvents.onGUIApplicationLauncherReady.Add(delegate
                 {
                     CreateStockToolbarButton();
@@ -122,6 +152,9 @@ namespace Trajectories
                 stock_toolbar_button = null;
             }
             normal_icon_texture = null;
+            active_icon_texture = null;
+            auto_icon_texture = null;
+            current_iconstyle = IconStyleType.NORMAL;
         }
 
         private static void CreateStockToolbarButton()
@@ -139,9 +172,50 @@ namespace Trajectories
                     normal_icon_texture
                     );
 
+                if (current_iconstyle == IconStyleType.ACTIVE)
+                    stock_toolbar_button.SetTexture(active_icon_texture);
+
+                if (current_iconstyle == IconStyleType.AUTO)
+                    stock_toolbar_button.SetTexture(auto_icon_texture);
+
                 if (Settings.fetch.MainGUIEnabled || Settings.fetch.GUIEnabled)
                     stock_toolbar_button.SetTrue(false);
 
+            }
+        }
+
+        /// <summary> Changes the toolbar button icon </summary>
+        public static void ChangeIcon(IconStyleType iconstyle)
+        {
+            // no icons for blizzy yet so only change the current icon style
+            if (ToolbarManager.ToolbarAvailable && Settings.fetch.UseBlizzyToolbar)
+                switch (iconstyle)
+                {
+                    case IconStyleType.ACTIVE:
+                        current_iconstyle = IconStyleType.ACTIVE;
+                        break;
+                    case IconStyleType.AUTO:
+                        current_iconstyle = IconStyleType.AUTO;
+                        break;
+                    default:
+                        current_iconstyle = IconStyleType.NORMAL;
+                        break;
+                }
+
+            else switch (iconstyle)
+            {
+                case IconStyleType.ACTIVE:
+                    stock_toolbar_button.SetTexture(active_icon_texture);
+                    current_iconstyle = IconStyleType.ACTIVE;
+                    break;
+                case IconStyleType.AUTO:
+                    stock_toolbar_button.SetTexture(auto_icon_texture);
+                    current_iconstyle = IconStyleType.AUTO;
+                    break;
+                default:
+                    stock_toolbar_button.SetTexture(normal_icon_texture);
+                    current_iconstyle = IconStyleType.NORMAL;
+                    break;
             }
         }
     }
