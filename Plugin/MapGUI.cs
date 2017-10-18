@@ -5,6 +5,7 @@ using UnityEngine;
 
 namespace Trajectories
 {
+    [Obsolete("use MainGUI")]
     [KSPAddon(KSPAddon.Startup.Flight, false)]
     class MapGUI: MonoBehaviour
     {
@@ -121,6 +122,8 @@ namespace Trajectories
                     double impactLat;
                     double impatLon;
                     double impactAlt;
+
+                    // Get Latitude and Longitude from impact position
                     impactPos = lastPatch.impactPosition.Value + lastPatchBody.position;
                     lastPatchBody.GetLatLonAlt(impactPos, out impactLat, out impatLon, out impactAlt);
 
