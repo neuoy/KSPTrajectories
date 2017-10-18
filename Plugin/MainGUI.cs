@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Linq;
+using System.Collections.Generic;
 using KSP.Localization;
 using UnityEngine;
 
@@ -43,6 +45,19 @@ namespace Trajectories
         private static DialogGUIVerticalLayout descent_page;
         private static DialogGUIVerticalLayout settings_page;
 
+        // display update strings
+        private static string max_gforce_hdrtxt = Localizer.Format("#autoLOC_Trajectories_MaxGforce") + ": ";
+        private static string aerodynamic_model_hdrtxt = Localizer.Format("#autoLOC_Trajectories_AeroModel") + ": ";
+        private static string performance_hdrtxt = Localizer.Format("#autoLOC_900334") + ": ";
+        private static string errors_hdrtxt = Localizer.Format("#autoLOC_Trajectories_Errors") + ": ";
+
+        private static string max_gforce_txt = "";
+        private static string impact_position_txt = "";
+        private static string impact_velocity_txt = "";
+        private static string aerodynamic_model_txt = "";
+        private static string performance_txt = "";
+        private static string num_errors_txt = "";
+
         public static MainGUI Instance
         {
             get
@@ -84,6 +99,8 @@ namespace Trajectories
             {
                 Show();
             }
+
+            UpdatePages();
         }
 
         private void OnDestroy()
@@ -123,6 +140,22 @@ namespace Trajectories
             // create pages
             info_page = new DialogGUIVerticalLayout(false, true, 0, new RectOffset(), TextAnchor.UpperCenter,
                 new DialogGUIHorizontalLayout(
+                    new DialogGUIToggle(() => { return Util.isPatchedConicsAvailable ? Settings.fetch.DisplayTrajectories : false; },
+                        Localizer.Format("#autoLOC_Trajectories_ShowTrajectory"), OnButtonClick_DisplayTrajectories),
+                    new DialogGUIToggle(() => { return Settings.fetch.DisplayTrajectoriesInFlight; },
+                        Localizer.Format("#autoLOC_Trajectories_InFlight"), OnButtonClick_DisplayTrajectoriesInFlight)),
+                new DialogGUIHorizontalLayout(
+                    new DialogGUIToggle(() => { return Settings.fetch.BodyFixedMode; },
+                        Localizer.Format("#autoLOC_Trajectories_FixedBody"), OnButtonClick_BodyFixedMode),
+                    new DialogGUIToggle(() => { return Settings.fetch.DisplayCompleteTrajectory; },
+                        Localizer.Format("#autoLOC_7001028"), OnButtonClick_DisplayCompleteTrajectory)),
+                new DialogGUILabel(() => { return max_gforce_txt; }, true),
+                new DialogGUILabel(() => { return impact_position_txt; }, true),
+                new DialogGUILabel(() => { return impact_velocity_txt; }, true),
+                new DialogGUIHorizontalLayout(
+                    new DialogGUILabel(() => { return Settings.fetch.ShowPerformance ? performance_txt : ""; }, true),
+                    new DialogGUILabel(() => { return Settings.fetch.ShowPerformance ? num_errors_txt : ""; }, true)),
+                new DialogGUILabel(() => { return aerodynamic_model_txt; }, true)
                 );
 
             target_page = new DialogGUIVerticalLayout(false, true, 0, new RectOffset(), TextAnchor.UpperCenter,
@@ -243,6 +276,35 @@ namespace Trajectories
             ChangePage(PageType.SETTINGS);
         }
 
+        private void OnButtonClick_DisplayTrajectories(bool inState)
+        {
+            // check that we have patched conics. If not, apologize to the user and return.
+            if (inState && !Util.isPatchedConicsAvailable)
+            {
+                ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_Trajectories_ConicsErr"));
+                Settings.fetch.DisplayTrajectories = false;
+                return;
+            }
+
+            Settings.fetch.DisplayTrajectories = inState;
+        }
+
+        private void OnButtonClick_DisplayTrajectoriesInFlight(bool inState)
+        {
+            Settings.fetch.DisplayTrajectoriesInFlight = inState;
+        }
+
+        private void OnButtonClick_BodyFixedMode(bool inState)
+        {
+            Settings.fetch.BodyFixedMode = inState;
+        }
+
+        private void OnButtonClick_DisplayCompleteTrajectory(bool inState)
+        {
+            Settings.fetch.DisplayCompleteTrajectory = inState;
+        }
+        #endregion
+
         #region Page methods for changing/updating the pages in the Gui page box
         /// <summary> Changes the page inside the page box. </summary>
         private void ChangePage(PageType inpage)
@@ -274,6 +336,95 @@ namespace Trajectories
             Stack<Transform> stack = new Stack<Transform>();
             stack.Push(page_box.uiItem.gameObject.transform);
             page_box.children[0].Create(ref stack, HighLogic.UISkin);
+        }
+
+        /// <summary> Updates the strings used by the Gui components to display changing values/data </summary>
+        private static void UpdatePages()
+        {
+            switch ((PageType)Settings.fetch.MainGUICurrentPage)
+            {
+                case PageType.INFO:
+                    UpdateInfoPage();
+                    return;
+                case PageType.TARGET:
+                    UpdateTargetPage();
+                    return;
+                case PageType.DESCENT:
+                    UpdateDescentPage();
+                    return;
+                case PageType.SETTINGS:
+                    UpdateSettingsPage();
+                    return;
+            }
+        }
+
+        /// <summary> Updates the strings used by the info page to display changing values/data </summary>
+        private static void UpdateInfoPage()
+        {
+            // grab the last patch that was calculated
+            Trajectory.Patch lastPatch = Trajectory.fetch.patches.LastOrDefault();
+
+            // max G-force
+            max_gforce_txt = max_gforce_hdrtxt +
+                    string.Format("{0:0.00}", Settings.fetch.DisplayTrajectories ? Trajectory.fetch.MaxAccel / 9.81 : 0);
+
+            // impact values
+            if (lastPatch != null && lastPatch.impactPosition.HasValue && Settings.fetch.DisplayTrajectories)
+            {
+                // calculate body offset position
+                CelestialBody lastPatchBody = lastPatch.startingState.referenceBody;
+                Vector3 position = lastPatch.impactPosition.Value + lastPatchBody.position;
+
+                // impact position
+                impact_position_txt = Localizer.Format("#autoLOC_Trajectories_ImpactPosition",
+                    string.Format("{0:000.000000}",lastPatchBody.GetLatitude(position)),
+                    string.Format("{0:000.000000}",lastPatchBody.GetLongitude(position)));
+
+                // impact velocity
+                Vector3 up = lastPatch.impactPosition.Value.normalized;
+                Vector3 vel = lastPatch.impactVelocity.Value - lastPatchBody.getRFrmVel(position);
+                float vVelMag = Vector3.Dot(vel, up);
+                float hVelMag = (vel - (up * vVelMag)).magnitude;
+
+                impact_velocity_txt = Localizer.Format("#autoLOC_Trajectories_ImpactVelocity",
+                    string.Format("{0:0.0}", -vVelMag),
+                    string.Format("{0:0.0}", hVelMag));
+            }
+            else
+            {
+                impact_position_txt = Localizer.Format("#autoLOC_Trajectories_ImpactPosition", "---", "---");
+                impact_velocity_txt = Localizer.Format("#autoLOC_Trajectories_ImpactVelocity", "---", "---");
+            }
+
+            // performace and errors
+            if (Settings.fetch.ShowPerformance)
+                UpdateSettingsPage();
+
+            // aerodynamic model
+            aerodynamic_model_txt = aerodynamic_model_hdrtxt + Trajectory.fetch.AerodynamicModelName;
+        }
+
+        /// <summary> Updates the strings used by the target page to display changing values/data </summary>
+        private static void UpdateTargetPage()
+        {
+        }
+
+        /// <summary> Updates the strings used by the descent page to display changing values/data </summary>
+        private static void UpdateDescentPage()
+        {
+        }
+
+        /// <summary> Updates the strings used by the settings page to display changing values/data </summary>
+        private static void UpdateSettingsPage()
+        {
+            Trajectory traj = Trajectory.fetch;
+
+            // performance
+            performance_txt = performance_hdrtxt +
+                string.Format("{0:0.0}ms ({1:0.0})%", traj.ComputationTime * 1000.0f, (traj.ComputationTime / traj.GameFrameTime) * 100.0f);
+
+            // num errors
+            num_errors_txt = errors_hdrtxt + string.Format("{0:0}", traj.ErrorCount);
         }
         #endregion
     }

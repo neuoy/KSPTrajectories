@@ -1,11 +1,12 @@
 ﻿using System;
+using KSP.Localization;
 using UnityEngine;
 
 namespace Trajectories
 {
-    class StockModel : VesselAerodynamicModel
+    class StockModel: VesselAerodynamicModel
     {
-        public override string AerodynamicModelName { get { return "Stock"; } }
+        public override string AerodynamicModelName { get { return Localizer.Format("#autoLOC_Trajectories_Stock"); } }
 
         public StockModel(Vessel ship, CelestialBody body) : base(ship, body) { }
 

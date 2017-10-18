@@ -9,6 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using KSP.Localization;
 using UnityEngine;
 
 namespace Trajectories
@@ -16,7 +17,7 @@ namespace Trajectories
     // this class handles trajectory prediction, performing a lightweight physical simulation to
     // predict a vessel trajectory in space and atmosphere)
     [KSPAddon(KSPAddon.Startup.EveryScene, false)]
-    class Trajectory : MonoBehaviour
+    class Trajectory: MonoBehaviour
     {
         public class VesselState
         {
@@ -88,7 +89,7 @@ namespace Trajectories
 
             public Point GetInfo(float altitudeAboveSeaLevel)
             {
-                if(!isAtmospheric)
+                if (!isAtmospheric)
                     throw new Exception("Trajectory info available only for atmospheric patches");
 
                 if (atmosphericTrajectory.Length == 1)
@@ -105,7 +106,7 @@ namespace Trajectories
                     ++idx;
 
                 float coeff = (absAltitude - atmosphericTrajectory[idx].pos.magnitude)
-                    / Mathf.Max(0.00001f, atmosphericTrajectory[idx-1].pos.magnitude - atmosphericTrajectory[idx].pos.magnitude);
+                    / Mathf.Max(0.00001f, atmosphericTrajectory[idx - 1].pos.magnitude - atmosphericTrajectory[idx].pos.magnitude);
                 coeff = Math.Min(1.0f, Math.Max(0.0f, coeff));
 
                 Point res = new Point();
@@ -133,7 +134,8 @@ namespace Trajectories
         private VesselAerodynamicModel aerodynamicModel_;
 
         public string AerodynamicModelName { get {
-                return aerodynamicModel_ == null ? "Not loaded" : aerodynamicModel_.AerodynamicModelName;
+                return aerodynamicModel_ == null ? Localizer.Format("#autoLOC_Trajectories_NotLoaded") :
+                    aerodynamicModel_.AerodynamicModelName;
             } }
 
         private List<Patch> patches_ = new List<Patch>();
@@ -394,7 +396,8 @@ namespace Trajectories
 
         public static double RealMaxAtmosphereAltitude(CelestialBody body)
         {
-            if (!body.atmosphere) return 0;
+            if (!body.atmosphere)
+                return 0;
             // Change for 1.0 refer to atmosphereDepth
             return body.atmosphereDepth;
         }
@@ -495,7 +498,7 @@ namespace Trajectories
             }
 
             double maxAtmosphereAltitude = RealMaxAtmosphereAltitude(body);
-            if(!body.atmosphere)
+            if (!body.atmosphere)
             {
                 maxAtmosphereAltitude = body.pqsController.mapMaxHeight;
             }
@@ -558,7 +561,7 @@ namespace Trajectories
                         double iterationSize = (groundRangeExit - entryTime) / 100.0;
                         double t;
                         bool groundImpact = false;
-                        for(t = entryTime; t < groundRangeExit; t += iterationSize)
+                        for (t = entryTime; t < groundRangeExit; t += iterationSize)
                         {
                             Vector3d pos = patch.spaceOrbit.getRelativePositionAtUT(t);
                             double groundAltitude = GetGroundAltitude(body, calculateRotatedPosition(body, Util.SwapYZ(pos), t))
@@ -732,7 +735,6 @@ namespace Trajectories
                         maxAccelBackBuffer_ = Math.Max(
                             (float) (aerodynamicForce.magnitude / aerodynamicModel_.mass),
                             maxAccelBackBuffer_);
-
 
                         //vel += acceleration * dt;
                         //pos += vel * dt;
