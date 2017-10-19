@@ -209,7 +209,8 @@ namespace Trajectories
                 new DialogGUIHorizontalLayout(true, false,
                     new DialogGUIToggle(() => { return Settings.fetch.ShowPerformance; },
                         Localizer.Format("#autoLOC_Trajectories_ShowPerformance"), OnButtonClick_ShowPerformance, 125f),
-                    new DialogGUIToggle(() => { return Settings.fetch.NewGui; }, "New Gui", OnButtonClick_NewGui))
+                    new DialogGUIToggle(() => { return Settings.fetch.NewGui; },
+                        Localizer.Format("#autoLOC_Trajectories_NewGui"), OnButtonClick_NewGui))
                 );
 
             // create page box with current page inserted into page box
