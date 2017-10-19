@@ -27,9 +27,6 @@ namespace Trajectories
             SETTINGS
         }
 
-        // permit global access
-        private static MainGUI instance = null;
-
         // visible flag
         private static bool visible = false;
 
@@ -65,19 +62,17 @@ namespace Trajectories
         private static double update_timer = Util.Clocks;
         private static double update_fps = 10;  // Frames per second the data values displayed in the Gui will update.
 
-        public static MainGUI Instance
+        // permit global access
+        public static MainGUI Fetch
         {
-            get
-            {
-                return instance;
-            }
-        }
+            get; private set;
+        } = null;
 
         //  constructor
         public MainGUI()
         {
             // enable global access
-            instance = this;
+            Fetch = this;
 
             // allocate and define window for use in the popup dialog
             Allocate();
@@ -120,9 +115,14 @@ namespace Trajectories
             UpdatePages();
         }
 
+        // FixedUpdate is required to fix the vessel switching bug!
+        private void FixedUpdate()
+        {
+        }
+
         private void OnDestroy()
         {
-            instance = null;
+            Fetch = null;
 
             // save popup position. Note. PopupDialog.RTrf is an offset from the center of the screeen.
             Settings.fetch.MainGUIWindowPos = new Vector2(
@@ -196,12 +196,12 @@ namespace Trajectories
                 new DialogGUIHorizontalLayout(
                     new DialogGUILabel(Localizer.Format("#autoLOC_Trajectories_MaxPatches"), true),
                     new DialogGUISlider(() => { return Settings.fetch.MaxPatchCount; },
-                        3, 10, true, slider_width, -1, OnSliderSet_MaxPatches),
+                        3f, 10f, true, slider_width, -1, OnSliderSet_MaxPatches),
                     new DialogGUILabel(() => { return Settings.fetch.MaxPatchCount.ToString(); }, 15f)),
                 new DialogGUIHorizontalLayout(
                     new DialogGUILabel(Localizer.Format("#autoLOC_Trajectories_MaxFramesPatch"), true),
                     new DialogGUISlider(() => { return Settings.fetch.MaxFramesPerPatch; },
-                        1, 50, true, slider_width, -1, OnSliderSet_MaxFramesPatch),
+                        1f, 50f, true, slider_width, -1, OnSliderSet_MaxFramesPatch),
                     new DialogGUILabel(() => { return Settings.fetch.MaxFramesPerPatch.ToString(); }, 15f)),
                 new DialogGUIHorizontalLayout(
                     new DialogGUILabel(() => { return performance_txt; }, true),
