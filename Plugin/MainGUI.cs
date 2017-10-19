@@ -197,18 +197,18 @@ namespace Trajectories
                     new DialogGUILabel(Localizer.Format("#autoLOC_Trajectories_MaxPatches"), true),
                     new DialogGUISlider(() => { return Settings.fetch.MaxPatchCount; },
                         3, 10, true, slider_width, -1, OnSliderSet_MaxPatches),
-                    new DialogGUILabel(() => { return Settings.fetch.MaxPatchCount.ToString(); }, 15)),
+                    new DialogGUILabel(() => { return Settings.fetch.MaxPatchCount.ToString(); }, 15f)),
                 new DialogGUIHorizontalLayout(
                     new DialogGUILabel(Localizer.Format("#autoLOC_Trajectories_MaxFramesPatch"), true),
                     new DialogGUISlider(() => { return Settings.fetch.MaxFramesPerPatch; },
                         1, 50, true, slider_width, -1, OnSliderSet_MaxFramesPatch),
-                    new DialogGUILabel(() => { return Settings.fetch.MaxFramesPerPatch.ToString(); }, 15)),
+                    new DialogGUILabel(() => { return Settings.fetch.MaxFramesPerPatch.ToString(); }, 15f)),
                 new DialogGUIHorizontalLayout(
                     new DialogGUILabel(() => { return performance_txt; }, true),
                     new DialogGUILabel(() => { return num_errors_txt; }, true)),
-                new DialogGUIHorizontalLayout(false, false,
+                new DialogGUIHorizontalLayout(true, false,
                     new DialogGUIToggle(() => { return Settings.fetch.ShowPerformance; },
-                        Localizer.Format("#autoLOC_Trajectories_ShowPerformance"), OnButtonClick_ShowPerformance, 125),
+                        Localizer.Format("#autoLOC_Trajectories_ShowPerformance"), OnButtonClick_ShowPerformance, 125f),
                     new DialogGUIToggle(() => { return Settings.fetch.NewGui; }, "New Gui", OnButtonClick_NewGui))
                 );
 
