@@ -294,8 +294,6 @@ namespace Trajectories
             GUILayout.Space(10);
 
             if (Settings.fetch.DisplaySettingsGUI = ToggleGroup(Settings.fetch.DisplaySettingsGUI, "Settings"))
-            GUILayout.BeginHorizontal();
-            if (GUILayout.Toggle(Settings.fetch.NewGui, new GUIContent("New Gui", "Swap to the New Gui")))
             {
                 GUILayout.BeginHorizontal();
                 GUILayout.Label("Max patches", GUILayout.Width(100));
@@ -341,17 +339,22 @@ namespace Trajectories
                     ), GUILayout.Width(130));
                 GUILayout.Label(traj.ErrorCount + " error(s)", GUILayout.Width(80));
                 GUILayout.EndHorizontal();
-                Settings.fetch.NewGui = true;
-                Settings.fetch.MainGUIEnabled = true;
-                Settings.fetch.GUIEnabled = false;
+
+                GUILayout.BeginHorizontal();
+                if (GUILayout.Toggle(Settings.fetch.NewGui, new GUIContent("New Gui", "Swap to the New Gui")))
+                {
+                    Settings.fetch.NewGui = true;
+                    Settings.fetch.MainGUIEnabled = true;
+                    Settings.fetch.GUIEnabled = false;
+                }
+                else
+                {
+                    Settings.fetch.NewGui = false;
+                    Settings.fetch.MainGUIEnabled = false;
+                    Settings.fetch.GUIEnabled = true;
+                }
+                GUILayout.EndHorizontal();
             }
-            else
-            {
-                Settings.fetch.NewGui = false;
-                Settings.fetch.MainGUIEnabled = false;
-                Settings.fetch.GUIEnabled = true;
-            }
-            GUILayout.EndHorizontal();
 
             tooltip = GUI.tooltip;
 
