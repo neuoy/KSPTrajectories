@@ -7,94 +7,174 @@ This file is part of Trajectories, under MIT license.
 
 using System;
 using System.Linq;
+using KSP.Localization;
 using UnityEngine;
 
 namespace Trajectories
 {
-    [KSPAddon(KSPAddon.Startup.EveryScene, false)]
-    class DescentProfile : MonoBehaviour
+    [KSPAddon(KSPAddon.Startup.Flight, false)]
+    public sealed class DescentProfile: MonoBehaviour
     {
-        struct Node
+        public class Node
         {
-            public string name;
-            public string description;
+            public string Name { get; private set; }
+            public string Description { get; private set; }
+            public string Horizon_txt { get; private set; }
+            public string Angle_txt { get; private set; }
+            private bool horizon;   // If true, angle is relative to horizon, otherwise it's relative to velocity (i.e. angle of attack)
+            private double angle;   // In radians
             private float sliderPos;
-            public double angle; // in radians
-            public bool horizon; // if true, angle is relative to horizon, otherwise it's relative to velocity (i.e. angle of attack)
 
-            static private readonly float maxAngle = 180.0f / 180.0f * Mathf.PI;
-
-            public double GetAngleOfAttack(Vector3d position, Vector3d velocity)
+            public bool Horizon
             {
-                if (!horizon)
-                    return angle;
-
-                return Math.Acos(Vector3d.Dot(position, velocity) / (position.magnitude * velocity.magnitude)) - Math.PI * 0.5 + angle;
+                get => horizon;
+                set
+                {
+                    horizon = value;
+                    Horizon_txt = value ? "Horiz" : "AoA";
+                }
             }
 
-            public void DoGUI()
+            public double Angle
             {
-                GUILayout.BeginHorizontal();
-                GUILayout.Label(new GUIContent(name, description), GUILayout.Width(50));
-                horizon = GUILayout.Toggle(horizon, new GUIContent(horizon ? "Horiz" : "AoA", "AoA = Angle of Attack = angle relatively to the velocity vector.\nHoriz = angle relatively to the horizon."), GUILayout.Width(50));
-                sliderPos = GUILayout.HorizontalSlider(sliderPos, -1.0f, 1.0f, GUILayout.Width(90));
-                angle = (double)(sliderPos * sliderPos * sliderPos * maxAngle); // this helps to have high precision near 0° while still allowing big angles
-                GUILayout.Label(Math.Round(angle * 180.0 / Math.PI).ToString() + "°", GUILayout.Width(30));
-                GUILayout.EndHorizontal();
+                get => angle;
+                set
+                {
+                    if (Math.Abs(value) < 0.00001)
+                        angle = 0d;
+                    else
+                        angle = value;
+
+                    double calc_angle = angle * 180.0 / Math.PI;
+                    if (calc_angle <= -100d || calc_angle >= 100d)
+                        Angle_txt = calc_angle.ToString("F1") + "°";
+                    else if (calc_angle <= -10d || calc_angle >= 10d)
+                        Angle_txt = calc_angle.ToString("F2") + "°";
+                    else
+                        Angle_txt = calc_angle.ToString("F3") + "°";
+                }
+            }
+
+            public float SliderPos
+            {
+                get => sliderPos;
+                set
+                {
+                    sliderPos = value;
+                    Angle = value * value * value * Math.PI; // This helps to have high precision near 0° while still allowing big angles
+                }
+            }
+
+            //  constructor
+            public Node(string name, string description)
+            {
+                Name = name;
+                Description = description;
             }
 
             public void RefreshSliderPos()
             {
-                bool negative = angle < 0;
-                sliderPos = (float)Math.Pow(Math.Abs(angle) / maxAngle, 1.0 / 3.0);
-                if (negative)
-                    sliderPos = -sliderPos;
+                float position = (float)Math.Pow(Math.Abs(Angle) / Math.PI, 1d / 3d);
+                if (Angle < 0d)
+                    SliderPos = -position;
+                else
+                    SliderPos = position;
+            }
+
+            public double GetAngleOfAttack(Vector3d position, Vector3d velocity)
+            {
+                if (!Horizon)
+                    return Angle;
+
+                return Math.Acos(Vector3d.Dot(position, velocity) / (position.magnitude * velocity.magnitude)) - Math.PI * 0.5 + Angle;
+            }
+
+            [Obsolete("use MainGUI")]
+            public void DoGUI()
+            {
+                GUILayout.BeginHorizontal();
+                GUILayout.Label(new GUIContent(Name, Description), GUILayout.Width(45));
+                Horizon = GUILayout.Toggle(Horizon, new GUIContent(Horizon_txt, "AoA = Angle of Attack = angle relatively to the velocity vector.\nHoriz = angle relatively to the horizon."), GUILayout.Width(45));
+                SliderPos = GUILayout.HorizontalSlider(SliderPos, -1.0f, 1.0f, GUILayout.Width(90));
+                GUILayout.Label(Angle_txt, GUILayout.Width(42));
+                GUILayout.EndHorizontal();
             }
         }
 
-        private Node entry = new Node { name = "Entry", description = "Spacecraft angle when entering the atmosphere" };
-        private Node highAltitude = new Node { name = "High", description = "Spacecraft angle at 50% of atmosphere height" };
-        private Node lowAltitude = new Node { name = "Low", description = "Spacecraft angle at 25% of atmosphere height" };
-        private Node finalApproach = new Node { name = "Ground", description = "Spacecraft angle near the ground" };
+        public Node entry;
+        public Node highAltitude;
+        public Node lowAltitude;
+        public Node finalApproach;
 
-        private bool progradeEntry;
-        private bool retrogradeEntry;
+        public bool ProgradeEntry { get; set; }
 
-        private static DescentProfile fetch_;
-        public static DescentProfile fetch { get { return fetch_; } }
+        public bool RetrogradeEntry { get; set; }
 
         private Vessel attachedVessel;
 
+        // permit global access
+        public static DescentProfile fetch { get; private set; }
+
+        //  constructors
         public DescentProfile()
         {
+            fetch = this;
+            Allocate();
+            Reset();
         }
 
-        public DescentProfile(float AoA)
+        public DescentProfile(double AoA)
         {
+            fetch = this;
+            Allocate();
             Reset(AoA);
         }
 
-        public void Reset(float AoA = 0)
+        private void OnDestroy()
         {
-            entry.angle = AoA;
-            entry.horizon = false;
-
-            highAltitude.angle = AoA;
-            highAltitude.horizon = false;
-
-            lowAltitude.angle = AoA;
-            lowAltitude.horizon = false;
-
-            finalApproach.angle = AoA;
-            finalApproach.horizon = false;
-
-            progradeEntry = AoA == 0;
-            retrogradeEntry = AoA == 180;
+            fetch = null;
+            entry = null;
+            highAltitude = null;
+            lowAltitude = null;
+            finalApproach = null;
         }
 
-        public void Update()
+        private void Allocate()
         {
-            if (HighLogic.LoadedScene == GameScenes.FLIGHT && attachedVessel != FlightGlobals.ActiveVessel)
+            entry = new Node(Localizer.Format("#autoLOC_Trajectories_Entry"), Localizer.Format("#autoLOC_Trajectories_EntryDesc"));
+            highAltitude = new Node(Localizer.Format("#autoLOC_6001508"), Localizer.Format("#autoLOC_Trajectories_HighDesc"));
+            lowAltitude = new Node(Localizer.Format("#autoLOC_7000051"), Localizer.Format("#autoLOC_Trajectories_LowDesc"));
+            finalApproach = new Node(Localizer.Format("#autoLOC_453573"), Localizer.Format("#autoLOC_Trajectories_GroundDesc"));
+        }
+
+        public void Reset(double AoA = 0d)
+        {
+            entry.Angle = AoA;
+            entry.Horizon = false;
+            highAltitude.Angle = AoA;
+            highAltitude.Horizon = false;
+            lowAltitude.Angle = AoA;
+            lowAltitude.Horizon = false;
+            finalApproach.Angle = AoA;
+            finalApproach.Horizon = false;
+
+            ProgradeEntry = AoA == 0d;
+            RetrogradeEntry = AoA == Math.PI;
+
+            RefreshSliders();
+        }
+
+        private void RefreshSliders()
+        {
+            entry.RefreshSliderPos();
+            highAltitude.RefreshSliderPos();
+            lowAltitude.RefreshSliderPos();
+            finalApproach.RefreshSliderPos();
+        }
+
+        private void Update()
+        {
+            if (Util.IsFlight && (attachedVessel != FlightGlobals.ActiveVessel))
             {
                 //Debug.Log("Loading vessel descent profile");
                 attachedVessel = FlightGlobals.ActiveVessel;
@@ -115,122 +195,107 @@ namespace Trajectories
                     else
                     {
                         //Debug.Log("Reading settings...");
-                        entry.angle = module.EntryAngle;
-                        entry.horizon = module.EntryHorizon;
-                        highAltitude.angle = module.HighAngle;
-                        highAltitude.horizon = module.HighHorizon;
-                        lowAltitude.angle = module.LowAngle;
-                        lowAltitude.horizon = module.LowHorizon;
-                        finalApproach.angle = module.GroundAngle;
-                        finalApproach.horizon = module.GroundHorizon;
+                        entry.Angle = module.EntryAngle;
+                        entry.Horizon = module.EntryHorizon;
+                        highAltitude.Angle = module.HighAngle;
+                        highAltitude.Horizon = module.HighHorizon;
+                        lowAltitude.Angle = module.LowAngle;
+                        lowAltitude.Horizon = module.LowHorizon;
+                        finalApproach.Angle = module.GroundAngle;
+                        finalApproach.Horizon = module.GroundHorizon;
 
-                        entry.RefreshSliderPos();
-                        highAltitude.RefreshSliderPos();
-                        lowAltitude.RefreshSliderPos();
-                        finalApproach.RefreshSliderPos();
+                        ProgradeEntry = module.ProgradeEntry;
+                        RetrogradeEntry = module.RetrogradeEntry;
 
-                        progradeEntry = module.ProgradeEntry;
-                        retrogradeEntry = module.RetrogradeEntry;
+                        RefreshSliders();
+
                         //Debug.Log("Descent profile loaded");
                     }
                 }
             }
         }
 
-        private void Save()
+        public void Save()
         {
-            if(attachedVessel == null)
+            if (attachedVessel == null)
                 return;
 
             foreach (var module in attachedVessel.Parts.SelectMany(p => p.Modules.OfType<TrajectoriesVesselSettings>()))
             {
-                module.EntryAngle = (float)entry.angle;
-                module.EntryHorizon = entry.horizon;
-                module.HighAngle = (float)highAltitude.angle;
-                module.HighHorizon = highAltitude.horizon;
-                module.LowAngle = (float)lowAltitude.angle;
-                module.LowHorizon = lowAltitude.horizon;
-                module.GroundAngle = (float)finalApproach.angle;
-                module.GroundHorizon = finalApproach.horizon;
+                module.EntryAngle = entry.Angle;
+                module.EntryHorizon = entry.Horizon;
+                module.HighAngle = highAltitude.Angle;
+                module.HighHorizon = highAltitude.Horizon;
+                module.LowAngle = lowAltitude.Angle;
+                module.LowHorizon = lowAltitude.Horizon;
+                module.GroundAngle = finalApproach.Angle;
+                module.GroundHorizon = finalApproach.Horizon;
 
-                module.ProgradeEntry = progradeEntry;
-                module.RetrogradeEntry = retrogradeEntry;
+                module.ProgradeEntry = ProgradeEntry;
+                module.RetrogradeEntry = RetrogradeEntry;
             }
         }
 
-        public void Start()
-        {
-            fetch_ = this;
-        }
-
+        [Obsolete("use MainGUI")]
         public void DoGUI()
         {
-            Update();
-
             entry.DoGUI();
             highAltitude.DoGUI();
             lowAltitude.DoGUI();
             finalApproach.DoGUI();
-
-            Save();
+            CheckGUI();
         }
 
+        [Obsolete("use MainGUI")]
         public void DoQuickControlsGUI()
         {
-            Update();
+            bool newPrograde = GUILayout.Toggle(ProgradeEntry, "Progr.", GUILayout.Width(50));
+            bool newRetrograde = GUILayout.Toggle(RetrogradeEntry, "Retro.", GUILayout.Width(50));
 
-            bool newPrograde = GUILayout.Toggle(progradeEntry, "Progr.", GUILayout.Width(50));
-            bool newRetrograde = GUILayout.Toggle(retrogradeEntry, "Retro.", GUILayout.Width(50));
-
-            bool presetActivated = false;
-            if (newPrograde && !progradeEntry)
+            if (newPrograde && !ProgradeEntry)
             {
-                newRetrograde = false;
-                presetActivated = true;
+                Reset();
+                Save();
             }
-            else if (newRetrograde && !retrogradeEntry)
+            else if (newRetrograde && !RetrogradeEntry)
             {
-                newPrograde = false;
-                presetActivated = true;
+                Reset(Math.PI);
+                Save();
             }
+        }
 
-            progradeEntry = newPrograde;
-            retrogradeEntry = newRetrograde;
+        public void CheckGUI()
+        {
+            double? AoA = entry.Horizon ? (double?)null : entry.Angle;
 
-            if (presetActivated)
+            if (highAltitude.Angle != AoA || highAltitude.Horizon)
+                AoA = null;
+            if (lowAltitude.Angle != AoA || lowAltitude.Horizon)
+                AoA = null;
+            if (finalApproach.Angle != AoA || finalApproach.Horizon)
+                AoA = null;
+
+            if (!AoA.HasValue)
             {
-                double setAoA = progradeEntry ? 0 : Math.PI;
-
-                entry.angle = setAoA;
-                entry.horizon = false;
-                entry.RefreshSliderPos();
-                highAltitude.angle = setAoA;
-                highAltitude.horizon = false;
-                highAltitude.RefreshSliderPos();
-                lowAltitude.angle = setAoA;
-                lowAltitude.horizon = false;
-                lowAltitude.RefreshSliderPos();
-                finalApproach.angle = setAoA;
-                finalApproach.horizon = false;
-                finalApproach.RefreshSliderPos();
+                ProgradeEntry = false;
+                RetrogradeEntry = false;
             }
             else
             {
-                double? AoA = entry.horizon ? (double?)null : entry.angle;
-                if (highAltitude.angle != AoA || highAltitude.horizon) AoA = null;
-                if (lowAltitude.angle != AoA || lowAltitude.horizon) AoA = null;
-                if (finalApproach.angle != AoA || finalApproach.horizon) AoA = null;
-
-                if (!AoA.HasValue || Math.Abs(AoA.Value - 0) > 0.01)
-                    progradeEntry = false;
-                if (!AoA.HasValue || Math.Abs(AoA.Value - Math.PI) > 0.01)
-                    retrogradeEntry = false;
+                if (Math.Abs(AoA.Value) < 0.00001)
+                    ProgradeEntry = true;
+                if (Math.Abs((Math.Abs(AoA.Value) - Math.PI)) < 0.00001)
+                    RetrogradeEntry = true;
             }
 
             Save();
         }
 
-        // Computes the angle of attack to follow the current profile if the aircraft is at the specified position (in world frame, but relative to the body) with the specified velocity (relative to the air, so it takes the body rotation into account)
+        /// <summary>
+        /// Computes the angle of attack to follow the current profile if the aircraft is at the specified position
+        /// (in world frame, but relative to the body) with the specified velocity
+        /// (relative to the air, so it takes the body rotation into account)
+        /// </summary>
         public double GetAngleOfAttack(CelestialBody body, Vector3d position, Vector3d velocity)
         {
             double altitude = position.magnitude - body.Radius;
@@ -239,19 +304,19 @@ namespace Trajectories
             Node a, b;
             double aCoeff;
 
-            if (altitudeRatio > 0.5)
+            if (altitudeRatio > 0.5)  // Atmospheric entry
             {
                 a = entry;
                 b = highAltitude;
                 aCoeff = Math.Min((altitudeRatio - 0.5) * 2.0, 1.0);
             }
-            else if(altitudeRatio > 0.25)
+            else if (altitudeRatio > 0.25)  // High Altitude
             {
                 a = highAltitude;
                 b = lowAltitude;
                 aCoeff = altitudeRatio * 4.0 - 1.0;
             }
-            else if (altitudeRatio > 0.05)
+            else if (altitudeRatio > 0.05)  // Low Altitude
             {
                 a = lowAltitude;
                 b = finalApproach;
@@ -260,7 +325,7 @@ namespace Trajectories
                 aCoeff = 1.0 - aCoeff;
                 aCoeff = 1.0 - aCoeff * aCoeff;
             }
-            else
+            else    // Final Approach or Non-Atmospheric Body
             {
                 return finalApproach.GetAngleOfAttack(position, velocity);
             }

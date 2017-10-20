@@ -9,7 +9,7 @@ namespace Trajectories
 {
     /// <summary> MainGUI window handler. </summary>
     [KSPAddon(KSPAddon.Startup.Flight, false)]
-    public class MainGUI: MonoBehaviour
+    public sealed class MainGUI: MonoBehaviour
     {
         // constants
         private const float width = 320.0f;
@@ -180,8 +180,40 @@ namespace Trajectories
                 new DialogGUILabel("<b>   Target Page</b>", true));
 
             descent_page = new DialogGUIVerticalLayout(false, true, 0, new RectOffset(), TextAnchor.UpperCenter,
-                new DialogGUISpace(4),
-                new DialogGUILabel("<b>   Descent Page</b>", true));
+                new DialogGUIHorizontalLayout(false, false, 0, new RectOffset(), TextAnchor.MiddleCenter,
+                    new DialogGUIToggle(() => { return DescentProfile.fetch.ProgradeEntry; },
+                        Localizer.Format("#autoLOC_900597"), OnButtonClick_Prograde),
+                    new DialogGUIToggle(() => { return DescentProfile.fetch.RetrogradeEntry; },
+                        Localizer.Format("#autoLOC_900607"), OnButtonClick_Retrograde)),
+                new DialogGUIHorizontalLayout(
+                    new DialogGUILabel(DescentProfile.fetch.entry.Name, true),
+                    new DialogGUIToggle(() => { return DescentProfile.fetch.entry.Horizon; },
+                        () => { return DescentProfile.fetch.entry.Horizon_txt; }, OnButtonClick_EntryHorizon, 60f),
+                    new DialogGUISlider(() => { return DescentProfile.fetch.entry.SliderPos; },
+                        -1f, 1f, false, slider_width, -1, OnSliderSet_EntryAngle),
+                    new DialogGUILabel(() => { return DescentProfile.fetch.entry.Angle_txt; }, 36f)),
+                new DialogGUIHorizontalLayout(
+                    new DialogGUILabel(DescentProfile.fetch.highAltitude.Name, true),
+                    new DialogGUIToggle(() => { return DescentProfile.fetch.highAltitude.Horizon; },
+                        () => { return DescentProfile.fetch.highAltitude.Horizon_txt; }, OnButtonClick_HighHorizon, 60f),
+                    new DialogGUISlider(() => { return DescentProfile.fetch.highAltitude.SliderPos; },
+                        -1f, 1f, false, slider_width, -1, OnSliderSet_HighAngle),
+                    new DialogGUILabel(() => { return DescentProfile.fetch.highAltitude.Angle_txt; }, 36f)),
+                new DialogGUIHorizontalLayout(
+                    new DialogGUILabel(DescentProfile.fetch.lowAltitude.Name, true),
+                    new DialogGUIToggle(() => { return DescentProfile.fetch.lowAltitude.Horizon; },
+                        () => { return DescentProfile.fetch.lowAltitude.Horizon_txt; }, OnButtonClick_LowHorizon, 60f),
+                    new DialogGUISlider(() => { return DescentProfile.fetch.lowAltitude.SliderPos; },
+                        -1f, 1f, false, slider_width, -1, OnSliderSet_LowAngle),
+                    new DialogGUILabel(() => { return DescentProfile.fetch.lowAltitude.Angle_txt; }, 36f)),
+                new DialogGUIHorizontalLayout(
+                    new DialogGUILabel(DescentProfile.fetch.finalApproach.Name, true),
+                    new DialogGUIToggle(() => { return DescentProfile.fetch.finalApproach.Horizon; },
+                        () => { return DescentProfile.fetch.finalApproach.Horizon_txt; }, OnButtonClick_GroundHorizon, 60f),
+                    new DialogGUISlider(() => { return DescentProfile.fetch.finalApproach.SliderPos; },
+                        -1f, 1f, false, slider_width, -1, OnSliderSet_GroundAngle),
+                    new DialogGUILabel(() => { return DescentProfile.fetch.finalApproach.Angle_txt; }, 36f))
+                );
 
             settings_page = new DialogGUIVerticalLayout(false, true, 0, new RectOffset(), TextAnchor.UpperCenter,
                 new DialogGUIToggle(() => { return ToolbarManager.ToolbarAvailable ? Settings.fetch.UseBlizzyToolbar : false; },
@@ -224,7 +256,7 @@ namespace Trajectories
                     break;
                 case PageType.SETTINGS:
                     page_box = new DialogGUIBox(null, -1, -1, () => true, settings_page);
-                   break;
+                    break;
                 default:
                     page_box = new DialogGUIBox(null, -1, -1, () => true, info_page);
                     break;
@@ -388,6 +420,52 @@ namespace Trajectories
             Settings.fetch.MainGUIEnabled = inState;
             Settings.fetch.GUIEnabled = !inState;
         }
+
+        private void OnButtonClick_Prograde(bool inState)
+        {
+            if (inState != DescentProfile.fetch.ProgradeEntry)
+            {
+                DescentProfile.fetch.ProgradeEntry = inState;
+                if (inState)
+                    DescentProfile.fetch.Reset();
+                DescentProfile.fetch.Save();
+            }
+        }
+
+        private void OnButtonClick_Retrograde(bool inState)
+        {
+            if (inState != DescentProfile.fetch.RetrogradeEntry)
+            {
+                DescentProfile.fetch.RetrogradeEntry = inState;
+                if (inState)
+                    DescentProfile.fetch.Reset(Math.PI);
+                DescentProfile.fetch.Save();
+            }
+        }
+
+        private void OnButtonClick_EntryHorizon(bool inState)
+        {
+            DescentProfile.fetch.entry.Horizon = inState;
+            DescentProfile.fetch.CheckGUI();
+        }
+
+        private void OnButtonClick_HighHorizon(bool inState)
+        {
+            DescentProfile.fetch.highAltitude.Horizon = inState;
+            DescentProfile.fetch.CheckGUI();
+        }
+
+        private void OnButtonClick_LowHorizon(bool inState)
+        {
+            DescentProfile.fetch.lowAltitude.Horizon = inState;
+            DescentProfile.fetch.CheckGUI();
+        }
+
+        private void OnButtonClick_GroundHorizon(bool inState)
+        {
+            DescentProfile.fetch.finalApproach.Horizon = inState;
+            DescentProfile.fetch.CheckGUI();
+        }
         #endregion
 
         #region Callback methods for the Gui components
@@ -400,6 +478,30 @@ namespace Trajectories
         private void OnSliderSet_MaxFramesPatch(float invalue)
         {
             Settings.fetch.MaxFramesPerPatch = (int)invalue;
+        }
+
+        private void OnSliderSet_EntryAngle(float invalue)
+        {
+            DescentProfile.fetch.entry.SliderPos = invalue;
+            DescentProfile.fetch.CheckGUI();
+        }
+
+        private void OnSliderSet_HighAngle(float invalue)
+        {
+            DescentProfile.fetch.highAltitude.SliderPos = invalue;
+            DescentProfile.fetch.CheckGUI();
+        }
+
+        private void OnSliderSet_LowAngle(float invalue)
+        {
+            DescentProfile.fetch.lowAltitude.SliderPos = invalue;
+            DescentProfile.fetch.CheckGUI();
+        }
+
+        private void OnSliderSet_GroundAngle(float invalue)
+        {
+            DescentProfile.fetch.finalApproach.SliderPos = invalue;
+            DescentProfile.fetch.CheckGUI();
         }
         #endregion
 
@@ -452,9 +554,6 @@ namespace Trajectories
                 case PageType.TARGET:
                     UpdateTargetPage();
                     return;
-                case PageType.DESCENT:
-                    UpdateDescentPage();
-                    return;
                 case PageType.SETTINGS:
                     UpdateSettingsPage();
                     return;
@@ -480,8 +579,8 @@ namespace Trajectories
 
                 // impact position
                 impact_position_txt = Localizer.Format("#autoLOC_Trajectories_ImpactPosition",
-                    string.Format("{0:000.000000}",lastPatchBody.GetLatitude(position)),
-                    string.Format("{0:000.000000}",lastPatchBody.GetLongitude(position)));
+                    string.Format("{0:000.000000}", lastPatchBody.GetLatitude(position)),
+                    string.Format("{0:000.000000}", lastPatchBody.GetLongitude(position)));
 
                 // impact velocity
                 Vector3 up = lastPatch.impactPosition.Value.normalized;
@@ -509,11 +608,6 @@ namespace Trajectories
 
         /// <summary> Updates the strings used by the target page to display changing values/data </summary>
         private static void UpdateTargetPage()
-        {
-        }
-
-        /// <summary> Updates the strings used by the descent page to display changing values/data </summary>
-        private static void UpdateDescentPage()
         {
         }
 
