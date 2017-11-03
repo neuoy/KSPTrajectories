@@ -85,6 +85,9 @@ namespace Trajectories
 
         private void FixedUpdate()
         {
+            if (Settings.fetch.NewGui)
+                return;
+
             float t = Time.realtimeSinceStartup;
             if (t < lastStringRenderTime + stringRenderInterval)
                 return;
