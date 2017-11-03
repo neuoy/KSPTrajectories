@@ -346,6 +346,8 @@ namespace Trajectories
                     Settings.fetch.NewGui = true;
                     Settings.fetch.MainGUIEnabled = true;
                     Settings.fetch.GUIEnabled = false;
+                    InputLockManager.RemoveControlLock("TrajectoriesFlightLock");
+                    clickThroughLocked = false;
                 }
                 else
                 {
