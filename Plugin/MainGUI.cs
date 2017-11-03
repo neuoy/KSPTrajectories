@@ -573,20 +573,20 @@ namespace Trajectories
             // impact values
             if (lastPatch != null && lastPatch.ImpactPosition.HasValue && Settings.fetch.DisplayTrajectories)
             {
-                // calculate body offset position
+                // calculate body offset impact position
                 CelestialBody lastPatchBody = lastPatch.StartingState.ReferenceBody;
-                Vector3 position = lastPatch.ImpactPosition.Value + lastPatchBody.position;
+                Vector3d impactPos = lastPatch.ImpactPosition.Value + lastPatchBody.position;
 
                 // impact position
                 impact_position_txt = Localizer.Format("#autoLOC_Trajectories_ImpactPosition",
-                    string.Format("{0:000.000000}", lastPatchBody.GetLatitude(position)),
-                    string.Format("{0:000.000000}", lastPatchBody.GetLongitude(position)));
+                    string.Format("{0:000.000000}", lastPatchBody.GetLatitude(impactPos)),
+                    string.Format("{0:000.000000}", lastPatchBody.GetLongitude(impactPos)));
 
                 // impact velocity
-                Vector3 up = lastPatch.ImpactPosition.Value.normalized;
-                Vector3 vel = lastPatch.ImpactVelocity.Value - lastPatchBody.getRFrmVel(position);
-                float vVelMag = Vector3.Dot(vel, up);
-                float hVelMag = (vel - (up * vVelMag)).magnitude;
+                Vector3d up = lastPatch.ImpactPosition.Value.normalized;
+                Vector3d vel = lastPatch.ImpactVelocity.Value - lastPatchBody.getRFrmVel(impactPos);
+                double vVelMag = Vector3d.Dot(vel, up);
+                double hVelMag = (vel - (up * vVelMag)).magnitude;
 
                 impact_velocity_txt = Localizer.Format("#autoLOC_Trajectories_ImpactVelocity",
                     string.Format("{0:0.0}", -vVelMag),
