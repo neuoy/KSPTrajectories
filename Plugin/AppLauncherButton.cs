@@ -119,7 +119,7 @@ namespace Trajectories
             if (e.MouseButton == 0)
             {
                 // check that we have patched conics. If not, apologize to the user and return.
-                if (!Util.isPatchedConicsAvailable)
+                if (!Util.IsPatchedConicsAvailable)
                 {
                     ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_Trajectories_ConicsErr"));
                     Settings.fetch.DisplayTrajectories = false;

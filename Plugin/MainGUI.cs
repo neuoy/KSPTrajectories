@@ -157,7 +157,7 @@ namespace Trajectories
             // create pages
             info_page = new DialogGUIVerticalLayout(false, true, 0, new RectOffset(), TextAnchor.UpperCenter,
                 new DialogGUIHorizontalLayout(
-                    new DialogGUIToggle(() => { return Util.isPatchedConicsAvailable ? Settings.fetch.DisplayTrajectories : false; },
+                    new DialogGUIToggle(() => { return Util.IsPatchedConicsAvailable ? Settings.fetch.DisplayTrajectories : false; },
                         Localizer.Format("#autoLOC_Trajectories_ShowTrajectory"), OnButtonClick_DisplayTrajectories),
                     new DialogGUIToggle(() => { return Settings.fetch.DisplayTrajectoriesInFlight; },
                         Localizer.Format("#autoLOC_Trajectories_InFlight"), OnButtonClick_DisplayTrajectoriesInFlight)),
@@ -355,7 +355,7 @@ namespace Trajectories
         private void OnButtonClick_DisplayTrajectories(bool inState)
         {
             // check that we have patched conics. If not, apologize to the user and return.
-            if (inState && !Util.isPatchedConicsAvailable)
+            if (inState && !Util.IsPatchedConicsAvailable)
             {
                 ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_Trajectories_ConicsErr"));
                 Settings.fetch.DisplayTrajectories = false;
@@ -564,18 +564,18 @@ namespace Trajectories
         private static void UpdateInfoPage()
         {
             // grab the last patch that was calculated
-            Trajectory.Patch lastPatch = Trajectory.fetch.patches.LastOrDefault();
+            Trajectory.Patch lastPatch = Trajectory.fetch.Patches.LastOrDefault();
 
             // max G-force
             max_gforce_txt = max_gforce_hdrtxt +
                     string.Format("{0:0.00}", Settings.fetch.DisplayTrajectories ? Trajectory.fetch.MaxAccel / 9.81 : 0);
 
             // impact values
-            if (lastPatch != null && lastPatch.impactPosition.HasValue && Settings.fetch.DisplayTrajectories)
+            if (lastPatch != null && lastPatch.ImpactPosition.HasValue && Settings.fetch.DisplayTrajectories)
             {
                 // calculate body offset position
-                CelestialBody lastPatchBody = lastPatch.startingState.referenceBody;
-                Vector3 position = lastPatch.impactPosition.Value + lastPatchBody.position;
+                CelestialBody lastPatchBody = lastPatch.StartingState.ReferenceBody;
+                Vector3 position = lastPatch.ImpactPosition.Value + lastPatchBody.position;
 
                 // impact position
                 impact_position_txt = Localizer.Format("#autoLOC_Trajectories_ImpactPosition",
@@ -583,8 +583,8 @@ namespace Trajectories
                     string.Format("{0:000.000000}", lastPatchBody.GetLongitude(position)));
 
                 // impact velocity
-                Vector3 up = lastPatch.impactPosition.Value.normalized;
-                Vector3 vel = lastPatch.impactVelocity.Value - lastPatchBody.getRFrmVel(position);
+                Vector3 up = lastPatch.ImpactPosition.Value.normalized;
+                Vector3 vel = lastPatch.ImpactVelocity.Value - lastPatchBody.getRFrmVel(position);
                 float vVelMag = Vector3.Dot(vel, up);
                 float hVelMag = (vel - (up * vVelMag)).magnitude;
 

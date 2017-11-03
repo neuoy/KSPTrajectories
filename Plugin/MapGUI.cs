@@ -92,16 +92,16 @@ namespace Trajectories
             lastStringRenderTime = t;
 
             Trajectory traj = Trajectory.fetch;
-            Trajectory.Patch lastPatch = traj.patches.LastOrDefault();
-            CelestialBody lastPatchBody = lastPatch?.startingState.referenceBody;
-            CelestialBody targetBody = traj.targetBody;
+            Trajectory.Patch lastPatch = traj.Patches.LastOrDefault();
+            CelestialBody lastPatchBody = lastPatch?.StartingState.ReferenceBody;
+            CelestialBody targetBody = traj.TargetBody;
 
             guistring_gForce = (traj.MaxAccel / 9.81).ToString("0.00");
 
-            if (lastPatch != null && lastPatch.impactPosition.HasValue)
+            if (lastPatch != null && lastPatch.ImpactPosition.HasValue)
             {
-                Vector3 up = lastPatch.impactPosition.Value.normalized;
-                Vector3 vel = lastPatch.impactVelocity.Value - lastPatchBody.getRFrmVel(lastPatch.impactPosition.Value + lastPatchBody.position);
+                Vector3 up = lastPatch.ImpactPosition.Value.normalized;
+                Vector3 vel = lastPatch.ImpactVelocity.Value - lastPatchBody.getRFrmVel(lastPatch.ImpactPosition.Value + lastPatchBody.position);
                 float vVelMag = Vector3.Dot(vel, up);
                 Vector3 vVel = up * vVelMag;
                 float hVelMag = (vel - vVel).magnitude;
@@ -115,8 +115,8 @@ namespace Trajectories
 
             if (Settings.fetch.DisplayTargetGUI)
             {
-                if (lastPatchBody != null && targetBody != null && lastPatch.impactPosition.HasValue
-                    && lastPatchBody == targetBody && traj.targetPosition.HasValue)
+                if (lastPatchBody != null && targetBody != null && lastPatch.ImpactPosition.HasValue
+                    && lastPatchBody == targetBody && traj.TargetPosition.HasValue)
                 {
                     // Get Latitude and Longitude from impact position
                     double impactLat;
@@ -124,23 +124,23 @@ namespace Trajectories
                     double impactAlt;
 
                     // Get Latitude and Longitude from impact position
-                    impactPos = lastPatch.impactPosition.Value + lastPatchBody.position;
+                    impactPos = lastPatch.ImpactPosition.Value + lastPatchBody.position;
                     lastPatchBody.GetLatLonAlt(impactPos, out impactLat, out impatLon, out impactAlt);
 
                     // Get Latitude and Longitude for target position
                     double targetLat;
                     double targetLon;
                     double targetAlt;
-                    targetPos = traj.targetPosition.Value + targetBody.position;
+                    targetPos = traj.TargetPosition.Value + targetBody.position;
                     targetBody.GetLatLonAlt(targetPos, out targetLat, out targetLon, out targetAlt);
 
-                    float targetDistance = (float)(Util.distanceFromLatitudeAndLongitude(targetBody.Radius + impactAlt,
+                    float targetDistance = (float)(Util.DistanceFromLatitudeAndLongitude(targetBody.Radius + impactAlt,
                         impactLat, impatLon, targetLat, targetLon) / 1e3);
 
-                    float targetDistanceNorth = (float)(Util.distanceFromLatitudeAndLongitude(targetBody.Radius + impactAlt,
+                    float targetDistanceNorth = (float)(Util.DistanceFromLatitudeAndLongitude(targetBody.Radius + impactAlt,
                         impactLat, targetLon, targetLat, targetLon) / 1e3) * ((targetLat - impactLat) < 0 ? -1.0f : +1.0f);
 
-                    float targetDistanceEast = (float)(Util.distanceFromLatitudeAndLongitude(targetBody.Radius + impactAlt,
+                    float targetDistanceEast = (float)(Util.DistanceFromLatitudeAndLongitude(targetBody.Radius + impactAlt,
                         targetLat, impatLon, targetLat, targetLon) / 1e3) * ((targetLon - impatLon) < 0 ? -1.0f : +1.0f);
 
                     // format distance to target string
@@ -177,7 +177,7 @@ namespace Trajectories
             Settings.fetch.DisplayTrajectoriesInFlight = GUILayout.Toggle(Settings.fetch.DisplayTrajectoriesInFlight, "In-Flight");
 
             // check that we have patched conics. If not, apologize to the user and return.
-            if (Settings.fetch.DisplayTrajectories && !Util.isPatchedConicsAvailable)
+            if (Settings.fetch.DisplayTrajectories && !Util.IsPatchedConicsAvailable)
             {
                 ScreenMessages.PostScreenMessage(
                     "Can't show trajectory because patched conics are not available." +
@@ -207,7 +207,7 @@ namespace Trajectories
 
             if (Settings.fetch.DisplayTargetGUI = ToggleGroup(Settings.fetch.DisplayTargetGUI, "Target"))
             {
-                GUI.enabled = traj.targetPosition.HasValue;
+                GUI.enabled = traj.TargetPosition.HasValue;
 
                 GUILayout.Label(guistring_targetDistance);
 
@@ -216,11 +216,11 @@ namespace Trajectories
                 GUI.enabled = true;
 
                 GUILayout.BeginHorizontal();
-                var patch = traj.patches.LastOrDefault();
-                GUI.enabled = (patch != null && patch.impactPosition.HasValue);
+                var patch = traj.Patches.LastOrDefault();
+                GUI.enabled = (patch != null && patch.ImpactPosition.HasValue);
                 if (GUILayout.Button("Set current impact", GUILayout.Width(150)))
                 {
-                    traj.SetTarget(patch.startingState.referenceBody, patch.impactPosition);
+                    traj.SetTarget(patch.StartingState.ReferenceBody, patch.ImpactPosition);
                 }
                 GUI.enabled = true;
                 if (GUILayout.Button("Set KSC", GUILayout.Width(70)))

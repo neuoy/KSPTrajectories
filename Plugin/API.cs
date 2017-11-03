@@ -20,51 +20,51 @@ namespace Trajectories
 
         public static double? getEndTime()
         {
-            foreach (var patch in Trajectory.fetch.patches)
+            foreach (var patch in Trajectory.fetch.Patches)
             {
-                if (patch.impactPosition.HasValue)
-                    return patch.endTime;
+                if (patch.ImpactPosition.HasValue)
+                    return patch.EndTime;
             }
             return null;
         }
 
         public static Vector3? getImpactPosition()
         {
-            foreach (var patch in Trajectory.fetch.patches)
+            foreach (var patch in Trajectory.fetch.Patches)
             {
-                if (patch.impactPosition != null)
-                    return patch.impactPosition;
+                if (patch.ImpactPosition != null)
+                    return patch.ImpactPosition;
             }
             return null;
         }
 
         public static Vector3? getImpactVelocity()
         {
-            foreach (var patch in Trajectory.fetch.patches)
+            foreach (var patch in Trajectory.fetch.Patches)
             {
-                if (patch.impactVelocity != null)
-                    return patch.impactVelocity;
+                if (patch.ImpactVelocity != null)
+                    return patch.ImpactVelocity;
             }
             return null;
         }
 
         public static Orbit getSpaceOrbit()
         {
-            foreach (var patch in Trajectory.fetch.patches)
+            foreach (var patch in Trajectory.fetch.Patches)
             {
-                if (patch.startingState.stockPatch != null)
+                if (patch.StartingState.StockPatch != null)
                 {
                     continue;
                 }
 
-                if (patch.isAtmospheric)
+                if (patch.IsAtmospheric)
                 {
                     continue;
                 }
 
-                if (patch.spaceOrbit != null)
+                if (patch.SpaceOrbit != null)
                 {
-                    return patch.spaceOrbit;
+                    return patch.SpaceOrbit;
                 }
             }
 
