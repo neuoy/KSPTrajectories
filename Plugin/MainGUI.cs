@@ -30,15 +30,10 @@ namespace Trajectories
         // visible flag
         private static bool visible = false;
 
-        // popup window, page box, buttons and pages
+        // popup window, page box and pages
         private static MultiOptionDialog multi_dialog;
         private static PopupDialog popup_dialog;
         private static DialogGUIBox page_box;
-
-        private static DialogGUIButton info_button;
-        private static DialogGUIButton target_button;
-        private static DialogGUIButton descent_button;
-        private static DialogGUIButton settings_button;
 
         private static DialogGUIVerticalLayout info_page;
         private static DialogGUIVerticalLayout target_page;
@@ -143,16 +138,6 @@ namespace Trajectories
             // default window to center of screen
             if (Settings.fetch.MainGUIWindowPos.x <= 0 || Settings.fetch.MainGUIWindowPos.y <= 0)
                 Settings.fetch.MainGUIWindowPos = new Vector2(0.5f, 0.5f);
-
-            // create buttons
-            info_button = new DialogGUIButton(Localizer.Format("#autoLOC_900629"),
-                OnButtonClick_Info, ButtonEnabler_Info, button_width, button_height, false);
-            target_button = new DialogGUIButton(Localizer.Format("#autoLOC_900591"),
-                OnButtonClick_Target, ButtonEnabler_Target, button_width, button_height, false);
-            descent_button = new DialogGUIButton(Localizer.Format("#autoLOC_Trajectories_Descent"),
-                OnButtonClick_Descent, ButtonEnabler_Descent, button_width, button_height, false);
-            settings_button = new DialogGUIButton(Localizer.Format("#autoLOC_900734"),
-                OnButtonClick_Settings, ButtonEnabler_Settings, button_width, button_height, false);
 
             // create pages
             info_page = new DialogGUIVerticalLayout(false, true, 0, new RectOffset(), TextAnchor.UpperCenter,
@@ -272,8 +257,16 @@ namespace Trajectories
                new Rect(Settings.fetch.MainGUIWindowPos.x, Settings.fetch.MainGUIWindowPos.y, width, height),
                new DialogGUIBase[]
                {
-                   // create line of buttons
-                   new DialogGUIHorizontalLayout(info_button, target_button, descent_button, settings_button),
+                   // create page select buttons
+                   new DialogGUIHorizontalLayout(
+                       new DialogGUIButton(Localizer.Format("#autoLOC_900629"),
+                           OnButtonClick_Info, ButtonEnabler_Info, button_width, button_height, false),
+                       new DialogGUIButton(Localizer.Format("#autoLOC_900591"),
+                           OnButtonClick_Target, ButtonEnabler_Target, button_width, button_height, false),
+                       new DialogGUIButton(Localizer.Format("#autoLOC_Trajectories_Descent"),
+                           OnButtonClick_Descent, ButtonEnabler_Descent, button_width, button_height, false),
+                       new DialogGUIButton(Localizer.Format("#autoLOC_900734"),
+                           OnButtonClick_Settings, ButtonEnabler_Settings, button_width, button_height, false)),
                    // insert page box
                    page_box
                });
