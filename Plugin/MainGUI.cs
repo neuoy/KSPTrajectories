@@ -345,7 +345,7 @@ namespace Trajectories
             ChangePage(PageType.SETTINGS);
         }
 
-        private void OnButtonClick_DisplayTrajectories(bool inState)
+        private static void OnButtonClick_DisplayTrajectories(bool inState)
         {
             // check that we have patched conics. If not, apologize to the user and return.
             if (inState && !Util.IsPatchedConicsAvailable)
@@ -366,55 +366,55 @@ namespace Trajectories
 
         }
 
-        private void OnButtonClick_DisplayTrajectoriesInFlight(bool inState)
+        private static void OnButtonClick_DisplayTrajectoriesInFlight(bool inState)
         {
             Settings.fetch.DisplayTrajectoriesInFlight = inState;
         }
 
-        private void OnButtonClick_BodyFixedMode(bool inState)
+        private static void OnButtonClick_BodyFixedMode(bool inState)
         {
             Settings.fetch.BodyFixedMode = inState;
         }
 
-        private void OnButtonClick_DisplayCompleteTrajectory(bool inState)
+        private static void OnButtonClick_DisplayCompleteTrajectory(bool inState)
         {
             Settings.fetch.DisplayCompleteTrajectory = inState;
         }
 
-        private void OnButtonClick_UseCache(bool inState)
+        private static void OnButtonClick_UseCache(bool inState)
         {
             Settings.fetch.UseCache = inState;
         }
 
-        private void OnButtonClick_AutoUpdateAerodynamicModel(bool inState)
+        private static void OnButtonClick_AutoUpdateAerodynamicModel(bool inState)
         {
             Settings.fetch.AutoUpdateAerodynamicModel = inState;
         }
 
-        private void OnButtonClick_Update()
+        private static void OnButtonClick_Update()
         {
             Trajectory.fetch.InvalidateAerodynamicModel();
         }
 
-        private void OnButtonClick_UseBlizzyToolbar(bool inState)
+        private static void OnButtonClick_UseBlizzyToolbar(bool inState)
         {
             if (ToolbarManager.ToolbarAvailable)
                 Settings.fetch.UseBlizzyToolbar = inState;
         }
 
-        private void OnButtonClick_ShowPerformance(bool inState)
+        private static void OnButtonClick_ShowPerformance(bool inState)
         {
             Settings.fetch.ShowPerformance = inState;
         }
 
-        private void OnButtonClick_NewGui(bool inState)
+        private static void OnButtonClick_NewGui(bool inState)
         {
             Settings.fetch.NewGui = inState;
             Settings.fetch.MainGUIEnabled = inState;
             Settings.fetch.GUIEnabled = !inState;
         }
 
-        private void OnButtonClick_Prograde(bool inState)
+        private static void OnButtonClick_Prograde(bool inState)
         {
             if (inState != DescentProfile.fetch.ProgradeEntry)
             {
@@ -425,7 +425,7 @@ namespace Trajectories
             }
         }
 
-        private void OnButtonClick_Retrograde(bool inState)
+        private static void OnButtonClick_Retrograde(bool inState)
         {
             if (inState != DescentProfile.fetch.RetrogradeEntry)
             {
@@ -436,25 +436,25 @@ namespace Trajectories
             }
         }
 
-        private void OnButtonClick_EntryHorizon(bool inState)
+        private static void OnButtonClick_EntryHorizon(bool inState)
         {
             DescentProfile.fetch.entry.Horizon = inState;
             DescentProfile.fetch.CheckGUI();
         }
 
-        private void OnButtonClick_HighHorizon(bool inState)
+        private static void OnButtonClick_HighHorizon(bool inState)
         {
             DescentProfile.fetch.highAltitude.Horizon = inState;
             DescentProfile.fetch.CheckGUI();
         }
 
-        private void OnButtonClick_LowHorizon(bool inState)
+        private static void OnButtonClick_LowHorizon(bool inState)
         {
             DescentProfile.fetch.lowAltitude.Horizon = inState;
             DescentProfile.fetch.CheckGUI();
         }
 
-        private void OnButtonClick_GroundHorizon(bool inState)
+        private static void OnButtonClick_GroundHorizon(bool inState)
         {
             DescentProfile.fetch.finalApproach.Horizon = inState;
             DescentProfile.fetch.CheckGUI();
@@ -463,35 +463,35 @@ namespace Trajectories
 
         #region Callback methods for the Gui components
         // Callback methods are used by the Gui to retrieve information it needs either for display or setting values.
-        private void OnSliderSet_MaxPatches(float invalue)
+        private static void OnSliderSet_MaxPatches(float invalue)
         {
             Settings.fetch.MaxPatchCount = (int)invalue;
         }
 
-        private void OnSliderSet_MaxFramesPatch(float invalue)
+        private static void OnSliderSet_MaxFramesPatch(float invalue)
         {
             Settings.fetch.MaxFramesPerPatch = (int)invalue;
         }
 
-        private void OnSliderSet_EntryAngle(float invalue)
+        private static void OnSliderSet_EntryAngle(float invalue)
         {
             DescentProfile.fetch.entry.SliderPos = invalue;
             DescentProfile.fetch.CheckGUI();
         }
 
-        private void OnSliderSet_HighAngle(float invalue)
+        private static void OnSliderSet_HighAngle(float invalue)
         {
             DescentProfile.fetch.highAltitude.SliderPos = invalue;
             DescentProfile.fetch.CheckGUI();
         }
 
-        private void OnSliderSet_LowAngle(float invalue)
+        private static void OnSliderSet_LowAngle(float invalue)
         {
             DescentProfile.fetch.lowAltitude.SliderPos = invalue;
             DescentProfile.fetch.CheckGUI();
         }
 
-        private void OnSliderSet_GroundAngle(float invalue)
+        private static void OnSliderSet_GroundAngle(float invalue)
         {
             DescentProfile.fetch.finalApproach.SliderPos = invalue;
             DescentProfile.fetch.CheckGUI();
@@ -500,7 +500,7 @@ namespace Trajectories
 
         #region Page methods for changing/updating the pages in the Gui page box
         /// <summary> Changes the page inside the page box. </summary>
-        private void ChangePage(PageType inpage)
+        private static void ChangePage(PageType inpage)
         {
             Settings.fetch.MainGUICurrentPage = (int)inpage;
 
