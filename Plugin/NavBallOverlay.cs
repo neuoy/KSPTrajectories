@@ -93,9 +93,9 @@ namespace Trajectories
 
         private void UpdateNavBall()
         {
-            Vector3? targetPosition = Trajectory.fetch.TargetPosition;
+            Vector3? targetPosition = Trajectory.Target.WorldPosition;
             var patch = Trajectory.fetch.Patches.LastOrDefault();
-            CelestialBody body = Trajectory.fetch.TargetBody;
+            CelestialBody body = Trajectory.Target.Body;
             if (!targetPosition.HasValue || patch == null || !patch.ImpactPosition.HasValue || patch.StartingState.ReferenceBody != body)
             {
                 SetDisplayEnabled(false);
@@ -135,7 +135,7 @@ namespace Trajectories
             Vector3 velRight = Vector3.Cross(vel, up).normalized;
             Vector3 velUp = Vector3.Cross(velRight, vel).normalized;
 
-            float plannedAngleOfAttack = (float)DescentProfile.fetch.GetAngleOfAttack(Trajectory.fetch.TargetBody, pos, vel);
+            float plannedAngleOfAttack = (float)DescentProfile.fetch.GetAngleOfAttack(Trajectory.Target.Body, pos, vel);
 
             return vel.normalized * Mathf.Cos(plannedAngleOfAttack) + velUp * Mathf.Sin(plannedAngleOfAttack);
         }
@@ -147,9 +147,9 @@ namespace Trajectories
             if (vessel == null)
                 return new Vector2(0, 0);
 
-            Vector3? targetPosition = Trajectory.fetch.TargetPosition;
+            Vector3? targetPosition = Trajectory.Target.WorldPosition;
             var patch = Trajectory.fetch.Patches.LastOrDefault();
-            CelestialBody body = Trajectory.fetch.TargetBody;
+            CelestialBody body = Trajectory.Target.Body;
             if (!targetPosition.HasValue || patch == null || !patch.ImpactPosition.HasValue || patch.StartingState.ReferenceBody != body || !patch.IsAtmospheric)
                 return new Vector2(0, 0);
 

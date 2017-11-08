@@ -97,7 +97,7 @@ namespace Trajectories
             Trajectory traj = Trajectory.fetch;
             Trajectory.Patch lastPatch = traj.Patches.LastOrDefault();
             CelestialBody lastPatchBody = lastPatch?.StartingState.ReferenceBody;
-            CelestialBody targetBody = traj.TargetBody;
+            CelestialBody targetBody = Trajectory.Target.Body;
 
             guistring_gForce = (traj.MaxAccel / 9.81).ToString("0.00");
 
@@ -119,7 +119,7 @@ namespace Trajectories
             if (Settings.fetch.DisplayTargetGUI)
             {
                 if (lastPatchBody != null && targetBody != null && lastPatch.ImpactPosition.HasValue
-                    && lastPatchBody == targetBody && traj.TargetPosition.HasValue)
+                    && lastPatchBody == targetBody && Trajectory.Target.WorldPosition.HasValue)
                 {
                     // Get Latitude and Longitude from impact position
                     double impactLat;
@@ -134,7 +134,7 @@ namespace Trajectories
                     double targetLat;
                     double targetLon;
                     double targetAlt;
-                    targetPos = traj.TargetPosition.Value + targetBody.position;
+                    targetPos = Trajectory.Target.WorldPosition.Value + targetBody.position;
                     targetBody.GetLatLonAlt(targetPos, out targetLat, out targetLon, out targetAlt);
 
                     float targetDistance = (float)(Util.DistanceFromLatitudeAndLongitude(targetBody.Radius + impactAlt,
@@ -210,12 +210,12 @@ namespace Trajectories
 
             if (Settings.fetch.DisplayTargetGUI = ToggleGroup(Settings.fetch.DisplayTargetGUI, "Target"))
             {
-                GUI.enabled = traj.TargetPosition.HasValue;
+                GUI.enabled = Trajectory.Target.WorldPosition.HasValue;
 
                 GUILayout.Label(guistring_targetDistance);
 
                 if (GUILayout.Button("Unset target"))
-                    traj.SetTarget();
+                    Trajectory.Target.Set();
                 GUI.enabled = true;
 
                 GUILayout.BeginHorizontal();
@@ -223,7 +223,7 @@ namespace Trajectories
                 GUI.enabled = (patch != null && patch.ImpactPosition.HasValue);
                 if (GUILayout.Button("Set current impact", GUILayout.Width(150)))
                 {
-                    traj.SetTarget(patch.StartingState.ReferenceBody, patch.ImpactPosition);
+                    Trajectory.Target.Set(patch.StartingState.ReferenceBody, patch.ImpactPosition);
                 }
                 GUI.enabled = true;
                 if (GUILayout.Button("Set KSC", GUILayout.Width(70)))
@@ -232,7 +232,7 @@ namespace Trajectories
                     if (body != null)
                     {
                         Vector3d worldPos = body.GetWorldSurfacePosition(-0.04860002, -74.72425635, 2.0);
-                        traj.SetTarget(body, worldPos - body.position);
+                        Trajectory.Target.Set(body, worldPos - body.position);
                     }
                 }
                 GUILayout.EndHorizontal();
@@ -245,7 +245,7 @@ namespace Trajectories
                 );
                 if (GUILayout.Button("Target vessel"))
                 {
-                    traj.SetTarget(targetVessel.lastBody, targetVessel.GetWorldPos3D() - targetVessel.lastBody.position);
+                    Trajectory.Target.Set(targetVessel.lastBody, targetVessel.GetWorldPos3D() - targetVessel.lastBody.position);
                     ScreenMessages.PostScreenMessage("Targeting vessel " + targetVessel.GetName());
                 }
 
@@ -253,7 +253,7 @@ namespace Trajectories
                 GUI.enabled = (navigationWaypoint != null);
                 if (GUILayout.Button("Active waypoint"))
                 {
-                    traj.SetTarget(navigationWaypoint.celestialBody,
+                    Trajectory.Target.Set(navigationWaypoint.celestialBody,
                         navigationWaypoint.celestialBody.GetRelSurfacePosition(navigationWaypoint.latitude, navigationWaypoint.longitude, navigationWaypoint.altitude));
                     ScreenMessages.PostScreenMessage("Targeting waypoint " + navigationWaypoint.name);
                 }
@@ -277,7 +277,7 @@ namespace Trajectories
                         {
                             Vector3d relPos = body.GetWorldSurfacePosition(lat, lng, 2.0) - body.position;
                             double altitude = Trajectory.GetGroundAltitude(body, relPos) + body.Radius;
-                            traj.SetTarget(body, relPos * (altitude / relPos.magnitude));
+                            Trajectory.Target.Set(body, relPos * (altitude / relPos.magnitude));
                         }
                     }
                 }

@@ -127,6 +127,68 @@ namespace Trajectories
             }
         }
 
+        public static class Target
+        {
+            /// <summary>
+            /// Targets reference body
+            /// </summary>
+            public static CelestialBody Body { get; set; } = null;
+
+            /// <summary>
+            /// Targets position in LocalSpace
+            /// </summary>
+            public static Vector3d? LocalPosition { get; set; } = null;
+
+            /// <summary>
+            /// Targets position in WorldSpace relative to the target body
+            /// </summary>
+            public static Vector3d? WorldPosition
+            {
+                get => LocalPosition.HasValue ? (Vector3d?)Body.transform.TransformDirection(LocalPosition.Value) : null;
+                set
+                {
+                    LocalPosition = Body == null ? (Vector3d?)null : Body.transform.InverseTransformDirection((Vector3)value);
+                }
+            }
+
+            /// <summary>
+            /// Sets the target to a body and a position relative to that body.
+            /// Passing a null or no arguments will clear the target.
+            /// Also saves the target to the active vessel.
+            /// </summary>
+            public static void Set(CelestialBody body = null, Vector3d? position = null)
+            {
+                if (body != null && position.HasValue)
+                {
+                    Body = body;
+                    WorldPosition = position;
+                }
+                else
+                {
+                    Body = null;
+                    LocalPosition = null;
+                }
+
+                Save();
+            }
+
+            /// <summary>
+            /// Saves the target to the active vessel module
+            /// </summary>
+            public static void Save()
+            {
+                if (FlightGlobals.ActiveVessel != null)
+                {
+                    foreach (var module in FlightGlobals.ActiveVessel.Parts.SelectMany(p => p.Modules.OfType<TrajectoriesVesselSettings>()))
+                    {
+                        module.hasTarget = LocalPosition != null;
+                        module.TargetLocalSpacePosition = LocalPosition ?? new Vector3d();
+                        module.TargetBody = Body == null ? "" : Body.name;
+                    }
+                }
+            }
+        }
+
         private int MaxIncrementTime { get { return 2; } }
 
         private Vessel vessel_;
@@ -158,10 +220,6 @@ namespace Trajectories
 
         public float MaxAccel { get { return maxAccel_; } }
 
-        private Vector3? targetPosition_;
-
-        private CelestialBody targetBody_;
-
         private static int errorCount_;
 
         public int ErrorCount { get { return errorCount_; } }
@@ -178,30 +236,20 @@ namespace Trajectories
 
         public float GameFrameTime { get { return averageGameFrameTime_ * 0.001f; } }
 
-        public Vector3? TargetPosition
-        {
-            get
-            {
-                return targetPosition_.HasValue ? (Vector3?)targetBody_.transform.TransformDirection(targetPosition_.Value) : null;
-            }
-        }
-
-        public Vector3? GroundRelativeTargetPosition { get { return targetPosition_; } }
-
-        public CelestialBody TargetBody { get { return targetBody_; } }
-
         private VesselState AddPatch_outState;
 
         // permit global access
-        public static Trajectory fetch
-        {
-            get; private set;
-        } = null;
+        public static Trajectory fetch { get; private set; } = null;
 
         //  constructor
         public Trajectory()
         {
             fetch = this;
+        }
+
+        private void OnDestroy()
+        {
+            fetch = null;
         }
 
 #if DEBUG && DEBUG_TELEMETRY
@@ -369,6 +417,7 @@ namespace Trajectories
 
         public void Update()
         {
+            // compute frame time
             computationTime_ = computationTime_ * 0.99f + frameTime_ * 0.01f;
             float offset = frameTime_ - computationTime_;
             frameTime_ = 0;
@@ -380,8 +429,10 @@ namespace Trajectories
             }
             gameFrameTime_ = Stopwatch.StartNew();
 
-            if (HighLogic.LoadedScene == GameScenes.FLIGHT && vessel_ != FlightGlobals.ActiveVessel)
+            // is current trajectory vessel the active vessel?
+            if (Util.IsFlight && (vessel_ != FlightGlobals.ActiveVessel))
             {
+                // load target data from vessel if module exists
                 TrajectoriesVesselSettings module = null;
                 if (FlightGlobals.ActiveVessel != null)
                 {
@@ -391,24 +442,28 @@ namespace Trajectories
 
                 CelestialBody body = null;
                 if (module != null)
-                    body = FlightGlobals.Bodies.FirstOrDefault(b => b.name == module.targetReferenceBody);
+                    body = FlightGlobals.Bodies.FirstOrDefault(b => b.name == module.TargetBody);
 
                 if (body == null || !module.hasTarget)
                 {
-                    SetTarget();
+                    // clear target and save to vessel module
+                    Target.Set();
                 }
                 else
                 {
-                    SetTarget(body, body.transform.TransformDirection(module.targetLocation));
+                    // set target data from vessel module
+                    Target.Body = body;
+                    Target.LocalPosition = module.TargetLocalSpacePosition;
                 }
             }
 
-            if (HighLogic.LoadedScene == GameScenes.FLIGHT
+            // should the trajectory be calculated?
+            if (Util.IsFlight
                 && FlightGlobals.ActiveVessel != null
                 && FlightGlobals.ActiveVessel.Parts.Count != 0
                 && ((Settings.fetch.DisplayTrajectories)
                     || Settings.fetch.AlwaysUpdate
-                    || targetPosition_.HasValue))
+                    || Target.LocalPosition.HasValue))
             {
                 ComputeTrajectory(FlightGlobals.ActiveVessel, DescentProfile.fetch);
             }
@@ -417,30 +472,6 @@ namespace Trajectories
         public void InvalidateAerodynamicModel()
         {
             aerodynamicModel_.Invalidate();
-        }
-
-        public void SetTarget(CelestialBody body = null, Vector3? relativePosition = null)
-        {
-            if (body != null && relativePosition.HasValue)
-            {
-                targetBody_ = body;
-                targetPosition_ = body.transform.InverseTransformDirection((Vector3)relativePosition);
-            }
-            else
-            {
-                targetBody_ = null;
-                targetPosition_ = null;
-            }
-
-            if (FlightGlobals.ActiveVessel != null)
-            {
-                foreach (var module in FlightGlobals.ActiveVessel.Parts.SelectMany(p => p.Modules.OfType<TrajectoriesVesselSettings>()))
-                {
-                    module.hasTarget = targetPosition_ != null;
-                    module.targetLocation = targetPosition_ ?? new Vector3();
-                    module.targetReferenceBody = targetBody_ == null ? "" : targetBody_.name;
-                }
-            }
         }
 
         public void ComputeTrajectory(Vessel vessel, float AoA)

@@ -87,7 +87,7 @@ namespace Trajectories
             if (body != null)
             {
                 Vector3d worldPos = body.GetWorldSurfacePosition(lat, lon, alt);
-                Trajectory.fetch.SetTarget(body, worldPos - body.position);
+                Trajectory.Target.Set(body, worldPos - body.position);
             }
         }
 

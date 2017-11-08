@@ -178,12 +178,12 @@ namespace Trajectories
                 }
             }
 
-            Vector3? targetPosition = Trajectory.fetch.TargetPosition;
+            Vector3? targetPosition = Trajectory.Target.WorldPosition;
             if (targetPosition.HasValue)
             {
-                var obj = GetMesh(Trajectory.fetch.TargetBody, lineMaterial);
+                var obj = GetMesh(Trajectory.Target.Body, lineMaterial);
                 var mesh = obj.GetComponent<MeshFilter>().mesh;
-                initMeshFromImpact(Trajectory.fetch.TargetBody, mesh, targetPosition.Value, Color.green);
+                initMeshFromImpact(Trajectory.Target.Body, mesh, targetPosition.Value, Color.green);
             }
         }
 

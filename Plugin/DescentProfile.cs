@@ -12,7 +12,7 @@ using UnityEngine;
 
 namespace Trajectories
 {
-    [KSPAddon(KSPAddon.Startup.Flight, false)]
+    [KSPAddon(KSPAddon.Startup.EveryScene, false)]
     public sealed class DescentProfile: MonoBehaviour
     {
         public class Node
@@ -113,7 +113,7 @@ namespace Trajectories
         private Vessel attachedVessel;
 
         // permit global access
-        public static DescentProfile fetch { get; private set; }
+        public static DescentProfile fetch { get; private set; } = null;
 
         //  constructors
         public DescentProfile()

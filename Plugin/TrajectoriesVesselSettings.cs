@@ -38,9 +38,9 @@ namespace Trajectories
         public bool hasTarget;
 
         [KSPField(isPersistant = true, guiActive = false)]
-        public Vector3 targetLocation;
+        public Vector3d TargetLocalSpacePosition;
 
         [KSPField(isPersistant = true, guiActive = false)]
-        public string targetReferenceBody;
+        public string TargetBody;
     }
 }
