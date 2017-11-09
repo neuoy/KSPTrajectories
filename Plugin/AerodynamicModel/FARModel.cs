@@ -19,6 +19,7 @@ namespace Trajectories
         protected override Vector3d ComputeForces_Model(Vector3d airVelocity, double altitude)
         {
             //Debug.Log("Trajectories: getting FAR forces");
+            if (vessel_.packed) { return Vector3.zero; }
             Vector3 worldAirVel = new Vector3((float)airVelocity.x, (float)airVelocity.y, (float)airVelocity.z);
             var parameters = new object[] { vessel_, new Vector3(), new Vector3(), worldAirVel, altitude };
             FARAPI_CalculateVesselAeroForces.Invoke(null, parameters);
