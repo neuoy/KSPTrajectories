@@ -6,7 +6,7 @@ rem see https://github.com/neuoy/KSPTrajectories/tree/master/misc/VisualStudio/R
 
 rem get parameters that are passed by visual studio post build event
 SET TargetName=%1
-SET Dllversion=%2
+SET Dllversion=%~n2
 
 rem make sure the initial working directory is the one containing the current script
 SET scriptPath=%~dp0
