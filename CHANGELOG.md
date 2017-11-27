@@ -3,6 +3,9 @@
 
 ### Changes since the last release
 
+ * When combined with FAR, aerodynamic forces calculated on a packed vessel would lead to NRE's. Vessels are now
+    no longer calculated when a vessel is in a packed state. Thanks go to Alex Wang for this bug fix.
+
 ### For Developers
 
  * Flickering entries bug in the Profiler is fixed :)
