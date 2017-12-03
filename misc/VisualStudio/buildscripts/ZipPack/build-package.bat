@@ -14,7 +14,7 @@ SET rootPath=%scriptPath%..\..\..\..\
 SET initialWD=%CD%
 
 rem current module manager version in misc\3rdParty\
-SET MODMANAGER_VERSION=2.8.1
+SET MODMANAGER_VERSION=3.0.0
 
 echo Generating %TargetName% Release Package...
 cd "%rootPath%"
