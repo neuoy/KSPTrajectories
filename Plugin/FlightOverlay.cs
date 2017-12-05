@@ -24,6 +24,21 @@ namespace Trajectories
 
         }
 
+        private void OnDestroy()
+        {
+            if (line != null)
+            {
+                line.enabled = false;
+                line.Vertices.Clear();
+            }
+
+            if (targetingCross != null)
+                targetingCross.enabled = false;
+
+            line = null;
+            targetingCross = null;
+        }
+
         private void FixedUpdate()
         {
             line.enabled = false;
