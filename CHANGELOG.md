@@ -3,6 +3,8 @@
 
 ### Changes since the last release
 
+ * In-Flight trajectory vector line and ground marker persistance bug fixed.
+ * ModuleManager updated to v3.0.0
  * When combined with FAR, aerodynamic forces calculated on a packed vessel would lead to NRE's. Vessels are now
     no longer calculated when a vessel is in a packed state. Thanks go to Alex Wang for this bug fix.
 
@@ -13,7 +15,7 @@
  
 ### Known Issues
 
- * Sometimes multiple In-Flight trajectory vector lines appear and target marker can cover entire screen when camera is close.
+ * Sometimes In-Flight trajectory ground target marker can cover entire screen when camera is close.
 
 
 ## v1.7.1 for KSP 1.3.1
