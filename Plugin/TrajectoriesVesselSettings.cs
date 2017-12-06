@@ -2,7 +2,7 @@
 
 namespace Trajectories
 {
-    class TrajectoriesVesselSettings : PartModule
+    class TrajectoriesVesselSettings: PartModule
     {
         [KSPField(isPersistant = true, guiActive = false)]
         public double EntryAngle;
@@ -29,18 +29,21 @@ namespace Trajectories
         public bool GroundHorizon;
 
         [KSPField(isPersistant = true, guiActive = false)]
-        public bool ProgradeEntry;
+        public bool ProgradeEntry = true;
 
         [KSPField(isPersistant = true, guiActive = false)]
         public bool RetrogradeEntry;
 
         [KSPField(isPersistant = true, guiActive = false)]
-        public bool hasTarget;
+        public string TargetBody = "";
 
         [KSPField(isPersistant = true, guiActive = false)]
-        public Vector3d TargetLocalSpacePosition;
+        public double TargetPosition_x = 0;
 
         [KSPField(isPersistant = true, guiActive = false)]
-        public string TargetBody;
+        public double TargetPosition_y = 0;
+
+        [KSPField(isPersistant = true, guiActive = false)]
+        public double TargetPosition_z = 0;
     }
 }

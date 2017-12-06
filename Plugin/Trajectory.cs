@@ -135,41 +135,45 @@ namespace Trajectories
             public static CelestialBody Body { get; set; } = null;
 
             /// <summary>
-            /// Targets position in LocalSpace
+            /// Targets position in WorldSpace
             /// </summary>
-            public static Vector3d? LocalPosition { get; set; } = null;
+            public static Vector3d? WorldPosition { get; set; } = null;
 
             /// <summary>
-            /// Targets position in WorldSpace relative to the target body
+            /// Targets position in LocalSpace relative to the target body
             /// </summary>
-            public static Vector3d? WorldPosition
+            public static Vector3d? LocalPosition
             {
-                get => LocalPosition.HasValue ? (Vector3d?)Body.transform.TransformDirection(LocalPosition.Value) : null;
+                get => WorldPosition.HasValue ? (Vector3d?)Body.transform.InverseTransformDirection(WorldPosition.Value) : null;
                 set
                 {
-                    LocalPosition = Body == null ? (Vector3d?)null : Body.transform.InverseTransformDirection((Vector3)value);
+                    WorldPosition = Body == null ? (Vector3d?)null : Body.transform.TransformDirection((Vector3)value);
                 }
             }
 
             /// <summary>
-            /// Sets the target to a body and a position relative to that body.
+            /// Sets the target to a body and a World position, if param localspace is true then uses a Local position.
             /// Passing a null or no arguments will clear the target.
-            /// Also saves the target to the active vessel.
+            /// Also saves the target to the active vessel when setting with a world position.
             /// </summary>
-            public static void Set(CelestialBody body = null, Vector3d? position = null)
+            public static void Set(CelestialBody body = null, Vector3d? position = null, bool localspace = false)
             {
                 if (body != null && position.HasValue)
                 {
                     Body = body;
-                    WorldPosition = position;
+                    if (localspace)
+                        LocalPosition = position;
+                    else
+                        WorldPosition = position;
                 }
                 else
                 {
                     Body = null;
-                    LocalPosition = null;
+                    WorldPosition = null;
                 }
 
-                Save();
+                if (!localspace)
+                    Save();
             }
 
             /// <summary>
@@ -177,21 +181,24 @@ namespace Trajectories
             /// </summary>
             public static void Save()
             {
-                if (FlightGlobals.ActiveVessel != null)
+                if (fetch.attachedVessel == null)
+                    return;
+
+                //UnityEngine.Debug.Log("Trajectories: Writing target profile settings...");
+                foreach (var module in FlightGlobals.ActiveVessel.Parts.SelectMany(p => p.Modules.OfType<TrajectoriesVesselSettings>()))
                 {
-                    foreach (var module in FlightGlobals.ActiveVessel.Parts.SelectMany(p => p.Modules.OfType<TrajectoriesVesselSettings>()))
-                    {
-                        module.hasTarget = LocalPosition != null;
-                        module.TargetLocalSpacePosition = LocalPosition ?? new Vector3d();
-                        module.TargetBody = Body == null ? "" : Body.name;
-                    }
+                    module.TargetBody = Body == null ? "" : Body.name;
+                    module.TargetPosition_x = LocalPosition.HasValue ? LocalPosition.Value.x : 0d;
+                    module.TargetPosition_y = LocalPosition.HasValue ? LocalPosition.Value.y : 0d;
+                    module.TargetPosition_z = LocalPosition.HasValue ? LocalPosition.Value.z : 0d;
+                    //UnityEngine.Debug.Log("Trajectories: Target profile saved");
                 }
             }
         }
 
         private int MaxIncrementTime { get { return 2; } }
 
-        private Vessel vessel_;
+        private Vessel attachedVessel;
 
         private VesselAerodynamicModel aerodynamicModel_;
 
@@ -429,44 +436,45 @@ namespace Trajectories
             }
             gameFrameTime_ = Stopwatch.StartNew();
 
-            // is current trajectory vessel the active vessel?
-            if (Util.IsFlight && (vessel_ != FlightGlobals.ActiveVessel))
+            if (Util.IsFlight)
             {
-                // load target data from vessel if module exists
-                TrajectoriesVesselSettings module = null;
-                if (FlightGlobals.ActiveVessel != null)
+                if (attachedVessel != FlightGlobals.ActiveVessel)
                 {
-                    module = FlightGlobals.ActiveVessel.Parts.SelectMany(p => p.Modules.OfType<TrajectoriesVesselSettings>())
-                        .FirstOrDefault();
+                    //UnityEngine.Debug.Log("Trajectories: Loading vessel target profile");
+                    attachedVessel = FlightGlobals.ActiveVessel;
+                    if (attachedVessel == null)
+                    {
+                        //UnityEngine.Debug.Log("Trajectories: No vessel");
+                        Target.Set();
+                    }
+                    else
+                    {
+                        TrajectoriesVesselSettings module = attachedVessel.Parts.SelectMany(p => p.Modules
+                            .OfType<TrajectoriesVesselSettings>()).FirstOrDefault();
+                        if (module == null)
+                        {
+                            //UnityEngine.Debug.Log("Trajectories: No TrajectoriesVesselSettings module");
+                            Target.Set();
+                        }
+                        else
+                        {
+                            //UnityEngine.Debug.Log("Trajectories: Reading target settings...");
+                            Target.Set(FlightGlobals.Bodies.FirstOrDefault(b => b.name == module.TargetBody),
+                                new Vector3d(module.TargetPosition_x, module.TargetPosition_y, module.TargetPosition_z), true);
+                            //UnityEngine.Debug.Log("Trajectories: Target profile loaded");
+                        }
+                    }
                 }
 
-                CelestialBody body = null;
-                if (module != null)
-                    body = FlightGlobals.Bodies.FirstOrDefault(b => b.name == module.TargetBody);
-
-                if (body == null || !module.hasTarget)
+                // should the trajectory be calculated?
+                if (attachedVessel != null &&
+                    (Settings.fetch.DisplayTrajectories || Settings.fetch.AlwaysUpdate || Target.WorldPosition.HasValue))
                 {
-                    // clear target and save to vessel module
-                    Target.Set();
-                }
-                else
-                {
-                    // set target data from vessel module
-                    Target.Body = body;
-                    Target.LocalPosition = module.TargetLocalSpacePosition;
+                    if (attachedVessel.Parts.Count != 0)
+                        ComputeTrajectory(attachedVessel, DescentProfile.fetch);
                 }
             }
 
-            // should the trajectory be calculated?
-            if (Util.IsFlight
-                && FlightGlobals.ActiveVessel != null
-                && FlightGlobals.ActiveVessel.Parts.Count != 0
-                && ((Settings.fetch.DisplayTrajectories)
-                    || Settings.fetch.AlwaysUpdate
-                    || Target.LocalPosition.HasValue))
-            {
-                ComputeTrajectory(FlightGlobals.ActiveVessel, DescentProfile.fetch);
-            }
         }
 
         public void InvalidateAerodynamicModel()
@@ -474,7 +482,7 @@ namespace Trajectories
             aerodynamicModel_.Invalidate();
         }
 
-        public void ComputeTrajectory(Vessel vessel, float AoA)
+        public void ComputeTrajectory(Vessel vessel, double AoA)
         {
             DescentProfile profile = new DescentProfile(AoA);
             ComputeTrajectory(vessel, profile);
@@ -486,14 +494,14 @@ namespace Trajectories
             {
                 incrementTime_ = Stopwatch.StartNew();
 
-                if (partialComputation_ == null || vessel != vessel_)
+                if (partialComputation_ == null || vessel != attachedVessel)
                 {
                     patchesBackBuffer_.Clear();
                     maxAccelBackBuffer_ = 0;
 
-                    vessel_ = vessel;
+                    attachedVessel = vessel;
 
-                    if (vessel == null)
+                    if (attachedVessel == null)
                     {
                         patches_.Clear();
                         return;
@@ -543,9 +551,9 @@ namespace Trajectories
                 if (incrementTime_.ElapsedMilliseconds > MaxIncrementTime)
                     yield return false;
 
-                if (null != vessel_.patchedConicSolver)
+                if (null != attachedVessel.patchedConicSolver)
                 {
-                    var maneuverNodes = vessel_.patchedConicSolver.maneuverNodes;
+                    var maneuverNodes = attachedVessel.patchedConicSolver.maneuverNodes;
                     foreach (var node in maneuverNodes)
                     {
                         if (node.UT == state.Time)
@@ -635,7 +643,7 @@ namespace Trajectories
 
         private IEnumerable<bool> AddPatch(VesselState startingState, DescentProfile profile)
         {
-            if (null == vessel_.patchedConicSolver)
+            if (null == attachedVessel.patchedConicSolver)
             {
                 UnityEngine.Debug.LogWarning("Trajectories: AddPatch() attempted when patchedConicsSolver is null; Skipping.");
                 yield break;
@@ -654,14 +662,14 @@ namespace Trajectories
             // the flight plan does not always contain the first patches (before the first maneuver node),
             // so we populate it with the current orbit and associated encounters etc.
             var flightPlan = new List<Orbit>();
-            for (var orbit = vessel_.orbit; orbit != null && orbit.activePatch; orbit = orbit.nextPatch)
+            for (var orbit = attachedVessel.orbit; orbit != null && orbit.activePatch; orbit = orbit.nextPatch)
             {
-                if (vessel_.patchedConicSolver.flightPlan.Contains(orbit))
+                if (attachedVessel.patchedConicSolver.flightPlan.Contains(orbit))
                     break;
                 flightPlan.Add(orbit);
             }
 
-            foreach (var orbit in vessel_.patchedConicSolver.flightPlan)
+            foreach (var orbit in attachedVessel.patchedConicSolver.flightPlan)
             {
                 flightPlan.Add(orbit);
             }
@@ -799,7 +807,7 @@ namespace Trajectories
                 }
                 else
                 {
-                    if (patch.StartingState.ReferenceBody != vessel_.mainBody)
+                    if (patch.StartingState.ReferenceBody != attachedVessel.mainBody)
                     {
                         // currently, we can't handle predictions for another body, so we stop
                         AddPatch_outState = null;
