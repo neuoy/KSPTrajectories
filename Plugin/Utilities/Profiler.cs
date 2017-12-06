@@ -9,7 +9,7 @@ namespace Trajectories
 {
     /// <summary> Simple profiler for measuring the execution time of code placed between the Start and Stop methods. </summary>
     [KSPAddon(KSPAddon.Startup.EveryScene, false)]
-    public sealed class Profiler : MonoBehaviour
+    public sealed class Profiler: MonoBehaviour
     {
 #if DEBUG_PROFILER
         // constants
@@ -56,10 +56,7 @@ namespace Trajectories
 
 
         // permit global access
-        public static Profiler Fetch
-        {
-            get; private set;
-        } = null;
+        public static Profiler Fetch { get; private set; } = null;
 
         //  constructor
         public Profiler()
@@ -100,7 +97,7 @@ namespace Trajectories
         private void Awake()
         {
             // create popup dialog
-            popup_dialog = PopupDialog.SpawnPopupDialog(multi_dialog, true, HighLogic.UISkin, false, "");
+            popup_dialog = PopupDialog.SpawnPopupDialog(multi_dialog, false, HighLogic.UISkin, false, "");
             if (popup_dialog != null)
                 popup_dialog.gameObject.SetActive(false);
         }
@@ -166,8 +163,11 @@ namespace Trajectories
         private void OnDestroy()
         {
             Fetch = null;
-            popup_dialog.Dismiss();
-            popup_dialog = null;
+            if (popup_dialog != null)
+            {
+                popup_dialog.Dismiss();
+                popup_dialog = null;
+            }
         }
 
         private static string GetTitle()
