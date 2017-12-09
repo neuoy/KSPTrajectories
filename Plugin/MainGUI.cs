@@ -557,7 +557,7 @@ namespace Trajectories
         private static void UpdateInfoPage()
         {
             // grab the last patch that was calculated
-            Trajectory.Patch lastPatch = Trajectory.fetch.Patches.LastOrDefault();
+            Trajectory.Patch lastPatch = Trajectory.fetch?.Patches.LastOrDefault();
 
             // max G-force
             max_gforce_txt = max_gforce_hdrtxt +
@@ -609,12 +609,20 @@ namespace Trajectories
         {
             Trajectory traj = Trajectory.fetch;
 
-            // performance
-            performance_txt = performance_hdrtxt +
-                string.Format("{0:0.0}ms ({1:0.0})%", traj.ComputationTime * 1000.0f, (traj.ComputationTime / traj.GameFrameTime) * 100.0f);
+            if (traj != null)
+            {
+                // performance
+                performance_txt = performance_hdrtxt +
+                    string.Format("{0:0.0}ms | {1:0.0} %", traj.ComputationTime * 1000.0f, (traj.ComputationTime / traj.GameFrameTime) * 100.0f);
 
-            // num errors
-            num_errors_txt = errors_hdrtxt + string.Format("{0:0}", traj.ErrorCount);
+                // num errors
+                num_errors_txt = errors_hdrtxt + string.Format("{0:0}", traj.ErrorCount);
+            }
+            else
+            {
+                performance_txt = performance_hdrtxt + "0.0ms | 0.0 %";
+                num_errors_txt = errors_hdrtxt + "0";
+            }
         }
         #endregion
     }
