@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace Trajectories
 {
-    class FARModel : VesselAerodynamicModel
+    class FARModel: VesselAerodynamicModel
     {
         private MethodInfo FARAPI_CalculateVesselAeroForces;
 
@@ -19,7 +19,15 @@ namespace Trajectories
         protected override Vector3d ComputeForces_Model(Vector3d airVelocity, double altitude)
         {
             //Debug.Log("Trajectories: getting FAR forces");
-            if (vessel_.packed) { return Vector3.zero; }
+            if (vessel_ == null || vessel_.packed)
+                return Vector3.zero;
+
+            if (airVelocity.x == 0d || airVelocity.y == 0d || airVelocity.z == 0d)
+            {
+                //Debug.LogWarning(string.Format("Trajectories: Getting FAR forces - Velocity: {0} | Altitude: {1}", airVelocity, altitude));
+                return Vector3.zero;
+            }
+
             Vector3 worldAirVel = new Vector3((float)airVelocity.x, (float)airVelocity.y, (float)airVelocity.z);
             var parameters = new object[] { vessel_, new Vector3(), new Vector3(), worldAirVel, altitude };
             FARAPI_CalculateVesselAeroForces.Invoke(null, parameters);
