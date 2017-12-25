@@ -466,14 +466,14 @@ namespace Trajectories
             return nextState;
         }
 
-        static SimulationState RK4Step(SimulationState state, Func<Vector3d, Vector3d, Vector3d> accelerationFunc, double dt)
+        static SimulationState RK4Step(SimulationState state, Func<Vector3d, Vector3d, Vector3d> accelerationFunc, double dt, out Vector3d accel)
         {
             Vector3d p1 = state.position;
             Vector3d v1 = state.velocity;
-            Vector3d a1 = accelerationFunc(p1, v1);
+            accel = accelerationFunc(p1, v1);
 
             Vector3d p2 = state.position + 0.5 * v1 * dt;
-            Vector3d v2 = state.velocity + 0.5 * a1 * dt;
+            Vector3d v2 = state.velocity + 0.5 * accel * dt;
             Vector3d a2 = accelerationFunc(p2, v2);
 
             Vector3d p3 = state.position + 0.5 * v2 * dt;
@@ -485,7 +485,7 @@ namespace Trajectories
             Vector3d a4 = accelerationFunc(p4, v4);
 
             state.position = state.position + (dt / 6.0) * (v1 + 2.0 * v2 + 2.0 * v3 + v4);
-            state.velocity = state.velocity + (dt / 6.0) * (a1 + 2.0 * a2 + 2.0 * a3 + a4);
+            state.velocity = state.velocity + (dt / 6.0) * (accel + 2.0 * a2 + 2.0 * a3 + a4);
 
             return state;
         }
@@ -801,19 +801,15 @@ namespace Trajectories
 
                         SimulationState lastState = state;
 
-                        Profiler.Start("VerletStep");
+                        Profiler.Start("IntegrationStep");
 
                         // Verlet integration (more precise than using the velocity)
                         // state = VerletStep(state, accelerationFunc, dt);
-                        state = RK4Step(state, accelerationFunc, dt);
-
-
+                        state = RK4Step(state, accelerationFunc, dt, out currentAccel);
+                        
                         currentTime += dt;
 
-                        Profiler.Stop("VerletStep");
-
-                        // calculate acceleration at current position
-                        currentAccel = accelerationFunc(state.position, state.velocity);
+                        Profiler.Stop("IntegrationStep");
 
                         // KSP presumably uses euler integration for position updates. Since RK4 is actually more precise than that,
                         // we try to reintroduce an approximation of the error.
