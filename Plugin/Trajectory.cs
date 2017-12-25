@@ -687,7 +687,9 @@ namespace Trajectories
                     state.position = Util.SwapYZ(patch.spaceOrbit.getRelativePositionAtUT(entryTime));
                     state.velocity = Util.SwapYZ(patch.spaceOrbit.getOrbitalVelocityAtUT(entryTime));
 
-                    //Util.PostSingleScreenMessage("atmo start cond", "Atmospheric start: vel=" + vel.ToString("0.00") + " (mag=" + vel.magnitude.ToString("0.00") + ")");
+                    // Initialize a patch with zero acceleration
+                    Vector3d currentAccel = new Vector3d(0.0, 0.0, 0.0);
+
 
                     double currentTime = entryTime;
                     double lastPositionStoredUT = 0;
@@ -720,8 +722,6 @@ namespace Trajectories
                         Profiler.Stop("accelerationFunc inside");
                         return accel;
                     };
-
-                    Vector3d currentAccel;
 
 
                     while (true)
@@ -794,11 +794,7 @@ namespace Trajectories
                             }
                         }
 
-
-                        // // Euler integration
-                        //vel += acceleration * dt;
-                        //pos += vel * dt;
-
+                        Vector3d lastAccel = currentAccel;
                         SimulationState lastState = state;
 
                         Profiler.Start("IntegrationStep");
@@ -809,15 +805,22 @@ namespace Trajectories
                         
                         currentTime += dt;
 
-                        Profiler.Stop("IntegrationStep");
-
-                        // KSP presumably uses euler integration for position updates. Since RK4 is actually more precise than that,
+                        // KSP presumably uses Euler integration for position updates. Since RK4 is actually more precise than that,
                         // we try to reintroduce an approximation of the error.
+
                         // The local truncation error for euler integration is:
                         // LTE = 1/2 * h^2 * y''(t)
                         // https://en.wikipedia.org/wiki/Euler_method#Local_truncation_error
-                        state.position = state.position + 0.5 * TimeWarp.fixedDeltaTime * currentAccel * dt;
+                        //
+                        // For us,
+                        // h is the time step of the outer simulation (KSP), which is the physics time step
+                        // y''(t) is the difference of the velocity/acceleration divided by the physics time step
+                        state.position += 0.5 * TimeWarp.fixedDeltaTime * currentAccel * dt;
+                        state.velocity += 0.5 * TimeWarp.fixedDeltaTime * (currentAccel - lastAccel);
 
+                        Profiler.Stop("IntegrationStep");
+                        
+                        // calculate gravity and aerodynamic force
                         Vector3d gravityAccel = lastState.position * (-body.gravParameter / (R * R * R));
                         Vector3d aerodynamicForce = (currentAccel - gravityAccel) / aerodynamicModel_.mass;
 
