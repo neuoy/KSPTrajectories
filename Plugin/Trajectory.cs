@@ -667,7 +667,7 @@ namespace Trajectories
                     patch.startingState.stockPatch = null;
 
                     // lower dt would be more accurate, but a tradeoff has to be found between performances and accuracy
-                    double dt = 2.0;
+                    double dt = Settings.fetch.IntegrationStepSize;
 
                     // some shallow entries can result in very long flight. For performances reasons,
                     // we limit the prediction duration
