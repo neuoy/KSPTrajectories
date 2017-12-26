@@ -466,10 +466,25 @@ Here's an example applied inside the *Trajectories.MapOverlay.Render* method:
     refreshMesh();
     Profiler.EndSample();
     ```
-
-In addition, there is a simple "frame-based" profiler included in the KSPTrajectories code base [here](https://github.com/neuoy/KSPTrajectories/tree/master/Plugin/Utility/Profiler.cs), that is appropriate for performance measurements.
-
+	
+	
 For more information see the KSP Forum thread [KSP Plugin debugging and profiling for Visual Studio and Monodevelop on all OS](http://forum.kerbalspaceprogram.com/index.php?/topic/102909-ksp-plugin-debugging-and-profiling-for-visual-studio-and-monodevelop-on-all-os/&page=1).
+
+
+
+In addition, there is a simple "frame-based" profiler included in the KSPTrajectories code base [here](https://github.com/neuoy/KSPTrajectories/tree/master/Plugin/Utilities/Profiler.cs), that is appropriate for performance measurements.
+
+In the code, wrap the code you want in pairs of `Trajectories.Profiler.Start("MyLabel")` and `Trajectories.Profiler.Start("MyLabel")`.
+
+In-game, start it by pressing Ctrl-P. It shows each code entry belonging to one label as one line. The columns show:
+
+  * NAME: The Label for the code being profiled
+  * LAST: Code runtime averaged over all the calls in a recent frame.
+  * AVG: Code runtime averaged over all the calls since start or reset.
+  * CALLS: Number of calls in a recent frame.
+  * AVG: Number of calls divided by the number of frames since start or reset
+
+You can reset these counters with the Reset button .
 
 
 ## Building Releases
