@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Reflection;
 using KSP.Localization;
 using UnityEngine;
 
@@ -18,6 +19,9 @@ namespace Trajectories
         private const float button_height = 25.0f;
         private const float slider_width = 130.0f;
         private const int page_padding = 10;
+
+        // version string
+        private static string version_txt = " vX.X.X";
 
         private enum PageType
         {
@@ -68,6 +72,11 @@ namespace Trajectories
         {
             // enable global access
             Fetch = this;
+
+            // version string
+            version_txt = " v" + typeof(MainGUI).Assembly.GetName().Version;
+            version_txt = version_txt.Remove(version_txt.LastIndexOf("."));
+            UnityEngine.Debug.Log(Localizer.Format("#autoLOC_Trajectories_Title") + version_txt);
 
             // allocate and define window for use in the popup dialog
             Allocate();
@@ -252,6 +261,7 @@ namespace Trajectories
                "TrajectoriesMainGUI",
                "",
                Localizer.Format("#autoLOC_Trajectories_Title"),
+               Localizer.Format("#autoLOC_Trajectories_Title") + " -" + version_txt,
                HighLogic.UISkin,
                // window origin is center of rect, position is offset from lower left corner of screen and normalized i.e (0.5, 0.5 is screen center)
                new Rect(Settings.fetch.MainGUIWindowPos.x, Settings.fetch.MainGUIWindowPos.y, width, height),
