@@ -53,6 +53,7 @@ namespace Trajectories
         private static string max_gforce_txt = "";
         private static string impact_position_txt = "";
         private static string impact_velocity_txt = "";
+        private static string impact_time_txt = "";
         private static string aerodynamic_model_txt = "";
         private static string performance_txt = "";
         private static string num_errors_txt = "";
@@ -163,6 +164,7 @@ namespace Trajectories
                 new DialogGUILabel(() => { return max_gforce_txt; }, true),
                 new DialogGUILabel(() => { return impact_position_txt; }, true),
                 new DialogGUILabel(() => { return impact_velocity_txt; }, true),
+                new DialogGUILabel(() => { return impact_time_txt; }, true),
                 new DialogGUIHorizontalLayout(
                     new DialogGUILabel(() => { return Settings.fetch.ShowPerformance ? performance_txt : ""; }, true),
                     new DialogGUILabel(() => { return Settings.fetch.ShowPerformance ? num_errors_txt : ""; }, true)),
@@ -594,11 +596,20 @@ namespace Trajectories
                 impact_velocity_txt = Localizer.Format("#autoLOC_Trajectories_ImpactVelocity",
                     string.Format("{0:0.0}", -vVelMag),
                     string.Format("{0:0.0}", hVelMag));
+
+                // time to impact
+                double duration = (lastPatch.EndTime - lastPatch.StartingState.Time) / 3600.0;   // duration in hrs
+                double hours = Math.Truncate(duration);
+                double mins = Math.Truncate((duration - hours) * 60.0);
+                double secs = (((duration - hours) * 60.0) - mins) * 60.0;
+                impact_time_txt = Localizer.Format("#autoLOC_Trajectories_ImpactTime",
+                    string.Format("{0:00}:{1:00}:{2:00.00}", hours, mins, secs));
             }
             else
             {
                 impact_position_txt = Localizer.Format("#autoLOC_Trajectories_ImpactPosition", "---", "---");
                 impact_velocity_txt = Localizer.Format("#autoLOC_Trajectories_ImpactVelocity", "---", "---");
+                impact_time_txt = Localizer.Format("#autoLOC_Trajectories_ImpactTime", "--:--:--");
             }
 
             // performace and errors
