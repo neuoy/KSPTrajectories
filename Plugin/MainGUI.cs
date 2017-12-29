@@ -5,6 +5,8 @@ using System.Diagnostics;
 using System.Reflection;
 using KSP.Localization;
 using UnityEngine;
+using UnityEngine.Events;
+using TMPro;
 
 namespace Trajectories
 {
@@ -13,16 +15,18 @@ namespace Trajectories
     public sealed class MainGUI: MonoBehaviour
     {
         // constants
-        private const float width = 320.0f;
-        private const float height = 250.0f;
+        private const float width = 340.0f;
+        private const float height = 285.0f;
         private const float button_width = 75.0f;
         private const float button_height = 25.0f;
-        private const float slider_width = 130.0f;
+        private const float targetbutton_width = 120.0f;
+        private const float slider_width = 150.0f;
         private const int page_padding = 10;
 
         // version string
         private static string version_txt = " vX.X.X";
 
+        // page type enum
         private enum PageType
         {
             INFO = 0,
@@ -44,11 +48,19 @@ namespace Trajectories
         private static DialogGUIVerticalLayout descent_page;
         private static DialogGUIVerticalLayout settings_page;
 
+        // manual target text input
+        private static string manual_target_txt = "";
+        private static bool manual_target_txt_ok = false;
+        private static bool manual_target_txt_changed = false;
+        private static DialogGUITextInput manual_target_textinput;
+        private static TMP_InputField tmpro_manual_target_textinput;
+
         // display update strings
         private static string max_gforce_hdrtxt = Localizer.Format("#autoLOC_Trajectories_MaxGforce") + ": ";
         private static string aerodynamic_model_hdrtxt = Localizer.Format("#autoLOC_Trajectories_AeroModel") + ": ";
         private static string performance_hdrtxt = Localizer.Format("#autoLOC_900334") + ": ";
         private static string errors_hdrtxt = Localizer.Format("#autoLOC_Trajectories_Errors") + ": ";
+        private static string target_body_hdrtxt = Localizer.Format("#autoLOC_Trajectories_TargetBody") + ": ";
 
         private static string max_gforce_txt = "";
         private static string impact_position_txt = "";
@@ -57,6 +69,9 @@ namespace Trajectories
         private static string aerodynamic_model_txt = "";
         private static string performance_txt = "";
         private static string num_errors_txt = "";
+        private static string target_body_txt = "";
+        private static string target_position_txt = "";
+        private static string target_distance_txt = "";
 
         // display update timer
         private static double update_timer = Util.Clocks;
@@ -102,10 +117,17 @@ namespace Trajectories
             // create popup dialog and hide it
             popup_dialog = PopupDialog.SpawnPopupDialog(multi_dialog, true, HighLogic.UISkin, false, "");
             Hide();
+
+            // create textbox event listeners
+            SetManualTargetTextBoxEvents();
         }
 
         private void Update()
         {
+            if ((Input.GetKey(KeyCode.Return) || Input.GetKey(KeyCode.KeypadEnter)) &&
+                (InputLockManager.GetControlLock("TrajectoriesKeyboardLockout") == ControlTypes.KEYBOARDINPUT))
+                KeyboardUnlock("");
+
             // hide or show the dialog box
             if ((!Settings.fetch.MainGUIEnabled || !Util.IsFlight || PlanetariumCamera.Camera == null) && visible)
             {
@@ -120,22 +142,20 @@ namespace Trajectories
             UpdatePages();
         }
 
-        // FixedUpdate is required to fix the vessel switching bug!
-        private void FixedUpdate()
-        {
-        }
-
         private void OnDestroy()
         {
             Fetch = null;
 
             // save popup position. Note. PopupDialog.RTrf is an offset from the center of the screeen.
-            Settings.fetch.MainGUIWindowPos = new Vector2(
-                ((Screen.width / 2) + popup_dialog.RTrf.position.x) / Screen.width,
-                ((Screen.height / 2) + popup_dialog.RTrf.position.y) / Screen.height);
+            if (popup_dialog != null)
+            {
+                Settings.fetch.MainGUIWindowPos = new Vector2(
+                    ((Screen.width / 2) + popup_dialog.RTrf.position.x) / Screen.width,
+                    ((Screen.height / 2) + popup_dialog.RTrf.position.y) / Screen.height);
+                popup_dialog.Dismiss();
+                popup_dialog = null;
+            }
 
-            popup_dialog.Dismiss();
-            popup_dialog = null;
             AppLauncherButton.Destroy();
         }
 
@@ -148,6 +168,9 @@ namespace Trajectories
             // default window to center of screen
             if (Settings.fetch.MainGUIWindowPos.x <= 0 || Settings.fetch.MainGUIWindowPos.y <= 0)
                 Settings.fetch.MainGUIWindowPos = new Vector2(0.5f, 0.5f);
+
+            // create manual target text input box
+            manual_target_textinput = new DialogGUITextInput(manual_target_txt, " ", false, 35, OnTextInput_TargetManual, 23);
 
             // create pages
             info_page = new DialogGUIVerticalLayout(false, true, 0, new RectOffset(), TextAnchor.UpperCenter,
@@ -165,6 +188,7 @@ namespace Trajectories
                 new DialogGUILabel(() => { return impact_position_txt; }, true),
                 new DialogGUILabel(() => { return impact_velocity_txt; }, true),
                 new DialogGUILabel(() => { return impact_time_txt; }, true),
+                new DialogGUILabel(() => { return Trajectory.Target.Body == null ? "" : target_distance_txt; }, true),
                 new DialogGUIHorizontalLayout(
                     new DialogGUILabel(() => { return Settings.fetch.ShowPerformance ? performance_txt : ""; }, true),
                     new DialogGUILabel(() => { return Settings.fetch.ShowPerformance ? num_errors_txt : ""; }, true)),
@@ -172,8 +196,35 @@ namespace Trajectories
                 );
 
             target_page = new DialogGUIVerticalLayout(false, true, 0, new RectOffset(), TextAnchor.UpperCenter,
+                new DialogGUILabel(() => { return target_body_txt; }, true),
+                new DialogGUILabel(() => { return target_position_txt; }, true),
+                new DialogGUILabel(() => { return target_distance_txt; }, true),
                 new DialogGUISpace(4),
-                new DialogGUILabel("<b>   Target Page</b>", true));
+                new DialogGUILabel(Localizer.Format("#autoLOC_Trajectories_TargetSelect")),
+                new DialogGUIHorizontalLayout(
+                    new DialogGUIButton(Localizer.Format("#autoLOC_Trajectories_TargetImpact"),
+                        OnButtonClick_TargetImpact, ButtonEnabler_TargetImpact, targetbutton_width, button_height, false),
+                    new DialogGUISpace(10),
+                    new DialogGUIButton(Localizer.Format("#autoLOC_6002159"),
+                        OnButtonClick_TargetKSC, () => { return true; }, targetbutton_width, button_height, false)),
+                new DialogGUIHorizontalLayout(
+                    new DialogGUIButton(Localizer.Format("#autoLOC_Trajectories_TargetVessel"),
+                        OnButtonClick_TargetVessel, ButtonEnabler_TargetVessel, targetbutton_width, button_height, false),
+                    new DialogGUISpace(10),
+                    new DialogGUIButton(Localizer.Format("#autoLOC_Trajectories_TargetWaypoint"),
+                        OnButtonClick_TargetWaypoint, ButtonEnabler_TargetWaypoint, targetbutton_width, button_height, false)),
+                new DialogGUILabel(Localizer.Format("#autoLOC_Trajectories_TargetHelp")),
+                manual_target_textinput,
+                new DialogGUISpace(2),
+                new DialogGUIHorizontalLayout(
+                    new DialogGUIButton(Localizer.Format("#autoLOC_Trajectories_TargetManual"),
+                        OnButtonClick_TargetManual, ButtonEnabler_TargetManual, targetbutton_width, button_height, false),
+                    new DialogGUISpace(10),
+                    new DialogGUIButton(Localizer.Format("#autoLOC_Trajectories_TargetClear"),
+                        OnButtonClick_TargetClear, ButtonEnabler_TargetClear, targetbutton_width, button_height, false)),
+                new DialogGUISpace(2)
+                );
+
 
             descent_page = new DialogGUIVerticalLayout(false, true, 0, new RectOffset(), TextAnchor.UpperCenter,
                 new DialogGUIHorizontalLayout(false, false, 0, new RectOffset(), TextAnchor.MiddleCenter,
@@ -262,7 +313,6 @@ namespace Trajectories
             multi_dialog = new MultiOptionDialog(
                "TrajectoriesMainGUI",
                "",
-               Localizer.Format("#autoLOC_Trajectories_Title"),
                Localizer.Format("#autoLOC_Trajectories_Title") + " -" + version_txt,
                HighLogic.UISkin,
                // window origin is center of rect, position is offset from lower left corner of screen and normalized i.e (0.5, 0.5 is screen center)
@@ -282,6 +332,35 @@ namespace Trajectories
                    // insert page box
                    page_box
                });
+        }
+
+        /// <summary>
+        /// Creates the event listeners for the manual target text input box
+        /// </summary>
+        private static void SetManualTargetTextBoxEvents()
+        {
+            if (manual_target_textinput?.uiItem == null)
+                return;
+
+            tmpro_manual_target_textinput = manual_target_textinput.uiItem.GetComponent<TMP_InputField>();
+            tmpro_manual_target_textinput.onSelect.AddListener(new UnityAction<string>(KeyboardLockout));
+            tmpro_manual_target_textinput.onDeselect.AddListener(new UnityAction<string>(KeyboardUnlock));
+        }
+
+        /// <summary>
+        /// Locks out the keyboards input
+        /// </summary>
+        private static void KeyboardLockout(string inString)
+        {
+            InputLockManager.SetControlLock(ControlTypes.KEYBOARDINPUT, "TrajectoriesKeyboardLockout");
+        }
+
+        /// <summary>
+        /// Removes the keyboard lockout
+        /// </summary>
+        private static void KeyboardUnlock(string inString)
+        {
+            InputLockManager.RemoveControlLock("TrajectoriesKeyboardLockout");
         }
 
         /// <summary> Shows window. </summary>
@@ -306,7 +385,7 @@ namespace Trajectories
 
         #region ButtonEnabler methods called by the GuiButtons
         // ButtonEnabler methods are Callbacks used by the GuiButtons to decide if they should enable or disable themselves.
-        //  A GuiButton will call its ButtonEnabler method which returns false if the currently viewed page matches the GuiButton
+        //  A page select button will call its ButtonEnabler method which returns false if the currently viewed page matches the button
         private static bool ButtonEnabler_Info()
         {
             if ((PageType)Settings.fetch.MainGUICurrentPage == PageType.INFO)
@@ -333,6 +412,47 @@ namespace Trajectories
             if ((PageType)Settings.fetch.MainGUICurrentPage == PageType.SETTINGS)
                 return false;
             return true;
+        }
+
+        private static bool ButtonEnabler_TargetImpact()
+        {
+            // grab the last patch that was calculated
+            Trajectory.Patch lastPatch = Trajectory.fetch?.Patches.LastOrDefault();
+
+            if (lastPatch != null && lastPatch.ImpactPosition.HasValue)
+                return true;
+            return false;
+        }
+
+        private static bool ButtonEnabler_TargetVessel()
+        {
+            // grab the currently targeted vessel
+            Vessel targetVessel = FlightGlobals.fetch.VesselTarget?.GetVessel();
+
+            if (targetVessel != null && targetVessel.Landed)
+                return true;
+            return false;
+        }
+
+        private static bool ButtonEnabler_TargetWaypoint()
+        {
+            if (FlightGlobals.ActiveVessel?.navigationWaypoint != null)
+                return true;
+            return false;
+        }
+
+        private static bool ButtonEnabler_TargetManual()
+        {
+            if (manual_target_txt_ok)
+                return true;
+            return false;
+        }
+
+        private static bool ButtonEnabler_TargetClear()
+        {
+            if ((Trajectory.Target.Body != null) && Trajectory.Target.WorldPosition.HasValue)
+                return true;
+            return false;
         }
         #endregion
 
@@ -471,10 +591,119 @@ namespace Trajectories
             DescentProfile.fetch.finalApproach.Horizon = inState;
             DescentProfile.fetch.CheckGUI();
         }
+
+        private static void OnButtonClick_TargetImpact()
+        {
+            // grab the last patch that was calculated
+            Trajectory.Patch lastPatch = Trajectory.fetch?.Patches.LastOrDefault();
+
+            if (lastPatch != null)
+            {
+                Trajectory.Target.Set(lastPatch.StartingState.ReferenceBody, lastPatch.ImpactPosition);
+                ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_Trajectories_TargetingImpact"));
+            }
+        }
+
+        private static void OnButtonClick_TargetKSC()
+        {
+            CelestialBody body = FlightGlobals.Bodies.SingleOrDefault(b => b.isHomeWorld);
+
+            if (body != null)
+            {
+                Trajectory.Target.Set(body, body.GetWorldSurfacePosition(-0.04860002, -74.72425635, 2.0) - body.position);
+                ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_Trajectories_TargetingKSC"));
+            }
+        }
+
+        private static void OnButtonClick_TargetVessel()
+        {
+            // grab the currently targeted vessel
+            Vessel targetVessel = FlightGlobals.fetch.VesselTarget?.GetVessel();
+
+            if (targetVessel != null && targetVessel.Landed)
+            {
+                Trajectory.Target.Set(targetVessel.lastBody, targetVessel.GetWorldPos3D() - targetVessel.lastBody.position);
+                ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_Trajectories_TargetingVessel", targetVessel.GetName()));
+            }
+        }
+
+        private static void OnButtonClick_TargetWaypoint()
+        {
+            // grab the currently selected waypoint
+            FinePrint.Waypoint navigationWaypoint = FlightGlobals.ActiveVessel?.navigationWaypoint;
+
+            if (navigationWaypoint != null)
+            {
+                Trajectory.Target.Set(navigationWaypoint.celestialBody, navigationWaypoint.celestialBody.
+                    GetRelSurfacePosition(navigationWaypoint.latitude, navigationWaypoint.longitude, navigationWaypoint.altitude));
+                ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_Trajectories_TargetingWaypoint", navigationWaypoint.name));
+            }
+        }
+
+        private static void OnButtonClick_TargetManual()
+        {
+            CelestialBody body = FlightGlobals.currentMainBody;
+
+            string[] latLng = Trajectory.Target.ManualText.Split(new char[] { ',', ';' });
+
+            if (latLng.Length == 2 && body != null)
+            {
+                double lat;
+                double lng;
+
+                if (double.TryParse(latLng[0].Trim(), out lat) && double.TryParse(latLng[1].Trim(), out lng))
+                {
+                    Vector3d relPos = body.GetWorldSurfacePosition(lat, lng, 2.0) - body.position;
+                    double altitude = Trajectory.GetGroundAltitude(body, relPos) + body.Radius;
+                    Trajectory.Target.Set(body, relPos * (altitude / relPos.magnitude));
+                    ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_Trajectories_TargetingManual"));
+                }
+            }
+        }
+
+        private static void OnButtonClick_TargetClear()
+        {
+            Trajectory.Target.Set();
+        }
+
+        private static string OnTextInput_TargetManual(string inString)
+        {
+            string[] latLng = inString.Split(new char[] { ',', ';' });
+            if (latLng.Length == 2)
+            {
+                latLng[0] = latLng[0].Trim();
+                latLng[1] = latLng[1].Trim();
+
+                double lat;
+                double lng;
+
+                if (double.TryParse(latLng[0], out lat) && double.TryParse(latLng[1], out lng))
+                {
+                    manual_target_txt = latLng[0] + " , " + latLng[1];
+                    manual_target_txt_changed = true;
+                    manual_target_txt_ok = true;
+                }
+                else
+                {
+                    manual_target_txt = inString;
+                    manual_target_txt_ok = false;
+                }
+            }
+            else
+            {
+                manual_target_txt = inString;
+                manual_target_txt_ok = false;
+            }
+
+            manual_target_textinput.text = manual_target_txt;
+            Trajectory.Target.ManualText = manual_target_txt;
+            Trajectory.Target.Save();
+            return null;
+        }
         #endregion
 
         #region Callback methods for the Gui components
-        // Callback methods are used by the Gui to retrieve information it needs either for display or setting values.
+        // Callback methods are used by the Gui to retrieve information it needs either for displaying or setting values.
         private static void OnSliderSet_MaxPatches(float invalue)
         {
             Settings.fetch.MaxPatchCount = (int)invalue;
@@ -541,6 +770,10 @@ namespace Trajectories
             Stack<Transform> stack = new Stack<Transform>();
             stack.Push(page_box.uiItem.gameObject.transform);
             page_box.children[0].Create(ref stack, HighLogic.UISkin);
+
+            // create textbox event listeners
+            if (inpage == PageType.TARGET)
+                SetManualTargetTextBoxEvents();
         }
 
         /// <summary> Updates the strings used by the Gui components to display changing values/data </summary>
@@ -558,6 +791,11 @@ namespace Trajectories
                     return;
                 case PageType.TARGET:
                     UpdateTargetPage();
+                    if (manual_target_txt_changed)
+                    {
+                        ChangePage(PageType.TARGET);
+                        manual_target_txt_changed = false;
+                    }
                     return;
                 case PageType.SETTINGS:
                     UpdateSettingsPage();
@@ -612,6 +850,9 @@ namespace Trajectories
                 impact_time_txt = Localizer.Format("#autoLOC_Trajectories_ImpactTime", "--:--:--");
             }
 
+            // target distance
+            UpdateTargetDistance();
+
             // performace and errors
             if (Settings.fetch.ShowPerformance)
                 UpdateSettingsPage();
@@ -623,6 +864,39 @@ namespace Trajectories
         /// <summary> Updates the strings used by the target page to display changing values/data </summary>
         private static void UpdateTargetPage()
         {
+            // grab the last patch that was calculated
+            Trajectory.Patch lastPatch = Trajectory.fetch?.Patches.LastOrDefault();
+            CelestialBody targetBody = Trajectory.Target.Body;
+
+            // target position and distance values
+            if (targetBody != null && Trajectory.Target.WorldPosition.HasValue)
+            {
+                // calculate body offset target position
+                Vector3d targetPos = Trajectory.Target.WorldPosition.Value + targetBody.position;
+
+                // target body
+                target_body_txt = target_body_hdrtxt + targetBody.bodyName;
+
+                // target position
+                target_position_txt = Localizer.Format("#autoLOC_Trajectories_TargetPosition",
+                    string.Format("{0:000.000000}", targetBody.GetLatitude(targetPos)),
+                    string.Format("{0:000.000000}", targetBody.GetLongitude(targetPos)));
+
+                // target distance
+                UpdateTargetDistance();
+            }
+            else
+            {
+                target_body_txt = target_body_hdrtxt + "---";
+                target_position_txt = Localizer.Format("#autoLOC_Trajectories_TargetPosition", "---", "---");
+                target_distance_txt = Localizer.Format("#autoLOC_Trajectories_TargetDistance", "---", "-", "---", "-", "---");
+            }
+
+            if (manual_target_txt != Trajectory.Target.ManualText)
+            {
+                OnTextInput_TargetManual(Trajectory.Target.ManualText);
+                manual_target_txt_changed = true;
+            }
         }
 
         /// <summary> Updates the strings used by the settings page to display changing values/data </summary>
@@ -644,6 +918,69 @@ namespace Trajectories
                 performance_txt = performance_hdrtxt + "0.0ms | 0.0 %";
                 num_errors_txt = errors_hdrtxt + "0";
             }
+        }
+
+        /// <summary> Updates the strings used by the info and target page to display target distance </summary>
+        private static void UpdateTargetDistance()
+        {
+            // grab the last patch that was calculated
+            Trajectory.Patch lastPatch = Trajectory.fetch?.Patches.LastOrDefault();
+            CelestialBody targetBody = Trajectory.Target.Body;
+            CelestialBody lastPatchBody = lastPatch?.StartingState.ReferenceBody;
+
+            // target position and distance values
+            if (targetBody != null && Trajectory.Target.WorldPosition.HasValue)
+            {
+                // calculate body offset target position
+                Vector3d targetPos = Trajectory.Target.WorldPosition.Value + targetBody.position;
+
+                // target distance values
+                if (lastPatch != null && lastPatch.ImpactPosition.HasValue && lastPatchBody == targetBody &&
+                    Settings.fetch.DisplayTrajectories)
+                {
+                    // calculate body offset impact position
+                    Vector3d impactPos = lastPatch.ImpactPosition.Value + lastPatchBody.position;
+
+                    // get latitude, longitude and altitude for impact position
+                    double impactLat;
+                    double impatLon;
+                    double impactAlt;
+                    lastPatchBody.GetLatLonAlt(impactPos, out impactLat, out impatLon, out impactAlt);
+
+                    // get get latitude, longitude and altitude for target position
+                    double targetLat;
+                    double targetLon;
+                    double targetAlt;
+                    targetBody.GetLatLonAlt(targetPos, out targetLat, out targetLon, out targetAlt);
+
+                    // calculate distances
+                    double targetDistance = Util.DistanceFromLatitudeAndLongitude(targetBody.Radius + impactAlt,
+                        impactLat, impatLon, targetLat, targetLon) / 1e3;
+
+                    double targetDistanceNorth = (Util.DistanceFromLatitudeAndLongitude(targetBody.Radius + impactAlt,
+                        impactLat, targetLon, targetLat, targetLon) / 1e3) * ((targetLat - impactLat) < 0.0d ? -1.0d : +1.0d);
+
+                    double targetDistanceEast = (Util.DistanceFromLatitudeAndLongitude(targetBody.Radius + impactAlt,
+                        targetLat, impatLon, targetLat, targetLon) / 1e3) * ((targetLon - impatLon) < 0.0d ? -1.0d : +1.0d);
+
+                    // target distance
+                    target_distance_txt = Localizer.Format("#autoLOC_Trajectories_TargetDistance",
+                        string.Format("{0,6:F2}", targetDistance),
+                        targetDistanceNorth > 0.0d ? 'N' : 'S',
+                        string.Format("{0,6:F2}", Math.Abs(targetDistanceNorth)),
+                        targetDistanceEast > 0.0d ? 'E' : 'W',
+                        string.Format("{0,6:F2}", Math.Abs(targetDistanceEast)));
+                }
+                else
+                {
+                    target_distance_txt = Localizer.Format("#autoLOC_Trajectories_TargetDistance", "---", "-", "---", "-", "---");
+                }
+            }
+            else
+            {
+                target_distance_txt = Localizer.Format("#autoLOC_Trajectories_TargetDistance", "---", "-", "---", "-", "---");
+            }
+
         }
         #endregion
     }

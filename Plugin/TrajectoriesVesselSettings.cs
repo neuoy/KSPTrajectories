@@ -45,5 +45,8 @@ namespace Trajectories
 
         [KSPField(isPersistant = true, guiActive = false)]
         public double TargetPosition_z = 0;
+
+        [KSPField(isPersistant = true, guiActive = false)]
+        public string ManualTargetTxt = "";
     }
 }

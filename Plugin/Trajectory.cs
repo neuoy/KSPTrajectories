@@ -144,12 +144,18 @@ namespace Trajectories
             /// </summary>
             public static Vector3d? LocalPosition
             {
+                // A transform that has double precision would be nice so we can have target precision in meter's
                 get => WorldPosition.HasValue ? (Vector3d?)Body.transform.InverseTransformDirection(WorldPosition.Value) : null;
                 set
                 {
                     WorldPosition = Body == null ? (Vector3d?)null : Body.transform.TransformDirection((Vector3)value);
                 }
             }
+
+            /// <summary>
+            /// Manual target TextBox string
+            /// </summary>
+            public static string ManualText { get; set; } = "";
 
             /// <summary>
             /// Sets the target to a body and a World position, if param localspace is true then uses a Local position.
@@ -191,6 +197,7 @@ namespace Trajectories
                     module.TargetPosition_x = LocalPosition.HasValue ? LocalPosition.Value.x : 0d;
                     module.TargetPosition_y = LocalPosition.HasValue ? LocalPosition.Value.y : 0d;
                     module.TargetPosition_z = LocalPosition.HasValue ? LocalPosition.Value.z : 0d;
+                    module.ManualTargetTxt = ManualText;
                     //UnityEngine.Debug.Log("Trajectories: Target profile saved");
                 }
             }
@@ -446,6 +453,7 @@ namespace Trajectories
                     {
                         //UnityEngine.Debug.Log("Trajectories: No vessel");
                         Target.Set();
+                        Target.ManualText = "";
                     }
                     else
                     {
@@ -455,12 +463,14 @@ namespace Trajectories
                         {
                             //UnityEngine.Debug.Log("Trajectories: No TrajectoriesVesselSettings module");
                             Target.Set();
+                            Target.ManualText = "";
                         }
                         else
                         {
                             //UnityEngine.Debug.Log("Trajectories: Reading target settings...");
                             Target.Set(FlightGlobals.Bodies.FirstOrDefault(b => b.name == module.TargetBody),
                                 new Vector3d(module.TargetPosition_x, module.TargetPosition_y, module.TargetPosition_z), true);
+                            Target.ManualText = module.ManualTargetTxt;
                             //UnityEngine.Debug.Log("Trajectories: Target profile loaded");
                         }
                     }

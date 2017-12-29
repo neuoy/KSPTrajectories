@@ -262,7 +262,12 @@ namespace Trajectories
                 GUI.enabled = true;
 
                 GUILayout.BeginHorizontal();
-                coords = GUILayout.TextField(coords, GUILayout.Width(170));
+                coords = GUILayout.TextField(Trajectory.Target.ManualText, GUILayout.Width(170));
+                if (coords != Trajectory.Target.ManualText)
+                {
+                    Trajectory.Target.ManualText = coords;
+                    Trajectory.Target.Save();
+                }
                 if (GUILayout.Button(new GUIContent("Set",
                         "Enter target latitude and longitude, separated by a comma, in decimal format (with a dot for decimal separator)"),
                         GUILayout.Width(50)))
