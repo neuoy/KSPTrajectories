@@ -552,7 +552,7 @@ namespace Trajectories
             {
                 DescentProfile.fetch.ProgradeEntry = inState;
                 if (inState)
-                    DescentProfile.fetch.Reset();
+                    DescentProfile.fetch.Reset(0d);
                 DescentProfile.fetch.Save();
             }
         }
@@ -563,7 +563,7 @@ namespace Trajectories
             {
                 DescentProfile.fetch.RetrogradeEntry = inState;
                 if (inState)
-                    DescentProfile.fetch.Reset(Math.PI);
+                    DescentProfile.fetch.Reset();
                 DescentProfile.fetch.Save();
             }
         }

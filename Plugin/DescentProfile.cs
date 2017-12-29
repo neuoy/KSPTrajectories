@@ -147,7 +147,7 @@ namespace Trajectories
             finalApproach = new Node(Localizer.Format("#autoLOC_453573"), Localizer.Format("#autoLOC_Trajectories_GroundDesc"));
         }
 
-        public void Reset(double AoA = 0d)
+        public void Reset(double AoA = Math.PI)
         {
             entry.Angle = AoA;
             entry.Horizon = false;
@@ -254,12 +254,12 @@ namespace Trajectories
 
             if (newPrograde && !ProgradeEntry)
             {
-                Reset();
+                Reset(0d);
                 Save();
             }
             else if (newRetrograde && !RetrogradeEntry)
             {
-                Reset(Math.PI);
+                Reset();
                 Save();
             }
         }
