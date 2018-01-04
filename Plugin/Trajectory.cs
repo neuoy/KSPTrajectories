@@ -250,8 +250,6 @@ namespace Trajectories
 
         public float GameFrameTime { get { return averageGameFrameTime_ * 0.001f; } }
 
-        private VesselState AddPatch_outState;
-
         // permit global access
         public static Trajectory fetch { get; private set; } = null;
 
@@ -897,8 +895,6 @@ namespace Trajectories
                     };
                     int nextPosIdx = 0;
 
-                    Vector3d pos = Util.SwapYZ(patch.SpaceOrbit.getRelativePositionAtUT(entryTime));
-                    Vector3d vel = Util.SwapYZ(patch.SpaceOrbit.getOrbitalVelocityAtUT(entryTime));
                     SimulationState state;
                     state.position = Util.SwapYZ(patch.spaceOrbit.getRelativePositionAtUT(entryTime));
                     state.velocity = Util.SwapYZ(patch.spaceOrbit.getOrbitalVelocityAtUT(entryTime));
@@ -963,13 +959,9 @@ namespace Trajectories
 
                             if (hitGround || atmosphereCoeff <= 0.0)
                             {
-                                patch.RawImpactPosition = pos;
-                                patch.ImpactPosition = CalculateRotatedPosition(body, patch.RawImpactPosition.Value, currentTime);
-                                patch.ImpactVelocity = vel;
                                 patch.rawImpactPosition = state.position;
                                 patch.impactPosition = calculateRotatedPosition(body, patch.rawImpactPosition.Value, currentTime);
                                 patch.impactVelocity = state.velocity;
->>>>>>> master
                             }
 
                             patch.EndTime = Math.Min(currentTime, patch.EndTime);
@@ -1005,10 +997,6 @@ namespace Trajectories
                                 patchesBackBuffer_.Add(patch);
                                 AddPatch_outState = new VesselState
                                 {
-                                    Position = pos,
-                                    Velocity = vel,
-                                    ReferenceBody = body,
-                                    Time = patch.EndTime
                                     position = state.position,
                                     velocity = state.velocity,
                                     referenceBody = body,
@@ -1053,23 +1041,12 @@ namespace Trajectories
                             (float)(aerodynamicForce.magnitude / aerodynamicModel_.mass),
                             maxAccelBackBuffer_);
 
-                        //vel += acceleration * dt;
-                        //pos += vel * dt;
-
-                        // Verlet integration (more precise than using the velocity)
-                        Vector3d ppos = prevPos;
-                        prevPos = pos;
-                        pos = pos + pos - ppos + acceleration * (dt * dt);
-                        vel = (pos - prevPos) / dt;
-
-                        currentTime += dt;
 
                         Profiler.Start("AddPatch#impact");
 
                         double interval = altitude < 10000.0 ? trajectoryInterval * 0.1 : trajectoryInterval;
                         if (currentTime >= lastPositionStoredUT + interval)
                         {
-                            double groundAltitude = GetGroundAltitude(body, CalculateRotatedPosition(body, pos, currentTime));
                             double groundAltitude = GetGroundAltitude(body, calculateRotatedPosition(body, state.position, currentTime));
                             if (lastPositionStoredUT > 0)
                             {
