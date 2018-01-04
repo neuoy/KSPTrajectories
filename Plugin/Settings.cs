@@ -62,7 +62,7 @@ namespace Trajectories
         [Persistent(Default: true)]
         public bool NewGui { get; set; }
         [Persistent(Default: 2.0f)]
-        public float IntegrationStepSize { get; set; } 
+        public float IntegrationStepSize { get; set; }
 
         [Persistent(Default: 4)]
         public int MaxPatchCount { get; set; }
@@ -72,9 +72,6 @@ namespace Trajectories
 
         [Persistent(Default: true)]
         public bool UseCache { get; set; }
-
-        [Persistent(Default: false)]
-        public bool ShowPerformance { get; set; }
 
         private KSP.IO.PluginConfiguration config;
 

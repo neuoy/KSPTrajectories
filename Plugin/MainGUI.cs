@@ -58,7 +58,7 @@ namespace Trajectories
         // display update strings
         private static string max_gforce_hdrtxt = Localizer.Format("#autoLOC_Trajectories_MaxGforce") + ": ";
         private static string aerodynamic_model_hdrtxt = Localizer.Format("#autoLOC_Trajectories_AeroModel") + ": ";
-        private static string performance_hdrtxt = Localizer.Format("#autoLOC_900334") + ": ";
+        private static string calculation_time_hdrtxt = Localizer.Format("#autoLOC_Trajectories_CalcTime") + ": ";
         private static string errors_hdrtxt = Localizer.Format("#autoLOC_Trajectories_Errors") + ": ";
         private static string target_body_hdrtxt = Localizer.Format("#autoLOC_Trajectories_TargetBody") + ": ";
 
@@ -67,7 +67,7 @@ namespace Trajectories
         private static string impact_velocity_txt = "";
         private static string impact_time_txt = "";
         private static string aerodynamic_model_txt = "";
-        private static string performance_txt = "";
+        private static string calculation_time_txt = "";
         private static string num_errors_txt = "";
         private static string target_body_txt = "";
         private static string target_position_txt = "";
@@ -188,11 +188,7 @@ namespace Trajectories
                 new DialogGUILabel(() => { return impact_position_txt; }, true),
                 new DialogGUILabel(() => { return impact_velocity_txt; }, true),
                 new DialogGUILabel(() => { return impact_time_txt; }, true),
-                new DialogGUILabel(() => { return Trajectory.Target.Body == null ? "" : target_distance_txt; }, true),
-                new DialogGUIHorizontalLayout(
-                    new DialogGUILabel(() => { return Settings.fetch.ShowPerformance ? performance_txt : ""; }, true),
-                    new DialogGUILabel(() => { return Settings.fetch.ShowPerformance ? num_errors_txt : ""; }, true)),
-                new DialogGUILabel(() => { return aerodynamic_model_txt; }, true)
+                new DialogGUILabel(() => { return Trajectory.Target.Body == null ? "" : target_distance_txt; }, true)
                 );
 
             target_page = new DialogGUIVerticalLayout(false, true, 0, new RectOffset(), TextAnchor.UpperCenter,
@@ -276,18 +272,22 @@ namespace Trajectories
                     new DialogGUILabel(Localizer.Format("#autoLOC_Trajectories_MaxPatches"), true),
                     new DialogGUISlider(() => { return Settings.fetch.MaxPatchCount; },
                         3f, 10f, true, slider_width, -1, OnSliderSet_MaxPatches),
-                    new DialogGUILabel(() => { return Settings.fetch.MaxPatchCount.ToString(); }, 15f)),
+                    new DialogGUILabel(() => { return Settings.fetch.MaxPatchCount.ToString(); }, 20f)),
                 new DialogGUIHorizontalLayout(
                     new DialogGUILabel(Localizer.Format("#autoLOC_Trajectories_MaxFramesPatch"), true),
                     new DialogGUISlider(() => { return Settings.fetch.MaxFramesPerPatch; },
                         1f, 50f, true, slider_width, -1, OnSliderSet_MaxFramesPatch),
-                    new DialogGUILabel(() => { return Settings.fetch.MaxFramesPerPatch.ToString(); }, 15f)),
+                    new DialogGUILabel(() => { return Settings.fetch.MaxFramesPerPatch.ToString(); }, 20f)),
                 new DialogGUIHorizontalLayout(
-                    new DialogGUILabel(() => { return performance_txt; }, true),
+                    new DialogGUILabel(Localizer.Format("#autoLOC_Trajectories_IntegrationStep"), true),
+                    new DialogGUISlider(() => { return Settings.fetch.IntegrationStepSize; },
+                        0.5f, 5f, false, slider_width, -1, OnSliderSet_IntegrationStep),
+                    new DialogGUILabel(() => { return Settings.fetch.IntegrationStepSize.ToString(); }, 20f)),
+                new DialogGUIHorizontalLayout(
+                    new DialogGUILabel(() => { return calculation_time_txt; }, true),
                     new DialogGUILabel(() => { return num_errors_txt; }, true)),
-                new DialogGUIHorizontalLayout(true, false,
-                    new DialogGUIToggle(() => { return Settings.fetch.ShowPerformance; },
-                        Localizer.Format("#autoLOC_Trajectories_ShowPerformance"), OnButtonClick_ShowPerformance, 125f),
+                new DialogGUIHorizontalLayout(true, false, 0, new RectOffset(), TextAnchor.MiddleCenter,
+                    new DialogGUILabel(() => { return aerodynamic_model_txt; }, true),
                     new DialogGUIToggle(() => { return Settings.fetch.NewGui; },
                         Localizer.Format("#autoLOC_Trajectories_NewGui"), OnButtonClick_NewGui))
                 );
@@ -534,11 +534,6 @@ namespace Trajectories
                 Settings.fetch.UseBlizzyToolbar = inState;
         }
 
-        private static void OnButtonClick_ShowPerformance(bool inState)
-        {
-            Settings.fetch.ShowPerformance = inState;
-        }
-
         private static void OnButtonClick_NewGui(bool inState)
         {
             Settings.fetch.NewGui = inState;
@@ -714,6 +709,12 @@ namespace Trajectories
             Settings.fetch.MaxFramesPerPatch = (int)invalue;
         }
 
+        private static void OnSliderSet_IntegrationStep(float invalue)
+        {
+            //Settings.fetch.IntegrationStepSize = (float)Math.Round(invalue, 1, MidpointRounding.AwayFromZero);    // 0.1 increments
+            Settings.fetch.IntegrationStepSize = (float)Math.Ceiling(invalue / 0.5f) * 0.5f;    // 0.5 increments
+        }
+
         private static void OnSliderSet_EntryAngle(float invalue)
         {
             DescentProfile.fetch.entry.SliderPos = invalue;
@@ -852,13 +853,6 @@ namespace Trajectories
 
             // target distance
             UpdateTargetDistance();
-
-            // performace and errors
-            if (Settings.fetch.ShowPerformance)
-                UpdateSettingsPage();
-
-            // aerodynamic model
-            aerodynamic_model_txt = aerodynamic_model_hdrtxt + Trajectory.fetch.AerodynamicModelName;
         }
 
         /// <summary> Updates the strings used by the target page to display changing values/data </summary>
@@ -906,8 +900,11 @@ namespace Trajectories
 
             if (traj != null)
             {
+                // aerodynamic model
+                aerodynamic_model_txt = aerodynamic_model_hdrtxt + Trajectory.fetch.AerodynamicModelName;
+
                 // performance
-                performance_txt = performance_hdrtxt +
+                calculation_time_txt = calculation_time_hdrtxt +
                     string.Format("{0:0.0}ms | {1:0.0} %", traj.ComputationTime * 1000.0f, (traj.ComputationTime / traj.GameFrameTime) * 100.0f);
 
                 // num errors
@@ -915,8 +912,11 @@ namespace Trajectories
             }
             else
             {
-                performance_txt = performance_hdrtxt + "0.0ms | 0.0 %";
+                calculation_time_txt = calculation_time_hdrtxt + "0.0ms | 0.0 %";
                 num_errors_txt = errors_hdrtxt + "0";
+                aerodynamic_model_txt = aerodynamic_model_hdrtxt + "---";
+
+
             }
         }
 
