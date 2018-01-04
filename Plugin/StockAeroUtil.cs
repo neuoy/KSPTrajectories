@@ -116,6 +116,8 @@ namespace Trajectories
         //*******************************************************
         public static Vector3 SimAeroForce(Vessel _vessel, Vector3 v_wrld_vel, double altitude, double latitude = 0.0)
         {
+            Profiler.Start("SimAeroForce");
+
             CelestialBody body = _vessel.mainBody;
             double pressure = body.GetPressure(altitude);
             // Lift and drag for force accumulation.
@@ -161,7 +163,9 @@ namespace Trajectories
                 Vector3 liftForce = new Vector3(0, 0, 0);
                 Vector3d dragForce;
 
-                switch(p.dragModel)
+
+                Profiler.Start("SimAeroForce#drag");
+                switch (p.dragModel)
                 {
                     case Part.DragModel.DEFAULT:
                     case Part.DragModel.CUBE:
@@ -218,7 +222,9 @@ namespace Trajectories
                         break;
                 }
 
-                #if DEBUG
+                Profiler.Stop("SimAeroForce#drag");
+
+#if DEBUG
                 if (partDebug != null)
                 {
                     partDebug.Drag += (float)dragForce.magnitude;
@@ -229,13 +235,21 @@ namespace Trajectories
                 // If it isn't a wing or lifter, get body lift.
                 if (!p.hasLiftModule)
                 {
+                    Profiler.Start("SimAeroForce#BodyLift");
+
                     float simbodyLiftScalar = p.bodyLiftMultiplier * PhysicsGlobals.BodyLiftMultiplier * (float)dyn_pressure;
                     simbodyLiftScalar *= PhysicsGlobals.GetLiftingSurfaceCurve("BodyLift").liftMachCurve.Evaluate((float)mach);
                     Vector3 bodyLift = p.transform.rotation * (simbodyLiftScalar * liftForce);
                     bodyLift = Vector3.ProjectOnPlane(bodyLift, sim_dragVectorDir);
                     // Only accumulate forces for non-LiftModules
                     total_lift += bodyLift;
+
+
+                    Profiler.Stop("SimAeroForce#BodyLift");
                 }
+
+
+                Profiler.Start("SimAeroForce#LiftingSurface");
 
                 // Find ModuleLifingSurface for wings and liftforce.
                 // Should catch control surface as it is a subclass
@@ -273,9 +287,13 @@ namespace Trajectories
                     }
                 }
 
+                Profiler.Stop("SimAeroForce#LiftingSurface");
+
             }
             // RETURN STUFF
             Vector3 force = total_lift + total_drag;
+
+            Profiler.Stop("SimAeroForce");
             return force;
         }
     } //StockAeroUtil

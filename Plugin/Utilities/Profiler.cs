@@ -9,7 +9,7 @@ namespace Trajectories
 {
     /// <summary> Simple profiler for measuring the execution time of code placed between the Start and Stop methods. </summary>
     [KSPAddon(KSPAddon.Startup.EveryScene, false)]
-    public sealed class Profiler : MonoBehaviour
+    public sealed class Profiler: MonoBehaviour
     {
 #if DEBUG_PROFILER
         // constants
@@ -56,10 +56,7 @@ namespace Trajectories
 
 
         // permit global access
-        public static Profiler Fetch
-        {
-            get; private set;
-        } = null;
+        public static Profiler Fetch { get; private set; } = null;
 
         //  constructor
         public Profiler()
@@ -83,14 +80,14 @@ namespace Trajectories
                            new DialogGUIButton(Localizer.Format("#autoLOC_900305"),
                                OnButtonClick_Reset, () => true, 75, 25, false),
                            new DialogGUIToggle(() => { return show_zero; },"Show zero calls", OnButtonClick_ShowZero),
-                           new DialogGUILabel(() => { return tot_frames_txt; }, value_width + 50)),
+                           new DialogGUILabel(() => { return tot_frames_txt; }, value_width + 50f)),
                        // create header line
                        new DialogGUIHorizontalLayout(
                            new DialogGUILabel("<b>   NAME</b>", true),
                            new DialogGUILabel("<b>LAST</b>", value_width),
                            new DialogGUILabel("<b>AVG</b>", value_width),
-                           new DialogGUILabel("<b>CALLS</b>", value_width - 15),
-                           new DialogGUILabel("<b>AVG</b>", value_width - 15))),
+                           new DialogGUILabel("<b>CALLS</b>", value_width - 15f),
+                           new DialogGUILabel("<b>AVG</b>", value_width - 15f))),
                    // create scrollbox for entry data
                    new DialogGUIScrollList(new Vector2(), false, true, dialog_items)
                });
@@ -99,11 +96,8 @@ namespace Trajectories
         // Awake is called only once when the script instance is being loaded. Used in place of the constructor for initialization.
         private void Awake()
         {
-            // keep it alive
-            DontDestroyOnLoad(this);
-
             // create popup dialog
-            popup_dialog = PopupDialog.SpawnPopupDialog(multi_dialog, true, HighLogic.UISkin, false, "");
+            popup_dialog = PopupDialog.SpawnPopupDialog(multi_dialog, false, HighLogic.UISkin, false, "");
             if (popup_dialog != null)
                 popup_dialog.gameObject.SetActive(false);
         }
@@ -169,8 +163,11 @@ namespace Trajectories
         private void OnDestroy()
         {
             Fetch = null;
-            popup_dialog.Dismiss();
-            popup_dialog = null;
+            if (popup_dialog != null)
+            {
+                popup_dialog.Dismiss();
+                popup_dialog = null;
+            }
         }
 
         private static string GetTitle()
@@ -212,8 +209,8 @@ namespace Trajectories
                     new DialogGUILabel("  " + e_name, true),
                     new DialogGUILabel(() => { return entries[e_name].last_txt; }, value_width),
                     new DialogGUILabel(() => { return entries[e_name].avg_txt; }, value_width),
-                    new DialogGUILabel(() => { return entries[e_name].calls_txt; }, value_width - 15),
-                    new DialogGUILabel(() => { return entries[e_name].avg_calls_txt; }, value_width - 15)));
+                    new DialogGUILabel(() => { return entries[e_name].calls_txt; }, value_width - 15f),
+                    new DialogGUILabel(() => { return entries[e_name].avg_calls_txt; }, value_width - 15f)));
 
             // required to force the Gui creation
             Stack<Transform> stack = new Stack<Transform>();

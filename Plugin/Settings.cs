@@ -61,6 +61,8 @@ namespace Trajectories
 
         [Persistent(Default: true)]
         public bool NewGui { get; set; }
+        [Persistent(Default: 2.0f)]
+        public float IntegrationStepSize { get; set; } 
 
         [Persistent(Default: 4)]
         public int MaxPatchCount { get; set; }

@@ -162,6 +162,7 @@ namespace Trajectories
         /// <returns>The computed aerodynamic forces in world space</returns>
         public Vector3d ComputeForces(double altitude, Vector3d airVelocity, Vector3d vup, double angleOfAttack)
         {
+            Profiler.Start("ComputeForces");
             if (!vessel_.mainBody.atmosphere)
                 return Vector3d.zero;
             if (altitude >= body_.atmosphereDepth)
@@ -221,6 +222,9 @@ namespace Trajectories
                 Debug.Log("Trajectories: res is NaN (altitude=" + altitude + ", airVelocity=" + airVelocity.magnitude + ", angleOfAttack=" + angleOfAttack);
                 return new Vector3d(0, 0, 0); // Don't send NaN into the simulation as it would cause bad things (infinite loops, crash, etc.). I think this case only happens at the atmosphere edge, so the total force should be 0 anyway.
             }
+
+
+            Profiler.Stop("ComputeForces");
             return res;
         }
 
