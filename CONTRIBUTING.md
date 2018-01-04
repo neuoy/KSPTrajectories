@@ -1,3 +1,50 @@
+Are you here because you want to:
+
+ * Report a Bug?  Click here.
+ * Request a feature? Click here.
+ * Jump in and contribute? Click here.
+
+Table of Contents
+=================
+
+   1. [How to Report Bugs](#how-to-report-bugs)
+      1. [Removing Mods for Debugging](#removing-mods-for-debugging)
+   1. [How to Suggest Features](#how-to-suggest-features)
+      1. [Stay Polite!](#stay-polite)
+      1. [Consider the workload](#consider-the-workload)
+      1. [Gather feedback from the community](#gather-feedback-from-the-community)
+         1. [Make sure that the feature is wanted](#make-sure-that-the-feature-is-wanted)
+      1. [Consider the Impact](#consider-the-impact)
+         1. ["Why can't you just add a toggle?"](#why-cant-you-just-add-a-toggle)
+      1. [What not to suggest](#what-not-to-suggest)
+      1. [Where to suggest a feature](#where-to-suggest-a-feature)
+      1. [Learn to accept a No](#learn-to-accept-a-no)
+   1. [How to Contribute](#how-to-contribute)
+      1. [Where to Start](#where-to-start)
+      1. [Using Git and GitHub](#using-git-and-github)
+         1. [Workflow for the Trajectories mod](#workflow-for-the-trajectories-mod)
+         1. [How to submit pull requests](#how-to-submit-pull-requests)
+      1. [Code Style](#code-style)
+      1. [Debugging with Visual Studio and Unity](#debugging-with-visual-studio-and-unity)
+         1. [Installation and Environment Setup](#installation-and-environment-setup)
+            1. [Unity](#unity)
+            1. [Visual Studio](#visual-studio)
+               1. [Visual Studio Tools for Unity](#visual-studio-tools-for-unity)
+               1. [Editor Settings](#editor-settings)
+            1. [Kerbal Space Program Install](#kerbal-space-program-install)
+            1. [System Environment Variables](#system-environment-variables)
+         1. [Development and Debugging](#development-and-debugging)
+            1. [Project Setup](#project-setup)
+            1. [Building](#building)
+            1. [Debugging](#debugging)
+               1. [Visual Studio](#visual-studio-1)
+               1. [MonoDevelop](#monodevelop)
+            1. [Telemetry](#telemetry)
+            1. [Profiling](#profiling)
+      1. [Building Releases](#building-releases)
+         1. [Release Checklist](#release-checklist)
+         1. [Versioning](#versioning)
+
 # How to Report Bugs
 
 Bug reports are a very valuable contribution to the development of this mod - but only if done right.
@@ -77,9 +124,9 @@ A demanding or bitter tone is a sure way to shut down even the best intentioned 
 ## Consider the workload
 
 As mentioned, none of us get paid to work on this project. Please consider this, when you try to suggest features that take a lot of work.
-Sometimes the idea might even be the best idea in the world - but there is simply noone who could implement it.
+Even the best idea in the world might not be implemented, simply because there is nobody around with the time to implement it.
 
-Try to asses how much work a feature would be, and state that in your suggestion.
+This shouldn't prevent you from making it in the first place, but try to asses how much work a feature would be, state that in your suggestion, and don't be too disappointed if it's doesn't get implemented.
 
 What would be best, of course, is to implement the feature yourself and submit a pull request! We have a guide for new contributors [right here](#how-to-contribute).
 
@@ -109,7 +156,6 @@ Whenever a new feature is introduced, no matter how big the benefits, there are 
   - Changing workloads: People are creatures of habit, and so are this mods users. When you introduce a change in "the way they do things",
     be aware that many people (who your are currently unaware of, because they are content and happy) will suddenly have to change their behaviour and that they
 	might not be as happy about the change as you are.
-  - Configuration complexity, explained [below](#why-cant-you-just-add-a-toggle)
 
 When you submit a feature request, please make sure to think about the drawbacks that your feature could have and specify and explain them clearly.
 
@@ -455,6 +501,9 @@ Here are the steps on how to use the telemetry module:
 
 #### Profiling
 
+
+#### Unity Profiler
+
 You can use the Unity Editor profiler by starting the Unity Editor, opening a blank project (or any project for that matter) and then use the **Window Menu->Profiler** option to open the Profiler Window. Now you can start your KSP dev install debug executable either standalone or with Visual Studio.
 
 By default you will only see the MonoBehavior methods (Update, FixedUpdate, etc...) but you can add calls in your code to profile anything you like. To do this, add to your code pairs of `Profiler.BeginSample("MyLabel");` and `Profiler.EndSample();`. Be aware that if a frame takes too long to execute the profiler will skip it.
@@ -471,6 +520,7 @@ Here's an example applied inside the *Trajectories.MapOverlay.Render* method:
 For more information see the KSP Forum thread [KSP Plugin debugging and profiling for Visual Studio and Monodevelop on all OS](http://forum.kerbalspaceprogram.com/index.php?/topic/102909-ksp-plugin-debugging-and-profiling-for-visual-studio-and-monodevelop-on-all-os/&page=1).
 
 
+#### Internal Profiler
 
 In addition, there is a simple "frame-based" profiler included in the KSPTrajectories code base [here](https://github.com/neuoy/KSPTrajectories/tree/master/Plugin/Utilities/Profiler.cs), that is appropriate for performance measurements.
 
