@@ -896,8 +896,8 @@ namespace Trajectories
                     int nextPosIdx = 0;
 
                     SimulationState state;
-                    state.position = Util.SwapYZ(patch.spaceOrbit.getRelativePositionAtUT(entryTime));
-                    state.velocity = Util.SwapYZ(patch.spaceOrbit.getOrbitalVelocityAtUT(entryTime));
+                    state.position = Util.SwapYZ(patch.SpaceOrbit.getRelativePositionAtUT(entryTime));
+                    state.velocity = Util.SwapYZ(patch.SpaceOrbit.getOrbitalVelocityAtUT(entryTime));
 
                     // Initialize a patch with zero acceleration
                     Vector3d currentAccel = new Vector3d(0.0, 0.0, 0.0);
@@ -959,9 +959,9 @@ namespace Trajectories
 
                             if (hitGround || atmosphereCoeff <= 0.0)
                             {
-                                patch.rawImpactPosition = state.position;
-                                patch.impactPosition = calculateRotatedPosition(body, patch.rawImpactPosition.Value, currentTime);
-                                patch.impactVelocity = state.velocity;
+                                patch.RawImpactPosition = state.position;
+                                patch.ImpactPosition = CalculateRotatedPosition(body, patch.RawImpactPosition.Value, currentTime);
+                                patch.ImpactVelocity = state.velocity;
                             }
 
                             patch.EndTime = Math.Min(currentTime, patch.EndTime);
@@ -997,10 +997,10 @@ namespace Trajectories
                                 patchesBackBuffer_.Add(patch);
                                 AddPatch_outState = new VesselState
                                 {
-                                    position = state.position,
-                                    velocity = state.velocity,
-                                    referenceBody = body,
-                                    time = patch.endTime
+                                    Position = state.position,
+                                    Velocity = state.velocity,
+                                    ReferenceBody = body,
+                                    Time = patch.EndTime
                                 };
                                 yield break;
                             }
@@ -1014,7 +1014,7 @@ namespace Trajectories
                         // Verlet integration (more precise than using the velocity)
                         // state = VerletStep(state, accelerationFunc, dt);
                         state = RK4Step(state, accelerationFunc, dt, out currentAccel);
-                        
+
                         currentTime += dt;
 
                         // KSP presumably uses Euler integration for position updates. Since RK4 is actually more precise than that,
@@ -1031,7 +1031,7 @@ namespace Trajectories
                         state.velocity += 0.5 * TimeWarp.fixedDeltaTime * (currentAccel - lastAccel);
 
                         Profiler.Stop("IntegrationStep");
-                        
+
                         // calculate gravity and aerodynamic force
                         Vector3d gravityAccel = lastState.position * (-body.gravParameter / (R * R * R));
                         Vector3d aerodynamicForce = (currentAccel - gravityAccel) / aerodynamicModel_.mass;
@@ -1047,7 +1047,7 @@ namespace Trajectories
                         double interval = altitude < 10000.0 ? trajectoryInterval * 0.1 : trajectoryInterval;
                         if (currentTime >= lastPositionStoredUT + interval)
                         {
-                            double groundAltitude = GetGroundAltitude(body, calculateRotatedPosition(body, state.position, currentTime));
+                            double groundAltitude = GetGroundAltitude(body, CalculateRotatedPosition(body, state.position, currentTime));
                             if (lastPositionStoredUT > 0)
                             {
                                 // check terrain collision, to detect impact on mountains etc.
