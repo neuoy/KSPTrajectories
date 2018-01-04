@@ -50,6 +50,9 @@ namespace Trajectories
         [Persistent(Default: false)]
         public bool GUIEnabled { get; set; }
 
+        [Persistent(Default: 2.0f)]
+        public float IntegrationStepSize { get; set; } 
+
         [Persistent(Default: 4)]
         public int MaxPatchCount { get; set; }
 

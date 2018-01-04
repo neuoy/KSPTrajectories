@@ -443,6 +443,53 @@ namespace Trajectories
 
         private VesselState AddPatch_outState;
 
+        struct SimulationState
+        {
+            public Vector3d position;
+            public Vector3d velocity;
+        }
+
+        static SimulationState VerletStep(SimulationState state, Func<Vector3d, Vector3d, Vector3d> accelerationFunc, double dt)
+        {
+
+            Profiler.Start("accelerationFunc outside");
+            Vector3d acceleration = accelerationFunc(state.position, state.velocity);
+            Profiler.Stop("accelerationFunc outside");
+
+            Vector3d prevPos = state.position - dt * state.velocity;
+
+            SimulationState nextState;
+
+            nextState.position = 2.0 * state.position - prevPos + acceleration * (dt * dt);
+            nextState.velocity = (nextState.position - state.position) / dt;
+
+            return nextState;
+        }
+
+        static SimulationState RK4Step(SimulationState state, Func<Vector3d, Vector3d, Vector3d> accelerationFunc, double dt, out Vector3d accel)
+        {
+            Vector3d p1 = state.position;
+            Vector3d v1 = state.velocity;
+            accel = accelerationFunc(p1, v1);
+
+            Vector3d p2 = state.position + 0.5 * v1 * dt;
+            Vector3d v2 = state.velocity + 0.5 * accel * dt;
+            Vector3d a2 = accelerationFunc(p2, v2);
+
+            Vector3d p3 = state.position + 0.5 * v2 * dt;
+            Vector3d v3 = state.velocity + 0.5 * a2 * dt;
+            Vector3d a3 = accelerationFunc(p3, v3);
+
+            Vector3d p4 = state.position + v3 * dt;
+            Vector3d v4 = state.velocity + a3 * dt;
+            Vector3d a4 = accelerationFunc(p4, v4);
+
+            state.position = state.position + (dt / 6.0) * (v1 + 2.0 * v2 + 2.0 * v3 + v4);
+            state.velocity = state.velocity + (dt / 6.0) * (accel + 2.0 * a2 + 2.0 * a3 + a4);
+
+            return state;
+        }
+
         private IEnumerable<bool> AddPatch(VesselState startingState, DescentProfile profile)
         {
             if (null == vessel_.patchedConicSolver)
@@ -620,7 +667,7 @@ namespace Trajectories
                     patch.startingState.stockPatch = null;
 
                     // lower dt would be more accurate, but a tradeoff has to be found between performances and accuracy
-                    double dt = 0.1;
+                    double dt = Settings.fetch.IntegrationStepSize;
 
                     // some shallow entries can result in very long flight. For performances reasons,
                     // we limit the prediction duration
@@ -636,12 +683,14 @@ namespace Trajectories
                     buffer.Add(new Point[chunkSize]);
                     int nextPosIdx = 0;
 
-                    Vector3d pos = Util.SwapYZ(patch.spaceOrbit.getRelativePositionAtUT(entryTime));
-                    Vector3d vel = Util.SwapYZ(patch.spaceOrbit.getOrbitalVelocityAtUT(entryTime));
+                    SimulationState state;
+                    state.position = Util.SwapYZ(patch.spaceOrbit.getRelativePositionAtUT(entryTime));
+                    state.velocity = Util.SwapYZ(patch.spaceOrbit.getOrbitalVelocityAtUT(entryTime));
 
-                    //Util.PostSingleScreenMessage("atmo start cond", "Atmospheric start: vel=" + vel.ToString("0.00") + " (mag=" + vel.magnitude.ToString("0.00") + ")");
+                    // Initialize a patch with zero acceleration
+                    Vector3d currentAccel = new Vector3d(0.0, 0.0, 0.0);
 
-                    Vector3d prevPos = pos - vel * dt;
+
                     double currentTime = entryTime;
                     double lastPositionStoredUT = 0;
                     Vector3d lastPositionStored = new Vector3d();
@@ -649,7 +698,32 @@ namespace Trajectories
                     int iteration = 0;
                     int incrementIterations = 0;
                     int minIterationsPerIncrement = maxIterations / Settings.fetch.MaxFramesPerPatch;
-                    double accumulatedForces = 0;
+
+                    // function that calculates the acceleration under current parmeters
+                    Func<Vector3d, Vector3d, Vector3d> accelerationFunc = (position, velocity) =>
+                    {
+                        Profiler.Start("accelerationFunc inside");
+
+                        // gravity acceleration
+                        double R_ = position.magnitude;
+                        Vector3d accel_g = position * (-body.gravParameter / (R_ * R_ * R_));
+
+                        // aero force
+                        Vector3d vel_air = velocity - body.getRFrmVel(body.position + position);
+
+                        double aoa = profile.GetAngleOfAttack(body, position, vel_air);
+
+                        Profiler.Start("GetForces");
+                        Vector3d force_aero = aerodynamicModel_.GetForces(body, position, vel_air, aoa);
+                        Profiler.Stop("GetForces");
+
+                        Vector3d accel = accel_g + force_aero / aerodynamicModel_.mass;
+
+                        Profiler.Stop("accelerationFunc inside");
+                        return accel;
+                    };
+
+
                     while (true)
                     {
                         ++iteration;
@@ -661,7 +735,8 @@ namespace Trajectories
                             incrementIterations = 0;
                         }
 
-                        double R = pos.magnitude;
+
+                        double R = state.position.magnitude;
                         double altitude = R - body.Radius;
                         double atmosphereCoeff = altitude / maxAtmosphereAltitude;
                         if (hitGround
@@ -672,9 +747,9 @@ namespace Trajectories
 
                             if (hitGround || atmosphereCoeff <= 0.0)
                             {
-                                patch.rawImpactPosition = pos;
+                                patch.rawImpactPosition = state.position;
                                 patch.impactPosition = calculateRotatedPosition(body, patch.rawImpactPosition.Value, currentTime);
-                                patch.impactVelocity = vel;
+                                patch.impactVelocity = state.velocity;
                             }
 
                             patch.endTime = Math.Min(currentTime, patch.endTime);
@@ -710,8 +785,8 @@ namespace Trajectories
                                 patchesBackBuffer_.Add(patch);
                                 AddPatch_outState = new VesselState
                                 {
-                                    position = pos,
-                                    velocity = vel,
+                                    position = state.position,
+                                    velocity = state.velocity,
                                     referenceBody = body,
                                     time = patch.endTime
                                 };
@@ -719,48 +794,60 @@ namespace Trajectories
                             }
                         }
 
-                        Vector3d gravityAccel = pos * (-body.gravParameter / (R * R * R));
+                        Vector3d lastAccel = currentAccel;
+                        SimulationState lastState = state;
 
-                        //Util.PostSingleScreenMessage("prediction vel", "prediction vel = " + vel);
-                        Vector3d airVelocity = vel - body.getRFrmVel(body.position + pos);
-                        double angleOfAttack = profile.GetAngleOfAttack(body, pos, airVelocity);
-                        Vector3d aerodynamicForce = aerodynamicModel_.GetForces(body, pos, airVelocity, angleOfAttack);
-                        accumulatedForces += aerodynamicForce.magnitude * dt;
-                        Vector3d acceleration = gravityAccel + aerodynamicForce / aerodynamicModel_.mass;
+                        Profiler.Start("IntegrationStep");
+
+                        // Verlet integration (more precise than using the velocity)
+                        // state = VerletStep(state, accelerationFunc, dt);
+                        state = RK4Step(state, accelerationFunc, dt, out currentAccel);
+                        
+                        currentTime += dt;
+
+                        // KSP presumably uses Euler integration for position updates. Since RK4 is actually more precise than that,
+                        // we try to reintroduce an approximation of the error.
+
+                        // The local truncation error for euler integration is:
+                        // LTE = 1/2 * h^2 * y''(t)
+                        // https://en.wikipedia.org/wiki/Euler_method#Local_truncation_error
+                        //
+                        // For us,
+                        // h is the time step of the outer simulation (KSP), which is the physics time step
+                        // y''(t) is the difference of the velocity/acceleration divided by the physics time step
+                        state.position += 0.5 * TimeWarp.fixedDeltaTime * currentAccel * dt;
+                        state.velocity += 0.5 * TimeWarp.fixedDeltaTime * (currentAccel - lastAccel);
+
+                        Profiler.Stop("IntegrationStep");
+                        
+                        // calculate gravity and aerodynamic force
+                        Vector3d gravityAccel = lastState.position * (-body.gravParameter / (R * R * R));
+                        Vector3d aerodynamicForce = (currentAccel - gravityAccel) / aerodynamicModel_.mass;
 
                         // acceleration in the vessel reference frame is acceleration - gravityAccel
                         maxAccelBackBuffer_ = Math.Max(
-                            (float) (aerodynamicForce.magnitude / aerodynamicModel_.mass),
+                            (float)(aerodynamicForce.magnitude / aerodynamicModel_.mass),
                             maxAccelBackBuffer_);
 
 
-                        //vel += acceleration * dt;
-                        //pos += vel * dt;
-
-                        // Verlet integration (more precise than using the velocity)
-                        Vector3d ppos = prevPos;
-                        prevPos = pos;
-                        pos = pos + pos - ppos + acceleration * (dt * dt);
-                        vel = (pos - prevPos) / dt;
-
-                        currentTime += dt;
+                        Profiler.Start("AddPatch#impact");
 
                         double interval = altitude < 10000.0 ? trajectoryInterval * 0.1 : trajectoryInterval;
                         if (currentTime >= lastPositionStoredUT + interval)
                         {
-                            double groundAltitude = GetGroundAltitude(body, calculateRotatedPosition(body, pos, currentTime));
+                            double groundAltitude = GetGroundAltitude(body, calculateRotatedPosition(body, state.position, currentTime));
                             if (lastPositionStoredUT > 0)
                             {
                                 // check terrain collision, to detect impact on mountains etc.
                                 Vector3 rayOrigin = lastPositionStored;
-                                Vector3 rayEnd = pos;
+                                Vector3 rayEnd = state.position;
                                 double absGroundAltitude = groundAltitude + body.Radius;
                                 if (absGroundAltitude > rayEnd.magnitude)
                                 {
                                     hitGround = true;
                                     float coeff = Math.Max(0.01f, (float)((absGroundAltitude - rayOrigin.magnitude)
                                         / (rayEnd.magnitude - rayOrigin.magnitude)));
-                                    pos = rayEnd * coeff + rayOrigin * (1.0f - coeff);
+                                    state.position = rayEnd * coeff + rayOrigin * (1.0f - coeff);
                                     currentTime = currentTime * coeff + lastPositionStoredUT * (1.0f - coeff);
                                 }
                             }
@@ -771,18 +858,20 @@ namespace Trajectories
                                 buffer.Add(new Point[chunkSize]);
                                 nextPosIdx = 0;
                             }
-                            Vector3d nextPos = pos;
+                            Vector3d nextPos = state.position;
                             if (Settings.fetch.BodyFixedMode)
                             {
                                 nextPos = calculateRotatedPosition(body, nextPos, currentTime);
                             }
                             buffer.Last()[nextPosIdx].aerodynamicForce = aerodynamicForce;
-                            buffer.Last()[nextPosIdx].orbitalVelocity = vel;
+                            buffer.Last()[nextPosIdx].orbitalVelocity = state.velocity;
                             buffer.Last()[nextPosIdx].groundAltitude = (float)groundAltitude;
                             buffer.Last()[nextPosIdx].time = currentTime;
                             buffer.Last()[nextPosIdx++].pos = nextPos;
-                            lastPositionStored = pos;
+                            lastPositionStored = state.position;
                         }
+
+                        Profiler.Stop("AddPatch#impact");
                     }
                 }
             }

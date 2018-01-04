@@ -7,6 +7,8 @@
  * ModuleManager updated to v3.0.0
  * When combined with FAR, aerodynamic forces calculated on a packed vessel would lead to NRE's. Vessels are now
     no longer calculated when a vessel is in a packed state. Thanks go to Alex Wang for this bug fix.
+ * Higher precision and better performance through more advanced numeric techniques.
+   Try disabling the Cache for more precise predictions predictions that should not kill your FPS anymore.
 
 ### For Developers
 
