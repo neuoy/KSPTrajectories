@@ -41,6 +41,8 @@ Table of Contents
                1. [MonoDevelop](#monodevelop)
             1. [Telemetry](#telemetry)
             1. [Profiling](#profiling)
+               1. [Unity Profiler](#unity-profiler)
+               1. [Internal Profiler](#internal-profiler)
       1. [Building Releases](#building-releases)
          1. [Release Checklist](#release-checklist)
          1. [Versioning](#versioning)
@@ -502,7 +504,7 @@ Here are the steps on how to use the telemetry module:
 #### Profiling
 
 
-#### Unity Profiler
+##### Unity Profiler
 
 You can use the Unity Editor profiler by starting the Unity Editor, opening a blank project (or any project for that matter) and then use the **Window Menu->Profiler** option to open the Profiler Window. Now you can start your KSP dev install debug executable either standalone or with Visual Studio.
 
@@ -520,7 +522,7 @@ Here's an example applied inside the *Trajectories.MapOverlay.Render* method:
 For more information see the KSP Forum thread [KSP Plugin debugging and profiling for Visual Studio and Monodevelop on all OS](http://forum.kerbalspaceprogram.com/index.php?/topic/102909-ksp-plugin-debugging-and-profiling-for-visual-studio-and-monodevelop-on-all-os/&page=1).
 
 
-#### Internal Profiler
+##### Internal Profiler
 
 In addition, there is a simple "frame-based" profiler included in the KSPTrajectories code base [here](https://github.com/neuoy/KSPTrajectories/tree/master/Plugin/Utilities/Profiler.cs), that is appropriate for performance measurements.
 
