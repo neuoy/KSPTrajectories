@@ -526,17 +526,18 @@ For more information see the KSP Forum thread [KSP Plugin debugging and profilin
 
 In addition, there is a simple "frame-based" profiler included in the KSPTrajectories code base [here](https://github.com/neuoy/KSPTrajectories/tree/master/Plugin/Utilities/Profiler.cs), that is appropriate for performance measurements.
 
-In the code, wrap the code you want in pairs of `Trajectories.Profiler.Start("MyLabel")` and `Trajectories.Profiler.Start("MyLabel")`.
+In the code, wrap the code you want in pairs of `Trajectories.Profiler.Start("MyLabel")` and `Trajectories.Profiler.Stop("MyLabel")`.
 
 In-game, start it by pressing Ctrl-P. It shows each code entry belonging to one label as one line. The columns show:
 
-  * NAME: The Label for the code being profiled
-  * LAST: Code runtime averaged over all the calls in a recent frame.
+  * NAME: The Label for the code being profiled.
+  * LAST: Code runtime for a call in the last executed frame.
   * AVG: Code runtime averaged over all the calls since start or reset.
-  * CALLS: Number of calls in a recent frame.
-  * AVG: Number of calls divided by the number of frames since start or reset
+  * CALLS: Number of calls in the last executed frame.
+  * AVG: Number of calls divided by the number of frames since start or reset.
 
-You can reset these counters with the Reset button .
+You can reset these counters with the Reset button.
+You can enable/disable the display of any calls not called in the last frame with the Show zero calls button.
 
 
 ## Building Releases
