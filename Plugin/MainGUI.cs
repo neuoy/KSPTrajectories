@@ -280,7 +280,7 @@ namespace Trajectories
                     new DialogGUILabel(() => { return Settings.fetch.MaxFramesPerPatch.ToString(); }, 20f)),
                 new DialogGUIHorizontalLayout(
                     new DialogGUILabel(Localizer.Format("#autoLOC_Trajectories_IntegrationStep"), true),
-                    new DialogGUISlider(() => { return Settings.fetch.IntegrationStepSize; },
+                    new DialogGUISlider(() => { return (float)Settings.fetch.IntegrationStepSize; },
                         0.5f, 5f, false, slider_width, -1, OnSliderSet_IntegrationStep),
                     new DialogGUILabel(() => { return Settings.fetch.IntegrationStepSize.ToString(); }, 20f)),
                 new DialogGUIHorizontalLayout(
@@ -711,8 +711,8 @@ namespace Trajectories
 
         private static void OnSliderSet_IntegrationStep(float invalue)
         {
-            //Settings.fetch.IntegrationStepSize = (float)Math.Round(invalue, 1, MidpointRounding.AwayFromZero);    // 0.1 increments
-            Settings.fetch.IntegrationStepSize = (float)Math.Ceiling(invalue / 0.5f) * 0.5f;    // 0.5 increments
+            //Settings.fetch.IntegrationStepSize = Math.Round(invalue, 1, MidpointRounding.AwayFromZero);    // 0.1 increments
+            Settings.fetch.IntegrationStepSize = Math.Ceiling(invalue / 0.5f) * 0.5f;    // 0.5 increments
         }
 
         private static void OnSliderSet_EntryAngle(float invalue)
