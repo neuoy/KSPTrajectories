@@ -837,12 +837,12 @@ namespace Trajectories
                     string.Format("{0:0.0}", hVelMag));
 
                 // time to impact
-                double duration = (lastPatch.EndTime - lastPatch.StartingState.Time) / 3600.0;   // duration in hrs
+                double duration = (lastPatch.EndTime - Planetarium.GetUniversalTime()) / 3600.0;   // duration in hrs
                 double hours = Math.Truncate(duration);
                 double mins = Math.Truncate((duration - hours) * 60.0);
                 double secs = (((duration - hours) * 60.0) - mins) * 60.0;
                 impact_time_txt = Localizer.Format("#autoLOC_Trajectories_ImpactTime",
-                    string.Format("{0:00}:{1:00}:{2:00.00}", hours, mins, secs));
+                    string.Format("{0:00}:{1:00}:{2:00}", hours, mins, secs));
             }
             else
             {
