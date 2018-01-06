@@ -449,18 +449,18 @@ namespace Trajectories
             public Vector3d velocity;
         }
 
-        static SimulationState VerletStep(SimulationState state, Func<Vector3d, Vector3d, Vector3d> accelerationFunc, double dt)
+        static SimulationState VerletStep(SimulationState state, Func<Vector3d, Vector3d, Vector3d> accelerationFunc, double dt, out Vector3d accel)
         {
 
             Profiler.Start("accelerationFunc outside");
-            Vector3d acceleration = accelerationFunc(state.position, state.velocity);
+            accel = accelerationFunc(state.position, state.velocity);
             Profiler.Stop("accelerationFunc outside");
 
             Vector3d prevPos = state.position - dt * state.velocity;
 
             SimulationState nextState;
 
-            nextState.position = 2.0 * state.position - prevPos + acceleration * (dt * dt);
+            nextState.position = 2.0 * state.position - prevPos + accel * (dt * dt);
             nextState.velocity = (nextState.position - state.position) / dt;
 
             return nextState;
