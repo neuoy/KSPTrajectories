@@ -120,7 +120,8 @@
     PostBuildMacros;
   </PostBuildEventDependsOn>
     <PostBuildEvent>if $(ConfigurationName)==Debug (call "$(ProjectDir)..\misc\VisualStudio\buildscripts\UnityDebug\prepare-debug.bat" $(TargetName))
-if $(ConfigurationName)==Release (call "$(ProjectDir)..\misc\VisualStudio\buildscripts\ZipPack\build-package.bat" $(TargetName) -v@(VersionNumber))</PostBuildEvent>
+if $(ConfigurationName)==Release (call "$(ProjectDir)..\misc\VisualStudio\buildscripts\ZipPack\build-package.bat" $(TargetName) -v@(VersionNumber))
+xcopy /E /D /Y "$(ProjectDir)..\Localization" "$(TargetDir)..\Localization\"</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
