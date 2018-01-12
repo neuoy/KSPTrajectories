@@ -15,12 +15,12 @@ namespace Trajectories
     public sealed class MainGUI: MonoBehaviour
     {
         // constants
-        private const float width = 340.0f;
+        private const float width = 370.0f;
         private const float height = 285.0f;
         private const float button_width = 75.0f;
         private const float button_height = 25.0f;
         private const float targetbutton_width = 120.0f;
-        private const float slider_width = 150.0f;
+        private const float slider_width = 170.0f;
         private const int page_padding = 10;
 
         // version string
@@ -55,23 +55,40 @@ namespace Trajectories
         private static DialogGUITextInput manual_target_textinput;
         private static TMP_InputField tmpro_manual_target_textinput;
 
+        // data field labels
+        private static DialogGUILabel impact_latitude_label;
+        private static DialogGUILabel impact_longitude_label;
+        private static DialogGUILabel impact_vertical_label;
+        private static DialogGUILabel impact_horizontal_label;
+        private static DialogGUILabel info_distance_label;
+        private static DialogGUILabel info_distance_latitude_label;
+        private static DialogGUILabel info_distance_longitude_label;
+        private static DialogGUILabel target_latitude_label;
+        private static DialogGUILabel target_longitude_label;
+        private static DialogGUILabel target_distance_label;
+        private static DialogGUILabel target_distance_latitude_label;
+        private static DialogGUILabel target_distance_longitude_label;
+
         // display update strings
-        private static string max_gforce_hdrtxt = Localizer.Format("#autoLOC_Trajectories_MaxGforce") + ": ";
         private static string aerodynamic_model_hdrtxt = Localizer.Format("#autoLOC_Trajectories_AeroModel") + ": ";
         private static string calculation_time_hdrtxt = Localizer.Format("#autoLOC_Trajectories_CalcTime") + ": ";
         private static string errors_hdrtxt = Localizer.Format("#autoLOC_Trajectories_Errors") + ": ";
-        private static string target_body_hdrtxt = Localizer.Format("#autoLOC_Trajectories_TargetBody") + ": ";
 
         private static string max_gforce_txt = "";
-        private static string impact_position_txt = "";
-        private static string impact_velocity_txt = "";
+        private static string impact_latitude_txt = "";
+        private static string impact_longitude_txt = "";
+        private static string impact_vertical_txt = "";
+        private static string impact_horizontal_txt = "";
         private static string impact_time_txt = "";
         private static string aerodynamic_model_txt = "";
         private static string calculation_time_txt = "";
         private static string num_errors_txt = "";
         private static string target_body_txt = "";
-        private static string target_position_txt = "";
+        private static string target_latitude_txt = "";
+        private static string target_longitude_txt = "";
         private static string target_distance_txt = "";
+        private static string target_distance_latitude_txt = "";
+        private static string target_distance_longitude_txt = "";
 
         // display update timer
         private static double update_timer = Util.Clocks;
@@ -117,6 +134,9 @@ namespace Trajectories
             // create popup dialog and hide it
             popup_dialog = PopupDialog.SpawnPopupDialog(multi_dialog, true, HighLogic.UISkin, false, "");
             Hide();
+
+            //set data field labels justification
+            SetDataFieldJustification();
 
             // create textbox event listeners
             SetManualTargetTextBoxEvents();
@@ -172,6 +192,23 @@ namespace Trajectories
             // create manual target text input box
             manual_target_textinput = new DialogGUITextInput(manual_target_txt, " ", false, 35, OnTextInput_TargetManual, 23);
 
+            // create data field labels
+            impact_latitude_label = new DialogGUILabel(() => { return impact_latitude_txt; }, 65);
+            impact_longitude_label = new DialogGUILabel(() => { return impact_longitude_txt; }, 65);
+            impact_vertical_label = new DialogGUILabel(() => { return impact_vertical_txt; }, 65);
+            impact_horizontal_label = new DialogGUILabel(() => { return impact_horizontal_txt; }, 65);
+            info_distance_label = new DialogGUILabel(() => { return Trajectory.Target.Body == null ? "" :
+                target_distance_txt; }, 60);
+            info_distance_latitude_label = new DialogGUILabel(() => { return Trajectory.Target.Body == null ? "" :
+                target_distance_latitude_txt; }, 80);
+            info_distance_longitude_label = new DialogGUILabel(() => { return Trajectory.Target.Body == null ? "" :
+                target_distance_longitude_txt; }, 80);
+            target_latitude_label = new DialogGUILabel(() => { return target_latitude_txt; }, 65);
+            target_longitude_label = new DialogGUILabel(() => { return target_longitude_txt; }, 65);
+            target_distance_label = new DialogGUILabel(() => { return target_distance_txt; }, 60);
+            target_distance_latitude_label = new DialogGUILabel(() => { return target_distance_latitude_txt; }, 80);
+            target_distance_longitude_label = new DialogGUILabel(() => { return target_distance_longitude_txt; }, 80);
+
             // create pages
             info_page = new DialogGUIVerticalLayout(false, true, 0, new RectOffset(), TextAnchor.UpperCenter,
                 new DialogGUIHorizontalLayout(
@@ -184,17 +221,54 @@ namespace Trajectories
                         Localizer.Format("#autoLOC_Trajectories_FixedBody"), OnButtonClick_BodyFixedMode),
                     new DialogGUIToggle(() => { return Settings.fetch.DisplayCompleteTrajectory; },
                         Localizer.Format("#autoLOC_7001028"), OnButtonClick_DisplayCompleteTrajectory)),
-                new DialogGUILabel(() => { return max_gforce_txt; }, true),
-                new DialogGUILabel(() => { return impact_position_txt; }, true),
-                new DialogGUILabel(() => { return impact_velocity_txt; }, true),
-                new DialogGUILabel(() => { return impact_time_txt; }, true),
-                new DialogGUILabel(() => { return Trajectory.Target.Body == null ? "" : target_distance_txt; }, true)
+                new DialogGUIHorizontalLayout(TextAnchor.MiddleRight,
+                    new DialogGUILabel(Localizer.Format("#autoLOC_Trajectories_MaxGforce"), true),
+                    new DialogGUILabel(() => { return max_gforce_txt; })),
+                new DialogGUIHorizontalLayout(TextAnchor.MiddleRight,
+                    new DialogGUILabel(Localizer.Format("#autoLOC_Trajectories_ImpactTime"), true),
+                    new DialogGUILabel(() => { return impact_time_txt; })),
+                new DialogGUIHorizontalLayout(TextAnchor.MiddleRight,
+                    new DialogGUILabel(Localizer.Format("#autoLOC_Trajectories_ImpactPosition"), true),
+                    new DialogGUILabel(Localizer.Format("#autoLOC_Trajectories_Lat"), 25f),
+                    impact_latitude_label,
+                    new DialogGUISpace(10),
+                    new DialogGUILabel(Localizer.Format("#autoLOC_Trajectories_Long"), 28f),
+                    impact_longitude_label),
+                new DialogGUIHorizontalLayout(TextAnchor.MiddleRight,
+                    new DialogGUILabel(Localizer.Format("#autoLOC_Trajectories_ImpactVelocity"), true),
+                    new DialogGUILabel(Localizer.Format("#autoLOC_Trajectories_Vert"), 25f),
+                    impact_vertical_label,
+                    new DialogGUISpace(10),
+                    new DialogGUILabel(Localizer.Format("#autoLOC_Trajectories_Hori"), 28f),
+                    impact_horizontal_label),
+                new DialogGUIHorizontalLayout(TextAnchor.MiddleRight,
+                    new DialogGUILabel(() => { return Trajectory.Target.Body == null ? "" :
+                        Localizer.Format("#autoLOC_Trajectories_TargetDistance"); }, true),
+                    info_distance_label,
+                    new DialogGUISpace(2),
+                    info_distance_latitude_label,
+                    new DialogGUISpace(2),
+                    info_distance_longitude_label)
                 );
 
             target_page = new DialogGUIVerticalLayout(false, true, 0, new RectOffset(), TextAnchor.UpperCenter,
-                new DialogGUILabel(() => { return target_body_txt; }, true),
-                new DialogGUILabel(() => { return target_position_txt; }, true),
-                new DialogGUILabel(() => { return target_distance_txt; }, true),
+                new DialogGUIHorizontalLayout(TextAnchor.MiddleRight,
+                    new DialogGUILabel(Localizer.Format("#autoLOC_Trajectories_TargetBody"), true),
+                    new DialogGUILabel(() => { return target_body_txt; })),
+                new DialogGUIHorizontalLayout(TextAnchor.MiddleRight,
+                    new DialogGUILabel(Localizer.Format("#autoLOC_Trajectories_TargetPosition"), true),
+                    new DialogGUILabel(Localizer.Format("#autoLOC_Trajectories_Lat"), 25f),
+                    target_latitude_label,
+                    new DialogGUISpace(10),
+                    new DialogGUILabel(Localizer.Format("#autoLOC_Trajectories_Long"), 28f),
+                    target_longitude_label),
+                new DialogGUIHorizontalLayout(TextAnchor.MiddleRight,
+                    new DialogGUILabel(() => { return Localizer.Format("#autoLOC_Trajectories_TargetDistance"); }, true),
+                    target_distance_label,
+                    new DialogGUISpace(2),
+                    target_distance_latitude_label,
+                    new DialogGUISpace(2),
+                    target_distance_longitude_label),
                 new DialogGUISpace(4),
                 new DialogGUILabel(Localizer.Format("#autoLOC_Trajectories_TargetSelect")),
                 new DialogGUIHorizontalLayout(
@@ -271,17 +345,17 @@ namespace Trajectories
                 new DialogGUIHorizontalLayout(
                     new DialogGUILabel(Localizer.Format("#autoLOC_Trajectories_MaxPatches"), true),
                     new DialogGUISlider(() => { return Settings.fetch.MaxPatchCount; },
-                        3f, 10f, true, slider_width, -1, OnSliderSet_MaxPatches),
+                        3f, 10f, true, slider_width + 10f, -1, OnSliderSet_MaxPatches),
                     new DialogGUILabel(() => { return Settings.fetch.MaxPatchCount.ToString(); }, 20f)),
                 new DialogGUIHorizontalLayout(
                     new DialogGUILabel(Localizer.Format("#autoLOC_Trajectories_MaxFramesPatch"), true),
                     new DialogGUISlider(() => { return Settings.fetch.MaxFramesPerPatch; },
-                        1f, 50f, true, slider_width, -1, OnSliderSet_MaxFramesPatch),
+                        1f, 50f, true, slider_width + 10f, -1, OnSliderSet_MaxFramesPatch),
                     new DialogGUILabel(() => { return Settings.fetch.MaxFramesPerPatch.ToString(); }, 20f)),
                 new DialogGUIHorizontalLayout(
                     new DialogGUILabel(Localizer.Format("#autoLOC_Trajectories_IntegrationStep"), true),
                     new DialogGUISlider(() => { return (float)Settings.fetch.IntegrationStepSize; },
-                        0.5f, 5f, false, slider_width, -1, OnSliderSet_IntegrationStep),
+                        0.5f, 5f, false, slider_width + 10f, -1, OnSliderSet_IntegrationStep),
                     new DialogGUILabel(() => { return Settings.fetch.IntegrationStepSize.ToString(); }, 20f)),
                 new DialogGUIHorizontalLayout(
                     new DialogGUILabel(() => { return calculation_time_txt; }, true),
@@ -315,12 +389,13 @@ namespace Trajectories
                "",
                Localizer.Format("#autoLOC_Trajectories_Title") + " -" + version_txt,
                HighLogic.UISkin,
-               // window origin is center of rect, position is offset from lower left corner of screen and normalized i.e (0.5, 0.5 is screen center)
+               // window origin is center of rect, position is offset from lower left corner of screen and normalized
+               // i.e (0.5, 0.5 is screen center)
                new Rect(Settings.fetch.MainGUIWindowPos.x, Settings.fetch.MainGUIWindowPos.y, width, height),
                new DialogGUIBase[]
                {
                    // create page select buttons
-                   new DialogGUIHorizontalLayout(
+                   new DialogGUIHorizontalLayout(true, false, 4, new RectOffset(), TextAnchor.MiddleCenter,
                        new DialogGUIButton(Localizer.Format("#autoLOC_900629"),
                            OnButtonClick_Info, ButtonEnabler_Info, button_width, button_height, false),
                        new DialogGUIButton(Localizer.Format("#autoLOC_900591"),
@@ -332,6 +407,32 @@ namespace Trajectories
                    // insert page box
                    page_box
                });
+        }
+
+
+        /// <summary>
+        /// Sets the justification of the data field labels
+        /// </summary>
+        private static void SetDataFieldJustification()
+        {
+            if (Settings.fetch.MainGUICurrentPage == (int)PageType.INFO && impact_latitude_label.text != null)
+            {
+                impact_latitude_label.text.alignment = TextAlignmentOptions.MidlineRight;
+                impact_longitude_label.text.alignment = TextAlignmentOptions.MidlineRight;
+                impact_vertical_label.text.alignment = TextAlignmentOptions.MidlineRight;
+                impact_horizontal_label.text.alignment = TextAlignmentOptions.MidlineRight;
+                info_distance_label.text.alignment = TextAlignmentOptions.MidlineRight;
+                info_distance_latitude_label.text.alignment = TextAlignmentOptions.MidlineRight;
+                info_distance_longitude_label.text.alignment = TextAlignmentOptions.MidlineRight;
+            }
+            else if (Settings.fetch.MainGUICurrentPage == (int)PageType.TARGET && target_latitude_label.text != null)
+            {
+                target_latitude_label.text.alignment = TextAlignmentOptions.MidlineRight;
+                target_longitude_label.text.alignment = TextAlignmentOptions.MidlineRight;
+                target_distance_label.text.alignment = TextAlignmentOptions.MidlineRight;
+                target_distance_latitude_label.text.alignment = TextAlignmentOptions.MidlineRight;
+                target_distance_longitude_label.text.alignment = TextAlignmentOptions.MidlineRight;
+            }
         }
 
         /// <summary>
@@ -772,6 +873,9 @@ namespace Trajectories
             stack.Push(page_box.uiItem.gameObject.transform);
             page_box.children[0].Create(ref stack, HighLogic.UISkin);
 
+            //set data field label justification
+            SetDataFieldJustification();
+
             // create textbox event listeners
             if (inpage == PageType.TARGET)
                 SetManualTargetTextBoxEvents();
@@ -811,8 +915,7 @@ namespace Trajectories
             Trajectory.Patch lastPatch = Trajectory.fetch?.Patches.LastOrDefault();
 
             // max G-force
-            max_gforce_txt = max_gforce_hdrtxt +
-                    string.Format("{0:0.00}", Settings.fetch.DisplayTrajectories ? Trajectory.fetch.MaxAccel / 9.81 : 0);
+            max_gforce_txt = string.Format("{0:0.00}", Settings.fetch.DisplayTrajectories ? Trajectory.fetch.MaxAccel / 9.81 : 0);
 
             // impact values
             if (lastPatch != null && lastPatch.ImpactPosition.HasValue && Settings.fetch.DisplayTrajectories)
@@ -822,9 +925,8 @@ namespace Trajectories
                 Vector3d impactPos = lastPatch.ImpactPosition.Value + lastPatchBody.position;
 
                 // impact position
-                impact_position_txt = Localizer.Format("#autoLOC_Trajectories_ImpactPosition",
-                    string.Format("{0:000.000000}", lastPatchBody.GetLatitude(impactPos)),
-                    string.Format("{0:000.000000}", lastPatchBody.GetLongitude(impactPos)));
+                impact_latitude_txt = string.Format("{0:000.000000}", lastPatchBody.GetLatitude(impactPos));
+                impact_longitude_txt = string.Format("{0:000.000000}", lastPatchBody.GetLongitude(impactPos));
 
                 // impact velocity
                 Vector3d up = lastPatch.ImpactPosition.Value.normalized;
@@ -832,23 +934,23 @@ namespace Trajectories
                 double vVelMag = Vector3d.Dot(vel, up);
                 double hVelMag = (vel - (up * vVelMag)).magnitude;
 
-                impact_velocity_txt = Localizer.Format("#autoLOC_Trajectories_ImpactVelocity",
-                    string.Format("{0:0.0}", -vVelMag),
-                    string.Format("{0:0.0}", hVelMag));
+                impact_vertical_txt = string.Format("{0:F1} {1}", -vVelMag, Localizer.Format("#autoLOC_Trajectories_ms"));
+                impact_horizontal_txt = string.Format("{0:F1} {1}", hVelMag, Localizer.Format("#autoLOC_Trajectories_ms"));
 
                 // time to impact
                 double duration = (lastPatch.EndTime - Planetarium.GetUniversalTime()) / 3600.0;   // duration in hrs
                 double hours = Math.Truncate(duration);
                 double mins = Math.Truncate((duration - hours) * 60.0);
                 double secs = (((duration - hours) * 60.0) - mins) * 60.0;
-                impact_time_txt = Localizer.Format("#autoLOC_Trajectories_ImpactTime",
-                    string.Format("{0:00}:{1:00}:{2:00}", hours, mins, secs));
+                impact_time_txt = string.Format("{0:00}:{1:00}:{2:00}", hours, mins, secs);
             }
             else
             {
-                impact_position_txt = Localizer.Format("#autoLOC_Trajectories_ImpactPosition", "---", "---");
-                impact_velocity_txt = Localizer.Format("#autoLOC_Trajectories_ImpactVelocity", "---", "---");
-                impact_time_txt = Localizer.Format("#autoLOC_Trajectories_ImpactTime", "--:--:--");
+                impact_latitude_txt = "---.------";
+                impact_longitude_txt = "---.------";
+                impact_vertical_txt = "-.- " + Localizer.Format("#autoLOC_Trajectories_ms");
+                impact_horizontal_txt = "-.- " + Localizer.Format("#autoLOC_Trajectories_ms");
+                impact_time_txt = "--:--:--";
             }
 
             // target distance
@@ -869,21 +971,23 @@ namespace Trajectories
                 Vector3d targetPos = Trajectory.Target.WorldPosition.Value + targetBody.position;
 
                 // target body
-                target_body_txt = target_body_hdrtxt + targetBody.bodyName;
+                target_body_txt = targetBody.bodyName;
 
                 // target position
-                target_position_txt = Localizer.Format("#autoLOC_Trajectories_TargetPosition",
-                    string.Format("{0:000.000000}", targetBody.GetLatitude(targetPos)),
-                    string.Format("{0:000.000000}", targetBody.GetLongitude(targetPos)));
+                target_latitude_txt = string.Format("{0:000.000000}", targetBody.GetLatitude(targetPos));
+                target_longitude_txt = string.Format("{0:000.000000}", targetBody.GetLongitude(targetPos));
 
                 // target distance
                 UpdateTargetDistance();
             }
             else
             {
-                target_body_txt = target_body_hdrtxt + "---";
-                target_position_txt = Localizer.Format("#autoLOC_Trajectories_TargetPosition", "---", "---");
-                target_distance_txt = Localizer.Format("#autoLOC_Trajectories_TargetDistance", "---", "-", "---", "-", "---");
+                target_body_txt = "---";
+                target_latitude_txt = "---.------";
+                target_longitude_txt = "---.------";
+                target_distance_txt = "-.-- " + Localizer.Format("#autoLOC_Trajectories_km");
+                target_distance_latitude_txt = "-: -.-- " + Localizer.Format("#autoLOC_Trajectories_km");
+                target_distance_longitude_txt = "-: -.-- " + Localizer.Format("#autoLOC_Trajectories_km");
             }
 
             if (manual_target_txt != Trajectory.Target.ManualText)
@@ -905,7 +1009,8 @@ namespace Trajectories
 
                 // performance
                 calculation_time_txt = calculation_time_hdrtxt +
-                    string.Format("{0:0.0}ms | {1:0.0} %", traj.ComputationTime * 1000.0f, (traj.ComputationTime / traj.GameFrameTime) * 100.0f);
+                    string.Format("{0:0.0}ms | {1:0.0} %", traj.ComputationTime * 1000.0f,
+                        (traj.ComputationTime / traj.GameFrameTime) * 100.0f);
 
                 // num errors
                 num_errors_txt = errors_hdrtxt + string.Format("{0:0}", traj.ErrorCount);
@@ -964,21 +1069,24 @@ namespace Trajectories
                         targetLat, impatLon, targetLat, targetLon) / 1e3) * ((targetLon - impatLon) < 0.0d ? -1.0d : +1.0d);
 
                     // target distance
-                    target_distance_txt = Localizer.Format("#autoLOC_Trajectories_TargetDistance",
-                        string.Format("{0,6:F2}", targetDistance),
-                        targetDistanceNorth > 0.0d ? 'N' : 'S',
-                        string.Format("{0,6:F2}", Math.Abs(targetDistanceNorth)),
-                        targetDistanceEast > 0.0d ? 'E' : 'W',
-                        string.Format("{0,6:F2}", Math.Abs(targetDistanceEast)));
+                    target_distance_txt = string.Format("{0:F2} {1}", targetDistance, Localizer.Format("#autoLOC_Trajectories_km"));
+                    target_distance_latitude_txt = string.Format("{0}: {1:F2} {2}", targetDistanceNorth > 0.0d ? 'N' : 'S',
+                        Math.Abs(targetDistanceNorth), Localizer.Format("#autoLOC_Trajectories_km"));
+                    target_distance_longitude_txt = string.Format("{0}: {1:F2} {2}", targetDistanceEast > 0.0d ? 'E' : 'W',
+                        Math.Abs(targetDistanceEast), Localizer.Format("#autoLOC_Trajectories_km"));
                 }
                 else
                 {
-                    target_distance_txt = Localizer.Format("#autoLOC_Trajectories_TargetDistance", "---", "-", "---", "-", "---");
+                    target_distance_txt = "-.-- " + Localizer.Format("#autoLOC_Trajectories_km");
+                    target_distance_latitude_txt = "-: -.-- " + Localizer.Format("#autoLOC_Trajectories_km");
+                    target_distance_longitude_txt = "-: -.-- " + Localizer.Format("#autoLOC_Trajectories_km");
                 }
             }
             else
             {
-                target_distance_txt = Localizer.Format("#autoLOC_Trajectories_TargetDistance", "---", "-", "---", "-", "---");
+                target_distance_txt = "-.-- " + Localizer.Format("#autoLOC_Trajectories_km");
+                target_distance_latitude_txt = "-: -.-- " + Localizer.Format("#autoLOC_Trajectories_km");
+                target_distance_longitude_txt = "-: -.-- " + Localizer.Format("#autoLOC_Trajectories_km");
             }
 
         }
