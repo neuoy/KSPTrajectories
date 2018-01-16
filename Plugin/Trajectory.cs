@@ -203,6 +203,9 @@ namespace Trajectories
             }
         }
 
+        public const double integrator_min = 0.1d;         // RK4 Integrator minimum step size
+        public const double integrator_max = 5.0d;         // RK4 Integrator maximum step size
+
         private int MaxIncrementTime { get { return 2; } }
 
         private Vessel attachedVessel;

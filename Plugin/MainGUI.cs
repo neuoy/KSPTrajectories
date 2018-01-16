@@ -21,6 +21,8 @@ namespace Trajectories
         private const float button_height = 25.0f;
         private const float targetbutton_width = 120.0f;
         private const float slider_width = 170.0f;
+        private const float integrator_slidermin = 1.0f;
+        private const float integrator_slidermax = 50.0f;
         private const int page_padding = 10;
 
         // version string
@@ -89,6 +91,38 @@ namespace Trajectories
         private static string target_distance_txt = "";
         private static string target_distance_latitude_txt = "";
         private static string target_distance_longitude_txt = "";
+
+        // integrator logarithmic slider
+        private static float integrator_sliderPos;
+
+        private static float IntegratorSliderPos
+        {
+            get => integrator_sliderPos;
+            set
+            {
+                // logarithmic step from position
+                double a = Math.Log(Trajectory.integrator_max / Trajectory.integrator_min) / (integrator_slidermax - integrator_slidermin);
+                double b = Trajectory.integrator_max / Math.Exp(a * integrator_slidermax);
+                double stepsize = b * Math.Exp(a * value);
+
+                // round off step;
+                if (stepsize < 0.25)
+                    Settings.fetch.IntegrationStepSize = Math.Round(stepsize * 100, MidpointRounding.AwayFromZero) / 100;    // 0.01
+                else if (stepsize < 0.5)
+                    Settings.fetch.IntegrationStepSize = Math.Round(stepsize * 20, MidpointRounding.AwayFromZero) / 20;     // 0.05
+                else if (stepsize < 1)
+                    Settings.fetch.IntegrationStepSize = Math.Round(stepsize * 10, MidpointRounding.AwayFromZero) / 10;     // 0.1
+                else if (stepsize < 2)
+                    Settings.fetch.IntegrationStepSize = Math.Round(stepsize * 4, MidpointRounding.AwayFromZero) / 4;       // 0.25
+                else
+                    Settings.fetch.IntegrationStepSize = Math.Round(stepsize * 2, MidpointRounding.AwayFromZero) / 2;       // 0.5
+
+                // set slider pos
+                integrator_sliderPos = (float)(integrator_slidermin + (Math.Log(Settings.fetch.IntegrationStepSize) -
+                    Math.Log(Trajectory.integrator_min)) / (Math.Log(Trajectory.integrator_max) - Math.Log(Trajectory.integrator_min)) *
+                    (integrator_slidermax - integrator_slidermin));
+            }
+        }
 
         // display update timer
         private static double update_timer = Util.Clocks;
@@ -208,6 +242,9 @@ namespace Trajectories
             target_distance_label = new DialogGUILabel(() => { return target_distance_txt; }, 60);
             target_distance_latitude_label = new DialogGUILabel(() => { return target_distance_latitude_txt; }, 80);
             target_distance_longitude_label = new DialogGUILabel(() => { return target_distance_longitude_txt; }, 80);
+
+            // set integrator sliderpos;
+            SetIntegratorSlider();
 
             // create pages
             info_page = new DialogGUIVerticalLayout(false, true, 0, new RectOffset(), TextAnchor.UpperCenter,
@@ -346,17 +383,17 @@ namespace Trajectories
                     new DialogGUILabel(Localizer.Format("#autoLOC_Trajectories_MaxPatches"), true),
                     new DialogGUISlider(() => { return Settings.fetch.MaxPatchCount; },
                         3f, 10f, true, slider_width + 10f, -1, OnSliderSet_MaxPatches),
-                    new DialogGUILabel(() => { return Settings.fetch.MaxPatchCount.ToString(); }, 20f)),
+                    new DialogGUILabel(() => { return Settings.fetch.MaxPatchCount.ToString(); }, 25f)),
                 new DialogGUIHorizontalLayout(
                     new DialogGUILabel(Localizer.Format("#autoLOC_Trajectories_MaxFramesPatch"), true),
                     new DialogGUISlider(() => { return Settings.fetch.MaxFramesPerPatch; },
                         1f, 50f, true, slider_width + 10f, -1, OnSliderSet_MaxFramesPatch),
-                    new DialogGUILabel(() => { return Settings.fetch.MaxFramesPerPatch.ToString(); }, 20f)),
+                    new DialogGUILabel(() => { return Settings.fetch.MaxFramesPerPatch.ToString(); }, 25f)),
                 new DialogGUIHorizontalLayout(
                     new DialogGUILabel(Localizer.Format("#autoLOC_Trajectories_IntegrationStep"), true),
-                    new DialogGUISlider(() => { return (float)Settings.fetch.IntegrationStepSize; },
-                        0.5f, 5f, false, slider_width + 10f, -1, OnSliderSet_IntegrationStep),
-                    new DialogGUILabel(() => { return Settings.fetch.IntegrationStepSize.ToString(); }, 20f)),
+                    new DialogGUISlider(() => { return IntegratorSliderPos; },
+                        integrator_slidermin, integrator_slidermax, false, slider_width + 10f, -1, OnSliderSet_IntegrationStep),
+                    new DialogGUILabel(() => { return Settings.fetch.IntegrationStepSize.ToString("F2"); }, 25f)),
                 new DialogGUIHorizontalLayout(
                     new DialogGUILabel(() => { return calculation_time_txt; }, true),
                     new DialogGUILabel(() => { return num_errors_txt; }, true)),
@@ -462,6 +499,16 @@ namespace Trajectories
         private static void KeyboardUnlock(string inString)
         {
             InputLockManager.RemoveControlLock("TrajectoriesKeyboardLockout");
+        }
+
+        /// <summary>
+        /// Sets the logarithmic slider positon for the plugin setting IntegrationStepSize
+        /// </summary>
+        private static void SetIntegratorSlider()
+        {
+            IntegratorSliderPos = (float)(integrator_slidermin + (Math.Log(Settings.fetch.IntegrationStepSize) -
+                Math.Log(Trajectory.integrator_min)) / (Math.Log(Trajectory.integrator_max) - Math.Log(Trajectory.integrator_min)) *
+                (integrator_slidermax - integrator_slidermin));
         }
 
         /// <summary> Shows window. </summary>
@@ -812,8 +859,7 @@ namespace Trajectories
 
         private static void OnSliderSet_IntegrationStep(float invalue)
         {
-            //Settings.fetch.IntegrationStepSize = Math.Round(invalue, 1, MidpointRounding.AwayFromZero);    // 0.1 increments
-            Settings.fetch.IntegrationStepSize = Math.Ceiling(invalue / 0.5f) * 0.5f;    // 0.5 increments
+            IntegratorSliderPos = invalue;
         }
 
         private static void OnSliderSet_EntryAngle(float invalue)
