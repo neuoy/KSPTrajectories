@@ -241,6 +241,9 @@ namespace Trajectories
 
         public int ErrorCount { get { return errorCount_; } }
 
+        /// <summary>
+        /// Trajectory calculation time in last frame
+        /// </summary>
         private static float frameTime_;
 
         private static float computationTime_;
@@ -503,40 +506,49 @@ namespace Trajectories
         {
             try
             {
+                // start of trajectory calculation in current frame
                 incrementTime_ = Stopwatch.StartNew();
 
+                // if there is no ongoing partial computation, start a new one
                 if (partialComputation_ == null || vessel != attachedVessel)
                 {
+                    // restart the public buffers
                     patchesBackBuffer_.Clear();
                     maxAccelBackBuffer_ = 0;
 
                     attachedVessel = vessel;
 
+                    // no vessel, no calculation
                     if (attachedVessel == null)
                     {
                         patches_.Clear();
                         return;
                     }
 
-                    if (partialComputation_ != null)
-                        partialComputation_.Dispose();
+                    // Create enumerator for Trajectory increment calculator
                     partialComputation_ = ComputeTrajectoryIncrement(vessel, profile).GetEnumerator();
                 }
 
+                // we are finished when there are no more partial computations to be done
                 bool finished = !partialComputation_.MoveNext();
 
+                // when calculation is finished,
                 if (finished)
                 {
+                    // swap the buffers for the patches and the maximum acceleration,
+                    // "publishing" the results
                     var tmp = patches_;
                     patches_ = patchesBackBuffer_;
                     patchesBackBuffer_ = tmp;
 
                     maxAccel_ = maxAccelBackBuffer_;
 
+                    // Reset partial computation
                     partialComputation_.Dispose();
                     partialComputation_ = null;
                 }
 
+                // how long did the calculation in this frame take?
                 frameTime_ += (float)incrementTime_.ElapsedMilliseconds;
             }
             catch (Exception)
@@ -548,31 +560,43 @@ namespace Trajectories
 
         private IEnumerable<bool> ComputeTrajectoryIncrement(Vessel vessel, DescentProfile profile)
         {
+            // create or update aerodynamic model
             if (aerodynamicModel_ == null || !aerodynamicModel_.isValidFor(vessel, vessel.mainBody))
                 aerodynamicModel_ = AerodynamicModelFactory.GetModel(vessel, vessel.mainBody);
             else
                 aerodynamicModel_.IncrementalUpdate();
 
+            // create new VesselState from vessel, or null if it's on the ground
             var state = vessel.LandedOrSplashed ? null : new VesselState(vessel);
+
+            // iterate over patches until MaxPatchCount is reached
             for (int patchIdx = 0; patchIdx < Settings.fetch.MaxPatchCount; ++patchIdx)
             {
+                // stop if we don't have a vessel state
                 if (state == null)
                     break;
 
+                // If we spent more time in this calculation than allowed, pause until the next frame
                 if (incrementTime_.ElapsedMilliseconds > MaxIncrementTime)
                     yield return false;
 
+                // if we have a patched conics solver, check for maneuver nodes
                 if (null != attachedVessel.patchedConicSolver)
                 {
+                    // search through maneuver nodes of the vessel
                     var maneuverNodes = attachedVessel.patchedConicSolver.maneuverNodes;
                     foreach (var node in maneuverNodes)
                     {
+                        // if the maneuver node time corresponds to the end time of the last patch
                         if (node.UT == state.Time)
                         {
+                            // add the velocity change of the burn to the velocity of the last patch
                             state.Velocity += node.GetBurnVector(CreateOrbitFromState(state));
                             break;
                         }
                     }
+
+                    // Add one patch, then pause execution after every patch
                     foreach (var result in AddPatch(state, profile))
                         yield return false;
                 }
@@ -660,24 +684,47 @@ namespace Trajectories
             public Vector3d velocity;
         }
 
-        static SimulationState VerletStep(SimulationState state, Func<Vector3d, Vector3d, Vector3d> accelerationFunc, double dt)
+        /// <summary>
+        /// Integration step function for Verlet integration
+        /// </summary>
+        /// <param name="state">Position+Velocity of the current time step</param>
+        /// <param name="accelerationFunc">Functor that returns the acceleration for a given Position+Velocity</param>
+        /// <param name="dt">Time step interval</param>
+        /// <param name="accel">Stores the value of the accelerationFunc at the current time step</param>
+        /// <returns></returns>
+        static SimulationState VerletStep(SimulationState state,
+            Func<Vector3d, Vector3d, Vector3d> accelerationFunc,
+            double dt,
+            out Vector3d accel)
         {
 
             Profiler.Start("accelerationFunc outside");
-            Vector3d acceleration = accelerationFunc(state.position, state.velocity);
+            accel = accelerationFunc(state.position, state.velocity);
             Profiler.Stop("accelerationFunc outside");
 
             Vector3d prevPos = state.position - dt * state.velocity;
 
             SimulationState nextState;
 
-            nextState.position = 2.0 * state.position - prevPos + acceleration * (dt * dt);
+            nextState.position = 2.0 * state.position - prevPos + accel * (dt * dt);
             nextState.velocity = (nextState.position - state.position) / dt;
 
             return nextState;
         }
 
-        static SimulationState RK4Step(SimulationState state, Func<Vector3d, Vector3d, Vector3d> accelerationFunc, double dt, out Vector3d accel)
+        /// <summary>
+        /// Integration step function for Runge-Kutta 4 integration
+        /// </summary>
+        /// <param name="state">Position+Velocity of the current time step</param>
+        /// <param name="accelerationFunc">Functor that returns the acceleration for a given Position+Velocity</param>
+        /// <param name="dt">Time step interval</param>
+        /// <param name="accel">Stores the value of the accelerationFunc at the current time step</param>
+        /// <returns></returns>
+        static SimulationState RK4Step(
+            SimulationState state,
+            Func<Vector3d, Vector3d, Vector3d> accelerationFunc,
+            double dt,
+            out Vector3d accel)
         {
             Vector3d p1 = state.position;
             Vector3d v1 = state.velocity;
@@ -914,6 +961,8 @@ namespace Trajectories
                     int incrementIterations = 0;
                     int minIterationsPerIncrement = maxIterations / Settings.fetch.MaxFramesPerPatch;
 
+                    #region Acceleration Functor
+
                     // function that calculates the acceleration under current parmeters
                     Func<Vector3d, Vector3d, Vector3d> accelerationFunc = (position, velocity) =>
                     {
@@ -937,7 +986,10 @@ namespace Trajectories
                         Profiler.Stop("accelerationFunc inside");
                         return accel;
                     };
+                    #endregion
 
+
+                    #region Integration Loop
 
                     while (true)
                     {
@@ -1044,6 +1096,7 @@ namespace Trajectories
                             (float)(aerodynamicForce.magnitude / aerodynamicModel_.mass),
                             maxAccelBackBuffer_);
 
+                        #region Impact Calculation
 
                         Profiler.Start("AddPatch#impact");
 
@@ -1087,7 +1140,11 @@ namespace Trajectories
                         }
 
                         Profiler.Stop("AddPatch#impact");
+
+                        #endregion
                     }
+
+                    #endregion
                 }
             }
             else

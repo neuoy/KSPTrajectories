@@ -13,7 +13,7 @@ namespace Trajectories
     {
 #if DEBUG_PROFILER
         // constants
-        private const float width = 400.0f;
+        private const float width = 500.0f;
         private const float height = 500.0f;
 
         private const float value_width = 65.0f;
@@ -87,7 +87,7 @@ namespace Trajectories
                            new DialogGUILabel("<b>LAST</b>", value_width),
                            new DialogGUILabel("<b>AVG</b>", value_width),
                            new DialogGUILabel("<b>CALLS</b>", value_width - 15f),
-                           new DialogGUILabel("<b>AVG</b>", value_width - 15f))),
+                           new DialogGUILabel("<b>AVG</b>", value_width - 10f))),
                    // create scrollbox for entry data
                    new DialogGUIScrollList(new Vector2(), false, true, dialog_items)
                });
@@ -210,7 +210,7 @@ namespace Trajectories
                     new DialogGUILabel(() => { return entries[e_name].last_txt; }, value_width),
                     new DialogGUILabel(() => { return entries[e_name].avg_txt; }, value_width),
                     new DialogGUILabel(() => { return entries[e_name].calls_txt; }, value_width - 15f),
-                    new DialogGUILabel(() => { return entries[e_name].avg_calls_txt; }, value_width - 15f)));
+                    new DialogGUILabel(() => { return entries[e_name].avg_calls_txt; }, value_width - 10f)));
 
             // required to force the Gui creation
             Stack<Transform> stack = new Stack<Transform>();
