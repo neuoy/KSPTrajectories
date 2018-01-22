@@ -290,8 +290,14 @@ namespace Trajectories
             Telemetry.AddChannel<double>("temperature_calc");
 
             Telemetry.AddChannel<double>("force_actual");
+            Telemetry.AddChannel<double>("force_actual.x");
+            Telemetry.AddChannel<double>("force_actual.y");
+            Telemetry.AddChannel<double>("force_actual.z");
             //Telemetry.AddChannel<double>("force_total");
             Telemetry.AddChannel<double>("force_predicted");
+            Telemetry.AddChannel<double>("force_predicted.x");
+            Telemetry.AddChannel<double>("force_predicted.y");
+            Telemetry.AddChannel<double>("force_predicted.z");
             Telemetry.AddChannel<double>("force_predicted_cache");
             //Telemetry.AddChannel<double>("force_reference");
         }
@@ -319,28 +325,28 @@ namespace Trajectories
                 Vector3d bodySpacePosition = new Vector3d();
                 Vector3d bodySpaceVelocity = new Vector3d();
 
-                if (aerodynamicModel_ != null && vessel_ != null)
+                if (aerodynamicModel_ != null && attachedVessel != null)
                 {
-                    CelestialBody body = vessel_.orbit.referenceBody;
+                    CelestialBody body = attachedVessel.orbit.referenceBody;
 
-                    bodySpacePosition = vessel_.GetWorldPos3D() - body.position;
-                    bodySpaceVelocity = vessel_.obt_velocity;
+                    bodySpacePosition = attachedVessel.GetWorldPos3D() - body.position;
+                    bodySpaceVelocity = attachedVessel.obt_velocity;
 
                     double altitudeAboveSea = bodySpacePosition.magnitude - body.Radius;
 
                     Vector3d airVelocity = bodySpaceVelocity - body.getRFrmVel(body.position + bodySpacePosition);
 
                     double R = PreviousFramePos.magnitude;
-                    Vector3d gravityForce = PreviousFramePos * (-body.gravParameter / (R * R * R) * vessel_.totalMass);
+                    Vector3d gravityForce = PreviousFramePos * (-body.gravParameter / (R * R * R) * attachedVessel.totalMass);
 
                     Quaternion inverseRotationFix = body.inverseRotation ?
                         Quaternion.AngleAxis((float)(body.angularVelocity.magnitude / Math.PI * 180.0 * dt), Vector3.up)
                         : Quaternion.identity;
-                    Vector3d TotalForce = (bodySpaceVelocity - inverseRotationFix * PreviousFrameVelocity) * (vessel_.totalMass / dt);
+                    Vector3d TotalForce = (bodySpaceVelocity - inverseRotationFix * PreviousFrameVelocity) * (attachedVessel.totalMass / dt);
                     TotalForce += bodySpaceVelocity * (dt * 0.000015); // numeric precision fix
                     Vector3d ActualForce = TotalForce - gravityForce;
 
-                    Transform vesselTransform = vessel_.ReferenceTransform;
+                    Transform vesselTransform = attachedVessel.ReferenceTransform;
                     Vector3d vesselBackward = (Vector3d)(-vesselTransform.up.normalized);
                     Vector3d vesselForward = -vesselBackward;
                     Vector3d vesselUp = (Vector3d)(-vesselTransform.forward.normalized);
@@ -376,15 +382,15 @@ namespace Trajectories
                         Vector3d.Dot(predictedForceWithCache, vesselBackward));
 
                     Telemetry.Send("ut", now);
-                    Telemetry.Send("altitude", vessel_.altitude);
+                    Telemetry.Send("altitude", attachedVessel.altitude);
 
                     Telemetry.Send("airspeed", Math.Floor(airVelocity.magnitude));
                     Telemetry.Send("aoa", (AoA * 180.0 / Math.PI));
 
                     Telemetry.Send("force_actual", localActualForce.magnitude);
-                    //Telemetry.Send("force_actual.x", localActualForce.x);
-                    //Telemetry.Send("force_actual.y", localActualForce.y);
-                    //Telemetry.Send("force_actual.z", localActualForce.z);
+                    Telemetry.Send("force_actual.x", localActualForce.x);
+                    Telemetry.Send("force_actual.y", localActualForce.y);
+                    Telemetry.Send("force_actual.z", localActualForce.z);
 
 
                     //Telemetry.Send("force_total", localTotalForce.magnitude);
@@ -393,9 +399,9 @@ namespace Trajectories
                     //Telemetry.Send("force_total.z", localTotalForce.z);
 
                     Telemetry.Send("force_predicted", localPredictedForce.magnitude);
-                    //Telemetry.Send("force_predicted.x", localPredictedForce.x);
-                    //Telemetry.Send("force_predicted.y", localPredictedForce.y);
-                    //Telemetry.Send("force_predicted.z", localPredictedForce.z);
+                    Telemetry.Send("force_predicted.x", localPredictedForce.x);
+                    Telemetry.Send("force_predicted.y", localPredictedForce.y);
+                    Telemetry.Send("force_predicted.z", localPredictedForce.z);
 
                     Telemetry.Send("force_predicted_cache", localPredictedForceWithCache.magnitude);
                     //Telemetry.Send("force_predicted_cache.x", localPredictedForceWithCache.x);
@@ -416,14 +422,14 @@ namespace Trajectories
                     //Telemetry.Send("velocity_pos.y", velocity_pos.y);
                     //Telemetry.Send("velocity_pos.z", velocity_pos.z);
 
-                    Telemetry.Send("drag", vessel_.rootPart.rb.drag);
+                    Telemetry.Send("drag", attachedVessel.rootPart.rb.drag);
 
-                    Telemetry.Send("density", vessel_.atmDensity);
+                    Telemetry.Send("density", attachedVessel.atmDensity);
                     Telemetry.Send("density_calc", StockAeroUtil.GetDensity(altitudeAboveSea, body));
-                    Telemetry.Send("density_calc_precise", StockAeroUtil.GetDensity(vessel_.GetWorldPos3D(), body));
+                    Telemetry.Send("density_calc_precise", StockAeroUtil.GetDensity(attachedVessel.GetWorldPos3D(), body));
 
-                    Telemetry.Send("temperature", vessel_.atmosphericTemperature);
-                    Telemetry.Send("temperature_calc", StockAeroUtil.GetTemperature(vessel_.GetWorldPos3D(), body));
+                    Telemetry.Send("temperature", attachedVessel.atmosphericTemperature);
+                    Telemetry.Send("temperature_calc", StockAeroUtil.GetTemperature(attachedVessel.GetWorldPos3D(), body));
                 }
 
                 PreviousFrameVelocity = bodySpaceVelocity;
