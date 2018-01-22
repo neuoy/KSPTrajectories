@@ -123,7 +123,7 @@ namespace Trajectories
         {
             var vessel = FlightGlobals.ActiveVessel;
 
-            if (vessel == null)
+            if (vessel == null || Trajectory.Target.Body == null)
                 return new Vector3(0, 0, 0);
 
             CelestialBody body = vessel.mainBody;
