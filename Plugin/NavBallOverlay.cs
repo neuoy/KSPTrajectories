@@ -93,10 +93,10 @@ namespace Trajectories
 
         private void UpdateNavBall()
         {
-            Vector3? targetPosition = Trajectory.fetch.targetPosition;
-            var patch = Trajectory.fetch.patches.LastOrDefault();
-            CelestialBody body = Trajectory.fetch.targetBody;
-            if (!targetPosition.HasValue || patch == null || !patch.impactPosition.HasValue || patch.startingState.referenceBody != body)
+            Vector3? targetPosition = Trajectory.Target.WorldPosition;
+            var patch = Trajectory.fetch.Patches.LastOrDefault();
+            CelestialBody body = Trajectory.Target.Body;
+            if (!targetPosition.HasValue || patch == null || !patch.ImpactPosition.HasValue || patch.StartingState.ReferenceBody != body)
             {
                 SetDisplayEnabled(false);
                 return;
@@ -135,7 +135,7 @@ namespace Trajectories
             Vector3 velRight = Vector3.Cross(vel, up).normalized;
             Vector3 velUp = Vector3.Cross(velRight, vel).normalized;
 
-            float plannedAngleOfAttack = (float)DescentProfile.fetch.GetAngleOfAttack(Trajectory.fetch.targetBody, pos, vel);
+            float plannedAngleOfAttack = (float)DescentProfile.fetch.GetAngleOfAttack(Trajectory.Target.Body, pos, vel);
 
             return vel.normalized * Mathf.Cos(plannedAngleOfAttack) + velUp * Mathf.Sin(plannedAngleOfAttack);
         }
@@ -147,27 +147,27 @@ namespace Trajectories
             if (vessel == null)
                 return new Vector2(0, 0);
 
-            Vector3? targetPosition = Trajectory.fetch.targetPosition;
-            var patch = Trajectory.fetch.patches.LastOrDefault();
-            CelestialBody body = Trajectory.fetch.targetBody;
-            if (!targetPosition.HasValue || patch == null || !patch.impactPosition.HasValue || patch.startingState.referenceBody != body || !patch.isAtmospheric)
+            Vector3? targetPosition = Trajectory.Target.WorldPosition;
+            var patch = Trajectory.fetch.Patches.LastOrDefault();
+            CelestialBody body = Trajectory.Target.Body;
+            if (!targetPosition.HasValue || patch == null || !patch.ImpactPosition.HasValue || patch.StartingState.ReferenceBody != body || !patch.IsAtmospheric)
                 return new Vector2(0, 0);
 
             // Get impact position, or, if some point over the trajectory has not enough clearance, smoothly interpolate to that point depending on how much clearance is missing
-            Vector3 impactPosition = patch.impactPosition.Value;
-            foreach (var p in patch.atmosphericTrajectory)
+            Vector3 impactPosition = patch.ImpactPosition.Value;
+            foreach (var p in patch.AtmosphericTrajectory)
             {
                 float neededClearance = 600.0f;
                 float missingClearance = neededClearance - (p.pos.magnitude - (float)body.Radius - p.groundAltitude);
                 if (missingClearance > 0.0f)
                 {
-                    if (Vector3.Distance(p.pos, patch.rawImpactPosition.Value) > 3000.0f)
+                    if (Vector3.Distance(p.pos, patch.RawImpactPosition.Value) > 3000.0f)
                     {
                         float coeff = missingClearance / neededClearance;
                         Vector3 rotatedPos = p.pos;
                         if (!Settings.fetch.BodyFixedMode)
                         {
-                            rotatedPos = Trajectory.calculateRotatedPosition(body, p.pos, p.time);
+                            rotatedPos = Trajectory.CalculateRotatedPosition(body, p.pos, p.time);
                         }
                         impactPosition = impactPosition * (1.0f - coeff) + rotatedPos * coeff;
                     }
@@ -175,7 +175,7 @@ namespace Trajectories
                 }
             }
 
-            Vector3 right = Vector3.Cross(patch.impactVelocity.Value, impactPosition).normalized;
+            Vector3 right = Vector3.Cross(patch.ImpactVelocity.Value, impactPosition).normalized;
             Vector3 behind = Vector3.Cross(right, impactPosition).normalized;
 
             Vector3 offset = targetPosition.Value - impactPosition;

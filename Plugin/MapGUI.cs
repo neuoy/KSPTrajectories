@@ -5,40 +5,11 @@ using UnityEngine;
 
 namespace Trajectories
 {
-    class GUIToggleButtonBlizzyVisibility: IVisibility
-    {
-        internal static GUIToggleButtonBlizzyVisibility Instance
-        {
-            get
-            {
-                return new GUIToggleButtonBlizzyVisibility();
-            }
-        }
-
-        private static IVisibility FLIGHT_VISIBILITY;
-
-        public bool Visible
-        {
-            get
-            {
-                return FLIGHT_VISIBILITY.Visible;
-            }
-        }
-
-        private GUIToggleButtonBlizzyVisibility()
-        {
-            if (FLIGHT_VISIBILITY == null)
-                FLIGHT_VISIBILITY = new GameScenesVisibility(GameScenes.FLIGHT);
-        }
-    }
-
+    [Obsolete("use MainGUI")]
     [KSPAddon(KSPAddon.Startup.Flight, false)]
     class MapGUI: MonoBehaviour
     {
         private static readonly int GUIId = 934824;
-
-        private static ApplicationLauncherButton GUIToggleButton = null;
-        private IButton GUIToggleButtonBlizzy;
 
         private string tooltip = String.Empty;
 
@@ -51,23 +22,6 @@ namespace Trajectories
         private bool clickThroughLocked = false;
         private const ControlTypes FlightLockTypes = ControlTypes.MANNODE_ADDEDIT | ControlTypes.MANNODE_DELETE | ControlTypes.MAP_UI |
             ControlTypes.TARGETING | ControlTypes.VESSEL_SWITCHING | ControlTypes.TWEAKABLES;
-
-        /// <summary>
-        /// Check if patched conics are available in the current save.
-        /// </summary>
-        /// <returns>True if patched conics are available</returns>
-        private bool isPatchedConicsAvailable()
-        {
-            // Get our level of tracking station
-            float trackingstation_level =
-                ScenarioUpgradeableFacilities.GetFacilityLevel(SpaceCenterFacility.TrackingStation);
-
-            // Check if the tracking station knows Patched Conics
-            return
-                GameVariables.Instance.GetOrbitDisplayMode(trackingstation_level).CompareTo(
-                    GameVariables.OrbitDisplayMode.PatchedConics)
-                >= 0;
-        }
 
         public void OnGUI()
         {
@@ -131,6 +85,9 @@ namespace Trajectories
 
         private void FixedUpdate()
         {
+            if (Settings.fetch.NewGui)
+                return;
+
             float t = Time.realtimeSinceStartup;
             if (t < lastStringRenderTime + stringRenderInterval)
                 return;
@@ -138,16 +95,16 @@ namespace Trajectories
             lastStringRenderTime = t;
 
             Trajectory traj = Trajectory.fetch;
-            Trajectory.Patch lastPatch = traj.patches.LastOrDefault();
-            CelestialBody lastPatchBody = lastPatch?.startingState.referenceBody;
-            CelestialBody targetBody = traj.targetBody;
+            Trajectory.Patch lastPatch = traj.Patches.LastOrDefault();
+            CelestialBody lastPatchBody = lastPatch?.StartingState.ReferenceBody;
+            CelestialBody targetBody = Trajectory.Target.Body;
 
             guistring_gForce = (traj.MaxAccel / 9.81).ToString("0.00");
 
-            if (lastPatch != null && lastPatch.impactPosition.HasValue)
+            if (lastPatch != null && lastPatch.ImpactPosition.HasValue)
             {
-                Vector3 up = lastPatch.impactPosition.Value.normalized;
-                Vector3 vel = lastPatch.impactVelocity.Value - lastPatchBody.getRFrmVel(lastPatch.impactPosition.Value + lastPatchBody.position);
+                Vector3 up = lastPatch.ImpactPosition.Value.normalized;
+                Vector3 vel = lastPatch.ImpactVelocity.Value - lastPatchBody.getRFrmVel(lastPatch.ImpactPosition.Value + lastPatchBody.position);
                 float vVelMag = Vector3.Dot(vel, up);
                 Vector3 vVel = up * vVelMag;
                 float hVelMag = (vel - vVel).magnitude;
@@ -161,30 +118,32 @@ namespace Trajectories
 
             if (Settings.fetch.DisplayTargetGUI)
             {
-                if (lastPatchBody != null && targetBody != null && lastPatch.impactPosition.HasValue
-                    && lastPatchBody == targetBody && traj.targetPosition.HasValue)
+                if (lastPatchBody != null && targetBody != null && lastPatch.ImpactPosition.HasValue
+                    && lastPatchBody == targetBody && Trajectory.Target.WorldPosition.HasValue)
                 {
                     // Get Latitude and Longitude from impact position
                     double impactLat;
                     double impatLon;
                     double impactAlt;
-                    impactPos = lastPatch.impactPosition.Value + lastPatchBody.position;
+
+                    // Get Latitude and Longitude from impact position
+                    impactPos = lastPatch.ImpactPosition.Value + lastPatchBody.position;
                     lastPatchBody.GetLatLonAlt(impactPos, out impactLat, out impatLon, out impactAlt);
 
                     // Get Latitude and Longitude for target position
                     double targetLat;
                     double targetLon;
                     double targetAlt;
-                    targetPos = traj.targetPosition.Value + targetBody.position;
+                    targetPos = Trajectory.Target.WorldPosition.Value + targetBody.position;
                     targetBody.GetLatLonAlt(targetPos, out targetLat, out targetLon, out targetAlt);
 
-                    float targetDistance = (float)(Util.distanceFromLatitudeAndLongitude(targetBody.Radius + impactAlt,
+                    float targetDistance = (float)(Util.DistanceFromLatitudeAndLongitude(targetBody.Radius + impactAlt,
                         impactLat, impatLon, targetLat, targetLon) / 1e3);
 
-                    float targetDistanceNorth = (float)(Util.distanceFromLatitudeAndLongitude(targetBody.Radius + impactAlt,
+                    float targetDistanceNorth = (float)(Util.DistanceFromLatitudeAndLongitude(targetBody.Radius + impactAlt,
                         impactLat, targetLon, targetLat, targetLon) / 1e3) * ((targetLat - impactLat) < 0 ? -1.0f : +1.0f);
 
-                    float targetDistanceEast = (float)(Util.distanceFromLatitudeAndLongitude(targetBody.Radius + impactAlt,
+                    float targetDistanceEast = (float)(Util.DistanceFromLatitudeAndLongitude(targetBody.Radius + impactAlt,
                         targetLat, impatLon, targetLat, targetLon) / 1e3) * ((targetLon - impatLon) < 0 ? -1.0f : +1.0f);
 
                     // format distance to target string
@@ -221,7 +180,7 @@ namespace Trajectories
             Settings.fetch.DisplayTrajectoriesInFlight = GUILayout.Toggle(Settings.fetch.DisplayTrajectoriesInFlight, "In-Flight");
 
             // check that we have patched conics. If not, apologize to the user and return.
-            if (Settings.fetch.DisplayTrajectories && !isPatchedConicsAvailable())
+            if (Settings.fetch.DisplayTrajectories && !Util.IsPatchedConicsAvailable)
             {
                 ScreenMessages.PostScreenMessage(
                     "Can't show trajectory because patched conics are not available." +
@@ -251,20 +210,20 @@ namespace Trajectories
 
             if (Settings.fetch.DisplayTargetGUI = ToggleGroup(Settings.fetch.DisplayTargetGUI, "Target"))
             {
-                GUI.enabled = traj.targetPosition.HasValue;
+                GUI.enabled = Trajectory.Target.WorldPosition.HasValue;
 
                 GUILayout.Label(guistring_targetDistance);
 
                 if (GUILayout.Button("Unset target"))
-                    traj.SetTarget();
+                    Trajectory.Target.Set();
                 GUI.enabled = true;
 
                 GUILayout.BeginHorizontal();
-                var patch = traj.patches.LastOrDefault();
-                GUI.enabled = (patch != null && patch.impactPosition.HasValue);
+                var patch = traj.Patches.LastOrDefault();
+                GUI.enabled = (patch != null && patch.ImpactPosition.HasValue);
                 if (GUILayout.Button("Set current impact", GUILayout.Width(150)))
                 {
-                    traj.SetTarget(patch.startingState.referenceBody, patch.impactPosition);
+                    Trajectory.Target.Set(patch.StartingState.ReferenceBody, patch.ImpactPosition);
                 }
                 GUI.enabled = true;
                 if (GUILayout.Button("Set KSC", GUILayout.Width(70)))
@@ -273,7 +232,7 @@ namespace Trajectories
                     if (body != null)
                     {
                         Vector3d worldPos = body.GetWorldSurfacePosition(-0.04860002, -74.72425635, 2.0);
-                        traj.SetTarget(body, worldPos - body.position);
+                        Trajectory.Target.Set(body, worldPos - body.position);
                     }
                 }
                 GUILayout.EndHorizontal();
@@ -286,7 +245,7 @@ namespace Trajectories
                 );
                 if (GUILayout.Button("Target vessel"))
                 {
-                    traj.SetTarget(targetVessel.lastBody, targetVessel.GetWorldPos3D() - targetVessel.lastBody.position);
+                    Trajectory.Target.Set(targetVessel.lastBody, targetVessel.GetWorldPos3D() - targetVessel.lastBody.position);
                     ScreenMessages.PostScreenMessage("Targeting vessel " + targetVessel.GetName());
                 }
 
@@ -294,7 +253,7 @@ namespace Trajectories
                 GUI.enabled = (navigationWaypoint != null);
                 if (GUILayout.Button("Active waypoint"))
                 {
-                    traj.SetTarget(navigationWaypoint.celestialBody,
+                    Trajectory.Target.Set(navigationWaypoint.celestialBody,
                         navigationWaypoint.celestialBody.GetRelSurfacePosition(navigationWaypoint.latitude, navigationWaypoint.longitude, navigationWaypoint.altitude));
                     ScreenMessages.PostScreenMessage("Targeting waypoint " + navigationWaypoint.name);
                 }
@@ -303,7 +262,12 @@ namespace Trajectories
                 GUI.enabled = true;
 
                 GUILayout.BeginHorizontal();
-                coords = GUILayout.TextField(coords, GUILayout.Width(170));
+                coords = GUILayout.TextField(Trajectory.Target.ManualText, GUILayout.Width(170));
+                if (coords != Trajectory.Target.ManualText)
+                {
+                    Trajectory.Target.ManualText = coords;
+                    Trajectory.Target.Save();
+                }
                 if (GUILayout.Button(new GUIContent("Set",
                         "Enter target latitude and longitude, separated by a comma, in decimal format (with a dot for decimal separator)"),
                         GUILayout.Width(50)))
@@ -318,7 +282,7 @@ namespace Trajectories
                         {
                             Vector3d relPos = body.GetWorldSurfacePosition(lat, lng, 2.0) - body.position;
                             double altitude = Trajectory.GetGroundAltitude(body, relPos) + body.Radius;
-                            traj.SetTarget(body, relPos * (altitude / relPos.magnitude));
+                            Trajectory.Target.Set(body, relPos * (altitude / relPos.magnitude));
                         }
                     }
                 }
@@ -383,6 +347,23 @@ namespace Trajectories
                     ), GUILayout.Width(130));
                 GUILayout.Label(traj.ErrorCount + " error(s)", GUILayout.Width(80));
                 GUILayout.EndHorizontal();
+
+                GUILayout.BeginHorizontal();
+                if (GUILayout.Toggle(Settings.fetch.NewGui, new GUIContent("New Gui", "Swap to the New Gui")))
+                {
+                    Settings.fetch.NewGui = true;
+                    Settings.fetch.MainGUIEnabled = true;
+                    Settings.fetch.GUIEnabled = false;
+                    InputLockManager.RemoveControlLock("TrajectoriesFlightLock");
+                    clickThroughLocked = false;
+                }
+                else
+                {
+                    Settings.fetch.NewGui = false;
+                    Settings.fetch.MainGUIEnabled = false;
+                    Settings.fetch.GUIEnabled = true;
+                }
+                GUILayout.EndHorizontal();
             }
 
             tooltip = GUI.tooltip;
@@ -399,58 +380,6 @@ namespace Trajectories
             GUILayout.Label(tooltip, toolTipStyle);
         }
 
-        public void Awake()
-        {
-            if (HighLogic.LoadedScene != GameScenes.FLIGHT)
-                return;
-
-            if (ToolbarManager.ToolbarAvailable && Settings.fetch.UseBlizzyToolbar)
-            {
-                Debug.Log("Using Blizzy toolbar for Trajectories GUI");
-                GUIToggleButtonBlizzy = ToolbarManager.Instance.add("Trajectories", "ToggleUI");
-                GUIToggleButtonBlizzy.Visibility = GUIToggleButtonBlizzyVisibility.Instance;
-                GUIToggleButtonBlizzy.TexturePath = "Trajectories/Textures/icon-blizzy";
-                GUIToggleButtonBlizzy.ToolTip = "Right click toggles Trajectories window";
-                GUIToggleButtonBlizzy.OnClick += OnToggleGUIBlizzy;
-            }
-            else
-            {
-                Debug.Log("Using stock toolbar for Trajectories GUI");
-                GameEvents.onGUIApplicationLauncherReady.Add(CreateStockToolbarButton);
-                GameEvents.onGUIApplicationLauncherUnreadifying.Add(DestroyStockToolbarButton);
-            }
-        }
-
-        void DummyVoid() { }
-
-        void DestroyStockToolbarButton(GameScenes scene)
-        {
-            if (GUIToggleButton != null)
-            {
-                ApplicationLauncher.Instance.RemoveModApplication(GUIToggleButton);
-                GUIToggleButton = null;
-            }
-        }
-
-        void CreateStockToolbarButton()
-        {
-            if (GUIToggleButton == null)
-            {
-                GUIToggleButton = ApplicationLauncher.Instance.AddModApplication(
-                    OnToggleOn,
-                    OnToggleOff,
-                    DummyVoid,
-                    DummyVoid,
-                    DummyVoid,
-                    DummyVoid,
-                    ApplicationLauncher.AppScenes.MAPVIEW | ApplicationLauncher.AppScenes.FLIGHT,
-                    (Texture)GameDatabase.Instance.GetTexture("Trajectories/Textures/icon", false));
-
-                if (Settings.fetch.GUIEnabled)
-                    GUIToggleButton.SetTrue(false);
-            }
-        }
-
         /// <summary>
         /// Determines if the current game scane is valid for the plugin.
         /// This plugin should be able to run in VAB/SPH, Flight, Space Center, and Tracking Station scenes.
@@ -459,44 +388,6 @@ namespace Trajectories
         Boolean IsValidScene()
         {
             return HighLogic.LoadedSceneIsEditor || HighLogic.LoadedSceneIsFlight || HighLogic.LoadedScene == GameScenes.SPACECENTER || HighLogic.LoadedScene == GameScenes.TRACKSTATION;
-        }
-
-        void OnToggleGUIBlizzy(ClickEvent e)
-        {
-            if (e.MouseButton == 0)
-            {
-                // check that we have patched conics. If not, apologize to the user and return.
-                if (!isPatchedConicsAvailable())
-                {
-                    ScreenMessages.PostScreenMessage(
-                        "Can't show trajectory because patched conics are not available." +
-                        " Please update your tracking station facility.");
-                    Settings.fetch.DisplayTrajectories = false;
-                    return;
-                }
-
-                Settings.fetch.DisplayTrajectories = !Settings.fetch.DisplayTrajectories;
-            }
-            else
-            {
-                Settings.fetch.GUIEnabled = !Settings.fetch.GUIEnabled;
-            }
-        }
-
-        void OnToggleOn()
-        {
-            Settings.fetch.GUIEnabled = true;
-        }
-
-        void OnToggleOff()
-        {
-            Settings.fetch.GUIEnabled = false;
-        }
-
-        void OnDestroy()
-        {
-            if (GUIToggleButtonBlizzy != null)
-                GUIToggleButtonBlizzy.Destroy();
         }
 
         private static Rect ClampToScreen(Rect window)

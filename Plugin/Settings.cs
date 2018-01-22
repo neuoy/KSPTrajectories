@@ -48,10 +48,22 @@ namespace Trajectories
         public Rect MapGUIWindowPos { get; set; }
 
         [Persistent(Default: false)]
+        public bool MainGUIEnabled { get; set; }
+
+        [Persistent(Default: null)]
+        public Vector2 MainGUIWindowPos { get; set; }
+
+        [Persistent(Default: null)]
+        public int MainGUICurrentPage { get; set; }
+
+        [Persistent(Default: false)]
         public bool GUIEnabled { get; set; }
 
-        [Persistent(Default: 2.0f)]
-        public float IntegrationStepSize { get; set; } 
+        [Persistent(Default: true)]
+        public bool NewGui { get; set; }
+
+        [Persistent(Default: 2.0d)]
+        public double IntegrationStepSize { get; set; }
 
         [Persistent(Default: 4)]
         public int MaxPatchCount { get; set; }

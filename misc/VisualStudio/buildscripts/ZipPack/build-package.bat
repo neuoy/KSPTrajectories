@@ -35,11 +35,16 @@ xcopy /y ..\..\..\%TargetName%.cfg .
 xcopy /y ..\..\..\%TargetName%.version .
 xcopy /y ..\..\..\README.md .
 
+mkdir Localization
+xcopy /y ..\..\..\Localization\TrajectoriesLocalization.cfg Localization
+
 mkdir Plugin
 xcopy /y %initialWD%\%TargetName%.dll Plugin
 
 mkdir Textures
 xcopy /y ..\..\..\Textures\icon.png Textures
+xcopy /y ..\..\..\Textures\iconActive.png Textures
+xcopy /y ..\..\..\Textures\iconAuto.png Textures
 xcopy /y ..\..\..\Textures\icon-blizzy.png Textures
 
 echo.

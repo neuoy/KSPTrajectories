@@ -150,40 +150,40 @@ namespace Trajectories
             }
 
 
-            foreach (var patch in Trajectory.fetch.patches)
+            foreach (var patch in Trajectory.fetch.Patches)
             {
-                if (patch.startingState.stockPatch != null && !Settings.fetch.BodyFixedMode && !Settings.fetch.DisplayCompleteTrajectory)
+                if (patch.StartingState.StockPatch != null && !Settings.fetch.BodyFixedMode && !Settings.fetch.DisplayCompleteTrajectory)
                     continue;
 
-                if (patch.isAtmospheric && patch.atmosphericTrajectory.Length < 2)
+                if (patch.IsAtmospheric && patch.AtmosphericTrajectory.Length < 2)
                     continue;
 
-                var obj = GetMesh(patch.startingState.referenceBody, lineMaterial);
+                var obj = GetMesh(patch.StartingState.ReferenceBody, lineMaterial);
                 var mesh = obj.GetComponent<MeshFilter>().mesh;
 
-                if (patch.isAtmospheric)
+                if (patch.IsAtmospheric)
                 {
-                    initMeshFromTrajectory(patch.startingState.referenceBody.position, mesh, patch.atmosphericTrajectory, Color.red);
+                    initMeshFromTrajectory(patch.StartingState.ReferenceBody.position, mesh, patch.AtmosphericTrajectory, Color.red);
                 }
                 else
                 {
-                    initMeshFromOrbit(patch.startingState.referenceBody.position, mesh, patch.spaceOrbit, patch.startingState.time, patch.endTime - patch.startingState.time, Color.white);
+                    initMeshFromOrbit(patch.StartingState.ReferenceBody.position, mesh, patch.SpaceOrbit, patch.StartingState.Time, patch.EndTime - patch.StartingState.Time, Color.white);
                 }
 
-                if (patch.impactPosition.HasValue)
+                if (patch.ImpactPosition.HasValue)
                 {
-                    obj = GetMesh(patch.startingState.referenceBody, lineMaterial);
+                    obj = GetMesh(patch.StartingState.ReferenceBody, lineMaterial);
                     mesh = obj.GetComponent<MeshFilter>().mesh;
-                    initMeshFromImpact(patch.startingState.referenceBody, mesh, patch.impactPosition.Value, Color.red);
+                    initMeshFromImpact(patch.StartingState.ReferenceBody, mesh, patch.ImpactPosition.Value, Color.red);
                 }
             }
 
-            Vector3? targetPosition = Trajectory.fetch.targetPosition;
+            Vector3? targetPosition = Trajectory.Target.WorldPosition;
             if (targetPosition.HasValue)
             {
-                var obj = GetMesh(Trajectory.fetch.targetBody, lineMaterial);
+                var obj = GetMesh(Trajectory.Target.Body, lineMaterial);
                 var mesh = obj.GetComponent<MeshFilter>().mesh;
-                initMeshFromImpact(Trajectory.fetch.targetBody, mesh, targetPosition.Value, Color.green);
+                initMeshFromImpact(Trajectory.Target.Body, mesh, targetPosition.Value, Color.green);
             }
         }
 
@@ -281,7 +281,7 @@ namespace Trajectories
 
                 Vector3 curMeshPos = Util.SwapYZ(orbit.getRelativePositionAtUT(time));
                 if (Settings.fetch.BodyFixedMode) {
-                    curMeshPos = Trajectory.calculateRotatedPosition(orbit.referenceBody, curMeshPos, time);
+                    curMeshPos = Trajectory.CalculateRotatedPosition(orbit.referenceBody, curMeshPos, time);
                 }
                 curMeshPos += bodyPosition;
 

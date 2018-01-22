@@ -200,6 +200,21 @@ namespace Trajectories
             }
         }
 
+        /// <summary> Check if patched conics are available in the current save. </summary>
+        /// <returns>True if patched conics are available</returns>
+        public static bool IsPatchedConicsAvailable
+        {
+            get
+            {
+                // Get our level of tracking station
+                float trackingstation_level = ScenarioUpgradeableFacilities.GetFacilityLevel(SpaceCenterFacility.TrackingStation);
+
+                // Check if the tracking station knows Patched Conics
+                return GameVariables.Instance.GetOrbitDisplayMode(trackingstation_level).CompareTo(
+                        GameVariables.OrbitDisplayMode.PatchedConics) >= 0;
+            }
+        }
+
 
 
         // --------------------------------------------------------------------------
@@ -249,7 +264,7 @@ namespace Trajectories
         /// <param name="destinationLatitude"></param>Latitude of the destination of the distance
         /// <param name="destinationLongitude"></param>Longitude of the destination of the distance
         /// <returns>Distance between origin and source in meters</returns>
-        public static double distanceFromLatitudeAndLongitude(
+        public static double DistanceFromLatitudeAndLongitude(
             double bodyRadius,
             double originLatidue, double originLongitude,
             double destinationLatitude, double destinationLongitude)
