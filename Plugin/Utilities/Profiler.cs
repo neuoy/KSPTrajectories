@@ -1,7 +1,11 @@
-﻿using System;
+﻿
+#if DEBUG_PROFILER
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using KSP.Localization;
+#endif
+
 using UnityEngine;
 
 
