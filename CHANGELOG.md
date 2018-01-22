@@ -1,8 +1,11 @@
-## v1.7.2 for KSP 1.3.1
+## v2.0.0 for KSP 1.3.1
  - 20xx-xx-xx
 
 ### Changes since the last release
 
+ * Completeley new and overhauled user interface, based on the DialogGUI system.
+   Includes (automated) localizations for Russian, Spanish and Chinese (traditional). If you know any of these languages,
+   please consider helping out with translations. Send all Thanks and Kudos to PiezPiedPy for this amazing contribution!
  * In-Flight trajectory vector line and ground marker persistance bug fixed.
  * ModuleManager updated to v3.0.0
  * When combined with FAR, aerodynamic forces calculated on a packed vessel would lead to NRE's. Vessels are now
