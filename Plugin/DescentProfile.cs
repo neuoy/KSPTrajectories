@@ -12,7 +12,7 @@ using UnityEngine;
 
 namespace Trajectories
 {
-    [KSPAddon(KSPAddon.Startup.EveryScene, false)]
+    [KSPAddon(KSPAddon.Startup.Flight, false)]
     public sealed class DescentProfile: MonoBehaviour
     {
         public class Node
@@ -120,14 +120,15 @@ namespace Trajectories
         {
             fetch = this;
             Allocate();
-            Reset();
         }
 
-        public DescentProfile(double AoA)
+        // Awake is called only once when the script instance is being loaded. Used in place of the constructor for initialization.
+        private void Awake()
         {
-            fetch = this;
-            Allocate();
-            Reset(AoA);
+            if (Settings.fetch.DefaultDescentIsRetro)
+                Reset();
+            else
+                Reset(0d);
         }
 
         private void OnDestroy()
@@ -149,6 +150,7 @@ namespace Trajectories
 
         public void Reset(double AoA = Math.PI)
         {
+            //Debug.Log(string.Format("Resetting vessel descent profile to {0} degrees", AoA));
             entry.Angle = AoA;
             entry.Horizon = false;
             highAltitude.Angle = AoA;
@@ -174,7 +176,7 @@ namespace Trajectories
 
         private void Update()
         {
-            if (Util.IsFlight && (attachedVessel != FlightGlobals.ActiveVessel))
+            if (attachedVessel != FlightGlobals.ActiveVessel)
             {
                 //Debug.Log("Loading vessel descent profile");
                 attachedVessel = FlightGlobals.ActiveVessel;
@@ -182,7 +184,10 @@ namespace Trajectories
                 if (attachedVessel == null)
                 {
                     //Debug.Log("No vessel");
-                    Reset();
+                    if (Settings.fetch.DefaultDescentIsRetro)
+                        Reset();
+                    else
+                        Reset(0d);
                 }
                 else
                 {
@@ -190,7 +195,32 @@ namespace Trajectories
                     if (module == null)
                     {
                         //Debug.Log("No TrajectoriesVesselSettings module");
-                        Reset();
+                        if (Settings.fetch.DefaultDescentIsRetro)
+                            Reset();
+                        else
+                            Reset(0d);
+                    }
+                    else if (!module.Initialized)
+                    {
+                        //Debug.Log("Initializing TrajectoriesVesselSettings module");
+                        if (Settings.fetch.DefaultDescentIsRetro)
+                            Reset();
+                        else
+                            Reset(0d);
+
+                        module.EntryAngle = entry.Angle;
+                        module.EntryHorizon = entry.Horizon;
+                        module.HighAngle = highAltitude.Angle;
+                        module.HighHorizon = highAltitude.Horizon;
+                        module.LowAngle = lowAltitude.Angle;
+                        module.LowHorizon = lowAltitude.Horizon;
+                        module.GroundAngle = finalApproach.Angle;
+                        module.GroundHorizon = finalApproach.Horizon;
+
+                        module.ProgradeEntry = ProgradeEntry;
+                        module.RetrogradeEntry = RetrogradeEntry;
+
+                        module.Initialized = true;
                     }
                     else
                     {
@@ -220,6 +250,7 @@ namespace Trajectories
             if (attachedVessel == null)
                 return;
 
+            //Debug.Log("Saving vessel descent profile");
             foreach (var module in attachedVessel.Parts.SelectMany(p => p.Modules.OfType<TrajectoriesVesselSettings>()))
             {
                 module.EntryAngle = entry.Angle;
@@ -233,6 +264,7 @@ namespace Trajectories
 
                 module.ProgradeEntry = ProgradeEntry;
                 module.RetrogradeEntry = RetrogradeEntry;
+                module.Initialized = true;
             }
         }
 

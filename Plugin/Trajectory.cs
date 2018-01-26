@@ -502,12 +502,6 @@ namespace Trajectories
             aerodynamicModel_.Invalidate();
         }
 
-        public void ComputeTrajectory(Vessel vessel, double AoA)
-        {
-            DescentProfile profile = new DescentProfile(AoA);
-            ComputeTrajectory(vessel, profile);
-        }
-
         public void ComputeTrajectory(Vessel vessel, DescentProfile profile)
         {
             try

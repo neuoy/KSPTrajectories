@@ -5,6 +5,9 @@ namespace Trajectories
     class TrajectoriesVesselSettings: PartModule
     {
         [KSPField(isPersistant = true, guiActive = false)]
+        public bool Initialized = false;
+
+        [KSPField(isPersistant = true, guiActive = false)]
         public double EntryAngle = Math.PI;
 
         [KSPField(isPersistant = true, guiActive = false)]

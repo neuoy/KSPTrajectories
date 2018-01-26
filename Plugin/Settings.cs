@@ -6,7 +6,7 @@ namespace Trajectories
 {
     class Settings
     {
-        private class Persistent : Attribute
+        private class Persistent: Attribute
         {
             public object DefaultValue;
             public Persistent(object Default) { DefaultValue = Default; }
@@ -14,6 +14,7 @@ namespace Trajectories
 
         public static Settings fetch { get { settings_ = settings_ ?? new Settings(); return settings_; } }
 
+        #region User settings
         [Persistent(Default: false)]
         public bool DisplayTargetGUI { get; set; }
 
@@ -73,6 +74,10 @@ namespace Trajectories
 
         [Persistent(Default: true)]
         public bool UseCache { get; set; }
+
+        [Persistent(Default: true)]
+        public bool DefaultDescentIsRetro { get; set; }
+        #endregion
 
         private KSP.IO.PluginConfiguration config;
 
@@ -135,7 +140,7 @@ namespace Trajectories
 
             foreach (var prop in props)
             {
-                if(write)
+                if (write)
                     config.SetValue(prop.Property.Name, prop.Property.GetValue(this, null));
                 else
                     prop.Property.SetValue(this, config.GetValue<object>(prop.Property.Name, prop.Attribute.DefaultValue), null);

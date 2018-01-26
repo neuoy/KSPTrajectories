@@ -372,6 +372,8 @@ namespace Trajectories
             settings_page = new DialogGUIVerticalLayout(false, true, 0, new RectOffset(), TextAnchor.UpperCenter,
                 new DialogGUIToggle(() => { return ToolbarManager.ToolbarAvailable ? Settings.fetch.UseBlizzyToolbar : false; },
                     Localizer.Format("#autoLOC_Trajectories_UseBlizzyToolbar"), OnButtonClick_UseBlizzyToolbar),
+                new DialogGUIToggle(() => { return Settings.fetch.DefaultDescentIsRetro; },
+                    Localizer.Format("#autoLOC_Trajectories_DefaultDescent"), OnButtonClick_UseDescentRetro),
                 new DialogGUIHorizontalLayout(false, false, 0, new RectOffset(), TextAnchor.MiddleCenter,
                     new DialogGUIToggle(() => { return Settings.fetch.UseCache; },
                         Localizer.Format("#autoLOC_Trajectories_UseCache"), OnButtonClick_UseCache),
@@ -664,6 +666,11 @@ namespace Trajectories
         private static void OnButtonClick_UseCache(bool inState)
         {
             Settings.fetch.UseCache = inState;
+        }
+
+        private static void OnButtonClick_UseDescentRetro(bool inState)
+        {
+            Settings.fetch.DefaultDescentIsRetro = inState;
         }
 
         private static void OnButtonClick_AutoUpdateAerodynamicModel(bool inState)
