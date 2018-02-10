@@ -3,10 +3,10 @@
 
 ### Changes since the last release
 
- * Completeley new and overhauled user interface, based on the DialogGUI system.
+ * Completely new and overhauled user interface, based on the DialogGUI system.
    Includes (automated) localizations for Russian, Spanish and Chinese (traditional). If you know any of these languages,
    please consider helping out with translations. Send all Thanks and Kudos to PiezPiedPy for this amazing contribution!
- * In-Flight trajectory vector line and ground marker persistance bug fixed.
+ * In-Flight trajectory vector line and ground marker persistence bug fixed.
  * ModuleManager updated to v3.0.3
  * When combined with FAR, aerodynamic forces calculated on a packed vessel would lead to NRE's. Vessels are now
     no longer calculated when a vessel is in a packed state. Thanks go to Alex Wang for this bug fix.
@@ -15,6 +15,8 @@
 
 ### For Developers
 
+ * API changes to help catch NRE's from improper calling of the API methods.
+ * New API method `HasTarget()` checks if a target has been set.
  * Flickering entries bug in the Profiler is fixed :)
  * Added Reset averages & Show zero calls buttons, a Framerate limiter, avg calls and frame counter to the Profiler.
  
@@ -42,7 +44,7 @@
 
 ### Changes since the last release
 
- * Improved precision by accounting for reynolds number in drag. Fixes Issue #84.
+ * Improved precision by accounting for Reynolds number in drag. Fixes Issue #84.
  * Fix crash when turning on In-Flight trajectory display while in Map view. Fixes Issue #102. Thanks to PiezPiedPy!
  * Prevent click-through in certain situations. Thanks to PiezPiedPy!
  * Numbers in the user interface don't change as quickly anymore, allowing for better readability
@@ -67,7 +69,7 @@
 - 2017-06-13
 
 ### Changes since the last release
-  * Fixed in-flight targeting cross remaining in scence even after trajectory display was disabled.
+  * Fixed in-flight targeting cross remaining in scene even after trajectory display was disabled.
   * Added toggle for in-flight trajectory display. Fixes Issue #96.
 
 ### Known Issues
@@ -82,7 +84,7 @@
 ### Changes since the last release
   * This release is brought to you by fat-lobyte (aka Kobymaru on the Forums)
   * Update ToolbarWrapper for blizzy78's Toolbar. Fixes Issue #78.
-  * Enable Trajectories window in flight scence.
+  * Enable Trajectories window in flight scene.
   * Implement in-flight trajectory line display. Please test and give feedback!
   * Fix Parenthesis silliness in .version file to make it valid JSON again. Thanks, ggpeters!
   * Update Module Manager to v2.8.0. Thanks to PiezPiedPy!
