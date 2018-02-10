@@ -7,7 +7,7 @@
    Includes (automated) localizations for Russian, Spanish and Chinese (traditional). If you know any of these languages,
    please consider helping out with translations. Send all Thanks and Kudos to PiezPiedPy for this amazing contribution!
  * In-Flight trajectory vector line and ground marker persistance bug fixed.
- * ModuleManager updated to v3.0.0
+ * ModuleManager updated to v3.0.3
  * When combined with FAR, aerodynamic forces calculated on a packed vessel would lead to NRE's. Vessels are now
     no longer calculated when a vessel is in a packed state. Thanks go to Alex Wang for this bug fix.
  * Higher precision and better performance through more advanced numeric techniques.
