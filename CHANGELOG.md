@@ -1,17 +1,17 @@
 ## v2.0.0 for KSP 1.3.1
- - 20xx-xx-xx
+ - 2018-02-15
 
 ### Changes since the last release
 
  * Completely new and overhauled user interface, based on the DialogGUI system.
-   Includes (automated) localizations for Russian, Spanish and Chinese (traditional). If you know any of these languages,
-   please consider helping out with translations. Send all Thanks and Kudos to PiezPiedPy for this amazing contribution!
+   Includes (automated) localizations for Russian, Spanish and Chinese (traditional). If you know any of these languages, please consider helping out with translations. Send all Thanks and Kudos to PiezPiedPy for this amazing contribution!
  * In-Flight trajectory vector line and ground marker persistence bug fixed.
  * ModuleManager updated to v3.0.3
- * When combined with FAR, aerodynamic forces calculated on a packed vessel would lead to NRE's. Vessels are now
-    no longer calculated when a vessel is in a packed state. Thanks go to Alex Wang for this bug fix.
- * Higher precision and better performance through more advanced numeric techniques.
-   Try disabling the Cache for more precise predictions predictions that should not kill your FPS anymore.
+ * When combined with FAR, aerodynamic forces calculated on a packed vessel would lead to NRE's.
+   Vessels are now no longer calculated when a vessel is in a packed state. Thanks go to Alex Wang for this bug fix.
+ * Higher precision and better performance through more advanced numeric techniques using an RK4 integration method.
+   Try disabling the Cache for more precise predictions, predictions that should not kill your FPS anymore.
+   Courtesy of fat-lobyte aka Kobymaru.
 
 ### For Developers
 
