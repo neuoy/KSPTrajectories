@@ -143,9 +143,9 @@ namespace Trajectories
         private void Allocate()
         {
             entry = new Node(Localizer.Format("#autoLOC_Trajectories_Entry"), Localizer.Format("#autoLOC_Trajectories_EntryDesc"));
-            highAltitude = new Node(Localizer.Format("#autoLOC_6001508"), Localizer.Format("#autoLOC_Trajectories_HighDesc"));
-            lowAltitude = new Node(Localizer.Format("#autoLOC_7000051"), Localizer.Format("#autoLOC_Trajectories_LowDesc"));
-            finalApproach = new Node(Localizer.Format("#autoLOC_453573"), Localizer.Format("#autoLOC_Trajectories_GroundDesc"));
+            highAltitude = new Node(Localizer.Format("#autoLOC_Trajectories_High"), Localizer.Format("#autoLOC_Trajectories_HighDesc"));
+            lowAltitude = new Node(Localizer.Format("#autoLOC_Trajectories_Low"), Localizer.Format("#autoLOC_Trajectories_LowDesc"));
+            finalApproach = new Node(Localizer.Format("#autoLOC_Trajectories_Ground"), Localizer.Format("#autoLOC_Trajectories_GroundDesc"));
         }
 
         public void Reset(double AoA = Math.PI)

@@ -23,6 +23,7 @@ namespace Trajectories
         private const float slider_width = 170.0f;
         private const float integrator_slidermin = 1.0f;
         private const float integrator_slidermax = 50.0f;
+        private const float lat_long_width = 28.0f;
         private const int page_padding = 10;
 
         // version string
@@ -257,7 +258,7 @@ namespace Trajectories
                     new DialogGUIToggle(() => { return Settings.fetch.BodyFixedMode; },
                         Localizer.Format("#autoLOC_Trajectories_FixedBody"), OnButtonClick_BodyFixedMode),
                     new DialogGUIToggle(() => { return Settings.fetch.DisplayCompleteTrajectory; },
-                        Localizer.Format("#autoLOC_7001028"), OnButtonClick_DisplayCompleteTrajectory)),
+                        Localizer.Format("#autoLOC_Trajectories_Complete"), OnButtonClick_DisplayCompleteTrajectory)),
                 new DialogGUIHorizontalLayout(TextAnchor.MiddleRight,
                     new DialogGUILabel(Localizer.Format("#autoLOC_Trajectories_MaxGforce"), true),
                     new DialogGUILabel(() => { return max_gforce_txt; })),
@@ -266,17 +267,17 @@ namespace Trajectories
                     new DialogGUILabel(() => { return impact_time_txt; })),
                 new DialogGUIHorizontalLayout(TextAnchor.MiddleRight,
                     new DialogGUILabel(Localizer.Format("#autoLOC_Trajectories_ImpactPosition"), true),
-                    new DialogGUILabel(Localizer.Format("#autoLOC_Trajectories_Lat"), 25f),
+                    new DialogGUILabel(Localizer.Format("#autoLOC_Trajectories_Lat"), lat_long_width),
                     impact_latitude_label,
                     new DialogGUISpace(10),
-                    new DialogGUILabel(Localizer.Format("#autoLOC_Trajectories_Long"), 28f),
+                    new DialogGUILabel(Localizer.Format("#autoLOC_Trajectories_Long"), lat_long_width),
                     impact_longitude_label),
                 new DialogGUIHorizontalLayout(TextAnchor.MiddleRight,
                     new DialogGUILabel(Localizer.Format("#autoLOC_Trajectories_ImpactVelocity"), true),
-                    new DialogGUILabel(Localizer.Format("#autoLOC_Trajectories_Vert"), 25f),
+                    new DialogGUILabel(Localizer.Format("#autoLOC_Trajectories_Vert"), lat_long_width),
                     impact_vertical_label,
                     new DialogGUISpace(10),
-                    new DialogGUILabel(Localizer.Format("#autoLOC_Trajectories_Hori"), 28f),
+                    new DialogGUILabel(Localizer.Format("#autoLOC_Trajectories_Hori"), lat_long_width),
                     impact_horizontal_label),
                 new DialogGUIHorizontalLayout(TextAnchor.MiddleRight,
                     new DialogGUILabel(() => { return Trajectory.Target.Body == null ? "" :
@@ -294,10 +295,10 @@ namespace Trajectories
                     new DialogGUILabel(() => { return target_body_txt; })),
                 new DialogGUIHorizontalLayout(TextAnchor.MiddleRight,
                     new DialogGUILabel(Localizer.Format("#autoLOC_Trajectories_TargetPosition"), true),
-                    new DialogGUILabel(Localizer.Format("#autoLOC_Trajectories_Lat"), 25f),
+                    new DialogGUILabel(Localizer.Format("#autoLOC_Trajectories_Lat"), lat_long_width),
                     target_latitude_label,
                     new DialogGUISpace(10),
-                    new DialogGUILabel(Localizer.Format("#autoLOC_Trajectories_Long"), 28f),
+                    new DialogGUILabel(Localizer.Format("#autoLOC_Trajectories_Long"), lat_long_width),
                     target_longitude_label),
                 new DialogGUIHorizontalLayout(TextAnchor.MiddleRight,
                     new DialogGUILabel(() => { return Localizer.Format("#autoLOC_Trajectories_TargetDistance"); }, true),
@@ -437,7 +438,7 @@ namespace Trajectories
                    new DialogGUIHorizontalLayout(true, false, 4, new RectOffset(), TextAnchor.MiddleCenter,
                        new DialogGUIButton(Localizer.Format("#autoLOC_900629"),
                            OnButtonClick_Info, ButtonEnabler_Info, button_width, button_height, false),
-                       new DialogGUIButton(Localizer.Format("#autoLOC_900591"),
+                       new DialogGUIButton(Localizer.Format("#autoLOC_Trajectories_Target"),
                            OnButtonClick_Target, ButtonEnabler_Target, button_width, button_height, false),
                        new DialogGUIButton(Localizer.Format("#autoLOC_Trajectories_Descent"),
                            OnButtonClick_Descent, ButtonEnabler_Descent, button_width, button_height, false),
