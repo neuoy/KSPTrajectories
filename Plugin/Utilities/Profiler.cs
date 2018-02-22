@@ -181,7 +181,7 @@ namespace Trajectories
                 case "es-es":
                     return "Trayectorias Profiler";
                 case "ru":
-                    return "Провайдер траектории";
+                    return "Провайдер Траектория";
                 case "zh-cn":
                     return "軌跡分析儀";
                 default:
