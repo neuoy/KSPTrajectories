@@ -1,14 +1,18 @@
 ﻿/*
   (c) ©Copyright 2017 S.Gray (aka PiezPiedPy).
 
-  All assumed rights to the code contained within this file and/or any compiles using code generated from the code
-  within this file are removed for any and all companies and/or corporations unless prior written authorization
-  from the copyright holders is given.
+  Any and all rights, assumed or otherwise, to the code contained within this file and/or any compiles using code
+  generated from the code within this file, are removed for any and all persons, companies and/or corporations unless
+  prior written authorization from the copyright holders is given.
 
-  Permission is hereby granted, for personal use only, free of charge, to any person wishing to use the code
-  contained within this file and/or any compiles using code generated from the code within this file, including
-  without limitation the rights to use, copy, modify, merge, publish, distribute and/ or sub-license, subject
-  to the following conditions:
+  Any and all rights, assumed or otherwise, to any commercial or personal gain from the use and/or resale of this file
+  and/or any compiles using code generated from the code within this file, but not including personally created user
+  content, are removed unless prior written authorization from the copyright holders is given. 
+
+  Permission is hereby granted, for personal use only, free of charge, not for resale, to any person wishing to use the
+  code contained within this file and/or any compiles using code generated from the code within this file, including
+  without limitation the rights to use, copy, modify, merge, publish, distribute, create user content and/ or sub-license,
+  subject to the following conditions:
 
   The above copyright notice and this permission notice shall be included and remain intact for all copies and/or
   other works using the code contained within this file.

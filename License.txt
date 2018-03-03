@@ -30,25 +30,30 @@ by S.Gray (aka PiezPiedPy) are not subject to the MIT License terms.
 See the details within those files and/or the details below for their
 respective License and Copyright terms:
 
-  1. All assumed rights to the code contained within those files and/or any
-  compiles using code generated from the code within those files are removed for
-  any and all companies and/or corporations unless prior written authorization
-  from the copyright holders is given.
+  1. Any and all rights, assumed or otherwise, to the code contained within those
+  files and/or any compiles using code generated from the code within those files,
+  are removed for any and all persons, companies and/or corporations unless prior
+  written authorization from the copyright holders is given.
 
-  2. Permission is hereby granted, for personal use only, free of charge, to any
-  person wishing to use the code contained within those files and/or any compiles
-  using code generated from the code within those files, including without limitation
-  the rights to use, copy, modify, merge, publish, distribute and/ or sub-license,
-  subject to the following conditions:
+  2. Any and all rights, assumed or otherwise, to any commercial or personal gain
+  from the use and/or resale of those files and/or any compiles using code generated
+  from the code within those files, but not including personally created user content,
+  are removed unless prior written authorization from the copyright holders is given. 
+  
+  3. Permission is hereby granted, for personal use only, free of charge, not for
+  resale, to any person wishing to use the code contained within those files and/or
+  any compiles using code generated from the code within those files, including without
+  limitation the rights to use, copy, modify, merge, publish, distribute, create user
+  content and/ or sub-license, subject to the following conditions:
 
-  3. The above copyright notice and this permission notice shall be included and remain
+  4. The above copyright notice and this permission notice shall be included and remain
   intact for all copies and/or other works using the code contained within those files.
 
-  4. Except as contained in this notice, the name of the copyright holders shall not be
+  5. Except as contained in this notice, the name of the copyright holders shall not be
   used in advertising or otherwise to promote the sale, use, or other dealings without
   prior written authorization from the copyright holders.
 
-  5. THE CODE WITHIN THOSE FILES AND/OR ANY COMPILES USING CODE GENERATED FROM THE CODE
+  6. THE CODE WITHIN THOSE FILES AND/OR ANY COMPILES USING CODE GENERATED FROM THE CODE
   WITHIN THOSE FILES IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
   INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
   PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
