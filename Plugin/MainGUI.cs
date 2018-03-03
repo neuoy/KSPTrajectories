@@ -1,4 +1,31 @@
-﻿using System;
+﻿/*
+  (c) ©Copyright 2017 S.Gray (aka PiezPiedPy).
+
+  All assumed rights to the code contained within this file and/or any compiles using code generated from the code
+  within this file are removed for any and all companies and/or corporations unless prior written authorization
+  from the copyright holders is given.
+
+  Permission is hereby granted, for personal use only, free of charge, to any person wishing to use the code
+  contained within this file and/or any compiles using code generated from the code within this file, including
+  without limitation the rights to use, copy, modify, merge, publish, distribute and/ or sub-license, subject
+  to the following conditions:
+
+  The above copyright notice and this permission notice shall be included and remain intact for all copies and/or
+  other works using the code contained within this file.
+
+  Except as contained in this notice, the name of the copyright holders shall not be used in advertising or otherwise
+  to promote the sale, use, or other dealings without prior written authorization from the copyright holders.
+
+  THE CODE WITHIN THIS FILE AND/OR ANY COMPILES USING CODE GENERATED FROM THE CODE WITHIN THIS FILE IS PROVIDED
+  "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+  MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+  HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+  ARISING FROM, OUT OF OR IN CONNECTION WITH THE CODE WITHIN THIS FILE AND/OR ANY COMPILES USING CODE GENERATED FROM
+  THE CODE WITHIN THIS FILE, OR THE USE OR OTHER DEALINGS IN THE CODE WITHIN THIS FILE AND/OR ANY COMPILES USING
+  CODE GENERATED FROM THE CODE WITHIN THIS FILE.
+*/
+
+using System;
 using System.Linq;
 using System.Collections.Generic;
 using System.Diagnostics;
