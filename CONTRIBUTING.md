@@ -91,13 +91,13 @@ The very first thing you should do is to **back up your save file**!!! We am not
 
 Next, create a backup of your GameData folder (Excluding "Squad"), and delete all mods in there except for Trajectories and ModuleManager (and Squad obviously).
 
-Create a new Savegame, build a craft with Stock parts that triggers the problem and launch it. Don't be afraid to use the Cheat menu to get the craft into the situation that you need (Set orbit, rendez-vous, infinite fuel...). In the animal kingdom, Alpacas of the "dirty cheating" variety are the most successful when it comes to debugging.
+Create a new Savegame, build a craft with Stock parts that triggers the problem and launch it. Don't be afraid to use the Cheat menu to get the craft into the situation that you need (Set orbit, rendezvous, infinite fuel...). In the animal kingdom, Alpacas of the "dirty cheating" variety are the most successful when it comes to debugging.
 
 Most of the time the bug will occur with *only* trajectories installed.
 
 Sometimes, you will require other mods to reproduce it, such as FAR or RSS. In that case, try to delete all mods that are uninvolved and state clearly which mods (and which versions of them) are required.
 
-If you are sure that the problem doesn't happen with only Trajectories but don't know which is reponsible, you have to search for it.
+If you are sure that the problem doesn't happen with only Trajectories but don't know which is responsible, you have to search for it.
 The simplest method is to add mods one by one. If you have few installed, you should do that.
 
 However, "binary search" is more effective: Add half your mods and see if the problem occurs. If not, add the other half. If yes, split the first half again and add the first quarter. If that doesn't cause the problem, remove it again and add the second quarter.
@@ -154,9 +154,9 @@ Whenever a new feature is introduced, no matter how big the benefits, there are 
 
   - Performance: every calculation takes time, needs a processor to execute it and consumes energy. Consider that your feature will potentially run on many users machines, for multiple hours, for around 30 times per second.
     You don't want to be the guy who's responsible for melting our planets ice caps, are you? ;)
-    Sometimes this is negligable. Sometimes, it is not. Think about which it is when you suggest a feature.
+    Sometimes this is negligible. Sometimes, it is not. Think about which it is when you suggest a feature.
   - Changing workloads: People are creatures of habit, and so are this mods users. When you introduce a change in "the way they do things",
-    be aware that many people (who your are currently unaware of, because they are content and happy) will suddenly have to change their behaviour and that they
+    be aware that many people (who your are currently unaware of, because they are content and happy) will suddenly have to change their behavior and that they
 	might not be as happy about the change as you are.
 
 When you submit a feature request, please make sure to think about the drawbacks that your feature could have and specify and explain them clearly.
@@ -164,13 +164,13 @@ When you submit a feature request, please make sure to think about the drawbacks
 ### "Why can't you just add a toggle?"
 
 If your feature request would introduce a change that makes the Mod do something differently, you might be tempted to add toggles and switches
-to revert back to the old behaviour, or when your feature is rejected because of the impact it has, you might exclaim "why can't you just add a toggle?".
+to revert back to the old behavior, or when your feature is rejected because of the impact it has, you might exclaim "why can't you just add a toggle?".
 No, generally we can't. Here is why:
 
 While it might make perfect sense from an individual point of view,
 where you consider one single feature and one single switch, changing the perspective to that of the maintainer makes things more complicated.
 
-A maintainer has to consider the *entirety* of all switches, options and toggles. What is "just one more switch" for you might be the twentyfirst switch to the maintainer.
+A maintainer has to consider the *entirety* of all switches, options and toggles. What is "just one more switch" for you might be the twenty first switch to the maintainer.
 While there is undoubtedly value in a "configurable" product, it also incurs a cost!
 
   - It's harder to learn how the mod works, harder to write manuals and therefor produces more support requests.
@@ -188,7 +188,7 @@ the user experience completely or even remove features to avoid confusion.
 Some features have been suggested many times, but cannot be included for technical reasons.
 Below is a list of these features and the reasons why they will probably never make it into Trajectories.
 
-If you disagree with this assesment, the best way to convice me otherwise is to provide a working implementation that fits well with the rest of the mod.
+If you disagree with this assessment, the best way to convince me otherwise is to provide a working implementation that fits well with the rest of the mod.
 
   - Predicting the trajectory after future staging events. We need the DragCubeList of a vessel to correctly calculate the drag it will produce. Currently, we get this DragCubeList from KSP as the one that is returned for the current vessel in the now. There is no way to create a "vessel after staging" or retrieve the "DragCubeList after staging". That means that we would have to duplicate a good deal of the KSP-internal staging and DragCube code, which is just not a good idea.
 
@@ -258,7 +258,7 @@ More information to specific question can be found here:
 
  * https://help.github.com/
 
-If you want to get into the depths of Git, this (online-) book is recommended:
+If you want to get into the depths of Git, this (online) book is recommended:
 
  * https://git-scm.com/book/
 
@@ -338,13 +338,13 @@ This section will guide you through setting up your development environment so t
 
 #### Unity
 For building and/or debugging KSPTrajectories with Visual Studio or Unity Editor you will need to download and install the exact version of Unity Editor that was used to build the version of KSP you are working with.
-You can find out which  Unity version your current KSP install is using by looking at the first line of `KSP_Data/output_log.txt` (or `KSP_x64_Data/output_log.txt`). It should read something like this:
+You can find out which Unity version your current KSP install is using by looking at the first line of `C:\Users\YOURUSERNAME\AppData\LocalLow\Squad\Kerbal Space Program/output_log.txt`. It should read something like this:
 
-    Initialize engine version: 5.4.0p4 (b15b5ae035b7)
+    Initialize engine version: 2017.1.3p1 (02d73f71d3bd)
 
-In this case, the Unity version for your KSP version is 5.4.0p4.
+In this case, the Unity version for your KSP version is 2017.1.3p1.
 
-The Unity Editor for **KSP v1.3.0** is **Unity v5.4.0.p4** and can be downloaded here: [UnitySetup64-5.4.0p4.exe](http://beta.unity3d.com/download/b15b5ae035b7/Windows64EditorInstaller/UnitySetup64-5.4.0p4.exe)
+The Unity Editor for **KSP v1.4.1** is **Unity v2017.1.3p1** and can be downloaded here: [UnityDownloadAssistant-2017.1.3p1.exe](https://beta.unity3d.com/download/02d73f71d3bd/UnityDownloadAssistant-2017.1.3p1.exe)
 
 #### Visual Studio
 
@@ -467,7 +467,7 @@ If the *"WindowsPlayer"* process doesn't show up in this menu, check that
   - Both KSP and Visual Studio are allowed to communicate through the local firewall
   - That you created or downloaded the PlayerConnectionConfigFile described [above](#kerbal-space-program-install)
 
-You should now be able to create breakpoits, step through the execution and inspect variables.
+You should now be able to create breakpoints, step through the execution and inspect variables.
 If that doesn't happen (the debugger just doesn't halt where you want it to), make sure that the debugging symbols (.mdb and .pdb) are available in the GameData directory, along with the Trajectories.dll file.
 
 Note that while you are halting at a breakpoint, the KSP will become unresponsive. If you try to open it while halted, Windows will suggest to kill it. This is not what you want when debugging ;)
@@ -545,7 +545,7 @@ You can enable/disable the display of any calls not called in the last frame wit
 Making releases is as simple as updating two version files and the clicking build. Below is a small checklist for releases.
 
 However, before creating a release, make sure that *you are actually authorized* to make one.
-While the code is open source and you could theoretically do what you want, it would be very, very, **very** apreciated that you don't create new releases unless the current maintainer has either stepped back or has gone missing for a long time and doesn't reply to requests.
+While the code is open source and you could theoretically do what you want, it would be very, very, **very** appreciated that you don't create new releases unless the current maintainer has either stepped back or has gone missing for a long time and doesn't reply to requests.
 
 If you want to distribute your own version for testing, please do so by making it very clear to everyone that it's not an official release, and **CHANGE THE VERSION NUMBER** according to the versioning scheme below.
 
@@ -555,7 +555,7 @@ If you want to distribute your own version for testing, please do so by making i
   - Complete the `CHANGELOG.md` file, and fill out the release date field. Make sure to credit all contributors.
   - Adjust the compatible KSP version numbers in `Trajectories.version`. Actually test if they work in all the KSP version claimed compatible.
   - Bump the version number in `Trajectories.version` and `Plugin\Properties\AssemblyInfo.cs` according the the versioning rules [below](#versioning).
-  - Check with Git that your working directory is clean. No Changes are allowed, everything must be commited.
+  - Check with Git that your working directory is clean. No Changes are allowed, everything must be committed.
   - Build the Project in release mode
   - Clean out the `GameData` folder of your KSP install, only the ´Squad` folder should remain.
   - Extract the `Trajectories-<version>.zip` that was created during the Release build into your GameData folder
@@ -574,8 +574,8 @@ The rules for versioning are rather lax, except for the main most important #1 r
 **DO NOT RELEASE DIFFERENT PRODUCTS UNDER THE SAME VERSION NUMBER**
 
 While the rules below are guidelines and can be ignored rather arbitrarily by the maintainer, the rule above is THE LAW.
-If you let a build slip out that differes from another build by as little as one bit but has the same version number, kittens will die and Krakens shall eat your ship.
-Increment the version number even if the change is miniscule.
+If you let a build slip out that differs from another build by as little as one bit but has the same version number, kittens will die and Krakens shall eat your ship.
+Increment the version number even if the change is minuscule.
 
 If the Version is MAJOR.MINOR.PATCH, then
 

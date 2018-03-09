@@ -1,9 +1,10 @@
-## v2.x.x for KSP 1.3.1
+## v2.1.0 for KSP 1.4.1
  - 2018-xx-xx
 
 ### Changes since the last release
 
  * Russian translation updated. Many thanks to Fat-Zer for correcting the mistakes.
+ * Chinese translation updated. Many thanks to studentmain for rewriting the translation.
 
 ### For Developers
 
