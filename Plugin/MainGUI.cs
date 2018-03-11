@@ -1,39 +1,28 @@
 ﻿/*
-  (c) ©Copyright 2017 S.Gray (aka PiezPiedPy).
+  Copyright© (c) 2017-2018 S.Gray, (aka PiezPiedPy).
+  Copyright© (c) 2017-2018 A.Korsunsky, (aka fat-lobyte).
 
-  Any and all rights, assumed or otherwise, to the code contained within this file and/or any compiles using code
-  generated from the code within this file, are removed for any and all persons, companies and/or corporations unless
-  prior written authorization from the copyright holders is given.
+  This file is part of Trajectories.
+  Trajectories is available under the terms of GPL-3.0-or-later.
+  See the LICENSE.md file for more details.
 
-  Any and all rights, assumed or otherwise, to any commercial or personal gain from the use and/or resale of this file
-  and/or any compiles using code generated from the code within this file, but not including personally created user
-  content, are removed unless prior written authorization from the copyright holders is given. 
+  Trajectories is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
 
-  Permission is hereby granted, for personal use only, free of charge, not for resale, to any person wishing to use the
-  code contained within this file and/or any compiles using code generated from the code within this file, including
-  without limitation the rights to use, copy, modify, merge, publish, distribute, create user content and/ or sub-license,
-  subject to the following conditions:
+  Trajectories is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
-  The above copyright notice and this permission notice shall be included and remain intact for all copies and/or
-  other works using the code contained within this file.
-
-  Except as contained in this notice, the name of the copyright holders shall not be used in advertising or otherwise
-  to promote the sale, use, or other dealings without prior written authorization from the copyright holders.
-
-  THE CODE WITHIN THIS FILE AND/OR ANY COMPILES USING CODE GENERATED FROM THE CODE WITHIN THIS FILE IS PROVIDED
-  "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-  MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
-  HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
-  ARISING FROM, OUT OF OR IN CONNECTION WITH THE CODE WITHIN THIS FILE AND/OR ANY COMPILES USING CODE GENERATED FROM
-  THE CODE WITHIN THIS FILE, OR THE USE OR OTHER DEALINGS IN THE CODE WITHIN THIS FILE AND/OR ANY COMPILES USING
-  CODE GENERATED FROM THE CODE WITHIN THIS FILE.
+  You should have received a copy of the GNU General Public License
+  along with Trajectories.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 using System;
 using System.Linq;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Reflection;
 using KSP.Localization;
 using UnityEngine;
 using UnityEngine.Events;

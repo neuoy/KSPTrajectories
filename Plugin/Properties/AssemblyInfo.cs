@@ -10,7 +10,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
 [assembly: AssemblyProduct("Trajectories")]
-[assembly: AssemblyCopyright("Copyright ©  2016, Youen Toupin")]
+[assembly: AssemblyCopyright("Copyright©  2014-2018  Y.Toupin, A.Korsunsky, S.Gray")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 

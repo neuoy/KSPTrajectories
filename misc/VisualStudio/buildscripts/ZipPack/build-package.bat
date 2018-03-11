@@ -30,10 +30,12 @@ xcopy /y ..\..\3rdParty\README.md .
 
 mkdir %TargetName%
 cd %TargetName%
-xcopy /y ..\..\..\License.txt .
+xcopy /y ..\..\..\COPYING.md .
+xcopy /y ..\..\..\LICENSE.md .
 xcopy /y ..\..\..\%TargetName%.cfg .
 xcopy /y ..\..\..\%TargetName%.version .
 xcopy /y ..\..\..\README.md .
+xcopy /y ..\..\..\CHANGELOG.md .
 
 mkdir Localization
 xcopy /y ..\..\..\Localization\TrajectoriesLocalization.cfg Localization

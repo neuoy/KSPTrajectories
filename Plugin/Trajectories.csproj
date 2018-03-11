@@ -87,7 +87,7 @@
     <Compile Include="API.cs" />
     <Compile Include="AppLauncherButton.cs" />
     <Compile Include="FlightOverlay.cs" />
-    <Compile Include="GLUtils.cs" />
+    <Compile Include="3rdParty\GLUtils.cs" />
     <Compile Include="Utilities\DebugFastStart.cs" />
     <Compile Include="Utilities\Profiler.cs" />
     <Compile Include="Utilities\TelemetryWrapper.cs" />

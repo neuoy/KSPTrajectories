@@ -1,4 +1,13 @@
-﻿using System.Collections.Generic;
+﻿/*
+MechJeb2  Copyright (C) 2013
+This program comes with ABSOLUTELY NO WARRANTY!
+This is free software, and you are welcome to redistribute it
+under certain conditions, as outlined in the full content of
+the GNU General Public License (GNU GPL), version 3, revision
+date 29 June 2007.
+*/
+
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Trajectories
