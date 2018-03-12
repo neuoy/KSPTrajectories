@@ -5,6 +5,7 @@
 
  * Russian translation updated. Many thanks to Fat-Zer for correcting the mistakes.
  * Chinese translation updated. Many thanks to studentmain for rewriting the translation.
+ * Added Japanese, German, French, Italian and Portuguese languages.
 
 ### For Developers
 
