@@ -92,7 +92,7 @@ namespace Trajectories
 
 
             GameObject navballGameObject = FlightUIModeController.Instance.navBall.gameObject;
-            Transform vectorsPivotTransform = navballGameObject.transform.FindChild("vectorsPivot");
+            Transform vectorsPivotTransform = navballGameObject.transform.Find("vectorsPivot");
             navball = navballGameObject.GetComponentInChildren<NavBall>();
 
             trajectoryGuide = GameObject.CreatePrimitive(PrimitiveType.Sphere);
