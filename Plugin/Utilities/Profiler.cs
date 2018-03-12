@@ -204,6 +204,16 @@ namespace Trajectories
                     return "Провайдер Траектория";
                 case "zh-cn":
                     return "軌跡分析儀";
+                case "ja":
+                    return "軌道プロファイラ";
+                case "de-de":
+                    return "Trajektorien Profiler";
+                case "fr-fr":
+                    return "Trajectoires Profiler";
+                case "it-it":
+                    return "Trailerories Profiler";
+                case "pt-br":
+                    return "Trajectórias perfil";
                 default:
                     return "Trajectories Profiler";
             }
