@@ -30,37 +30,28 @@ namespace Trajectories
         private const int defaultVertexCount = 32;
         private const float lineWidth = 2.0f;
 
-        private TrajectoryLine line;
+        private static TrajectoryLine line;
+        private static TargetingCross targetingCross;
 
-        private TargetingCross targetingCross;
-
-        public void Awake()
+        private void Awake()
         {
             line = FlightCamera.fetch.mainCamera.gameObject.AddComponent<TrajectoryLine>();
             targetingCross = FlightCamera.fetch.mainCamera.gameObject.AddComponent<TargetingCross>();
         }
 
-        public void Start()
-        {
-
-        }
-
         private void OnDestroy()
         {
             if (line != null)
-            {
-                line.enabled = false;
-                line.Vertices.Clear();
-            }
+                Destroy(line);
 
             if (targetingCross != null)
-                targetingCross.enabled = false;
+                Destroy(targetingCross);
 
             line = null;
             targetingCross = null;
         }
 
-        private void FixedUpdate()
+        private void Update()
         {
             line.enabled = false;
             targetingCross.enabled = false;
@@ -154,6 +145,5 @@ namespace Trajectories
             // draw ground marker at this position
             GLUtils.DrawGroundMarker(ImpactBody, impactLat, impactLon, Color.red, false, 0, markerSize);
         }
-
     }
 }

@@ -26,179 +26,196 @@ using UnityEngine;
 
 namespace Trajectories
 {
-    [KSPAddon(KSPAddon.Startup.EveryScene, false)]
-    public class MapOverlay : MonoBehaviour
+    /// <summary>
+    /// Trajectory map view overlay handler
+    /// </summary>
+    [KSPAddon(KSPAddon.Startup.Flight, false)]
+    public sealed class MapOverlay: MonoBehaviour
     {
-        private class CameraListener : MonoBehaviour
+        /// <summary>
+        /// Trajectory map view renderer
+        /// </summary>
+        private sealed class MapTrajectoryRenderer: MonoBehaviour
         {
-            public MapOverlay overlay;
+            public List<GameObject> meshes = new List<GameObject>();
 
             public void OnPreRender()
             {
-                overlay.Render();
+                if (meshes != null)
+                    fetch.RenderMesh();
             }
-        }
 
-        private GameObject attachedCamera;
-        private CameraListener listener;
-        private List<GameObject> meshes = new List<GameObject>();
-        private bool displayEnabled = false;
-
-        private Material lineMaterial;
-
-        private float lineWidth = 3.0f;
-
-        private void DetachCamera()
-        {
-            if (attachedCamera == null)
-                return;
-
-            Debug.Log("Trajectories: detaching camera listener");
-
-            Destroy(listener);
-            listener = null;
-            attachedCamera = null;
-        }
-
-        public void Update()
-        {
-            setDisplayEnabled((HighLogic.LoadedScene == GameScenes.FLIGHT || HighLogic.LoadedScene == GameScenes.TRACKSTATION) && MapView.MapIsEnabled && PlanetariumCamera.Camera != null);
-
-            if (attachedCamera != null && (PlanetariumCamera.Camera == null || PlanetariumCamera.Camera.gameObject != attachedCamera))
+            /// <summary>
+            /// Shows or hides the rendered trajectory on the map view
+            /// </summary>
+            public void Visible(bool show)
             {
-                DetachCamera();
-            }
+                if (meshes != null)
+                {
+                    foreach (GameObject mesh in meshes)
+                        mesh.GetComponent<MeshRenderer>().enabled = show;
 
-            if ((HighLogic.LoadedScene != GameScenes.FLIGHT && HighLogic.LoadedScene != GameScenes.TRACKSTATION) || !MapView.MapIsEnabled || PlanetariumCamera.Camera == null)
-                return;
-
-            if (listener == null)
-            {
-                Debug.Log("Trajectories: attaching camera listener");
-                listener = PlanetariumCamera.Camera.gameObject.AddComponent<CameraListener>();
-                listener.overlay = this;
-                attachedCamera = PlanetariumCamera.Camera.gameObject;
+                    enabled = show;
+                }
             }
         }
 
-        public void Render()
+        // constants
+        private const float line_width = 3.0f;
+        private const int layer2D = 31;
+        private const int layer3D = 24;
+
+        // Map trajectory material
+        private static Material material;
+
+        // Map trajectory renderer
+        private static MapTrajectoryRenderer map_traj_renderer;
+
+        // visible flag
+        private static bool visible = false;
+
+        // permit global access
+        public static MapOverlay fetch
         {
-            if ((HighLogic.LoadedScene != GameScenes.FLIGHT && HighLogic.LoadedScene != GameScenes.TRACKSTATION) || !MapView.MapIsEnabled || PlanetariumCamera.Camera == null)
+            get; private set;
+        } = null;
+
+        //  constructor
+        public MapOverlay()
+        {
+            // enable global access
+            fetch = this;
+        }
+
+        // Awake is called only once when the script instance is being loaded. Used in place of the constructor for initialization.
+        private void Awake()
+        {
+            material = MapView.fetch.orbitLinesMaterial;
+            map_traj_renderer = PlanetariumCamera.Camera.gameObject.AddComponent<MapTrajectoryRenderer>();
+            map_traj_renderer.Visible(false);
+        }
+
+        private void OnDestroy()
+        {
+            if (map_traj_renderer != null)
+                Destroy(map_traj_renderer);
+            map_traj_renderer = null;
+        }
+
+        private void Update()
+        {
+            // return if no renderer or camera
+            if ((map_traj_renderer == null) || (PlanetariumCamera.Camera == null))
             {
-                setDisplayEnabled(false);
+                visible = false;
                 return;
             }
 
-            setDisplayEnabled(true);
-            refreshMesh();
-        }
-
-        private void setDisplayEnabled(bool enabled)
-        {
-            enabled = enabled && Settings.fetch.DisplayTrajectories;
-
-            if (displayEnabled == enabled)
-                return;
-            displayEnabled = enabled;
-
-            foreach (var mesh in meshes)
+            // hide or show the Map trajectory
+            if ((!Util.IsMap || !Settings.fetch.DisplayTrajectories) && visible)
             {
-                mesh.GetComponent<MeshRenderer>().enabled = enabled;
+                //Debug.Log("Trajectories: Hide map trajectory");
+                visible = false;
+                map_traj_renderer.Visible(false);
+                return;
+            }
+            else if (Util.IsMap && Settings.fetch.DisplayTrajectories && !visible)
+            {
+                //Debug.Log("Trajectories: Show map trajectory");
+                visible = true;
+                map_traj_renderer.Visible(true);
             }
         }
 
-        private GameObject GetMesh(CelestialBody body, Material material)
+        /// <summary>
+        /// Returns first found Non-Active mesh, if none are found then adds a new mesh to the end of the list.
+        /// </summary>
+        private GameObject GetMesh()
         {
-            GameObject obj = null;
-            foreach (var mesh in meshes)
+            // find a Non-Active mesh in the list
+            GameObject mesh_found = null;
+            foreach (GameObject mesh in map_traj_renderer.meshes)
             {
                 if (!mesh.activeSelf)
                 {
                     mesh.SetActive(true);
-                    obj = mesh;
+                    mesh_found = mesh;
                     break;
                 }
             }
 
-            if (obj == null)
+            // create a new mesh if a Non-Active mesh is not found
+            if (mesh_found == null)
             {
-                //ScreenMessages.PostScreenMessage("adding trajectory mesh " + meshes.Count);
+                //Debug.Log("Trajectories: Adding map trajectory mesh " + map_traj_renderer.meshes.Count);
 
-                var newMesh = new GameObject();
+                GameObject newMesh = new GameObject();
                 newMesh.AddComponent<MeshFilter>();
-                var renderer = newMesh.AddComponent<MeshRenderer>();
-                renderer.enabled = displayEnabled;
-                //renderer.castShadows = false;
+                MeshRenderer renderer = newMesh.AddComponent<MeshRenderer>();
+                renderer.enabled = visible;
                 renderer.receiveShadows = false;
-                newMesh.layer = 31;
+                newMesh.layer = MapView.Draw3DLines ? layer3D : layer2D;
+                map_traj_renderer.meshes.Add(newMesh);
 
-                meshes.Add(newMesh);
-
-                obj = newMesh;
+                mesh_found = newMesh;
             }
 
-            obj.GetComponent<Renderer>().sharedMaterial = material;
+            mesh_found.GetComponent<Renderer>().sharedMaterial = material;
 
-            return obj;
+            return mesh_found;
         }
 
-        public void Clear()
+        private void RenderMesh()
         {
-            foreach (var mesh in meshes)
-            {
-                GameObject.Destroy(mesh);
-            }
-        }
-
-        private void refreshMesh()
-        {
-            foreach (var mesh in meshes)
+            // set all meshes to Non-Active to init mesh list search.
+            foreach (GameObject mesh in map_traj_renderer.meshes)
             {
                 mesh.SetActive(false);
             }
 
-            // material from RemoteTech
-            if (lineMaterial == null)
+            // create/update meshes from Trajectory patches.
+            foreach (Trajectory.Patch patch in Trajectory.fetch.Patches)
             {
-                //    lineMaterial = new Material("Shader \"Vertex Colors/Alpha\" {Category{Tags {\"Queue\"=\"Transparent\" \"IgnoreProjector\"=\"True\" \"RenderType\"=\"Transparent\"}SubShader {Cull Off ZWrite On Blend SrcAlpha OneMinusSrcAlpha Pass {BindChannels {Bind \"Color\", color Bind \"Vertex\", vertex}}}}}");
-                lineMaterial = MapView.fetch.orbitLinesMaterial;
-            }
-
-
-            foreach (var patch in Trajectory.fetch.Patches)
-            {
-                if (patch.StartingState.StockPatch != null && !Settings.fetch.BodyFixedMode && !Settings.fetch.DisplayCompleteTrajectory)
+                if (patch.StartingState.StockPatch != null && !Settings.fetch.BodyFixedMode &&
+                    !Settings.fetch.DisplayCompleteTrajectory)
                     continue;
 
                 if (patch.IsAtmospheric && patch.AtmosphericTrajectory.Length < 2)
                     continue;
 
-                var obj = GetMesh(patch.StartingState.ReferenceBody, lineMaterial);
-                var mesh = obj.GetComponent<MeshFilter>().mesh;
+                GameObject mesh_found = GetMesh();
+                mesh_found.layer = MapView.Draw3DLines ? layer3D : layer2D;
+                Mesh mesh = mesh_found.GetComponent<MeshFilter>().mesh;
 
                 if (patch.IsAtmospheric)
                 {
-                    initMeshFromTrajectory(patch.StartingState.ReferenceBody.position, mesh, patch.AtmosphericTrajectory, Color.red);
+                    InitMeshFromTrajectory(patch.StartingState.ReferenceBody.position, mesh,
+                        patch.AtmosphericTrajectory, Color.red);
                 }
                 else
                 {
-                    initMeshFromOrbit(patch.StartingState.ReferenceBody.position, mesh, patch.SpaceOrbit, patch.StartingState.Time, patch.EndTime - patch.StartingState.Time, Color.white);
+                    InitMeshFromOrbit(patch.StartingState.ReferenceBody.position, mesh, patch.SpaceOrbit,
+                        patch.StartingState.Time, patch.EndTime - patch.StartingState.Time, Color.white);
                 }
 
+                // create/update red crosshair mesh from ImpactPosition.
                 if (patch.ImpactPosition.HasValue)
                 {
-                    obj = GetMesh(patch.StartingState.ReferenceBody, lineMaterial);
-                    mesh = obj.GetComponent<MeshFilter>().mesh;
-                    initMeshFromImpact(patch.StartingState.ReferenceBody, mesh, patch.ImpactPosition.Value, Color.red);
+                    mesh_found = GetMesh();
+                    mesh_found.layer = MapView.Draw3DLines ? layer3D : layer2D;
+                    mesh = mesh_found.GetComponent<MeshFilter>().mesh;
+                    InitMeshCrosshair(patch.StartingState.ReferenceBody, mesh, patch.ImpactPosition.Value, Color.red);
                 }
             }
 
-            Vector3? targetPosition = Trajectory.Target.WorldPosition;
-            if (targetPosition.HasValue)
+            // create/update green crosshair mesh from TargetPosition.
+            Vector3? target_position = Trajectory.Target.WorldPosition;
+            if (target_position.HasValue)
             {
-                var obj = GetMesh(Trajectory.Target.Body, lineMaterial);
-                var mesh = obj.GetComponent<MeshFilter>().mesh;
-                initMeshFromImpact(Trajectory.Target.Body, mesh, targetPosition.Value, Color.green);
+                GameObject mesh_found = GetMesh();
+                mesh_found.layer = MapView.Draw3DLines ? layer3D : layer2D;
+                Mesh mesh = mesh_found.GetComponent<MeshFilter>().mesh;
+                InitMeshCrosshair(Trajectory.Target.Body, mesh, target_position.Value, Color.green);
             }
         }
 
@@ -206,16 +223,16 @@ namespace Trajectories
         {
             // Code taken from RemoteTech mod
 
-            var camera = PlanetariumCamera.Camera;
+            Camera camera = PlanetariumCamera.Camera;
 
-            var start = camera.WorldToScreenPoint(ScaledSpace.LocalToScaledSpace(prevPos));
-            var end = camera.WorldToScreenPoint(ScaledSpace.LocalToScaledSpace(edgeCenter));
+            Vector3 start = camera.WorldToScreenPoint(ScaledSpace.LocalToScaledSpace(prevPos));
+            Vector3 end = camera.WorldToScreenPoint(ScaledSpace.LocalToScaledSpace(edgeCenter));
 
-            var segment = new Vector3(end.y - start.y, start.x - end.x, 0).normalized * (width  * 0.5f);
+            Vector3 segment = new Vector3(end.y - start.y, start.x - end.x, 0).normalized * (width * 0.5f);
 
             if (!MapView.Draw3DLines)
             {
-                var dist = Screen.height / 2 + 0.01f;
+                float dist = Screen.height / 2 + 0.01f;
                 start.z = start.z >= 0.15f ? dist : -dist;
                 end.z = end.z >= 0.15f ? dist : -dist;
             }
@@ -223,7 +240,7 @@ namespace Trajectories
             Vector3 p0 = (end + segment);
             Vector3 p1 = (end - segment);
 
-            if(MapView.Draw3DLines)
+            if (MapView.Draw3DLines)
             {
                 p0 = camera.ScreenToWorldPoint(p0);
                 p1 = camera.ScreenToWorldPoint(p1);
@@ -232,7 +249,9 @@ namespace Trajectories
             vertices[startIndex + 0] = p0;
             vertices[startIndex + 1] = p1;
 
-            // in 2D mode, if one point is in front of the screen and the other is behind, we don't draw the segment (to achieve this, we draw degenerated triangles, i.e. triangles that have two identical vertices which make them "flat")
+            // in 2D mode, if one point is in front of the screen and the other is behind, we don't draw the segment
+            // (to achieve this, we draw degenerated triangles, i.e. triangles that have two identical vertices which
+            // make them "flat")
             if (!MapView.Draw3DLines && (start.z > 0) != (end.z > 0))
             {
                 vertices[startIndex + 0] = vertices[startIndex + 1];
@@ -241,7 +260,7 @@ namespace Trajectories
             }
         }
 
-        private void initMeshFromOrbit(Vector3 bodyPosition, Mesh mesh, Orbit orbit, double startTime, double duration, Color color)
+        private void InitMeshFromOrbit(Vector3 bodyPosition, Mesh mesh, Orbit orbit, double startTime, double duration, Color color)
         {
             int steps = 128;
 
@@ -250,16 +269,16 @@ namespace Trajectories
 
             double[] stepUT = new double[steps * 4];
             int utIdx = 0;
-            double maxDT = Math.Max(1.0, duration / (double)steps);
-            double maxDTA = 2.0 * Math.PI / (double)steps;
+            double maxDT = Math.Max(1.0, duration / steps);
+            double maxDTA = 2.0 * Math.PI / steps;
             stepUT[utIdx++] = startTime;
-            while(true)
+            while (true)
             {
                 double time = prevTime + maxDT;
                 for (int count = 0; count < 100; ++count)
                 {
                     if (count == 99)
-                        Debug.Log("WARNING: infinite loop? (Trajectories.MapOverlay.initMeshFromOrbit)");
+                        Debug.Log("Trajectories: *WARNING* Infinite loop in map view renderer. (InitMeshFromOrbit)");
                     double ta = orbit.TrueAnomalyAtUT(time);
                     while (ta < prevTA)
                         ta += 2.0 * Math.PI;
@@ -271,7 +290,7 @@ namespace Trajectories
                     time = (prevTime + time) * 0.5;
                 }
 
-                if (time > startTime + duration - (time-prevTime) * 0.5)
+                if (time > startTime + duration - (time - prevTime) * 0.5)
                     break;
 
                 prevTime = time;
@@ -279,29 +298,30 @@ namespace Trajectories
                 stepUT[utIdx++] = time;
                 if (utIdx >= stepUT.Length - 1)
                 {
-                    //Util.PostSingleScreenMessage("ut overflow", "ut overflow");
+                    //Debug.Log("ut overflow", "ut overflow");
                     break; // this should never happen, but better stop than overflow if it does
                 }
             }
             stepUT[utIdx++] = startTime + duration;
 
-            var vertices = new Vector3[utIdx * 2 + 2];
-            var uvs = new Vector2[utIdx * 2 + 2];
-            var triangles = new int[utIdx * 6];
+            Vector3[] vertices = new Vector3[utIdx * 2 + 2];
+            Vector2[] uvs = new Vector2[utIdx * 2 + 2];
+            int[] triangles = new int[utIdx * 6];
 
-            Vector3 prevMeshPos = Util.SwapYZ(orbit.getRelativePositionAtUT(startTime - duration / (double)steps)) + bodyPosition;
-            for(int i = 0; i < utIdx; ++i)
+            Vector3 prevMeshPos = Util.SwapYZ(orbit.getRelativePositionAtUT(startTime - duration / steps)) + bodyPosition;
+            for (int i = 0; i < utIdx; ++i)
             {
                 double time = stepUT[i];
 
                 Vector3 curMeshPos = Util.SwapYZ(orbit.getRelativePositionAtUT(time));
-                if (Settings.fetch.BodyFixedMode) {
+                if (Settings.fetch.BodyFixedMode)
+                {
                     curMeshPos = Trajectory.CalculateRotatedPosition(orbit.referenceBody, curMeshPos, time);
                 }
                 curMeshPos += bodyPosition;
 
                 // add a segment to the trajectory mesh
-                MakeRibbonEdge(prevMeshPos, curMeshPos, lineWidth, vertices, i * 2);
+                MakeRibbonEdge(prevMeshPos, curMeshPos, line_width, vertices, i * 2);
                 uvs[i * 2 + 0] = new Vector2(0.8f, 0);
                 uvs[i * 2 + 1] = new Vector2(0.8f, 1);
 
@@ -320,11 +340,11 @@ namespace Trajectories
                 prevMeshPos = curMeshPos;
             }
 
-            var colors = new Color[vertices.Length];
+            Color[] colors = new Color[vertices.Length];
             for (int i = 0; i < colors.Length; ++i)
             {
                 //if (color.g < 0.5)
-                    colors[i] = color;
+                colors[i] = color;
                 /*else
                     colors[i] = new Color(0, (float)i / (float)colors.Length, 1.0f - (float)i / (float)colors.Length);*/
             }
@@ -338,20 +358,20 @@ namespace Trajectories
             mesh.MarkDynamic();
         }
 
-        private void initMeshFromTrajectory(Vector3 bodyPosition, Mesh mesh, Trajectory.Point[] trajectory, Color color)
+        private void InitMeshFromTrajectory(Vector3 bodyPosition, Mesh mesh, Trajectory.Point[] trajectory, Color color)
         {
-            var vertices = new Vector3[trajectory.Length * 2];
-            var uvs = new Vector2[trajectory.Length * 2];
-            var triangles = new int[(trajectory.Length-1) * 6];
+            Vector3[] vertices = new Vector3[trajectory.Length * 2];
+            Vector2[] uvs = new Vector2[trajectory.Length * 2];
+            int[] triangles = new int[(trajectory.Length - 1) * 6];
 
-            Vector3 prevMeshPos = trajectory[0].pos - (trajectory[1].pos-trajectory[0].pos) + bodyPosition;
-            for(int i = 0; i < trajectory.Length; ++i)
+            Vector3 prevMeshPos = trajectory[0].pos - (trajectory[1].pos - trajectory[0].pos) + bodyPosition;
+            for (int i = 0; i < trajectory.Length; ++i)
             {
                 // the fixed-body rotation transformation has already been applied in AddPatch.
                 Vector3 curMeshPos = trajectory[i].pos + bodyPosition;
 
                 // add a segment to the trajectory mesh
-                MakeRibbonEdge(prevMeshPos, curMeshPos, lineWidth, vertices, i * 2);
+                MakeRibbonEdge(prevMeshPos, curMeshPos, line_width, vertices, i * 2);
                 uvs[i * 2 + 0] = new Vector2(0.8f, 0);
                 uvs[i * 2 + 1] = new Vector2(0.8f, 1);
 
@@ -370,7 +390,7 @@ namespace Trajectories
                 prevMeshPos = curMeshPos;
             }
 
-            var colors = new Color[vertices.Length];
+            Color[] colors = new Color[vertices.Length];
             for (int i = 0; i < colors.Length; ++i)
                 colors[i] = color;
 
@@ -382,29 +402,33 @@ namespace Trajectories
             mesh.RecalculateBounds();
         }
 
-        private void initMeshFromImpact(CelestialBody body, Mesh mesh, Vector3 impactPosition, Color color)
+        private void InitMeshCrosshair(CelestialBody body, Mesh mesh, Vector3 position, Color color)
         {
-            var vertices = new Vector3[8];
-            var uvs = new Vector2[8];
-            var triangles = new int[12];
+            Vector3[] vertices = new Vector3[8];
+            Vector2[] uvs = new Vector2[8];
+            int[] triangles = new int[12];
 
             Vector3 camPos = ScaledSpace.ScaledToLocalSpace(PlanetariumCamera.Camera.transform.position) - body.position;
 
-            double impactDistFromBody = impactPosition.magnitude;
+            double impactDistFromBody = position.magnitude;
             double altitude = impactDistFromBody - body.Radius;
-            altitude = altitude * 1.0 + 1200; // hack to avoid the cross being hidden under the ground in map view
-            impactPosition *= (float)((body.Radius + altitude) / impactDistFromBody);
+            altitude = altitude + 1200; // hack to avoid the crosshair being hidden under the ground in map view
+            position *= (float)((body.Radius + altitude) / impactDistFromBody);
 
-            Vector3 crossV1 = Vector3.Cross(impactPosition, Vector3.right).normalized;
-            Vector3 crossV2 = Vector3.Cross(impactPosition, crossV1).normalized;
+            Vector3 crossV1 = Vector3.Cross(position, Vector3.right).normalized;
+            Vector3 crossV2 = Vector3.Cross(position, crossV1).normalized;
 
-            float crossThickness = Mathf.Min(lineWidth * 0.001f * Vector3.Distance(camPos, impactPosition), 6000.0f);
+            float crossThickness = Mathf.Min(line_width * 0.001f * Vector3.Distance(camPos, position), 6000.0f);
             float crossSize = crossThickness * 10.0f;
 
-            vertices[0] = impactPosition - crossV1 * crossSize + crossV2 * crossThickness; uvs[0] = new Vector2(0.8f, 1);
-            vertices[1] = impactPosition - crossV1 * crossSize - crossV2 * crossThickness; uvs[1] = new Vector2(0.8f, 0);
-            vertices[2] = impactPosition + crossV1 * crossSize + crossV2 * crossThickness; uvs[2] = new Vector2(0.8f, 1);
-            vertices[3] = impactPosition + crossV1 * crossSize - crossV2 * crossThickness; uvs[3] = new Vector2(0.8f, 0);
+            vertices[0] = position - crossV1 * crossSize + crossV2 * crossThickness;
+            uvs[0] = new Vector2(0.8f, 1);
+            vertices[1] = position - crossV1 * crossSize - crossV2 * crossThickness;
+            uvs[1] = new Vector2(0.8f, 0);
+            vertices[2] = position + crossV1 * crossSize + crossV2 * crossThickness;
+            uvs[2] = new Vector2(0.8f, 1);
+            vertices[3] = position + crossV1 * crossSize - crossV2 * crossThickness;
+            uvs[3] = new Vector2(0.8f, 0);
 
             triangles[0] = 0;
             triangles[1] = 1;
@@ -413,10 +437,14 @@ namespace Trajectories
             triangles[4] = 3;
             triangles[5] = 2;
 
-            vertices[4] = impactPosition - crossV2 * crossSize - crossV1 * crossThickness; uvs[4] = new Vector2(0.8f, 0);
-            vertices[5] = impactPosition - crossV2 * crossSize + crossV1 * crossThickness; uvs[5] = new Vector2(0.8f, 1);
-            vertices[6] = impactPosition + crossV2 * crossSize - crossV1 * crossThickness; uvs[6] = new Vector2(0.8f, 0);
-            vertices[7] = impactPosition + crossV2 * crossSize + crossV1 * crossThickness; uvs[7] = new Vector2(0.8f, 1);
+            vertices[4] = position - crossV2 * crossSize - crossV1 * crossThickness;
+            uvs[4] = new Vector2(0.8f, 0);
+            vertices[5] = position - crossV2 * crossSize + crossV1 * crossThickness;
+            uvs[5] = new Vector2(0.8f, 1);
+            vertices[6] = position + crossV2 * crossSize - crossV1 * crossThickness;
+            uvs[6] = new Vector2(0.8f, 0);
+            vertices[7] = position + crossV2 * crossSize + crossV1 * crossThickness;
+            uvs[7] = new Vector2(0.8f, 1);
 
             triangles[6] = 4;
             triangles[7] = 5;
@@ -425,14 +453,16 @@ namespace Trajectories
             triangles[10] = 7;
             triangles[11] = 6;
 
-            var colors = new Color[vertices.Length];
+            Color[] colors = new Color[vertices.Length];
             for (int i = 0; i < colors.Length; ++i)
                 colors[i] = color;
 
             for (int i = 0; i < vertices.Length; ++i)
             {
-                // in current implementation, impact positions are displayed only if MapView is in 3D mode (i.e. not zoomed out too far)
-                vertices[i] = MapView.Draw3DLines ? (Vector3)ScaledSpace.LocalToScaledSpace(vertices[i] + body.position) : new Vector3(0,0,0);
+                // in current implementation, impact positions are displayed only if MapView is in 3D mode
+                // (i.e. not zoomed out too far)
+                vertices[i] = MapView.Draw3DLines ?
+                    (Vector3)ScaledSpace.LocalToScaledSpace(vertices[i] + body.position) : new Vector3(0, 0, 0);
             }
 
             mesh.Clear();
@@ -441,13 +471,6 @@ namespace Trajectories
             mesh.colors = colors;
             mesh.triangles = triangles;
             mesh.RecalculateBounds();
-        }
-
-        public void OnDestroy()
-        {
-            Settings.fetch.Save();
-            DetachCamera();
-            Clear();
         }
     }
 }
