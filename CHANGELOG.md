@@ -3,16 +3,19 @@
 
 ### Changes since the last release
 
- * Trajectories license has been changed from MIT to GPL-3.0-or-later.
+ * Trajectories license has been changed from MIT to GPL-3.0-or-later. Please see the LICENSE.md file for more details.
  * Russian translation updated. Many thanks to Fat-Zer for correcting the mistakes.
  * Chinese translation updated. Many thanks to studentmain for rewriting the translation.
- * Added Japanese, German, French, Italian and Portuguese languages.
-
+ * Added Japanese, German, French, Italian and Portuguese languages. If you know any of these languages,
+   please consider helping out with translations.
+ * A big cheers and a beer to Jebs_SY for his help in fixing a rendering issue on the MapView.
+ 
 ### For Developers
 
 ### Known Issues
 
  * Sometimes In-Flight trajectory ground target marker can cover entire screen when camera is close.
+ * Setting the target from a waypoint marker can give wrong longitude positions. 
 
 
 ## v2.0.0 for KSP 1.3.1
@@ -21,7 +24,8 @@
 ### Changes since the last release
 
  * Completely new and overhauled user interface, based on the DialogGUI system.
-   Includes (automated) localizations for Russian, Spanish and Chinese (traditional). If you know any of these languages, please consider helping out with translations. Send all Thanks and Kudos to PiezPiedPy for this amazing contribution!
+   Includes (automated) localizations for Russian, Spanish and Chinese (traditional). If you know any of these languages,
+   please consider helping out with translations. Send all Thanks and Kudos to PiezPiedPy for this amazing contribution!
  * In-Flight trajectory vector line and ground marker persistence bug fixed.
  * ModuleManager updated to v3.0.3
  * When combined with FAR, aerodynamic forces calculated on a packed vessel would lead to NRE's.
