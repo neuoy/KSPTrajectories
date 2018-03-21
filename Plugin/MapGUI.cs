@@ -275,8 +275,9 @@ namespace Trajectories
                 GUI.enabled = (navigationWaypoint != null);
                 if (GUILayout.Button("Active waypoint"))
                 {
-                    Trajectory.Target.Set(navigationWaypoint.celestialBody,
-                        navigationWaypoint.celestialBody.GetRelSurfacePosition(navigationWaypoint.latitude, navigationWaypoint.longitude, navigationWaypoint.altitude));
+                    Trajectory.Target.Set(navigationWaypoint.celestialBody,navigationWaypoint.celestialBody.
+                        GetWorldSurfacePosition(navigationWaypoint.latitude, navigationWaypoint.longitude,navigationWaypoint.altitude)
+                        - navigationWaypoint.celestialBody.position);
                     ScreenMessages.PostScreenMessage("Targeting waypoint " + navigationWaypoint.name);
                 }
                 GUILayout.EndHorizontal();

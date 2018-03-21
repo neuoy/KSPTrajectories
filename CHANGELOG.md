@@ -8,7 +8,7 @@
  * Chinese translation updated. Many thanks to studentmain for rewriting the translation.
  * Added Japanese, German, French, Italian and Portuguese languages. If you know any of these languages,
    please consider helping out with translations.
- * A big cheers and a beer to Jebs_SY for his help in fixing a rendering issue on the MapView.
+ * A big cheers and a beer to Jebs_SY for his help in fixing a rendering issue on the MapView and the Target Waypoint bug.
  * ModuleManager updated to v3.0.6
  
 ### For Developers
@@ -16,7 +16,6 @@
 ### Known Issues
 
  * Sometimes In-Flight trajectory ground target marker can cover entire screen when camera is close.
- * Setting the target from a waypoint marker can give wrong longitude positions. 
 
 
 ## v2.0.0 for KSP 1.3.1

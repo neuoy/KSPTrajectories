@@ -806,7 +806,8 @@ namespace Trajectories
             if (navigationWaypoint != null)
             {
                 Trajectory.Target.Set(navigationWaypoint.celestialBody, navigationWaypoint.celestialBody.
-                    GetRelSurfacePosition(navigationWaypoint.latitude, navigationWaypoint.longitude, navigationWaypoint.altitude));
+                    GetWorldSurfacePosition(navigationWaypoint.latitude, navigationWaypoint.longitude, navigationWaypoint.altitude)
+                    - navigationWaypoint.celestialBody.position);
                 ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_Trajectories_TargetingWaypoint", navigationWaypoint.name));
             }
         }
