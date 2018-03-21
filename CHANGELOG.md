@@ -9,6 +9,7 @@
  * Added Japanese, German, French, Italian and Portuguese languages. If you know any of these languages,
    please consider helping out with translations.
  * A big cheers and a beer to Jebs_SY for his help in fixing a rendering issue on the MapView.
+ * ModuleManager updated to v3.0.6
  
 ### For Developers
 
