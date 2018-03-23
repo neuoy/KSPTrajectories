@@ -2,6 +2,7 @@
  - 2018-xx-xx
 
 ### Changes since the last release
+ * Japanese translation updated. Many thanks to UresiiZo for correcting the mistakes.
 
 ### For Developers
 
