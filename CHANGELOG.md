@@ -1,3 +1,15 @@
+## v2.1.1 for KSP 1.4.1
+ - 2018-xx-xx
+
+### Changes since the last release
+
+### For Developers
+
+### Known Issues
+
+ * Sometimes In-Flight trajectory ground target marker can cover entire screen when camera is close.
+
+
 ## v2.1.0 for KSP 1.4.1
  - 2018-03-21
 
