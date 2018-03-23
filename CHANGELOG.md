@@ -3,6 +3,7 @@
 
 ### Changes since the last release
  * Japanese translation updated. Many thanks to UresiiZo for correcting the mistakes.
+ * Italian translation updated. All thanks go to Brusura for the translation fix.
 
 ### For Developers
 
