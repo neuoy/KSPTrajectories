@@ -344,7 +344,7 @@ You can find out which Unity version your current KSP install is using by lookin
 
 In this case, the Unity version for your KSP version is 2017.1.3p1.
 
-The Unity Editor for **KSP v1.4.1** is **Unity v2017.1.3p1** and can be downloaded here: [UnityDownloadAssistant-2017.1.3p1.exe](https://beta.unity3d.com/download/02d73f71d3bd/UnityDownloadAssistant-2017.1.3p1.exe)
+The Unity Editor for **KSP v1.4.1** is **Unity v2017.1.3p1** and can be downloaded here: [UnityDownloadAssistant-2017.1.3p1.exe](https://beta.unity3d.com/download/02d73f71d3bd/UnityDownloadAssistant-2017.1.3p1.exe )
 
 #### Visual Studio
 
