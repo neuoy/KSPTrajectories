@@ -232,6 +232,7 @@ namespace Trajectories
             }
 
             AppLauncherButton.Destroy();
+            Settings.fetch.Save();
         }
 
         /// <summary>
