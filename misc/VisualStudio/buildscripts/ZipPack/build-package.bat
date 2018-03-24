@@ -7,6 +7,7 @@ rem see https://github.com/neuoy/KSPTrajectories/tree/master/misc/VisualStudio/R
 rem get parameters that are passed by visual studio post build event
 SET TargetName=%1
 SET Dllversion=%~n2
+SET KSPversion=%3
 
 rem make sure the initial working directory is the one containing the current script
 SET scriptPath=%~dp0
@@ -16,7 +17,7 @@ SET initialWD=%CD%
 rem current module manager version in misc\3rdParty\
 SET MODMANAGER_VERSION=3.0.6
 
-echo Generating %TargetName% Release Package...
+echo Generating %TargetName%%KSPversion% Release Package...
 cd "%rootPath%"
 
 IF EXIST package\ rd /s /q package
@@ -50,9 +51,9 @@ xcopy /y ..\..\..\Textures\iconAuto.png Textures
 xcopy /y ..\..\..\Textures\icon-blizzy.png Textures
 
 echo.
-echo Compressing %TargetName% Release Package...
-IF EXIST "%rootPath%%TargetName%*.zip" del "%rootPath%%TargetName%*.zip"
-"%scriptPath%7za.exe" a "..\..\..\%TargetName%%Dllversion%.zip" ..\..\GameData
+echo Compressing %TargetName%%KSPversion% Release Package...
+IF EXIST "%rootPath%%TargetName%%KSPversion%*.zip" del "%rootPath%%TargetName%%KSPversion%*.zip"
+"%scriptPath%7za.exe" a "..\..\..\%TargetName%%KSPversion%%Dllversion%.zip" ..\..\GameData
 
 cd "%rootPath%"
 rd /s /q package
