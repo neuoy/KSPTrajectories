@@ -22,7 +22,6 @@
 using System;
 using System.Linq;
 using System.Collections.Generic;
-using System.Diagnostics;
 using KSP.Localization;
 using UnityEngine;
 using UnityEngine.Events;
@@ -164,7 +163,7 @@ namespace Trajectories
             // version string
             version_txt = " v" + typeof(MainGUI).Assembly.GetName().Version;
             version_txt = version_txt.Remove(version_txt.LastIndexOf("."));
-            UnityEngine.Debug.Log(Localizer.Format("#autoLOC_Trajectories_Title") + version_txt);
+            Debug.Log(Localizer.Format("#autoLOC_Trajectories_Title") + version_txt);
 
             // allocate and define window for use in the popup dialog
             Allocate();
@@ -187,7 +186,7 @@ namespace Trajectories
             settings_page.padding.right = page_padding;
 
             // create popup dialog and hide it
-            popup_dialog = PopupDialog.SpawnPopupDialog(multi_dialog, true, HighLogic.UISkin, false, "");
+            popup_dialog = PopupDialog.SpawnPopupDialog(multi_dialog, false, HighLogic.UISkin, false, "");
             Hide();
 
             //set data field labels justification
@@ -961,7 +960,7 @@ namespace Trajectories
         private static void UpdatePages()
         {
             // skip updates for a smoother display and increased performance
-            if (Util.Clocks - update_timer <= Stopwatch.Frequency / update_fps)
+            if (Util.Clocks - update_timer <= System.Diagnostics.Stopwatch.Frequency / update_fps)
                 return;
             update_timer = Util.Clocks;
 
