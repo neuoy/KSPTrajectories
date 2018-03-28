@@ -18,6 +18,7 @@
   along with Trajectories.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+using System.IO;
 using KSP.Localization;
 using KSP.UI.Screens;
 using UnityEngine;
@@ -31,24 +32,19 @@ namespace Trajectories
     {
         private class BlizzyToolbarButtonVisibility: IVisibility
         {
-            // permit global access
-            private static BlizzyToolbarButtonVisibility instance = null;
-
             private static IVisibility flight_visibility;
 
-            public static BlizzyToolbarButtonVisibility Instance
+            // permit global access
+            public static BlizzyToolbarButtonVisibility fetch
             {
-                get
-                {
-                    return instance;
-                }
-            }
+                get; private set;
+            } = null;
 
             //  constructor
             public BlizzyToolbarButtonVisibility()
             {
                 // enable global access
-                instance = this;
+                fetch = this;
 
                 flight_visibility = new GameScenesVisibility(GameScenes.FLIGHT);
             }
@@ -70,25 +66,17 @@ namespace Trajectories
             AUTO
         }
 
-        private static IconStyleType current_iconstyle;
+        /// <summary> Current style of the toolbar button icon </summary>
+        public static IconStyleType IconStyle { get; private set; } = IconStyleType.NORMAL;
 
         // Textures for icons (held here for better performance when switching icons on the stock toolbar)
-        private static Texture2D normal_icon_texture;
-        private static Texture2D active_icon_texture;
-        private static Texture2D auto_icon_texture;
+        private static Texture2D normal_icon_texture = null;
+        private static Texture2D active_icon_texture = null;
+        private static Texture2D auto_icon_texture = null;
 
         // Toolbar buttons
         private static ApplicationLauncherButton stock_toolbar_button = null;
         private static IButton blizzy_toolbar_button = null;
-
-        /// <summary> Return the current style of the toolbar button icon </summary>
-        public static IconStyleType IconStyle
-        {
-            get
-            {
-                return current_iconstyle;
-            }
-        }
 
         /// <summary> Creates the toolbar button for either a KSP stock toolbar or Blizzy toolbar if available. </summary>
         public static void Create()
@@ -96,9 +84,9 @@ namespace Trajectories
             if (ToolbarManager.ToolbarAvailable && Settings.fetch.UseBlizzyToolbar)
             {
                 // setup a toolbar button for the blizzy toolbar
-                Debug.Log("Using Blizzy toolbar for Trajectories");
+                Debug.Log("Trajectories: Using Blizzy toolbar");
                 blizzy_toolbar_button = ToolbarManager.Instance.add(Localizer.Format("#autoLOC_Trajectories_Title"), "TrajectoriesGUI");
-                blizzy_toolbar_button.Visibility = BlizzyToolbarButtonVisibility.Instance;
+                blizzy_toolbar_button.Visibility = BlizzyToolbarButtonVisibility.fetch;
                 blizzy_toolbar_button.TexturePath = "Trajectories/Textures/icon-blizzy";
                 blizzy_toolbar_button.ToolTip = Localizer.Format("#autoLOC_Trajectories_AppButtonTooltip");
                 blizzy_toolbar_button.OnClick += OnBlizzyToggle;
@@ -106,15 +94,19 @@ namespace Trajectories
             else
             {
                 // setup a toolbar button for the stock toolbar
-                Debug.Log("Using Stock toolbar for Trajectories");
-                normal_icon_texture = GameDatabase.Instance.GetTexture("Trajectories/Textures/icon", false);
-                active_icon_texture = GameDatabase.Instance.GetTexture("Trajectories/Textures/iconActive", false);
-                auto_icon_texture = GameDatabase.Instance.GetTexture("Trajectories/Textures/iconAuto", false);
+                Debug.Log("Trajectories: Using KSP stock toolbar");
+                string TrajTexturePath = KSPUtil.ApplicationRootPath + "GameData/Trajectories/Textures/";
+                normal_icon_texture = new Texture2D(36, 36);
+                active_icon_texture = new Texture2D(36, 36);
+                auto_icon_texture = new Texture2D(36, 36);
+                normal_icon_texture.LoadImage(File.ReadAllBytes(TrajTexturePath + "icon.png"));
+                active_icon_texture.LoadImage(File.ReadAllBytes(TrajTexturePath + "iconActive.png"));
+                auto_icon_texture.LoadImage(File.ReadAllBytes(TrajTexturePath + "iconAuto.png"));
 
                 if (Settings.fetch.DisplayTrajectories)
-                    current_iconstyle = IconStyleType.ACTIVE;
+                    IconStyle = IconStyleType.ACTIVE;
                 else
-                    current_iconstyle = IconStyleType.NORMAL;
+                    IconStyle = IconStyleType.NORMAL;
 
                 GameEvents.onGUIApplicationLauncherReady.Add(delegate
                 {
@@ -183,7 +175,7 @@ namespace Trajectories
             normal_icon_texture = null;
             active_icon_texture = null;
             auto_icon_texture = null;
-            current_iconstyle = IconStyleType.NORMAL;
+            IconStyle = IconStyleType.NORMAL;
         }
 
         private static void CreateStockToolbarButton()
@@ -201,10 +193,10 @@ namespace Trajectories
                     normal_icon_texture
                     );
 
-                if (current_iconstyle == IconStyleType.ACTIVE)
+                if (IconStyle == IconStyleType.ACTIVE)
                     stock_toolbar_button.SetTexture(active_icon_texture);
 
-                if (current_iconstyle == IconStyleType.AUTO)
+                if (IconStyle == IconStyleType.AUTO)
                     stock_toolbar_button.SetTexture(auto_icon_texture);
 
                 if (Settings.fetch.MainGUIEnabled || Settings.fetch.GUIEnabled)
@@ -221,31 +213,32 @@ namespace Trajectories
                 switch (iconstyle)
                 {
                     case IconStyleType.ACTIVE:
-                        current_iconstyle = IconStyleType.ACTIVE;
+                        IconStyle = IconStyleType.ACTIVE;
                         break;
                     case IconStyleType.AUTO:
-                        current_iconstyle = IconStyleType.AUTO;
+                        IconStyle = IconStyleType.AUTO;
                         break;
                     default:
-                        current_iconstyle = IconStyleType.NORMAL;
+                        IconStyle = IconStyleType.NORMAL;
                         break;
                 }
 
-            else switch (iconstyle)
-            {
-                case IconStyleType.ACTIVE:
-                    stock_toolbar_button.SetTexture(active_icon_texture);
-                    current_iconstyle = IconStyleType.ACTIVE;
-                    break;
-                case IconStyleType.AUTO:
-                    stock_toolbar_button.SetTexture(auto_icon_texture);
-                    current_iconstyle = IconStyleType.AUTO;
-                    break;
-                default:
-                    stock_toolbar_button.SetTexture(normal_icon_texture);
-                    current_iconstyle = IconStyleType.NORMAL;
-                    break;
-            }
+            else
+                switch (iconstyle)
+                {
+                    case IconStyleType.ACTIVE:
+                        stock_toolbar_button.SetTexture(active_icon_texture);
+                        IconStyle = IconStyleType.ACTIVE;
+                        break;
+                    case IconStyleType.AUTO:
+                        stock_toolbar_button.SetTexture(auto_icon_texture);
+                        IconStyle = IconStyleType.AUTO;
+                        break;
+                    default:
+                        stock_toolbar_button.SetTexture(normal_icon_texture);
+                        IconStyle = IconStyleType.NORMAL;
+                        break;
+                }
         }
     }
 }
