@@ -5,8 +5,9 @@
  * Japanese translation updated. Many thanks to UresiiZo for correcting the mistakes.
  * Italian translation updated. All thanks go to Brusura for the translation fix.
  * German translation updated. Lots of thanks to nistei for updating the mistakes.
+ * French translation updated. Huge thanks to d-faure for correcting the syntax.
  * GUI settings are now persistent again.
- * Black toolbar icons when Texture Settings not set to FullRes bug fixed.
+ * Black toolbar icons when Texture Settings not set to Full-Res bug fixed.
 
 ### For Developers
 
