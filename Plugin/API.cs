@@ -53,7 +53,7 @@ namespace Trajectories
         {
             if (FlightGlobals.ActiveVessel != null)
             {
-                foreach (var patch in Trajectory.fetch.Patches)
+                foreach (Trajectory.Patch patch in Trajectory.fetch.Patches)
                 {
                     if (patch.ImpactPosition.HasValue)
                         return patch.EndTime;
@@ -62,11 +62,31 @@ namespace Trajectories
             return null;
         }
 
+
+        /// <summary>
+        /// Returns the remaining time until Impact in seconds or Null if no active vessel or calculated trajectory.
+        /// </summary>
+        public static double? GetTimeTillImpact()
+        {
+            if (FlightGlobals.ActiveVessel != null)
+            {
+                foreach (Trajectory.Patch patch in Trajectory.fetch.Patches)
+                {
+                    if (patch.ImpactPosition.HasValue)
+                        return patch.EndTime - Planetarium.GetUniversalTime();
+                }
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// Returns the calculated impact position of the trajectory or Null if no active vessel or calculated trajectory.
+        /// </summary>
         public static Vector3? GetImpactPosition()
         {
             if (FlightGlobals.ActiveVessel != null)
             {
-                foreach (var patch in Trajectory.fetch.Patches)
+                foreach (Trajectory.Patch patch in Trajectory.fetch.Patches)
                 {
                     if (patch.ImpactPosition != null)
                         return patch.ImpactPosition;
@@ -82,7 +102,7 @@ namespace Trajectories
         {
             if (FlightGlobals.ActiveVessel != null)
             {
-                foreach (var patch in Trajectory.fetch.Patches)
+                foreach (Trajectory.Patch patch in Trajectory.fetch.Patches)
                 {
                     if (patch.ImpactVelocity != null)
                         return patch.ImpactVelocity;
@@ -96,24 +116,16 @@ namespace Trajectories
         /// </summary>
         public static Orbit GetSpaceOrbit()
         {
-            foreach (var patch in Trajectory.fetch.Patches)
+            if (FlightGlobals.ActiveVessel != null)
             {
-                if (FlightGlobals.ActiveVessel != null)
+                foreach (Trajectory.Patch patch in Trajectory.fetch.Patches)
                 {
-                    if (patch.StartingState.StockPatch != null)
-                    {
-                        continue;
-                    }
 
-                    if (patch.IsAtmospheric)
-                    {
+                    if ((patch.StartingState.StockPatch != null) || patch.IsAtmospheric)
                         continue;
-                    }
 
                     if (patch.SpaceOrbit != null)
-                    {
                         return patch.SpaceOrbit;
-                    }
                 }
             }
             return null;
@@ -156,7 +168,7 @@ namespace Trajectories
         {
             if (FlightGlobals.ActiveVessel != null)
             {
-                var body = FlightGlobals.Bodies.SingleOrDefault(b => b.isHomeWorld);    // needs fixing, vessel is not allways at kerbin
+                CelestialBody body = FlightGlobals.Bodies.SingleOrDefault(b => b.isHomeWorld);    // needs fixing, vessel is not allways at kerbin
                 if (body != null)
                 {
                     Vector3d worldPos = body.GetWorldSurfacePosition(lat, lon, alt);
@@ -170,7 +182,8 @@ namespace Trajectories
         /// </summary>
         private static void UpdateTrajectory()
         {
-            Trajectory.fetch.ComputeTrajectory(FlightGlobals.ActiveVessel, DescentProfile.fetch);
+            if (FlightGlobals.ActiveVessel != null)
+                Trajectory.fetch.ComputeTrajectory(FlightGlobals.ActiveVessel, DescentProfile.fetch);
         }
     }
 }
