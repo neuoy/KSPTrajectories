@@ -26,10 +26,13 @@ using UnityEngine;
 namespace Trajectories
 {
     /// <summary>
-    /// This class only returns correct values for the "active vessel".
+    /// API for Trajectories. Note: this API only returns correct values for the "active vessel".
     /// </summary>
     public static class API
     {
+        /// <summary>
+        /// Modifies the AlwaysUpdate value in the settings page.
+        /// </summary>
         public static bool AlwaysUpdate
         {
             get
@@ -42,6 +45,10 @@ namespace Trajectories
             }
         }
 
+        /// <summary>
+        /// Returns trajectory patch EndTime or Null if no active vessel or calculated trajectory.
+        /// See GetTimeTillImpact for remaining time until impact.
+        /// </summary>
         public static double? GetEndTime()
         {
             if (FlightGlobals.ActiveVessel != null)
@@ -68,6 +75,9 @@ namespace Trajectories
             return null;
         }
 
+        /// <summary>
+        /// Returns the calculated impact velocity of the trajectory or Null if no active vessel or calculated trajectory.
+        /// </summary>
         public static Vector3? GetImpactVelocity()
         {
             if (FlightGlobals.ActiveVessel != null)
@@ -81,6 +91,9 @@ namespace Trajectories
             return null;
         }
 
+        /// <summary>
+        /// Returns the space orbit of the calculated trajectory or Null if orbit is atmospheric or there is no active vessel or calculated trajectory.
+        /// </summary>
         public static Orbit GetSpaceOrbit()
         {
             foreach (var patch in Trajectory.fetch.Patches)
@@ -106,6 +119,9 @@ namespace Trajectories
             return null;
         }
 
+        /// <summary>
+        /// Returns the planned direction or Null if no active vessel or set target.
+        /// </summary>
         public static Vector3? PlannedDirection()
         {
             if (FlightGlobals.ActiveVessel != null && Trajectory.Target.Body != null)
@@ -113,6 +129,9 @@ namespace Trajectories
             return null;
         }
 
+        /// <summary>
+        /// Returns the corrected direction or Null if no active vessel or set target.
+        /// </summary>
         public static Vector3? CorrectedDirection()
         {
             if (FlightGlobals.ActiveVessel != null && Trajectory.Target.Body != null)
@@ -120,6 +139,9 @@ namespace Trajectories
             return null;
         }
 
+        /// <summary>
+        /// Returns true if a target has been set, false if not, or Null if no active vessel.
+        /// </summary>
         public static bool HasTarget()
         {
             if (FlightGlobals.ActiveVessel != null && Trajectory.Target.Body != null)
@@ -127,7 +149,10 @@ namespace Trajectories
             return false;
         }
 
-        public static void SetTarget(double lat,double lon,double alt = 2.0)
+        /// <summary>
+        /// Set the trajectories target to a latitude, longitude and altitude at the HomeWorld.
+        /// </summary>
+        public static void SetTarget(double lat, double lon, double alt = 2.0)
         {
             if (FlightGlobals.ActiveVessel != null)
             {
@@ -140,6 +165,9 @@ namespace Trajectories
             }
         }
 
+        /// <summary>
+        /// Triggers a recalculation of the trajectory.
+        /// </summary>
         private static void UpdateTrajectory()
         {
             Trajectory.fetch.ComputeTrajectory(FlightGlobals.ActiveVessel, DescentProfile.fetch);
