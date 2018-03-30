@@ -31,6 +31,57 @@ namespace Trajectories
     public static class API
     {
         /// <summary>
+        /// Returns the version number of trajectories in a string formated as Major.Minor.Patch i.e. 2.1.0
+        /// </summary>
+        public static string GetVersion
+        {
+            get
+            {
+                string version_txt = typeof(API).Assembly.GetName().Version.ToString();
+                version_txt = version_txt.Remove(version_txt.LastIndexOf("."));
+                return version_txt;
+            }
+        }
+
+        /// <summary>
+        /// Returns the major version number of trajectories
+        /// </summary>
+        public static int GetVersionMajor
+        {
+            get
+            {
+                string[] version = GetVersion.Split('.');
+                return System.Convert.ToInt32(version[0]);
+            }
+        }
+
+
+        /// <summary>
+        /// Returns the minor version number of trajectories
+        /// </summary>
+        public static int GetVersionMinor
+        {
+            get
+            {
+                string[] version = GetVersion.Split('.');
+                return System.Convert.ToInt32(version[1]);
+            }
+        }
+
+
+        /// <summary>
+        /// Returns the patch version number of trajectories
+        /// </summary>
+        public static int GetVersionPatch
+        {
+            get
+            {
+                string[] version = GetVersion.Split('.');
+                return System.Convert.ToInt32(version[2]);
+            }
+        }
+
+        /// <summary>
         /// Modifies the AlwaysUpdate value in the settings page.
         /// </summary>
         public static bool AlwaysUpdate
