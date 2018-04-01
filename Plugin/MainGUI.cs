@@ -188,6 +188,7 @@ namespace Trajectories
             // create popup dialog and hide it
             popup_dialog = PopupDialog.SpawnPopupDialog(multi_dialog, false, HighLogic.UISkin, false, "");
             Hide();
+            popup_dialog.onDestroy.AddListener(new UnityAction(OnPopupDialogDestroy));
 
             //set data field labels justification
             SetDataFieldJustification();
@@ -223,9 +224,6 @@ namespace Trajectories
             // save popup position. Note. PopupDialog.RTrf is an offset from the center of the screeen.
             if (popup_dialog != null)
             {
-                Settings.fetch.MainGUIWindowPos = new Vector2(
-                    ((Screen.width / 2) + popup_dialog.RTrf.position.x) / Screen.width,
-                    ((Screen.height / 2) + popup_dialog.RTrf.position.y) / Screen.height);
                 popup_dialog.Dismiss();
                 popup_dialog = null;
             }
@@ -469,6 +467,20 @@ namespace Trajectories
                });
         }
 
+        /// <summary>
+        /// Called when the PopupDialog OnDestroy method is called. Used for saving the MainGUI window position.
+        /// </summary>
+        private void OnPopupDialogDestroy()
+        {
+            // save popup position. Note. PopupDialog.RTrf is an offset from the center of the screeen.
+            if (popup_dialog != null)
+            {
+                Settings.fetch.MainGUIWindowPos = new Vector2(
+                    ((Screen.width / 2) + popup_dialog.RTrf.position.x) / Screen.width,
+                    ((Screen.height / 2) + popup_dialog.RTrf.position.y) / Screen.height);
+                //Debug.Log("Trajectories: Saving MainGUI window position as " + Settings.fetch.MainGUIWindowPos.ToString());
+            }
+        }
 
         /// <summary>
         /// Sets the justification of the data field labels
