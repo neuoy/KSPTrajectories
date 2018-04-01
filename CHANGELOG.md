@@ -10,7 +10,9 @@
  * Black toolbar icons when Texture Settings not set to Full-Res bug fixed.
 
 ### For Developers
-
+ * New API functions added `GetTimeTillImpact`, two for the Descent Profile `ProgradeEntry RetrogradeEntry`
+   and some for the Trajectories version. `GetVersion GetVersionMajor GetVersionMinor GetVersionPatch`
+ 
 ### Known Issues
 
  * Sometimes In-Flight trajectory ground target marker can cover entire screen when camera is close.
