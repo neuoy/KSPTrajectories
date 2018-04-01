@@ -150,6 +150,7 @@ namespace Trajectories
 
         public void Save()
         {
+            Debug.Log("Trajectories: Saving settings.");
             Serialize(true);
         }
 
