@@ -229,6 +229,50 @@ namespace Trajectories
         }
 
         /// <summary>
+        /// Set the trajectories descent profile to Prograde.
+        /// </summary>
+        public static bool? ProgradeEntry
+        {
+            get
+            {
+                if (FlightGlobals.ActiveVessel != null)
+                    return DescentProfile.fetch.ProgradeEntry;
+                return null;
+            }
+            set
+            {
+                if ((FlightGlobals.ActiveVessel != null) && !DescentProfile.fetch.ProgradeEntry)
+                {
+                    DescentProfile.fetch.ProgradeEntry = true;
+                    DescentProfile.fetch.Reset(0d);
+                    DescentProfile.fetch.Save();
+                }
+            }
+        }
+
+        /// <summary>
+        /// Set the trajectories descent profile to Prograde.
+        /// </summary>
+        public static bool? RetrogradeEntry
+        {
+            get
+            {
+                if (FlightGlobals.ActiveVessel != null)
+                    return DescentProfile.fetch.RetrogradeEntry;
+                return null;
+            }
+            set
+            {
+                if ((FlightGlobals.ActiveVessel != null) && !DescentProfile.fetch.RetrogradeEntry)
+                {
+                    DescentProfile.fetch.RetrogradeEntry = true;
+                    DescentProfile.fetch.Reset();
+                    DescentProfile.fetch.Save();
+                }
+            }
+        }
+
+        /// <summary>
         /// Triggers a recalculation of the trajectory.
         /// </summary>
         private static void UpdateTrajectory()
