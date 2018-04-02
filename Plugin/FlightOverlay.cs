@@ -126,7 +126,9 @@ namespace Trajectories
 
     public class TargetingCross: MonoBehaviour
     {
-        public const double markerSize = 50.0f; // in meters
+        public const double markerSize = 2.0d; // in meters
+        private double cross_dist = 0d;
+        private Vector3 cam_pos;
 
         public Vector3? ImpactPosition { get; internal set; }
         public CelestialBody ImpactBody { get; internal set; }
@@ -142,8 +144,12 @@ namespace Trajectories
             // get impact position, translate to latitude and longitude
             ImpactBody.GetLatLonAlt(ImpactPosition.Value + ImpactBody.position, out impactLat, out impactLon, out impactAlt);
 
+            // resize marker in respect to distance from camera.
+            cam_pos = ScaledSpace.ScaledToLocalSpace(PlanetariumCamera.Camera.transform.position) - ImpactBody.position;
+            cross_dist = System.Math.Max(Vector3.Distance(cam_pos, ImpactPosition.Value) / 80.0d, 1.0d);
+
             // draw ground marker at this position
-            GLUtils.DrawGroundMarker(ImpactBody, impactLat, impactLon, Color.red, false, 0, markerSize);
+            GLUtils.DrawGroundMarker(ImpactBody, impactLat, impactLon, Color.red, false, 0, System.Math.Min(markerSize * cross_dist, 1500.0d));
         }
     }
 }

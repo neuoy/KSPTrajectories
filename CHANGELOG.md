@@ -8,15 +8,12 @@
  * French translation updated. Huge thanks to d-faure for correcting the syntax.
  * GUI settings are now persistent again.
  * Black toolbar icons when Texture Settings not set to Full-Res bug fixed.
+ * In-Flight trajectory ground target marker covering entire screen when camera is close bug fixed.
 
 ### For Developers
  * New API functions added `GetTimeTillImpact`, two for the Descent Profile `ProgradeEntry RetrogradeEntry`
    and some for the Trajectories version. `GetVersion GetVersionMajor GetVersionMinor GetVersionPatch`
  
-### Known Issues
-
- * Sometimes In-Flight trajectory ground target marker can cover entire screen when camera is close.
-
 
 ## v2.1.0 for KSP 1.4.1
  - 2018-03-21
