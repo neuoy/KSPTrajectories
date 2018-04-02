@@ -1,5 +1,5 @@
 ## v2.2.0 for KSP 1.4.2
- - 2018-xx-xx
+ - 2018-04-02
 
 ### Changes since the last release
  * Japanese translation updated. Many thanks to UresiiZo for correcting the mistakes.
