@@ -28,7 +28,7 @@ using UnityEngine;
 namespace Trajectories
 {
     // Display indications on the navball. Code inspired from Enhanced NavBall mod.
-    [KSPAddon(KSPAddon.Startup.EveryScene, false)]
+    [KSPAddon(KSPAddon.Startup.Flight, false)]
     class NavBallOverlay : MonoBehaviour
     {
         private GameObject trajectoryGuide;

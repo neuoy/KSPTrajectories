@@ -24,18 +24,21 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using KSP.Localization;
-#endif
-
 using UnityEngine;
-
+#endif
 
 namespace Trajectories
 {
+#if !DEBUG_PROFILER
+    /// <summary> Simple profiler for measuring the execution time of code placed between the Start and Stop methods. </summary>
+    public sealed class Profiler
+    {
+#endif
+#if DEBUG_PROFILER
     /// <summary> Simple profiler for measuring the execution time of code placed between the Start and Stop methods. </summary>
     [KSPAddon(KSPAddon.Startup.EveryScene, false)]
     public sealed class Profiler: MonoBehaviour
     {
-#if DEBUG_PROFILER
         // constants
         private const float width = 500.0f;
         private const float height = 500.0f;

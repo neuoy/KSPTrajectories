@@ -33,7 +33,7 @@ namespace Trajectories
     /// Handles trajectory prediction, performing a lightweight physical simulation to
     /// predict a vessels trajectory in space and atmosphere.
     /// </summary>
-    [KSPAddon(KSPAddon.Startup.EveryScene, false)]
+    [KSPAddon(KSPAddon.Startup.Flight, false)]
     class Trajectory: MonoBehaviour
     {
         public class VesselState
