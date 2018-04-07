@@ -1,6 +1,6 @@
 rem Generate the zip Release package.
 rem For information on how to setup your environment.
-rem see https://github.com/neuoy/KSPTrajectories/tree/master/misc/VisualStudio/Readme.md
+rem see https://github.com/neuoy/KSPTrajectories/blob/master/CONTRIBUTING.md
 
 @echo off
 
@@ -17,7 +17,7 @@ SET initialWD=%CD%
 rem current module manager version in misc\3rdParty\
 SET MODMANAGER_VERSION=3.0.6
 
-echo Generating %TargetName%%KSPversion% Release Package...
+echo Generating %TargetName% for %KSPversion% Release Package...
 cd "%rootPath%"
 
 IF EXIST package\ rd /s /q package
@@ -51,9 +51,9 @@ xcopy /y ..\..\..\Textures\iconAuto.png Textures
 xcopy /y ..\..\..\Textures\icon-blizzy.png Textures
 
 echo.
-echo Compressing %TargetName%%KSPversion% Release Package...
-IF EXIST "%rootPath%%TargetName%%KSPversion%*.zip" del "%rootPath%%TargetName%%KSPversion%*.zip"
-"%scriptPath%7za.exe" a "..\..\..\%TargetName%%KSPversion%%Dllversion%.zip" ..\..\GameData
+echo Compressing %TargetName% for %KSPversion% Release Package...
+IF EXIST "%rootPath%%TargetName%*_For_%KSPversion%.zip" del "%rootPath%%TargetName%*_For_%KSPversion%.zip"
+"%scriptPath%7za.exe" a "..\..\..\%TargetName%%Dllversion%_For_%KSPversion%.zip" ..\..\GameData
 
 cd "%rootPath%"
 rd /s /q package
