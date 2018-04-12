@@ -25,13 +25,21 @@ using UnityEngine;
 namespace Trajectories
 {
     [KSPAddon(KSPAddon.Startup.Flight, false)]
-    public class FlightOverlay: MonoBehaviour
+    public sealed class FlightOverlay: MonoBehaviour
     {
         private const int defaultVertexCount = 32;
         private const float lineWidth = 2.0f;
 
         private static TrajectoryLine line;
         private static TargetingCross targetingCross;
+
+        // update method variables, put here to stop over use of the garbage collector.
+        private static double time = 0d;
+        private static double time_increment = 0d;
+        private static Orbit orbit = null;
+        private static Trajectory.Patch lastPatch = null;
+        private static Vector3d bodyPosition = Vector3d.zero;
+        private static Vector3 vertex = Vector3.zero;
 
         private void Awake()
         {
@@ -64,24 +72,24 @@ namespace Trajectories
 
             line.Vertices.Clear();
 
-            Trajectory.Patch lastPatch = Trajectory.fetch.Patches[Trajectory.fetch.Patches.Count - 1];
-            Vector3d bodyPosition = lastPatch.StartingState.ReferenceBody.position;
+            lastPatch = Trajectory.fetch.Patches[Trajectory.fetch.Patches.Count - 1];
+            bodyPosition = lastPatch.StartingState.ReferenceBody.position;
             if (lastPatch.IsAtmospheric)
             {
                 for (uint i = 0; i < lastPatch.AtmosphericTrajectory.Length; ++i)
                 {
-                    Vector3 vertex = lastPatch.AtmosphericTrajectory[i].pos + bodyPosition;
+                    vertex = lastPatch.AtmosphericTrajectory[i].pos + bodyPosition;
                     line.Vertices.Add(vertex);
                 }
             }
             else
             {
-                double time = lastPatch.StartingState.Time;
-                double time_increment = (lastPatch.EndTime - lastPatch.StartingState.Time) / defaultVertexCount;
-                Orbit orbit = lastPatch.SpaceOrbit;
+                time = lastPatch.StartingState.Time;
+                time_increment = (lastPatch.EndTime - lastPatch.StartingState.Time) / defaultVertexCount;
+                orbit = lastPatch.SpaceOrbit;
                 for (uint i = 0; i < defaultVertexCount; ++i)
                 {
-                    Vector3 vertex = Util.SwapYZ(orbit.getRelativePositionAtUT(time));
+                    vertex = Util.SwapYZ(orbit.getRelativePositionAtUT(time));
                     if (Settings.fetch.BodyFixedMode)
                         vertex = Trajectory.CalculateRotatedPosition(orbit.referenceBody, vertex, time);
 
@@ -127,8 +135,13 @@ namespace Trajectories
     public class TargetingCross: MonoBehaviour
     {
         public const double markerSize = 2.0d; // in meters
-        private double cross_dist = 0d;
-        private Vector3 cam_pos;
+
+        private static double impactLat = 0d;
+        private static double impactLon = 0d;
+        private static double impactAlt = 0d;
+        private static Vector3 screen_point;
+        private static Vector3 cam_pos;
+        private static double cross_dist = 0d;
 
         public Vector3? ImpactPosition { get; internal set; }
         public CelestialBody ImpactBody { get; internal set; }
@@ -139,10 +152,13 @@ namespace Trajectories
             if (ImpactPosition == null || ImpactBody == null)
                 return;
 
-            double impactLat, impactLon, impactAlt;
-
             // get impact position, translate to latitude and longitude
             ImpactBody.GetLatLonAlt(ImpactPosition.Value + ImpactBody.position, out impactLat, out impactLon, out impactAlt);
+
+            // only draw if visable on the camera
+            screen_point = PlanetariumCamera.Camera.WorldToViewportPoint(ImpactPosition.Value + ImpactBody.position);
+            if (!(screen_point.z > 0 && screen_point.x > 0 && screen_point.x < 1 && screen_point.y > 0 && screen_point.y < 1))
+                return;
 
             // resize marker in respect to distance from camera.
             cam_pos = ScaledSpace.ScaledToLocalSpace(PlanetariumCamera.Camera.transform.position) - ImpactBody.position;
