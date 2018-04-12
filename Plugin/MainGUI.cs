@@ -57,7 +57,8 @@ namespace Trajectories
             SETTINGS
         }
 
-        // visible flag
+        // spawned and visible flags
+        private static int spawned = 0;
         private static bool visible = false;
 
         // popup window, page box and pages
@@ -185,9 +186,8 @@ namespace Trajectories
             settings_page.padding.left = page_padding;
             settings_page.padding.right = page_padding;
 
-            // create popup dialog and hide it
+            // create popup dialog and add onDestroy listener
             popup_dialog = PopupDialog.SpawnPopupDialog(multi_dialog, false, HighLogic.UISkin, false, "");
-            Hide();
             popup_dialog.onDestroy.AddListener(new UnityAction(OnPopupDialogDestroy));
 
             //set data field labels justification
@@ -199,12 +199,29 @@ namespace Trajectories
 
         private void Update()
         {
+            // initialization for dialog box window position
+            if (spawned != 2 && popup_dialog != null)
+            {
+                if (spawned == 0)
+                {
+                    popup_dialog.gameObject.SetActive(true);
+                    spawned = 1;
+                }
+                else
+                {
+                    Hide();
+                    spawned = 2;
+                }
+                return;
+            }
+
+            // keyboard unlock for manual target edit box
             if ((Input.GetKey(KeyCode.Return) || Input.GetKey(KeyCode.KeypadEnter)) &&
                 (InputLockManager.GetControlLock("TrajectoriesKeyboardLockout") == ControlTypes.KEYBOARDINPUT))
                 KeyboardUnlock("");
 
             // hide or show the dialog box
-            if ((!Settings.fetch.MainGUIEnabled || !Util.IsFlight || PlanetariumCamera.Camera == null) && visible)
+            if ((!Settings.fetch.MainGUIEnabled || PlanetariumCamera.Camera == null) && visible)
             {
                 Hide();
                 return;
@@ -229,7 +246,6 @@ namespace Trajectories
             }
 
             AppLauncherButton.Destroy();
-            Settings.fetch.Save();
         }
 
         /// <summary>
@@ -239,7 +255,7 @@ namespace Trajectories
         private void Allocate()
         {
             // default window to center of screen
-            if (Settings.fetch.MainGUIWindowPos.x <= 0 || Settings.fetch.MainGUIWindowPos.y <= 0)
+            if (Settings.fetch.MainGUIWindowPos.x <= 0.0f || Settings.fetch.MainGUIWindowPos.y <= 0.0f)
                 Settings.fetch.MainGUIWindowPos = new Vector2(0.5f, 0.5f);
 
             // create manual target text input box
@@ -480,6 +496,7 @@ namespace Trajectories
                     ((Screen.height / 2) + popup_dialog.RTrf.position.y) / Screen.height);
                 //Debug.Log("Trajectories: Saving MainGUI window position as " + Settings.fetch.MainGUIWindowPos.ToString());
             }
+            Settings.fetch.Save();
         }
 
         /// <summary>

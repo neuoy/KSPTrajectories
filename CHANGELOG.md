@@ -2,7 +2,8 @@
  - 2018-xx-xx
 
 ### Changes since the last release
-
+ * GUI window would reset to screen center on a game restart if it was hidden in the previous game, now fixed.
+ 
 ### For Developers
  
 ### Known Issues
