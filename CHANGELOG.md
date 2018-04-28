@@ -1,4 +1,4 @@
-## v2.2.1 for KSP 1.4.2
+## v2.2.1 for KSP 1.4.3
  - 2018-xx-xx
 
 ### Changes since the last release
