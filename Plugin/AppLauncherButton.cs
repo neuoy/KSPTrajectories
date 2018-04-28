@@ -124,6 +124,7 @@ namespace Trajectories
         {
             if (blizzy_toolbar_button != null)
                 blizzy_toolbar_button.Destroy();
+            blizzy_toolbar_button = null;
         }
 
         private static void OnBlizzyToggle(ClickEvent e)

@@ -168,6 +168,7 @@ namespace Trajectories
 
             // allocate and define window for use in the popup dialog
             Allocate();
+            spawned = 0;
         }
 
         // Awake is called only once when the script instance is being loaded. Used in place of the constructor for initialization.
@@ -238,7 +239,6 @@ namespace Trajectories
         {
             Fetch = null;
 
-            // save popup position. Note. PopupDialog.RTrf is an offset from the center of the screeen.
             if (popup_dialog != null)
             {
                 popup_dialog.Dismiss();
