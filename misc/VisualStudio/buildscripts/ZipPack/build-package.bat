@@ -15,7 +15,7 @@ SET rootPath=%scriptPath%..\..\..\..\
 SET initialWD=%CD%
 
 rem current module manager version in misc\3rdParty\
-SET MODMANAGER_VERSION=3.0.6
+SET MODMANAGER_VERSION=3.0.7
 
 echo Generating %TargetName% for %KSPversion% Release Package...
 cd "%rootPath%"
@@ -35,6 +35,7 @@ xcopy /y ..\..\..\COPYING.md .
 xcopy /y ..\..\..\LICENSE.md .
 xcopy /y ..\..\..\%TargetName%.cfg .
 xcopy /y ..\..\..\%TargetName%.version .
+xcopy /y ..\..\..\CONTRIBUTING.md .
 xcopy /y ..\..\..\README.md .
 xcopy /y ..\..\..\CHANGELOG.md .
 
