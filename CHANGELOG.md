@@ -1,3 +1,15 @@
+## v2.2.2 for KSP 1.4.3
+ - 2018-05-xx
+
+### Changes since the last release
+
+ * ModuleManager updated to v3.0.7
+ 
+### For Developers
+ 
+### Known Issues
+
+
 ## v2.2.1 for KSP 1.4.3
  - 2018-04-28
 
