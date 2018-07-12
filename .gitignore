@@ -45,3 +45,7 @@ _ReSharper*/
 
 # Microsoft Fakes
 FakesAssemblies/
+
+# Windows shortcuts
+*.lnk
+desktop.ini
