@@ -45,3 +45,10 @@ _ReSharper*/
 
 # Microsoft Fakes
 FakesAssemblies/
+
+# Windows shortcuts
+*.lnk
+desktop.ini
+
+# Read the docs local builds
+docs/_*
