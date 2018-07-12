@@ -24,7 +24,7 @@ source_parsers = {
 # -- Project information -----------------------------------------------------
 
 project = u'KSPTrajectories'
-copyright = u'2014-2018, Youen Toupin, (aka neuoy) | A.Korsunsky, (aka fat-lobyte) | S.Gray, (aka PiezPiedPy)'
+copyright = u'2014-2018, Y.Toupin, (aka neuoy) | A.Korsunsky, (aka fat-lobyte) | S.Gray, (aka PiezPiedPy)'
 author = u'neuoy fat-lobyte PiezPiedPy'
 
 # The short X.Y version
