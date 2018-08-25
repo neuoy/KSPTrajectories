@@ -43,6 +43,7 @@ Table of Contents
             1. [Profiling](#profiling)
                1. [Unity Profiler](#unity-profiler)
                1. [Internal Profiler](#internal-profiler)
+      1. [Development on MacOS](#development-on-macos)
       1. [Building Releases](#building-releases)
          1. [Release Checklist](#release-checklist)
          1. [Versioning](#versioning)
@@ -337,14 +338,23 @@ This section will guide you through setting up your development environment so t
 ### Installation and Environment Setup
 
 #### Unity
-For building and/or debugging KSPTrajectories with Visual Studio or Unity Editor you will need to download and install the exact version of Unity Editor that was used to build the version of KSP you are working with.
-You can find out which Unity version your current KSP install is using by looking at the first line of `C:\Users\YOURUSERNAME\AppData\LocalLow\Squad\Kerbal Space Program/output_log.txt`. It should read something like this:
+For building and/or debugging KSP Kerbalism with Visual Studio or Unity Editor you will need to download and install the exact version of Unity Editor that was used to build the version of KSP you are working with.
+For KSP1.4.x You can find out which Unity version your current KSP install is using by looking at the first line of `C:\Users\YOURUSERNAME\AppData\LocalLow\Squad\Kerbal Space Program/output_log.txt`. It should read something like this:
 
     Initialize engine version: 2017.1.3p1 (02d73f71d3bd)
 
 In this case, the Unity version for your KSP version is 2017.1.3p1.
 
+And for KSP1.3.1 you can find out which Unity version your current KSP install is using by looking at the first line of `KSP_Data/output_log.txt` (or `KSP_x64_Data/output_log.txt`). It should read something like this:
+
+    Initialize engine version: 5.4.0p4 (b15b5ae035b7)
+
+In this case, the Unity version for your KSP version is 5.4.0p4.
+
+
 The Unity Editor for **KSP v1.4.x** is **Unity v2017.1.3p1** and can be downloaded here: [UnityDownloadAssistant-2017.1.3p1.exe](https://beta.unity3d.com/download/02d73f71d3bd/UnityDownloadAssistant-2017.1.3p1.exe )
+
+The Unity Editor for **KSP v1.3.1** is **Unity v5.4.0.p4** and can be downloaded here: [UnityDownloadAssistant-5.4.0p4.exe](https://beta.unity3d.com/download/b15b5ae035b7/UnityDownloadAssistant-5.4.0p4.exe )
 
 #### Visual Studio
 
@@ -386,7 +396,7 @@ To do that, you follow these steps:
     Copy the file `player_win.exe` into your KSP main directory
   - Delete or rename `KSP_x64.exe` in your KSP main directory
   - Rename the `player_win.exe` to `KSP_x64.exe`
-  - Download the [PlayerConnectionConfigFile](https://www.sarbian.com/sarbian/PlayerConnectionConfigFile) file and put it into your KSP dev `KSP_x64_Data` folder.
+  - Copy the `PlayerConnectionConfigFile` file from `misc\VisualStudio\buildscripts\UnityDebug` and put it into your KSP dev `KSP_x64_Data` folder.
 
 This will turn your KSP install into a Development version only. If you want to use this install as a regular (non-Development) install as well, then instead of deleting or renaming `KSP_x64.exe`, you can do the following:
 
@@ -400,9 +410,10 @@ Now you can choose between the Development version (launch `KSP_x64_Dbg.exe`) an
 
 #### System Environment Variables
 
-To make your life a little easier, the Trajectories Visual Studio Project respects an environment variable called `KSPDIR`.
-If you set its value to the path of your KSP development install, the reference and debugging paths inside the project should be set automatically.
+To make your life a little easier, the Kerbalism Visual Studio Project respects two environment variables called `KSPDEVDIR` and `KSPBACKPORTDIR`
+If you set their values to the paths of the relevant versions of your KSP development installs, the reference and debugging paths inside the project should be set automatically. Obviously `KSPDEVDIR` should point to your KSP1.4.x install and `KSPBACKPORTDIR` to your KSP1.3.1 install. 
 If it is not set, your reference paths and the Debugging paths have to be set manually.
+Please note that you don't need to use both installs if you plan on making private builds but if you plan on making pull requests then it will be appreciated if you make sure your code works for both versions. You can also use the compiler directive `KSP13` in the source to switch relevant code specific to a KSP version.
 
 To set the variable, follow the instructions in this link, before starting a Visual Studio instance:
 
@@ -414,13 +425,13 @@ https://superuser.com/a/949577
 #### Project Setup
 
 Before you can build Trajectories, your Visual Studio has to know where the Unity and KSP assemblies are that it references.
-If you set your `KSPDIR` variable as mentioned [above](#system-environment-variables), then this should already be set. If not, then please:
+If you set your `KSPDEVDIR` and/or `KSPBACKPORTDIR` variable as mentioned [above](#system-environment-variables), then this should already be set. If not, then please:
 
   - Double-Click the "Properties" page in the Solution Explorer in Visual Studio
   - Change to the **Reference Paths** tab and select the `\KSP_x64_Data\Managed` subdirectory of your KSP dev install
   - Click "Add" to actually add the selected path
  
-To be able to quicklaunch KSP using F5 (or Ctrl-F5), you have to set which external program should start. This should already be set if you set your `KSPDIR` environment variable. If not,
+To be able to quicklaunch KSP using F5 (or Ctrl-F5), you have to set which external program should start. This should already be set if you set your `KSPDEVDIR` and/or `KSPBACKPORTDIR` environment variable. If not,
   
  - Double-Click the "Properties" page in the Solution Explorer in Visual Studio
  - Change to the **Debug** tab, select "Start External Program" and select the KSP executable that you want to start.
@@ -429,7 +440,9 @@ To be able to quicklaunch KSP using F5 (or Ctrl-F5), you have to set which exter
 #### Building
 
 If your reference paths are set up correctly, then building the project should be as simple as Clicking Build -> Build Solution.
-If `KSPDIR` is set, then the output path will be the `\GameData\Trajectories\Plugin\` subdirectory of your KSP install. If not, you have to configure the output path yourself in Properties -> Build -> Output Path.
+If `KSPDEVDIR` and/or `KSPBACKPORTDIR` is set, then the output path will be the `\GameData\Trajectories\Plugin\` subdirectory of your KSP install. If not, you have to configure the output path yourself in Properties -> Build -> Output Path.
+
+You can use the configuration menu to switch between `Debug` and `Release` for KSP1.4.x and also `Debug 1.3` and `Release 1.3` for KSP1.3.1
 
 When you are building in Debug mode, one additional file with the ending `.mdb` is created. This file is required for unity debugging.
 
@@ -440,7 +453,7 @@ It is recommended to debug KSP in a window rather than fullscreen, so turn off f
 To save startup time, seconds of our life and the environment, it is recommended to set the Graphics options way down. For that, go to KSP Main Menu -> Settings -> Graphics and set:
 
   - Render Quality: Fastest
-  - Texture Quality: Eigth Res
+  - Texture Quality: Eighth Res
   - Aerodynamic FX Quality: Minimal
   - Anti-Aliasing: Disabled
   - V-Sync: Don't sync
@@ -538,6 +551,18 @@ In-game, start it by pressing Ctrl-P. It shows each code entry belonging to one 
 
 You can reset these counters with the Reset button.
 You can enable/disable the display of any calls not called in the last frame with the Show zero calls button.
+
+
+### Development on MacOS
+
+To get a working development environment on mac, things are a little different. This little guide will help you get going if you want to develop Trajectories on MacOS. Follow these steps:
+
+- Download and install Visual Studio, the community edition is free of charge. Bear in mind that it will also require you to have XCode installed - so you could easily end up downloading about 2 GB.
+- Assuming you want to use your default KSP installation for development (on MacOS it is in `/Applications/KSP_osx`), execute the script `setup_mac.sh` from the `buildscripts` folder in this repository. This will set up the environment variable `KSPDEVDIR` and create a few symbolic links in your KSP installation folder that will make it compatible with the Visual Studio Project.
+- Start visual studio from the console: `open /Applications/Visual\ Studio.app`. By starting it from the console you will have the environment variable `KSPDEVDIR` set for the time it runs, Visual Studio depends on this variable to find a couple of libraries in your KSP folder. If you have a better way to set that variable when you start Visual Studio from your launchpad, please adapt this guide.
+- Within Visual Studio, open the 'Trajectories.sln' project. You should be able to create a release build now.
+
+I didn't try to run KSP in a debugger yet. If you know how to do this, please update this guide. It might work with using the Launcher.app in your KSP folder (which is already used to build Trajectories), so maybe you won't even have to download Unity.
 
 
 ## Building Releases
