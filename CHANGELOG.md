@@ -3,6 +3,7 @@
 
 ### Changes since the last release
 
+ * Japanese translation updated, thanks to ebigunso
  * ModuleManager updated to v3.0.7
  
 ### For Developers
