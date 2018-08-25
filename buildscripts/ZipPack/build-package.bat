@@ -8,14 +8,13 @@ rem get parameters that are passed by visual studio post build event
 SET TargetName=%1
 SET Dllversion=%~n2
 SET KSPversion=%3
+SET Versioning=%~n3
+SET Versioning=%Versioning:*KSP=%
 
 rem make sure the initial working directory is the one containing the current script
 SET scriptPath=%~dp0
-SET rootPath=%scriptPath%..\..\..\..\
+SET rootPath=%scriptPath%..\..\
 SET initialWD=%CD%
-
-rem current module manager version in misc\3rdParty\
-SET MODMANAGER_VERSION=3.0.7
 
 echo Generating %TargetName% for %KSPversion% Release Package...
 cd "%rootPath%"
@@ -26,24 +25,24 @@ cd package
 
 mkdir GameData
 cd GameData
-xcopy /y ..\..\3rdParty\ModuleManager.%MODMANAGER_VERSION%.dll .
-xcopy /y ..\..\3rdParty\README.md .
+xcopy /y /e "..\..\3rdParty\%Versioning%\*" .
 
-mkdir %TargetName%
-cd %TargetName%
+mkdir "%TargetName%"
+cd "%TargetName%"
 xcopy /y ..\..\..\COPYING.md .
 xcopy /y ..\..\..\LICENSE.md .
-xcopy /y ..\..\..\%TargetName%.cfg .
-xcopy /y ..\..\..\%TargetName%.version .
+xcopy /y "..\..\..\%TargetName%.cfg" .
 xcopy /y ..\..\..\CONTRIBUTING.md .
 xcopy /y ..\..\..\README.md .
 xcopy /y ..\..\..\CHANGELOG.md .
+
+xcopy /y /e "..\..\..\buildscripts\Versioning\%Versioning%\*" .
 
 mkdir Localization
 xcopy /y ..\..\..\Localization\TrajectoriesLocalization.cfg Localization
 
 mkdir Plugin
-xcopy /y %initialWD%\%TargetName%.dll Plugin
+xcopy /y "%initialWD%\%TargetName%.dll" Plugin
 
 mkdir Textures
 xcopy /y ..\..\..\Textures\icon.png Textures
