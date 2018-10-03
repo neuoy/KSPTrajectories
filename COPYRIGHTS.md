@@ -6,7 +6,7 @@ Copyright© (c) 2014-2018 A.Korsunsky, (aka fat-lobyte).
 Copyright© (c) 2017-2018 S.Gray, (aka PiezPiedPy).
 
 Trajectories is available under the terms of GPL-3.0-or-later.  
-See the GNU General Public License contained in the LICENSE.md file
+See the GNU General Public License contained in the [LICENSE.md](LICENSE.md) file
 for details.
 
 Trajectories is free software: you can redistribute it and/or modify
