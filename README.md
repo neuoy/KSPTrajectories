@@ -11,6 +11,8 @@ It is possible to configure a descent profile for space planes, so that you can 
 
 The mod can also help reaching a precise location on any celestial body. Even when there is no atmosphere, the original game does not display where you'll arrive according to the body rotation. This mod adds a small cross on the body showing you're estimated impact location.
 
+----
+
 Features
 --------
 
@@ -19,14 +21,25 @@ Features
 - Display trajectory after an aerobraking maneuver
 - Display fixed-body trajectory (i.e. trajectory in the closest body rotating frame)
 
+----
+
 Supported Aerodynamic models
 ----------------------------
 
 - Stock Kerbal Space Program aerodynamic model
 - Ferram Aerospace Research
 
+----
+
 Installation
 ------------
 
 - Download Trajectories.zip from the latest release (https://github.com/neuoy/KSPTrajectories/releases)
 - Unzip the contents into your GameData folder.
+
+----
+
+License
+-------
+Trajectories is available under the terms of GPL-3.0-or-later.  
+See the [COPYRIGHTS.md](COPYRIGHTS.md) file for details.
