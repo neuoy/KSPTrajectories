@@ -103,43 +103,6 @@ namespace Trajectories
             public Vector3? RawImpactPosition { get; set; }
 
             public Vector3? ImpactVelocity { get; set; }
-
-            public Point GetInfo(float altitudeAboveSeaLevel)
-            {
-                if (!IsAtmospheric)
-                    throw new Exception("Trajectory info available only for atmospheric patches");
-
-                if (AtmosphericTrajectory.Length == 1)
-                    return AtmosphericTrajectory[0];
-                else if (AtmosphericTrajectory.Length == 0)
-                    return new Point();
-
-                float absAltitude = (float)StartingState.ReferenceBody.Radius + altitudeAboveSeaLevel;
-                float sqMag = absAltitude * absAltitude;
-
-                // TODO: optimize by doing a dichotomic search (this function assumes that altitude variation is monotonic anyway)
-                int idx = 1;
-                while (idx < AtmosphericTrajectory.Length && AtmosphericTrajectory[idx].pos.sqrMagnitude > sqMag)
-                    ++idx;
-
-                float coeff = (absAltitude - AtmosphericTrajectory[idx].pos.magnitude)
-                    / Mathf.Max(0.00001f, AtmosphericTrajectory[idx - 1].pos.magnitude - AtmosphericTrajectory[idx].pos.magnitude);
-                coeff = Math.Min(1.0f, Math.Max(0.0f, coeff));
-
-                Point res = new Point
-                {
-                    pos = AtmosphericTrajectory[idx].pos * (1.0f - coeff) + AtmosphericTrajectory[idx - 1].pos * coeff,
-                    aerodynamicForce = AtmosphericTrajectory[idx].aerodynamicForce * (1.0f - coeff) +
-                                           AtmosphericTrajectory[idx - 1].aerodynamicForce * coeff,
-                    orbitalVelocity = AtmosphericTrajectory[idx].orbitalVelocity * (1.0f - coeff) +
-                                          AtmosphericTrajectory[idx - 1].orbitalVelocity * coeff,
-                    groundAltitude = AtmosphericTrajectory[idx].groundAltitude * (1.0f - coeff) +
-                                         AtmosphericTrajectory[idx - 1].groundAltitude * coeff,
-                    time = AtmosphericTrajectory[idx].time * (1.0f - coeff) + AtmosphericTrajectory[idx - 1].time * coeff
-                };
-
-                return res;
-            }
         }
 
         public static class Target
