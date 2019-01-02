@@ -219,12 +219,9 @@ namespace Trajectories
         {
             if (FlightGlobals.ActiveVessel != null)
             {
-                CelestialBody body = FlightGlobals.Bodies.SingleOrDefault(b => b.isHomeWorld);    // needs fixing, vessel is not allways at kerbin
+                CelestialBody body = FlightGlobals.GetHomeBody();
                 if (body != null)
-                {
-                    Vector3d worldPos = body.GetWorldSurfacePosition(lat, lon, alt);
-                    Trajectory.Target.Set(body, worldPos - body.position);
-                }
+                    Trajectory.Target.SetFromLatLonAlt(body, lat, lon, alt);
             }
         }
 

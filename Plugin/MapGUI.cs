@@ -237,7 +237,7 @@ namespace Trajectories
                 GUILayout.Label(guistring_targetDistance);
 
                 if (GUILayout.Button("Unset target"))
-                    Trajectory.Target.Set();
+                    Trajectory.Target.Clear();
                 GUI.enabled = true;
 
                 GUILayout.BeginHorizontal();
@@ -245,17 +245,15 @@ namespace Trajectories
                 GUI.enabled = (patch != null && patch.ImpactPosition.HasValue);
                 if (GUILayout.Button("Set current impact", GUILayout.Width(150)))
                 {
-                    Trajectory.Target.Set(patch.StartingState.ReferenceBody, patch.ImpactPosition);
+                    if (patch.ImpactPosition.HasValue)
+                    Trajectory.Target.SetFromWorldPos(patch.StartingState.ReferenceBody, patch.ImpactPosition.Value);
                 }
                 GUI.enabled = true;
                 if (GUILayout.Button("Set KSC", GUILayout.Width(70)))
                 {
-                    var body = FlightGlobals.Bodies.SingleOrDefault(b => b.isHomeWorld);
-                    if (body != null)
-                    {
-                        Vector3d worldPos = body.GetWorldSurfacePosition(-0.04860002, -74.72425635, 2.0);
-                        Trajectory.Target.Set(body, worldPos - body.position);
-                    }
+                    var homebody = FlightGlobals.GetHomeBody();
+                    if (homebody != null)
+                        Trajectory.Target.SetFromLatLonAlt(homebody, - 0.04860002, -74.72425635, 2.0);
                 }
                 GUILayout.EndHorizontal();
 
@@ -267,7 +265,7 @@ namespace Trajectories
                 );
                 if (GUILayout.Button("Target vessel"))
                 {
-                    Trajectory.Target.Set(targetVessel.lastBody, targetVessel.GetWorldPos3D() - targetVessel.lastBody.position);
+                    Trajectory.Target.SetFromWorldPos(targetVessel.lastBody, targetVessel.GetWorldPos3D() - targetVessel.lastBody.position);
                     ScreenMessages.PostScreenMessage("Targeting vessel " + targetVessel.GetName());
                 }
 
@@ -275,9 +273,8 @@ namespace Trajectories
                 GUI.enabled = (navigationWaypoint != null);
                 if (GUILayout.Button("Active waypoint"))
                 {
-                    Trajectory.Target.Set(navigationWaypoint.celestialBody,navigationWaypoint.celestialBody.
-                        GetWorldSurfacePosition(navigationWaypoint.latitude, navigationWaypoint.longitude,navigationWaypoint.altitude)
-                        - navigationWaypoint.celestialBody.position);
+                    Trajectory.Target.SetFromLatLonAlt(navigationWaypoint.celestialBody,
+                        navigationWaypoint.latitude, navigationWaypoint.longitude, navigationWaypoint.altitude);
                     ScreenMessages.PostScreenMessage("Targeting waypoint " + navigationWaypoint.name);
                 }
                 GUILayout.EndHorizontal();
@@ -305,7 +302,7 @@ namespace Trajectories
                         {
                             Vector3d relPos = body.GetWorldSurfacePosition(lat, lng, 2.0) - body.position;
                             double altitude = Trajectory.GetGroundAltitude(body, relPos) + body.Radius;
-                            Trajectory.Target.Set(body, relPos * (altitude / relPos.magnitude));
+                            Trajectory.Target.SetFromLatLonAlt(body, lat, lng, altitude);
                         }
                     }
                 }

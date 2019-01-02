@@ -5,6 +5,7 @@
 
  * Japanese translation updated, thanks to ebigunso
  * ModuleManager updated to v3.0.7
+ * Fix drifting target marker when above 100 km (Issue #140)
  
 ### For Developers
  

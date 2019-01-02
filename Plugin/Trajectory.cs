@@ -145,6 +145,15 @@ namespace Trajectories
         public static class Target
         {
             /// <summary>
+            /// Tests if the target has been set.
+            /// </summary>
+            /// <returns></returns>
+            public static bool HasTarget()
+            {
+                return LocalPosition.HasValue && Body != null;
+            }
+
+            /// <summary>
             /// Targets reference body
             /// </summary>
             public static CelestialBody Body { get; set; } = null;
@@ -152,20 +161,20 @@ namespace Trajectories
             /// <summary>
             /// Targets position in WorldSpace
             /// </summary>
-            public static Vector3d? WorldPosition { get; set; } = null;
+            public static Vector3d? WorldPosition
+            {
+                get => LocalPosition.HasValue ? Body?.transform?.TransformDirection(LocalPosition.Value) : null;
+                set
+                {
+                    // A transform that has double precision would be nice so we can have target precision in meter's
+                    LocalPosition = value.HasValue ? Body?.transform?.InverseTransformDirection(value.Value) : null;
+                }
+            }
 
             /// <summary>
             /// Targets position in LocalSpace relative to the target body
             /// </summary>
-            public static Vector3d? LocalPosition
-            {
-                // A transform that has double precision would be nice so we can have target precision in meter's
-                get => WorldPosition.HasValue ? (Vector3d?)Body.transform.InverseTransformDirection(WorldPosition.Value) : null;
-                set
-                {
-                    WorldPosition = Body == null ? (Vector3d?)null : Body.transform.TransformDirection((Vector3)value);
-                }
-            }
+            public static Vector3d? LocalPosition { get; private set; } = null;
 
             /// <summary>
             /// Manual target TextBox string
@@ -173,29 +182,50 @@ namespace Trajectories
             public static string ManualText { get; set; } = "";
 
             /// <summary>
-            /// Sets the target to a body and a World position, if param localspace is true then uses a Local position.
-            /// Passing a null or no arguments will clear the target.
-            /// Also saves the target to the active vessel when setting with a world position.
+            /// Sets the target to a body and a World position
+            /// Saves the target to the active vessel.
             /// </summary>
-            public static void Set(CelestialBody body = null, Vector3d? position = null, bool localspace = false)
+            public static void SetFromWorldPos(CelestialBody body, Vector3d position)
             {
-                if (body != null && position.HasValue)
-                {
-                    Body = body;
-                    if (localspace)
-                        LocalPosition = position;
-                    else
-                        WorldPosition = position;
-                }
-                else
-                {
-                    Body = null;
-                    WorldPosition = null;
-                }
-
-                if (!localspace)
-                    Save();
+                Body = body;
+                WorldPosition = position;
+                
+                Save();
             }
+
+            /// <summary>
+            /// Sets the target to a body and a body-relative position
+            /// Saves the target to the active vessel.
+            /// </summary>
+            public static void SetFromLocalPos(CelestialBody body, Vector3d position)
+            {
+                Body = body;
+                LocalPosition = position;
+
+                Save();
+            }
+
+            /// <summary>
+            /// Sets the target to a body and a World position
+            /// Saves the target to the active vessel.
+            /// </summary>
+            public static void SetFromLatLonAlt(CelestialBody body, double latitude, double longitude, double altitude)
+            {
+                Body = body;
+                LocalPosition = body.GetRelSurfacePosition(latitude, longitude, altitude);
+
+                Save();
+            }
+
+            /// <summary>
+            /// Clears the target
+            /// </summary>
+            public static void Clear()
+            {
+                Body = null;
+                LocalPosition = null;
+            }
+
 
             /// <summary>
             /// Saves the target to the active vessel module
@@ -477,7 +507,7 @@ namespace Trajectories
                     if (attachedVessel == null)
                     {
                         //UnityEngine.Debug.Log("Trajectories: No vessel");
-                        Target.Set();
+                        Target.Clear();
                         Target.ManualText = "";
                     }
                     else
@@ -487,14 +517,14 @@ namespace Trajectories
                         if (module == null)
                         {
                             //UnityEngine.Debug.Log("Trajectories: No TrajectoriesVesselSettings module");
-                            Target.Set();
+                            Target.Clear();
                             Target.ManualText = "";
                         }
                         else
                         {
                             //UnityEngine.Debug.Log("Trajectories: Reading target settings...");
-                            Target.Set(FlightGlobals.Bodies.FirstOrDefault(b => b.name == module.TargetBody),
-                                new Vector3d(module.TargetPosition_x, module.TargetPosition_y, module.TargetPosition_z), true);
+                            Target.SetFromLocalPos(FlightGlobals.Bodies.FirstOrDefault(b => b.name == module.TargetBody),
+                                new Vector3d(module.TargetPosition_x, module.TargetPosition_y, module.TargetPosition_z));
                             Target.ManualText = module.ManualTargetTxt;
                             //UnityEngine.Debug.Log("Trajectories: Target profile loaded");
                         }
