@@ -797,20 +797,20 @@ namespace Trajectories
             // grab the last patch that was calculated
             Trajectory.Patch lastPatch = Trajectory.fetch?.Patches.LastOrDefault();
 
-            if (lastPatch != null)
+            if (lastPatch != null && lastPatch.ImpactPosition.HasValue)
             {
-                Trajectory.Target.Set(lastPatch.StartingState.ReferenceBody, lastPatch.ImpactPosition);
+                Trajectory.Target.SetFromWorldPos(lastPatch.StartingState.ReferenceBody, lastPatch.ImpactPosition.Value);
                 ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_Trajectories_TargetingImpact"));
             }
         }
 
         private static void OnButtonClick_TargetKSC()
         {
-            CelestialBody body = FlightGlobals.Bodies.SingleOrDefault(b => b.isHomeWorld);
+            CelestialBody body = FlightGlobals.GetHomeBody();
 
             if (body != null)
             {
-                Trajectory.Target.Set(body, body.GetWorldSurfacePosition(-0.04860002, -74.72425635, 2.0) - body.position);
+                Trajectory.Target.SetFromLatLonAlt(body, -0.04860002, -74.72425635, 2.0);
                 ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_Trajectories_TargetingKSC"));
             }
         }
@@ -822,7 +822,7 @@ namespace Trajectories
 
             if (targetVessel != null && targetVessel.Landed)
             {
-                Trajectory.Target.Set(targetVessel.lastBody, targetVessel.GetWorldPos3D() - targetVessel.lastBody.position);
+                Trajectory.Target.SetFromWorldPos(targetVessel.lastBody, targetVessel.GetWorldPos3D() - targetVessel.lastBody.position);
                 ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_Trajectories_TargetingVessel", targetVessel.GetName()));
             }
         }
@@ -834,9 +834,8 @@ namespace Trajectories
 
             if (navigationWaypoint != null)
             {
-                Trajectory.Target.Set(navigationWaypoint.celestialBody, navigationWaypoint.celestialBody.
-                    GetWorldSurfacePosition(navigationWaypoint.latitude, navigationWaypoint.longitude, navigationWaypoint.altitude)
-                    - navigationWaypoint.celestialBody.position);
+                Trajectory.Target.SetFromLatLonAlt(navigationWaypoint.celestialBody,
+                    navigationWaypoint.latitude, navigationWaypoint.longitude, navigationWaypoint.altitude);
                 ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_Trajectories_TargetingWaypoint", navigationWaypoint.name));
             }
         }
@@ -856,7 +855,7 @@ namespace Trajectories
                 {
                     Vector3d relPos = body.GetWorldSurfacePosition(lat, lng, 2.0) - body.position;
                     double altitude = Trajectory.GetGroundAltitude(body, relPos) + body.Radius;
-                    Trajectory.Target.Set(body, relPos * (altitude / relPos.magnitude));
+                    Trajectory.Target.SetFromLatLonAlt(body, lat, lng, altitude);
                     ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_Trajectories_TargetingManual"));
                 }
             }
@@ -864,7 +863,7 @@ namespace Trajectories
 
         private static void OnButtonClick_TargetClear()
         {
-            Trajectory.Target.Set();
+            Trajectory.Target.Clear();
         }
 
         private static string OnTextInput_TargetManual(string inString)
