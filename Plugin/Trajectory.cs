@@ -946,7 +946,7 @@ namespace Trajectories
 
                     // some shallow entries can result in very long flight. For performances reasons,
                     // we limit the prediction duration
-                    int maxIterations = (int)(30.0 * 60.0 / dt);
+                    int maxIterations = (int)(60.0 * 60.0 / dt);
 
                     int chunkSize = 128;
 
