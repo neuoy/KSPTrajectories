@@ -215,7 +215,7 @@ namespace Trajectories
         /// <summary>
         /// Set the trajectories target to a latitude, longitude and altitude at the HomeWorld.
         /// </summary>
-        public static void SetTarget(double lat, double lon, double alt = 2.0)
+        public static void SetTarget(double lat, double lon, double? alt = null)
         {
             if (FlightGlobals.ActiveVessel != null)
             {
