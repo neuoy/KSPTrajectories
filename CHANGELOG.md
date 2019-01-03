@@ -26,7 +26,8 @@
  * In-Flight trajectory ground target marker would sometimes appear on screen when behind the camera view, now fixed.
  
 ### For Developers
- 
+ * API Change: If `SetTarget`'s alt parameter is null or not given, the altitude is calculated from the surface altitude.
+
 ### Known Issues
 
 ------------------------------------------------------------------------------------------------------
