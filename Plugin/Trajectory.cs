@@ -169,13 +169,20 @@ namespace Trajectories
             }
 
             /// <summary>
-            /// Sets the target to a body and a World position
+            /// Sets the target to a body and a World position. If the altitude is not given, it will be calculated as the surface altitude at that latitude/longitude.
             /// Saves the target to the active vessel.
             /// </summary>
-            public static void SetFromLatLonAlt(CelestialBody body, double latitude, double longitude, double altitude)
+            public static void SetFromLatLonAlt(CelestialBody body, double latitude, double longitude, double? altitude = null)
             {
                 Body = body;
-                LocalPosition = body.GetRelSurfacePosition(latitude, longitude, altitude);
+            
+                if (!altitude.HasValue)
+                {
+                    Vector3d relPos = body.GetWorldSurfacePosition(latitude, longitude, 2.0) - body.position;
+                    altitude = Trajectory.GetGroundAltitude(body, relPos);
+                }
+
+                LocalPosition = body.GetRelSurfacePosition(latitude, longitude, altitude.Value);
 
                 Save();
             }

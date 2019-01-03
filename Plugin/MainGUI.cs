@@ -806,13 +806,13 @@ namespace Trajectories
 
         private static void OnButtonClick_TargetKSC()
         {
-            CelestialBody body = FlightGlobals.GetHomeBody();
+            var homebody = FlightGlobals.GetHomeBody();
 
-            if (body != null)
-            {
-                Trajectory.Target.SetFromLatLonAlt(body, -0.04860002, -74.72425635, 2.0);
-                ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_Trajectories_TargetingKSC"));
-            }
+            double latitude = SpaceCenter.Instance.Latitude;
+            double longitude = SpaceCenter.Instance.Longitude;
+
+            if (homebody != null)
+                Trajectory.Target.SetFromLatLonAlt(homebody, latitude, longitude);
         }
 
         private static void OnButtonClick_TargetVessel()
@@ -853,9 +853,7 @@ namespace Trajectories
 
                 if (double.TryParse(latLng[0].Trim(), out lat) && double.TryParse(latLng[1].Trim(), out lng))
                 {
-                    Vector3d relPos = body.GetWorldSurfacePosition(lat, lng, 2.0) - body.position;
-                    double altitude = Trajectory.GetGroundAltitude(body, relPos) + body.Radius;
-                    Trajectory.Target.SetFromLatLonAlt(body, lat, lng, altitude);
+                    Trajectory.Target.SetFromLatLonAlt(body, lat, lng);
                     ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_Trajectories_TargetingManual"));
                 }
             }
