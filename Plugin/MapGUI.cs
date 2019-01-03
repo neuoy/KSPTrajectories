@@ -252,8 +252,12 @@ namespace Trajectories
                 if (GUILayout.Button("Set KSC", GUILayout.Width(70)))
                 {
                     var homebody = FlightGlobals.GetHomeBody();
+
+                    double latitude = SpaceCenter.Instance.Latitude;
+                    double longitude = SpaceCenter.Instance.Longitude;
+
                     if (homebody != null)
-                        Trajectory.Target.SetFromLatLonAlt(homebody, - 0.04860002, -74.72425635, 2.0);
+                        Trajectory.Target.SetFromLatLonAlt(homebody, latitude, longitude);
                 }
                 GUILayout.EndHorizontal();
 
@@ -300,9 +304,7 @@ namespace Trajectories
                         double lng;
                         if (double.TryParse(latLng[0].Trim(), out lat) && double.TryParse(latLng[1].Trim(), out lng))
                         {
-                            Vector3d relPos = body.GetWorldSurfacePosition(lat, lng, 2.0) - body.position;
-                            double altitude = Trajectory.GetGroundAltitude(body, relPos) + body.Radius;
-                            Trajectory.Target.SetFromLatLonAlt(body, lat, lng, altitude);
+                            Trajectory.Target.SetFromLatLonAlt(body, lat, lng);
                         }
                     }
                 }

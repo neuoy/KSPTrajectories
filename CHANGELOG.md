@@ -6,6 +6,7 @@
  * Japanese translation updated, thanks to ebigunso
  * ModuleManager updated to v3.0.7
  * Fix drifting target marker when above 100 km (Issue #140)
+ * Read KSC location for targeting from the game, instead of a hardcoded value
  
 ### For Developers
  
