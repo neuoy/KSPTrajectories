@@ -31,11 +31,20 @@ Supported Aerodynamic models
 
 ----
 
+Requirements
+------------
+
+- Any KSP version from 1.3.1 to 1.6.x
+- ModuleManager 3.0.0+
+
+----
+
 Installation
 ------------
 
 - Download Trajectories.zip from the latest release (https://github.com/neuoy/KSPTrajectories/releases)
 - Unzip the contents into your GameData folder.
+- Don't forget that Trajectories requires ModuleManager to also be installed.
 
 ----
 
