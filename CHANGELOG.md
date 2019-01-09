@@ -12,6 +12,7 @@
  
  * KSP1.3.1 Back port builds can now be built from the Visual Studio Config selector, see CONTRIBUTING.md 
  * Support for development on mac now included, also with help in the CONTRIBUTING.md file (Sir Mortimer)
+ * API Change: If `SetTarget`'s alt parameter is null or not given, the altitude is calculated from the surface altitude.
 
 ### Known Issues
 
@@ -26,7 +27,6 @@
  * In-Flight trajectory ground target marker would sometimes appear on screen when behind the camera view, now fixed.
  
 ### For Developers
- * API Change: If `SetTarget`'s alt parameter is null or not given, the altitude is calculated from the surface altitude.
 
 ### Known Issues
 
