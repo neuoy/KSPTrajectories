@@ -26,10 +26,10 @@ namespace TrajectoriesBootstrap
 {
     public static class Util
     {
-        public static AssemblyLoader.LoadedAssembly FindTrajectoriesBin()
+        public static AssemblyLoader.LoadedAssembly FindTrajectoriesAssembly(string name = "Trajectories")
         {
             foreach (AssemblyLoader.LoadedAssembly a in AssemblyLoader.loadedAssemblies)
-                if (a.name == BinName)
+                if (a.name == name)
                     return a;
             return null;
         }
