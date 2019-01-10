@@ -122,14 +122,15 @@ namespace Trajectories
                 Debug.Log("Error loading Trajectories config: " + e.ToString());
 
                 string TrajPluginPath = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
-                Debug.Log("Trajectories installed in: " + TrajPluginPath);
-                if (System.IO.File.Exists(TrajPluginPath + "/PluginData/Trajectories/config.xml"))
+                Debug.Log("Trajectories is installed in: " + TrajPluginPath);
+                TrajPluginPath += "/PluginData/" + System.Reflection.Assembly.GetExecutingAssembly().FullName + "/config.xml";
+                if (System.IO.File.Exists(TrajPluginPath))
                 {
                     Debug.Log("Clearing config file...");
                     int idx = 1;
-                    while (System.IO.File.Exists(TrajPluginPath + "/PluginData/Trajectories/config.xml.bak." + idx))
+                    while (System.IO.File.Exists(TrajPluginPath + ".bak." + idx))
                         ++idx;
-                    System.IO.File.Move(TrajPluginPath + "/PluginData/Trajectories/config.xml", TrajPluginPath + "/PluginData/Trajectories/config.xml.bak." + idx);
+                    System.IO.File.Move(TrajPluginPath, TrajPluginPath + ".bak." + idx);
 
                     Debug.Log("Creating new config...");
                     config.load();

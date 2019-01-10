@@ -31,14 +31,15 @@ using UnityEngine;
 namespace TrajectoriesBootstrap
 {
     [KSPAddon(KSPAddon.Startup.Instantly, false)]
-    public class Bootstrap: MonoBehaviour
+    public class TrajectoriesBootstrap: MonoBehaviour
     {
 
         public void Start()
         {
-            if (Util.IsDllLoaded || (Util.FindTrajectoriesBin() != null))
+            if (Util.IsDllLoaded || (Util.FindTrajectoriesAssembly(Util.BinName) != null))
                 print("[TrajectoriesBootstrap] WARNING: TRAJECTORIES HAS ALREADY LOADED BEFORE US!");
 
+            string load_bin = Path.Combine(AssemblyDirectory(Assembly.GetExecutingAssembly()), "Trajectories.bin");
             string our_bin = Path.Combine(AssemblyDirectory(Assembly.GetExecutingAssembly()), Util.BinName + ".bin");
             string possible_dll = Path.Combine(AssemblyDirectory(Assembly.GetExecutingAssembly()), "Trajectories.dll");
 
@@ -70,8 +71,25 @@ namespace TrajectoriesBootstrap
                 return;
             }
 
-            AssemblyLoader.LoadPlugin(new FileInfo(our_bin), our_bin, null);
-            AssemblyLoader.LoadedAssembly loadedAssembly = Util.FindTrajectoriesBin();
+            //copy version specific Trajectoriesxx.bin file to Trajectories.bin and load it if successful
+            try
+            {
+                File.Copy(our_bin, load_bin, true);
+                print("[TrajectoriesBootstrap] Copied version specific Trajectories bin file to '" + load_bin + "'");
+            }
+            catch
+            {
+                print("[TrajectoriesBootstrap] Could not copy bin file '" + our_bin + "'");
+            }
+
+            if (!File.Exists(load_bin))
+            {
+                print("[TrajectoriesBootstrap] Trajectories.bin not found! Ditching!");
+                return;
+            }
+
+            AssemblyLoader.LoadPlugin(new FileInfo(load_bin), load_bin, null);
+            AssemblyLoader.LoadedAssembly loadedAssembly = Util.FindTrajectoriesAssembly();
             if (loadedAssembly == null)
             {
                 print("[TrajectoriesBootstrap] Trajectories failed to load! Ditching!");
