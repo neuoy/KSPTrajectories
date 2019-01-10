@@ -1,12 +1,15 @@
-## v2.2.2 for KSP 1.4.x and 1.3.1
+## v2.2.2 for all versions of KSP from 1.3.1 to 1.6.x
  - 2019-xx-xx
 
 ### Changes since the last release
 
+ * Support for KSP 1.5.x and 1.6.x
+
  * Japanese translation updated, thanks to ebigunso
- * ModuleManager updated to v3.1.3
  * Fix drifting target marker when above 100 km (Issue #140)
  * Read KSC location for targeting from the game, instead of a hardcoded value
+ * ModuleManager is no longer bundled with Trajectories but it is still a requirement
+ * New release format to allow the facilitation of one download zip for all KSP versions from 1.3.1 onwards.
  
 ### For Developers
  
