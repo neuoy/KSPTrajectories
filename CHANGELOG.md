@@ -1,5 +1,5 @@
 ## v2.2.2 for all versions of KSP from 1.3.1 to 1.6.x
- - 2019-xx-xx
+ - 2019-02-14
 
 ### Changes since the last release
 
