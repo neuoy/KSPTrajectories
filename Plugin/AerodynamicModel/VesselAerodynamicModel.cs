@@ -80,14 +80,12 @@ namespace Trajectories
         {
             Debug.Log("Trajectories: Initializing cache");
 
-            double maxCacheVelocity = 10000.0;
-            double maxCacheAoA = 180.0 / 180.0 * Math.PI;
+            // resolution = step size for true values, others are interpolated
+            int velocityResolution = 100; // m/s
+            int angleOfAttackResolution = 2; // degree, internal converted to radian
+            int altitudeResolution = 500; // m
 
-            int velocityResolution = 32;
-            int angleOfAttackResolution = 33; // even number to include exactly 0°
-            int altitudeResolution = 32;
-
-            cachedForces = new AeroForceCache(maxCacheVelocity, maxCacheAoA, body_.atmosphereDepth, velocityResolution, angleOfAttackResolution, altitudeResolution, this);
+            cachedForces = new AeroForceCache( velocityResolution, angleOfAttackResolution, altitudeResolution, this);
 
             isValid = true;
 
@@ -228,7 +226,7 @@ namespace Trajectories
             Vector3d predictedVesselForward = velForward * Math.Cos(angleOfAttack) + velUp * Math.Sin(angleOfAttack);
             Vector3d predictedVesselBackward = -predictedVesselForward;
             Vector3d predictedVesselRight = velRight;
-            Vector3d predictedVesselUp = Vector3d.Cross(predictedVesselBackward, predictedVesselRight).normalized;
+            Vector3d predictedVesselUp = Vector3d.Cross((Math.Abs(angleOfAttack) < 0.5*Math.PI ? predictedVesselBackward : predictedVesselForward), predictedVesselRight).normalized;
 
             Vector3d res = predictedVesselRight * localForce.x + predictedVesselUp * localForce.y + predictedVesselBackward * localForce.z;
             if (Double.IsNaN(res.x) || Double.IsNaN(res.y) || Double.IsNaN(res.z))

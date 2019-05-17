@@ -23,10 +23,12 @@
  
 //#define PRECOMPUTE_CACHE
 using System;
+using System.Reflection;
 using UnityEngine;
 
 namespace Trajectories
 {
+    
     // this class provides several methods to access stock aero information
     public static class StockAeroUtil
     {
@@ -130,6 +132,8 @@ namespace Trajectories
         public static Vector3 SimAeroForce(Vessel _vessel, Vector3 v_wrld_vel, double altitude, double latitude = 0.0)
         {
             Profiler.Start("SimAeroForce");
+
+            FieldInfo mcsCtrlSurfacefield = typeof(ModuleControlSurface).GetField("ctrlSurface", BindingFlags.Instance | BindingFlags.NonPublic);
 
             CelestialBody body = _vessel.mainBody;
             double pressure = body.GetPressure(altitude);
@@ -269,12 +273,19 @@ namespace Trajectories
                 for (int j = 0; j < p.Modules.Count; ++j)
                 {
                     var m = p.Modules[j];
-                    float mcs_mod;
+                    float mcs_mod = 0f, mcs_angle = 0f;
                     if (m is ModuleLiftingSurface)
                     {
-                        mcs_mod = 1.0f;
+
                         double liftQ = dyn_pressure * 1000;
                         ModuleLiftingSurface wing = (ModuleLiftingSurface)m;
+                        if (wing is ModuleControlSurface)
+                        {
+                            mcs_mod = (wing as ModuleControlSurface).ctrlSurfaceArea;
+
+                            mcs_angle = (mcsCtrlSurfacefield.GetValue(wing as ModuleControlSurface) as Transform).localEulerAngles.x;
+                        }
+
                         Vector3 nVel = Vector3.zero;
                         Vector3 liftVector = Vector3.zero;
                         float liftdot;
@@ -283,14 +294,30 @@ namespace Trajectories
 
                         double prevMach = p.machNumber;
                         p.machNumber = mach;
-                        Vector3 local_lift = mcs_mod * wing.GetLiftVector(liftVector, liftdot, absdot, liftQ, (float)mach);
-                        Vector3 local_drag = mcs_mod * wing.GetDragVector(nVel, absdot, liftQ);
-                        p.machNumber = prevMach;
+
+                        // fixed wing proportion for control surfaces
+                        Vector3 local_lift = (1.0f - mcs_mod) * wing.GetLiftVector(liftVector, liftdot, absdot, liftQ, (float)mach);
+                        Vector3 local_drag = (1.0f - mcs_mod) * wing.GetDragVector(nVel, absdot, liftQ);
+
 
                         total_lift += local_lift;
                         total_drag += local_drag;
 
-                        #if DEBUG
+                        if (wing is ModuleControlSurface)
+                        {
+                            if (altitude >= 24000 && altitude <= 25000)
+                                Debug.Log(m.GetModuleDisplayName() + " has local_lift " + local_lift + " and drag " + local_drag + " for fixed wing and vel "+v_wrld_vel);
+                            //since we cannot rotate wing for calculation, we rotate velocity in other direction and later turn force back
+                            wing.SetupCoefficients(Quaternion.AngleAxis(-mcs_angle, Vector3.right)* v_wrld_vel, out nVel, out liftVector, out liftdot, out absdot);
+                            local_lift = mcs_mod * (Quaternion.AngleAxis(mcs_angle, Vector3.right)* wing.GetLiftVector(liftVector, liftdot, absdot, liftQ, (float)mach));
+                            local_drag = 2.0f*mcs_mod * (Quaternion.AngleAxis(mcs_angle, Vector3.right) * wing.GetDragVector(nVel, absdot, liftQ));
+                            if (altitude >= 24000 && altitude <= 25000)
+                                Debug.Log(m.GetModuleDisplayName() + " has local_lift " + local_lift + " and drag " + local_drag + " for angle " + mcs_angle);
+                            total_lift += local_lift;
+                            total_drag += local_drag;
+                        }
+                        p.machNumber = prevMach;
+#if DEBUG
                         if (partDebug != null)
                         {
                             partDebug.Lift += (float)local_lift.magnitude;

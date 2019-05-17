@@ -28,6 +28,8 @@ namespace Trajectories
 
         [KSPField(isPersistant = false, guiActive = true)]
         public float Lift;
+
+        public string channelPrefix = null;
     }
 #endif
 }

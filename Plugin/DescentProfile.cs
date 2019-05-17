@@ -60,7 +60,7 @@ namespace Trajectories
                     else
                         angle = value;
 
-                    double calc_angle = angle * 180.0 / Math.PI;
+                    double calc_angle = angle * Mathf.Rad2Deg;
                     if (calc_angle <= -100d || calc_angle >= 100d)
                         Angle_txt = calc_angle.ToString("F1") + "°";
                     else if (calc_angle <= -10d || calc_angle >= 10d)
@@ -76,7 +76,7 @@ namespace Trajectories
                 set
                 {
                     sliderPos = value;
-                    Angle = value * value * value * Math.PI; // This helps to have high precision near 0° while still allowing big angles
+                    Angle = (fetch.RetrogradeEntry ? Math.PI : 0d ) + Math.Sign(value) * 0.5 * value * value * Math.PI; // This helps to have high precision near 0/180° while still allowing big angles
                 }
             }
 
@@ -89,8 +89,10 @@ namespace Trajectories
 
             public void RefreshSliderPos()
             {
-                float position = (float)Math.Pow(Math.Abs(Angle) / Math.PI, 1d / 3d);
-                if (Angle < 0d)
+                Debug.Log(string.Format("Setting slider for angle {0} with retrograde is {1}", Angle, fetch.RetrogradeEntry));
+                float position = (float)Math.Sqrt(Math.Abs(Angle - (fetch.RetrogradeEntry ? Math.PI : 0d) )*2 / Math.PI );
+                Debug.Log("New sliderpos abs value is " + position);
+                if (Angle < (fetch.RetrogradeEntry ? Math.PI : 0d ))
                     SliderPos = -position;
                 else
                     SliderPos = position;
@@ -121,7 +123,7 @@ namespace Trajectories
         public Node lowAltitude;
         public Node finalApproach;
 
-        public bool ProgradeEntry { get; set; }
+        public bool ProgradeEntry { get { return !RetrogradeEntry; } }
 
         public bool RetrogradeEntry { get; set; }
 
@@ -141,7 +143,7 @@ namespace Trajectories
         private void Awake()
         {
             if (Settings.fetch.DefaultDescentIsRetro)
-                Reset();
+                Reset(Math.PI);
             else
                 Reset(0d);
         }
@@ -163,9 +165,14 @@ namespace Trajectories
             finalApproach = new Node(Localizer.Format("#autoLOC_Trajectories_Ground"), Localizer.Format("#autoLOC_Trajectories_GroundDesc"));
         }
 
-        public void Reset(double AoA = Math.PI)
+        public void Reset(double AoA = 0)
         {
-            //Debug.Log(string.Format("Resetting vessel descent profile to {0} degrees", AoA));
+            Debug.Log(string.Format("Resetting vessel descent profile to {0} degrees", AoA * Mathf.Rad2Deg));
+            
+            RetrogradeEntry = Math.Abs(AoA) > 0.5 * Math.PI;
+
+            /*AoA = AoA - (RetrogradeEntry ? Math.PI : 0d)*/;
+
             entry.Angle = AoA;
             entry.Horizon = false;
             highAltitude.Angle = AoA;
@@ -175,8 +182,6 @@ namespace Trajectories
             finalApproach.Angle = AoA;
             finalApproach.Horizon = false;
 
-            ProgradeEntry = AoA == 0d;
-            RetrogradeEntry = AoA == Math.PI;
 
             RefreshSliders();
         }
@@ -199,10 +204,8 @@ namespace Trajectories
                 if (attachedVessel == null)
                 {
                     //Debug.Log("No vessel");
-                    if (Settings.fetch.DefaultDescentIsRetro)
-                        Reset();
-                    else
-                        Reset(0d);
+                    Reset();
+                    
                 }
                 else
                 {
@@ -210,18 +213,13 @@ namespace Trajectories
                     if (module == null)
                     {
                         //Debug.Log("No TrajectoriesVesselSettings module");
-                        if (Settings.fetch.DefaultDescentIsRetro)
-                            Reset();
-                        else
-                            Reset(0d);
+                        Reset();
+                        
                     }
                     else if (!module.Initialized)
                     {
                         //Debug.Log("Initializing TrajectoriesVesselSettings module");
-                        if (Settings.fetch.DefaultDescentIsRetro)
-                            Reset();
-                        else
-                            Reset(0d);
+                        Reset();
 
                         module.EntryAngle = entry.Angle;
                         module.EntryHorizon = entry.Horizon;
@@ -249,7 +247,7 @@ namespace Trajectories
                         finalApproach.Angle = module.GroundAngle;
                         finalApproach.Horizon = module.GroundHorizon;
 
-                        ProgradeEntry = module.ProgradeEntry;
+                        //ProgradeEntry = module.ProgradeEntry;
                         RetrogradeEntry = module.RetrogradeEntry;
 
                         RefreshSliders();
@@ -306,14 +304,14 @@ namespace Trajectories
             }
             else if (newRetrograde && !RetrogradeEntry)
             {
-                Reset();
+                Reset(Math.PI);
                 Save();
             }
         }
 
         public void CheckGUI()
         {
-            double? AoA = entry.Horizon ? (double?)null : entry.Angle;
+            /*double? AoA = entry.Horizon ? (double?)null : entry.Angle;
 
             if (highAltitude.Angle != AoA || highAltitude.Horizon)
                 AoA = null;
@@ -321,20 +319,7 @@ namespace Trajectories
                 AoA = null;
             if (finalApproach.Angle != AoA || finalApproach.Horizon)
                 AoA = null;
-
-            if (!AoA.HasValue)
-            {
-                ProgradeEntry = false;
-                RetrogradeEntry = false;
-            }
-            else
-            {
-                if (Math.Abs(AoA.Value) < 0.00001)
-                    ProgradeEntry = true;
-                if (Math.Abs((Math.Abs(AoA.Value) - Math.PI)) < 0.00001)
-                    RetrogradeEntry = true;
-            }
-
+                */
             Save();
         }
 

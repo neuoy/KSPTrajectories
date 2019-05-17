@@ -20,6 +20,7 @@
   along with Trajectories.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+using System;
 using System.Linq;
 using UnityEngine;
 
@@ -243,15 +244,15 @@ namespace Trajectories
             {
                 if ((FlightGlobals.ActiveVessel != null) && !DescentProfile.fetch.ProgradeEntry)
                 {
-                    DescentProfile.fetch.ProgradeEntry = true;
-                    DescentProfile.fetch.Reset(0d);
+                    DescentProfile.fetch.RetrogradeEntry = false;
+                    DescentProfile.fetch.Reset(0);
                     DescentProfile.fetch.Save();
                 }
             }
         }
 
         /// <summary>
-        /// Set the trajectories descent profile to Prograde.
+        /// Set the trajectories descent profile to Retrograde.
         /// </summary>
         public static bool? RetrogradeEntry
         {
@@ -266,7 +267,7 @@ namespace Trajectories
                 if ((FlightGlobals.ActiveVessel != null) && !DescentProfile.fetch.RetrogradeEntry)
                 {
                     DescentProfile.fetch.RetrogradeEntry = true;
-                    DescentProfile.fetch.Reset();
+                    DescentProfile.fetch.Reset(Math.PI);
                     DescentProfile.fetch.Save();
                 }
             }

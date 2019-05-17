@@ -750,20 +750,17 @@ namespace Trajectories
         {
             if (inState != DescentProfile.fetch.ProgradeEntry)
             {
-                DescentProfile.fetch.ProgradeEntry = inState;
-                if (inState)
-                    DescentProfile.fetch.Reset(0d);
+                DescentProfile.fetch.Reset(0d);
                 DescentProfile.fetch.Save();
             }
         }
 
         private static void OnButtonClick_Retrograde(bool inState)
         {
+            Debug.Log("Retrograde activated, is currently " + DescentProfile.fetch.RetrogradeEntry);
             if (inState != DescentProfile.fetch.RetrogradeEntry)
             {
-                DescentProfile.fetch.RetrogradeEntry = inState;
-                if (inState)
-                    DescentProfile.fetch.Reset();
+                DescentProfile.fetch.Reset(Math.PI);
                 DescentProfile.fetch.Save();
             }
         }

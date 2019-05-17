@@ -295,14 +295,14 @@ namespace Trajectories
             Telemetry.AddChannel<double>("altitude");
             Telemetry.AddChannel<double>("airspeed");
             Telemetry.AddChannel<double>("aoa");
-            Telemetry.AddChannel<float>("drag");
+            //Telemetry.AddChannel<float>("drag");
 
             Telemetry.AddChannel<double>("density");
-            Telemetry.AddChannel<double>("density_calc");
-            Telemetry.AddChannel<double>("density_calc_precise");
+            //Telemetry.AddChannel<double>("density_calc");
+            //Telemetry.AddChannel<double>("density_calc_precise");
 
-            Telemetry.AddChannel<double>("temperature");
-            Telemetry.AddChannel<double>("temperature_calc");
+            //Telemetry.AddChannel<double>("temperature");
+            //Telemetry.AddChannel<double>("temperature_calc");
 
             Telemetry.AddChannel<double>("force_actual");
             Telemetry.AddChannel<double>("force_actual.x");
@@ -313,8 +313,21 @@ namespace Trajectories
             Telemetry.AddChannel<double>("force_predicted.x");
             Telemetry.AddChannel<double>("force_predicted.y");
             Telemetry.AddChannel<double>("force_predicted.z");
-            Telemetry.AddChannel<double>("force_predicted_cache");
+            //Telemetry.AddChannel<double>("force_predicted_cache");
             //Telemetry.AddChannel<double>("force_reference");
+            if (FlightGlobals.ActiveVessel != null)
+            {
+                foreach (TrajectoriesDebug partDebug in FlightGlobals.ActiveVessel.FindPartModulesImplementing<TrajectoriesDebug>())
+                {
+                    partDebug.channelPrefix = partDebug.part.partName + "_" + partDebug.part.persistentId;
+                    UnityEngine.Debug.Log("would add " + partDebug.channelPrefix + " to trajectory output");
+                    Telemetry.AddChannel<double>(partDebug.channelPrefix + "_Lift");
+                    Telemetry.AddChannel<double>(partDebug.channelPrefix + "_Drag");
+                    Telemetry.AddChannel<double>(partDebug.channelPrefix + "_actLift");
+                    Telemetry.AddChannel<double>(partDebug.channelPrefix + "_actDrag");
+                }
+            } else
+                UnityEngine.Debug.Log("Traj Debug: onAwake has no activeVessel");
         }
 
         public void FixedUpdate()
@@ -370,11 +383,8 @@ namespace Trajectories
                     if (Vector3d.Dot(airVelocity, vesselUp) > 0)
                         AoA = -AoA;
 
-                    VesselAerodynamicModel.DebugParts = true;
-                    Vector3d referenceForce = aerodynamicModel_.ComputeForces(20000, new Vector3d(0, 0, 1500), new Vector3d(0,1,0), 0);
-                    VesselAerodynamicModel.DebugParts = false;
-
                     Vector3d predictedForce = aerodynamicModel_.ComputeForces(altitudeAboveSea, airVelocity, vesselUp, AoA);
+                    VesselAerodynamicModel.DebugParts = false;
                     //VesselAerodynamicModel.Verbose = true;
                     Vector3d predictedForceWithCache = aerodynamicModel_.GetForces(body, bodySpacePosition, airVelocity, AoA);
                     //VesselAerodynamicModel.Verbose = false;
@@ -418,7 +428,7 @@ namespace Trajectories
                     Telemetry.Send("force_predicted.y", localPredictedForce.y);
                     Telemetry.Send("force_predicted.z", localPredictedForce.z);
 
-                    Telemetry.Send("force_predicted_cache", localPredictedForceWithCache.magnitude);
+                    //Telemetry.Send("force_predicted_cache", localPredictedForceWithCache.magnitude);
                     //Telemetry.Send("force_predicted_cache.x", localPredictedForceWithCache.x);
                     //Telemetry.Send("force_predicted_cache.y", localPredictedForceWithCache.y);
                     //Telemetry.Send("force_predicted_cache.z", localPredictedForceWithCache.z);
@@ -440,16 +450,29 @@ namespace Trajectories
                     Telemetry.Send("drag", attachedVessel.rootPart.rb.drag);
 
                     Telemetry.Send("density", attachedVessel.atmDensity);
-                    Telemetry.Send("density_calc", StockAeroUtil.GetDensity(altitudeAboveSea, body));
-                    Telemetry.Send("density_calc_precise", StockAeroUtil.GetDensity(attachedVessel.GetWorldPos3D(), body));
+                    //Telemetry.Send("density_calc", StockAeroUtil.GetDensity(altitudeAboveSea, body));
+                    //Telemetry.Send("density_calc_precise", StockAeroUtil.GetDensity(attachedVessel.GetWorldPos3D(), body));
 
-                    Telemetry.Send("temperature", attachedVessel.atmosphericTemperature);
-                    Telemetry.Send("temperature_calc", StockAeroUtil.GetTemperature(attachedVessel.GetWorldPos3D(), body));
+                    //Telemetry.Send("temperature", attachedVessel.atmosphericTemperature);
+                    //Telemetry.Send("temperature_calc", StockAeroUtil.GetTemperature(attachedVessel.GetWorldPos3D(), body));
+
+                    foreach (TrajectoriesDebug partDebug in attachedVessel.FindPartModulesImplementing<TrajectoriesDebug>())
+                    {
+                        if (partDebug.channelPrefix != null)
+                        {
+                            Telemetry.Send(partDebug.channelPrefix + "_Lift", partDebug.Lift);
+                            Telemetry.Send(partDebug.channelPrefix + "_Drag", partDebug.Drag);
+                            Telemetry.Send(partDebug.channelPrefix + "_actLift", partDebug.part.bodyLiftScalar);
+                            Telemetry.Send(partDebug.channelPrefix + "_actDrag", partDebug.part.dragScalar);
+                        }
+
+                    }
+
+
+                    PreviousFrameVelocity = bodySpaceVelocity;
+                    PreviousFramePos = bodySpacePosition;
+                    PreviousFrameTime = now;
                 }
-
-                PreviousFrameVelocity = bodySpaceVelocity;
-                PreviousFramePos = bodySpacePosition;
-                PreviousFrameTime = now;
             }
         }
 #endif

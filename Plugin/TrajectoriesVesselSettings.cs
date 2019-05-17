@@ -53,7 +53,7 @@ namespace Trajectories
         [KSPField(isPersistant = true, guiActive = false)]
         public bool GroundHorizon;
 
-        [KSPField(isPersistant = true, guiActive = false)]
+        [KSPField(isPersistant = false, guiActive = false)]
         public bool ProgradeEntry;
 
         [KSPField(isPersistant = true, guiActive = false)]
