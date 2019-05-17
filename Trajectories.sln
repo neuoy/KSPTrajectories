@@ -1,34 +1,53 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25123.0
+# Visual Studio 15
+VisualStudioVersion = 15.0.28010.2003
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Trajectories", "Plugin\Trajectories.csproj", "{34928415-4627-4BAD-ABC6-CB5677691E95}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Trajectories", "src\Plugin\Trajectories.csproj", "{34928415-4627-4BAD-ABC6-CB5677691E95}"
+	ProjectSection(ProjectDependencies) = postProject
+		{EC230A5D-640F-4F8E-BE92-3E29B1CC52DB} = {EC230A5D-640F-4F8E-BE92-3E29B1CC52DB}
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{E895F67A-FA85-4D57-9F86-A96B45108B8A}"
+	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
+		CHANGELOG.md = CHANGELOG.md
+		TODO.md = TODO.md
+		GameData\Trajectories\Trajectories.version = GameData\Trajectories\Trajectories.version
+		GameData\Trajectories\Localization\TrajectoriesLocalization.cfg = GameData\Trajectories\Localization\TrajectoriesLocalization.cfg
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bootstrap", "src\Bootstrap\Bootstrap.csproj", "{EC230A5D-640F-4F8E-BE92-3E29B1CC52DB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug 1.3|Any CPU = Debug 1.3|Any CPU
 		Debug|Any CPU = Debug|Any CPU
-		Debug|Mixed Platforms = Debug|Mixed Platforms
-		Debug|x86 = Debug|x86
+		Release 1.3|Any CPU = Release 1.3|Any CPU
 		Release|Any CPU = Release|Any CPU
-		Release|Mixed Platforms = Release|Mixed Platforms
-		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{34928415-4627-4BAD-ABC6-CB5677691E95}.Debug 1.3|Any CPU.ActiveCfg = Debug 1.3|Any CPU
+		{34928415-4627-4BAD-ABC6-CB5677691E95}.Debug 1.3|Any CPU.Build.0 = Debug 1.3|Any CPU
 		{34928415-4627-4BAD-ABC6-CB5677691E95}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{34928415-4627-4BAD-ABC6-CB5677691E95}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{34928415-4627-4BAD-ABC6-CB5677691E95}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
-		{34928415-4627-4BAD-ABC6-CB5677691E95}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
-		{34928415-4627-4BAD-ABC6-CB5677691E95}.Debug|x86.ActiveCfg = Release|Any CPU
-		{34928415-4627-4BAD-ABC6-CB5677691E95}.Debug|x86.Build.0 = Release|Any CPU
+		{34928415-4627-4BAD-ABC6-CB5677691E95}.Release 1.3|Any CPU.ActiveCfg = Release 1.3|Any CPU
+		{34928415-4627-4BAD-ABC6-CB5677691E95}.Release 1.3|Any CPU.Build.0 = Release 1.3|Any CPU
 		{34928415-4627-4BAD-ABC6-CB5677691E95}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{34928415-4627-4BAD-ABC6-CB5677691E95}.Release|Any CPU.Build.0 = Release|Any CPU
-		{34928415-4627-4BAD-ABC6-CB5677691E95}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
-		{34928415-4627-4BAD-ABC6-CB5677691E95}.Release|Mixed Platforms.Build.0 = Release|Any CPU
-		{34928415-4627-4BAD-ABC6-CB5677691E95}.Release|x86.ActiveCfg = Release|Any CPU
-		{34928415-4627-4BAD-ABC6-CB5677691E95}.Release|x86.Build.0 = Release|Any CPU
+		{EC230A5D-640F-4F8E-BE92-3E29B1CC52DB}.Debug 1.3|Any CPU.ActiveCfg = Debug 1.3|Any CPU
+		{EC230A5D-640F-4F8E-BE92-3E29B1CC52DB}.Debug 1.3|Any CPU.Build.0 = Debug 1.3|Any CPU
+		{EC230A5D-640F-4F8E-BE92-3E29B1CC52DB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EC230A5D-640F-4F8E-BE92-3E29B1CC52DB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EC230A5D-640F-4F8E-BE92-3E29B1CC52DB}.Release 1.3|Any CPU.ActiveCfg = Release 1.3|Any CPU
+		{EC230A5D-640F-4F8E-BE92-3E29B1CC52DB}.Release 1.3|Any CPU.Build.0 = Release 1.3|Any CPU
+		{EC230A5D-640F-4F8E-BE92-3E29B1CC52DB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EC230A5D-640F-4F8E-BE92-3E29B1CC52DB}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {8D6B2958-069A-427F-823A-9DC3826CFA60}
 	EndGlobalSection
 EndGlobal

@@ -1,14 +1,36 @@
-## v2.2.2 for KSP 1.4.3
- - 2018-05-xx
+## v2.2.3 for all versions of KSP from 1.3.1 to 1.6.x
+ - 2019-xx-xx
 
 ### Changes since the last release
 
- * ModuleManager updated to v3.0.7
- 
 ### For Developers
  
 ### Known Issues
 
+------------------------------------------------------------------------------------------------------
+
+## v2.2.2 for all versions of KSP from 1.3.1 to 1.6.x
+ - 2019-02-14
+
+### Changes since the last release
+
+ * Support for KSP 1.5.x and 1.6.x
+
+ * Japanese translation updated, thanks to ebigunso
+ * Fix drifting target marker when above 100 km (Issue #140)
+ * Read KSC location for targeting from the game, instead of a hardcoded value
+ * ModuleManager is no longer bundled with Trajectories but it is still a requirement
+ * New release format to allow the facilitation of one download zip for all KSP versions from 1.3.1 onwards.
+ 
+### For Developers
+ 
+ * KSP1.3.1 Back port builds can now be built from the Visual Studio Config selector, see CONTRIBUTING.md 
+ * Support for development on mac now included, also with help in the CONTRIBUTING.md file (Sir Mortimer)
+ * API Change: If `SetTarget`'s alt parameter is null or not given, the altitude is calculated from the surface altitude.
+
+### Known Issues
+
+------------------------------------------------------------------------------------------------------
 
 ## v2.2.1 for KSP 1.4.3
  - 2018-04-28
@@ -19,9 +41,10 @@
  * In-Flight trajectory ground target marker would sometimes appear on screen when behind the camera view, now fixed.
  
 ### For Developers
- 
+
 ### Known Issues
 
+------------------------------------------------------------------------------------------------------
 
 ## v2.2.0 for KSP 1.4.2
  - 2018-04-02
@@ -39,6 +62,7 @@
  * New API functions added `GetTimeTillImpact`, two for the Descent Profile `ProgradeEntry RetrogradeEntry`
    and some for the Trajectories version. `GetVersion GetVersionMajor GetVersionMinor GetVersionPatch`
  
+------------------------------------------------------------------------------------------------------
 
 ## v2.1.0 for KSP 1.4.1
  - 2018-03-21
@@ -59,6 +83,7 @@
 
  * Sometimes In-Flight trajectory ground target marker can cover entire screen when camera is close.
 
+------------------------------------------------------------------------------------------------------
 
 ## v2.0.0 for KSP 1.3.1
  - 2018-02-15
@@ -87,6 +112,7 @@
 
  * Sometimes In-Flight trajectory ground target marker can cover entire screen when camera is close.
 
+------------------------------------------------------------------------------------------------------
 
 ## v1.7.1 for KSP 1.3.1
  - 2017-10-13
@@ -126,6 +152,7 @@
 
   * In-Flight trajectory for non-atmospheric trajectories is incorrect and jumpy
 
+------------------------------------------------------------------------------------------------------
 
 ## v1.6.8 for KSP 1.3.0
 
@@ -139,6 +166,7 @@
   * Trajectory prediction is still fundamentally incorrect. See Issue #84.
   * In-Flight trajectory for non-atmospheric trajectories is jerky and jumpy.
 
+------------------------------------------------------------------------------------------------------
 
 ## v1.6.7 for KSP 1.3.0
 
