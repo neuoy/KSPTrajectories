@@ -1,4 +1,13 @@
 
+## v2.2.4 for all versions of KSP from 1.3.1 to 1.7.2
+ - 20xx-xx-xx
+
+### Changes since the last release
+
+### For Developers
+ 
+### Known Issues
+
 ## v2.2.3 for all versions of KSP from 1.3.1 to 1.7.2
  - 2019-06-17
 
