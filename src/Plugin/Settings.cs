@@ -94,7 +94,7 @@ namespace Trajectories
         [Persistent(Default: 15)]
         public int MaxFramesPerPatch { get; set; }
 
-        [Persistent(Default: true)]
+        [Persistent(Default: false)]
         public bool UseCache { get; set; }
 
         [Persistent(Default: true)]
