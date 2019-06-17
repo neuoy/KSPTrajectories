@@ -1,7 +1,11 @@
-## v2.2.3 for all versions of KSP from 1.3.1 to 1.6.x
- - 2019-xx-xx
+
+## v2.2.3 for all versions of KSP from 1.3.1 to 1.7.2
+ - 2019-06-17
 
 ### Changes since the last release
+
+ - Recompiled for KSP 1.7.2
+ - Forces Cache is now disabled by default
 
 ### For Developers
  
