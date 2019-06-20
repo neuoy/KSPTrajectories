@@ -32,6 +32,7 @@ namespace Trajectories
         {
             public object DefaultValue;
             public Persistent(object Default) { DefaultValue = Default; }
+            public Persistent(double x, double y, double z) { DefaultValue = new Vector3d(x,y,z); }
         }
 
         public static Settings fetch { get { settings_ = settings_ ?? new Settings(); return settings_; } }
@@ -99,6 +100,9 @@ namespace Trajectories
 
         [Persistent(Default: true)]
         public bool DefaultDescentIsRetro { get; set; }
+
+        [Persistent(1d,1d,1d)]
+        public Vector3d GlobalCorrectionFactor { get; set; }
         #endregion
 
         private KSP.IO.PluginConfiguration config;

@@ -104,7 +104,10 @@ namespace Trajectories
             return "[" + v.x.ToString(format) + ", " + v.y.ToString(format) + ", " + v.z.ToString(format) + "]";
         }
 
-
+        public static double Clamp(double value, double min, double max)
+        {
+            return Math.Max(min, Math.Min(value, max));
+        }
 
         // --------------------------------------------------------------------------
         // --- TIME -----------------------------------------------------------------

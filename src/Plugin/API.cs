@@ -194,6 +194,22 @@ namespace Trajectories
         }
 
         /// <summary>
+        /// Returns the planned orientation as Quaternion for attitude control and vector operations or Null if no active vessel or set target.
+        /// </summary>
+        public static Quaternion? PlannedOrientation()
+        {
+            if (FlightGlobals.ActiveVessel != null && Trajectory.Target.Body != null)
+            {
+
+                Vector3d pos = FlightGlobals.ActiveVessel.GetWorldPos3D() - Trajectory.Target.Body.position;
+                Vector3d vel = FlightGlobals.ActiveVessel.obt_velocity - Trajectory.Target.Body.getRFrmVel(Trajectory.Target.Body.position + pos);
+                return DescentProfile.fetch.GetRealOrientation(Trajectory.Target.Body, pos, vel);
+            }
+            else
+                return null;
+        }
+
+        /// <summary>
         /// Returns the corrected direction or Null if no active vessel or set target.
         /// </summary>
         public static Vector3? CorrectedDirection()
@@ -268,6 +284,26 @@ namespace Trajectories
                     DescentProfile.fetch.Save();
                 }
             }
+        }
+
+        /// <summary>
+        /// lets controller slightly increase or decrease angle settings
+        /// actually manipulates slider as they are centered on 0 and scaling will never affect pro / retrograde
+        /// </summary>
+        public static void rescaleAngle(float factor)
+        {
+            DescentProfile.fetch.entry.SliderPos *= factor;
+            DescentProfile.fetch.highAltitude.SliderPos *= factor;
+            DescentProfile.fetch.lowAltitude.SliderPos *= factor;
+            DescentProfile.fetch.finalApproach.SliderPos *= factor;
+        }
+
+        /// <summary>
+        /// Clear current calculation, can be called if known outside changes make current values worthless
+        /// </summary>
+        public static void invalidateCalculation()
+        {
+            Trajectory.fetch.InvalidateCalculation();
         }
 
         /// <summary>

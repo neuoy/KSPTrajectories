@@ -242,6 +242,8 @@ namespace Trajectories
 
         public List<Patch> Patches { get { return patches_; } }
 
+        public void InvalidateCalculation() { patches_.Clear(); maxAccel_ = 0; }
+
         private Stopwatch incrementTime_;
 
         private IEnumerator<bool> partialComputation_;
@@ -286,6 +288,21 @@ namespace Trajectories
         }
 
 #if DEBUG && DEBUG_TELEMETRY
+        private void addVector(string name)
+        {
+            Telemetry.AddChannel<double>(name);
+            Telemetry.AddChannel<double>(name + ".x");
+            Telemetry.AddChannel<double>(name + ".y");
+            Telemetry.AddChannel<double>(name + ".z");
+        }
+
+        private void sendVector(string name, Vector3d value)
+        {
+            Telemetry.Send(name, value.magnitude);
+            Telemetry.Send(name + ".x", value.x);
+            Telemetry.Send(name + ".y", value.y);
+            Telemetry.Send(name + ".z", value.z);
+        }
 
         // Awake is called only once when the script instance is being loaded. Used in place of the constructor for initialization.
         public void Awake()
@@ -293,10 +310,9 @@ namespace Trajectories
             // Add telemetry channels for real and predicted variable values
             Telemetry.AddChannel<double>("ut");
             Telemetry.AddChannel<double>("altitude");
-            Telemetry.AddChannel<double>("airspeed");
+            addVector("airVelocity");
             Telemetry.AddChannel<double>("aoa");
-            //Telemetry.AddChannel<float>("drag");
-
+            
             Telemetry.AddChannel<double>("density");
             //Telemetry.AddChannel<double>("density_calc");
             //Telemetry.AddChannel<double>("density_calc_precise");
@@ -304,30 +320,14 @@ namespace Trajectories
             //Telemetry.AddChannel<double>("temperature");
             //Telemetry.AddChannel<double>("temperature_calc");
 
-            Telemetry.AddChannel<double>("force_actual");
-            Telemetry.AddChannel<double>("force_actual.x");
-            Telemetry.AddChannel<double>("force_actual.y");
-            Telemetry.AddChannel<double>("force_actual.z");
-            //Telemetry.AddChannel<double>("force_total");
-            Telemetry.AddChannel<double>("force_predicted");
-            Telemetry.AddChannel<double>("force_predicted.x");
-            Telemetry.AddChannel<double>("force_predicted.y");
-            Telemetry.AddChannel<double>("force_predicted.z");
+            addVector("force_actual");
+            addVector("force_predicted");
+
+            //addVector("force_total");
+            
             //Telemetry.AddChannel<double>("force_predicted_cache");
             //Telemetry.AddChannel<double>("force_reference");
-            if (FlightGlobals.ActiveVessel != null)
-            {
-                foreach (TrajectoriesDebug partDebug in FlightGlobals.ActiveVessel.FindPartModulesImplementing<TrajectoriesDebug>())
-                {
-                    partDebug.channelPrefix = partDebug.part.partName + "_" + partDebug.part.persistentId;
-                    UnityEngine.Debug.Log("would add " + partDebug.channelPrefix + " to trajectory output");
-                    Telemetry.AddChannel<double>(partDebug.channelPrefix + "_Lift");
-                    Telemetry.AddChannel<double>(partDebug.channelPrefix + "_Drag");
-                    Telemetry.AddChannel<double>(partDebug.channelPrefix + "_actLift");
-                    Telemetry.AddChannel<double>(partDebug.channelPrefix + "_actDrag");
-                }
-            } else
-                UnityEngine.Debug.Log("Traj Debug: onAwake has no activeVessel");
+            
         }
 
         public void FixedUpdate()
@@ -338,7 +338,6 @@ namespace Trajectories
         private static Vector3d PreviousFramePos;
         private static Vector3d PreviousFrameVelocity;
         private static double PreviousFrameTime = 0;
-
 
         public void DebugTelemetry()
         {
@@ -368,86 +367,72 @@ namespace Trajectories
                     Vector3d gravityForce = PreviousFramePos * (-body.gravParameter / (R * R * R) * attachedVessel.totalMass);
 
                     Quaternion inverseRotationFix = body.inverseRotation ?
-                        Quaternion.AngleAxis((float)(body.angularVelocity.magnitude / Math.PI * 180.0 * dt), Vector3.up)
+                        Quaternion.AngleAxis((float)(body.angularVelocity.magnitude * Mathf.Rad2Deg * dt), Vector3.up)
                         : Quaternion.identity;
                     Vector3d TotalForce = (bodySpaceVelocity - inverseRotationFix * PreviousFrameVelocity) * (attachedVessel.totalMass / dt);
                     TotalForce += bodySpaceVelocity * (dt * 0.000015); // numeric precision fix
                     Vector3d ActualForce = TotalForce - gravityForce;
 
                     Transform vesselTransform = attachedVessel.ReferenceTransform;
-                    Vector3d vesselBackward = (Vector3d)(-vesselTransform.up.normalized);
-                    Vector3d vesselForward = -vesselBackward;
-                    Vector3d vesselUp = (Vector3d)(-vesselTransform.forward.normalized);
-                    Vector3d vesselRight = Vector3d.Cross(vesselUp, vesselBackward).normalized;
-                    double AoA = Math.Acos(Vector3d.Dot(airVelocity.normalized, vesselForward.normalized));
-                    if (Vector3d.Dot(airVelocity, vesselUp) > 0)
-                        AoA = -AoA;
 
-                    Vector3d predictedForce = aerodynamicModel_.ComputeForces(altitudeAboveSea, airVelocity, vesselUp, AoA);
+                    Quaternion velocityRotation = Quaternion.LookRotation(-bodySpacePosition, airVelocity).Inverse();
+                    
+                    double AoA = Math.Acos(Vector3d.Dot(airVelocity.normalized, vesselTransform.up));
+                    if (Vector3d.Dot(airVelocity, vesselTransform.forward) < 0)
+                        AoA = -AoA;
+                    VesselAerodynamicModel.DebugParts = true;
+                    Vector3d predictedForce = aerodynamicModel_.ComputeForces(/*30000 */altitudeAboveSea, airVelocity, bodySpacePosition, /*DescentProfile.fetch.highAltitude.GetAngleOfAttack(bodySpacePosition,bodySpaceVelocity) */ AoA, applyScale: false );
                     VesselAerodynamicModel.DebugParts = false;
                     //VesselAerodynamicModel.Verbose = true;
-                    Vector3d predictedForceWithCache = aerodynamicModel_.GetForces(body, bodySpacePosition, airVelocity, AoA);
+                    //Vector3d predictedForceWithCache = aerodynamicModel_.GetForces(body, bodySpacePosition, airVelocity, AoA);
                     //VesselAerodynamicModel.Verbose = false;
-
-                    Vector3d localTotalForce = new Vector3d(
-                        Vector3d.Dot(TotalForce, vesselRight),
-                        Vector3d.Dot(TotalForce, vesselUp),
-                        Vector3d.Dot(TotalForce, vesselBackward));
-                    Vector3d localActualForce = new Vector3d(
-                        Vector3d.Dot(ActualForce, vesselRight),
-                        Vector3d.Dot(ActualForce, vesselUp),
-                        Vector3d.Dot(ActualForce, vesselBackward));
-                    Vector3d localPredictedForce = new Vector3d(
-                        Vector3d.Dot(predictedForce, vesselRight),
-                        Vector3d.Dot(predictedForce, vesselUp),
-                        Vector3d.Dot(predictedForce, vesselBackward));
-                    Vector3d localPredictedForceWithCache = new Vector3d(
-                        Vector3d.Dot(predictedForceWithCache, vesselRight),
-                        Vector3d.Dot(predictedForceWithCache, vesselUp),
-                        Vector3d.Dot(predictedForceWithCache, vesselBackward));
 
                     Telemetry.Send("ut", now);
                     Telemetry.Send("altitude", attachedVessel.altitude);
 
-                    Telemetry.Send("airspeed", Math.Floor(airVelocity.magnitude));
-                    Telemetry.Send("aoa", (AoA * 180.0 / Math.PI));
+                    sendVector("airVelocity", velocityRotation * airVelocity);
 
-                    Telemetry.Send("force_actual", localActualForce.magnitude);
-                    Telemetry.Send("force_actual.x", localActualForce.x);
-                    Telemetry.Send("force_actual.y", localActualForce.y);
-                    Telemetry.Send("force_actual.z", localActualForce.z);
+                    Telemetry.Send("aoa", (AoA * Mathf.Rad2Deg));
 
+                    Vector3 localActualForce = velocityRotation * ActualForce;
+                    Vector3 localPredictedForce = velocityRotation * predictedForce;
+                    bool idleFlight = attachedVessel.ctrlState.mainThrottle == 0
+                                        && attachedVessel.FindPartModulesImplementing<ModuleRCS>().Any(p => !p.rcs_active);
 
-                    //Telemetry.Send("force_total", localTotalForce.magnitude);
-                    //Telemetry.Send("force_total.x", localTotalForce.x);
-                    //Telemetry.Send("force_total.y", localTotalForce.y);
-                    //Telemetry.Send("force_total.z", localTotalForce.z);
+                    if (altitudeAboveSea < body.atmosphereDepth && idleFlight )
+                    {
+                        Vector3d newScale = Vector3d.one;
+                        //clamp correction factor depending on altitude: 1 at entry, between 0 and 2 at ground
+                        //this allows for better adaption close to ground while being stable at high altitudes
+                        double min = altitudeAboveSea / body.atmosphereDepth;
+                        double max = 2 - min;
 
-                    Telemetry.Send("force_predicted", localPredictedForce.magnitude);
-                    Telemetry.Send("force_predicted.x", localPredictedForce.x);
-                    Telemetry.Send("force_predicted.y", localPredictedForce.y);
-                    Telemetry.Send("force_predicted.z", localPredictedForce.z);
+                        if (Math.Abs(localPredictedForce.x) > 0.1 )
+                            newScale.x = Util.Clamp(localActualForce.x / localPredictedForce.x, min, max);
+                        if (Math.Abs(localPredictedForce.y) > 0.1 )
+                            newScale.y = Util.Clamp(localActualForce.y / localPredictedForce.y, min, max);
+                        if (Math.Abs(localPredictedForce.z) > 0.1 )
+                            newScale.z = Util.Clamp(localActualForce.z / localPredictedForce.z, min, max);
 
-                    //Telemetry.Send("force_predicted_cache", localPredictedForceWithCache.magnitude);
-                    //Telemetry.Send("force_predicted_cache.x", localPredictedForceWithCache.x);
-                    //Telemetry.Send("force_predicted_cache.y", localPredictedForceWithCache.y);
-                    //Telemetry.Send("force_predicted_cache.z", localPredictedForceWithCache.z);
+                        // forces can jump somewhat so only move current factor slowly
+                        Settings.fetch.GlobalCorrectionFactor = Vector3d.Lerp(Settings.fetch.GlobalCorrectionFactor, newScale, 0.05);
+                        //UnityEngine.Debug.Log(String.Format("Trajectories adjusting global Correction to {0}", Settings.fetch.GlobalCorrectionFactor));
+                    }
+                    else
+                    {
+                        Settings.fetch.GlobalCorrectionFactor = Vector3d.one;
+                        //UnityEngine.Debug.Log(String.Format("Trajectories adjusting global Correction to {0}", Settings.fetch.GlobalCorrectionFactor));
+                    }
 
-                    //Telemetry.Send("force_reference", referenceForce.magnitude);
-                    //Telemetry.Send("force_reference.x", referenceForce.x);
-                    //Telemetry.Send("force_reference.y", referenceForce.y);
-                    //Telemetry.Send("force_reference.z", referenceForce.z);
+                    // sendVector("force_total",velocityRotation * TotalForce);
+                    sendVector("force_actual", localActualForce);
+                    sendVector("force_predicted", velocityRotation * predictedForce);
 
-                    //Telemetry.Send("velocity.x", bodySpaceVelocity.x);
-                    //Telemetry.Send("velocity.y", bodySpaceVelocity.y);
-                    //Telemetry.Send("velocity.z", bodySpaceVelocity.z);
 
                     //Vector3d velocity_pos = (bodySpacePosition - PreviousFramePos) / dt;
                     //Telemetry.Send("velocity_pos.x", velocity_pos.x);
                     //Telemetry.Send("velocity_pos.y", velocity_pos.y);
                     //Telemetry.Send("velocity_pos.z", velocity_pos.z);
-
-                    Telemetry.Send("drag", attachedVessel.rootPart.rb.drag);
 
                     Telemetry.Send("density", attachedVessel.atmDensity);
                     //Telemetry.Send("density_calc", StockAeroUtil.GetDensity(altitudeAboveSea, body));
@@ -455,19 +440,6 @@ namespace Trajectories
 
                     //Telemetry.Send("temperature", attachedVessel.atmosphericTemperature);
                     //Telemetry.Send("temperature_calc", StockAeroUtil.GetTemperature(attachedVessel.GetWorldPos3D(), body));
-
-                    foreach (TrajectoriesDebug partDebug in attachedVessel.FindPartModulesImplementing<TrajectoriesDebug>())
-                    {
-                        if (partDebug.channelPrefix != null)
-                        {
-                            Telemetry.Send(partDebug.channelPrefix + "_Lift", partDebug.Lift);
-                            Telemetry.Send(partDebug.channelPrefix + "_Drag", partDebug.Drag);
-                            Telemetry.Send(partDebug.channelPrefix + "_actLift", partDebug.part.bodyLiftScalar);
-                            Telemetry.Send(partDebug.channelPrefix + "_actDrag", partDebug.part.dragScalar);
-                        }
-
-                    }
-
 
                     PreviousFrameVelocity = bodySpaceVelocity;
                     PreviousFramePos = bodySpacePosition;

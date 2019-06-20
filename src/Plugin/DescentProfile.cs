@@ -75,7 +75,7 @@ namespace Trajectories
                 get => sliderPos;
                 set
                 {
-                    sliderPos = value;
+                    sliderPos = Mathf.Clamp(value, -1f, 1f);
                     Angle = (fetch.RetrogradeEntry ? Math.PI : 0d ) + Math.Sign(value) * 0.5 * value * value * Math.PI; // This helps to have high precision near 0/180° while still allowing big angles
                 }
             }
@@ -333,39 +333,38 @@ namespace Trajectories
             double altitude = position.magnitude - body.Radius;
             double altitudeRatio = body.atmosphere ? altitude / body.atmosphereDepth : 0;
 
-            Node a, b;
-            double aCoeff;
+            double dLerp( double a, double b, double t) { return a + (b - a) * Mathf.Clamp01((float)t); }
 
-            if (altitudeRatio > 0.5)  // Atmospheric entry
+            if (altitudeRatio > 0.4)  // Atmospheric entry -> high Altitude switch from 0.6 to 0.5
             {
-                a = entry;
-                b = highAltitude;
-                aCoeff = Math.Min((altitudeRatio - 0.5) * 2.0, 1.0);
+                return dLerp(highAltitude.GetAngleOfAttack(position, velocity), entry.GetAngleOfAttack(position, velocity), (altitudeRatio - 0.5) * 10f);
             }
-            else if (altitudeRatio > 0.25)  // High Altitude
+            else if (altitudeRatio > 0.2)  // High Altitude -> low Altitude from 0.35 to 0.25
             {
-                a = highAltitude;
-                b = lowAltitude;
-                aCoeff = altitudeRatio * 4.0 - 1.0;
+                return dLerp(lowAltitude.GetAngleOfAttack(position, velocity), highAltitude.GetAngleOfAttack(position, velocity), (altitudeRatio - 0.25) * 10f);
             }
-            else if (altitudeRatio > 0.05)  // Low Altitude
+            else  // Low Altitude -> final from 0.10 to 0.05
+                  // returns entry for non atmospheric body
             {
-                a = lowAltitude;
-                b = finalApproach;
-                aCoeff = altitudeRatio * 5.0 - 0.25;
+                return dLerp(entry.GetAngleOfAttack(position, velocity), lowAltitude.GetAngleOfAttack(position, velocity), (altitudeRatio - 0.05) * 20f);
+            }
+        }
 
-                aCoeff = 1.0 - aCoeff;
-                aCoeff = 1.0 - aCoeff * aCoeff;
-            }
-            else    // Final Approach or Non-Atmospheric Body
+        /// <summary>
+        /// Computes the orientation Quaternion for API (intended for MechJeb).
+        /// Note: we are using Unity directions, not KSP swapped forward/up stuff
+        /// </summary>
+        public Quaternion GetRealOrientation(CelestialBody body, Vector3d position, Vector3d velocity)
+        {
+            if (ProgradeEntry)
             {
-                return finalApproach.GetAngleOfAttack(position, velocity);
+                return Quaternion.AngleAxis((float) GetAngleOfAttack(body, position, velocity) * Mathf.Rad2Deg, Vector3.right);
             }
-
-            double aAoA = a.GetAngleOfAttack(position, velocity);
-            double bAoA = b.GetAngleOfAttack(position, velocity);
-
-            return aAoA * aCoeff + bAoA * (1.0 - aCoeff);
+            else
+            {
+                //retrograde is actually 180° rotation around Vesselup to keep orientation and then pitch for remaining AoA, not pitch by nearly 180°
+                return Quaternion.AngleAxis((float) GetAngleOfAttack(body, position, velocity) * Mathf.Rad2Deg - 180f, Vector3.right) * Quaternion.AngleAxis(180f, Vector3.up);
+            }
         }
     }
 }

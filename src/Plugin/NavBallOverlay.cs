@@ -152,6 +152,8 @@ namespace Trajectories
 
             float plannedAngleOfAttack = (float)DescentProfile.fetch.GetAngleOfAttack(Trajectory.Target.Body, pos, vel);
 
+            if (DescentProfile.fetch.RetrogradeEntry) velUp = -velUp; // Quickfix orientation for retrograde, for real rotations see VesselAerodynamicsModel
+
             return vel.normalized * Mathf.Cos(plannedAngleOfAttack) + velUp * Mathf.Sin(plannedAngleOfAttack);
         }
 
