@@ -21,6 +21,7 @@
 */
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using KSP.Localization;
 using UnityEngine;
@@ -123,6 +124,8 @@ namespace Trajectories
         public Node lowAltitude;
         public Node finalApproach;
 
+        public SortedList<double, (Node higher, Node lower, double transition)> NodeList;
+
         public bool ProgradeEntry { get { return !RetrogradeEntry; } }
 
         public bool RetrogradeEntry { get; set; }
@@ -157,12 +160,21 @@ namespace Trajectories
             finalApproach = null;
         }
 
+        class revSort : IComparer<double> { public int Compare(double x, double y) { return y.CompareTo(x);  } }
+
         private void Allocate()
         {
             entry = new Node(Localizer.Format("#autoLOC_Trajectories_Entry"), Localizer.Format("#autoLOC_Trajectories_EntryDesc"));
             highAltitude = new Node(Localizer.Format("#autoLOC_Trajectories_High"), Localizer.Format("#autoLOC_Trajectories_HighDesc"));
             lowAltitude = new Node(Localizer.Format("#autoLOC_Trajectories_Low"), Localizer.Format("#autoLOC_Trajectories_LowDesc"));
             finalApproach = new Node(Localizer.Format("#autoLOC_Trajectories_Ground"), Localizer.Format("#autoLOC_Trajectories_GroundDesc"));
+            // stores connection between the different settings
+            NodeList = new SortedList<double, (Node higher, Node lower, double transition)>(new revSort())
+            {
+                { 0.5,  (entry,        highAltitude,  10) },
+                { 0.25, (highAltitude, lowAltitude,   10) },
+                { 0.0,  (lowAltitude,  finalApproach, 10) }
+            };
         }
 
         public void Reset(double AoA = 0)
@@ -333,21 +345,16 @@ namespace Trajectories
             double altitude = position.magnitude - body.Radius;
             double altitudeRatio = body.atmosphere ? altitude / body.atmosphereDepth : 0;
 
-            double dLerp( double a, double b, double t) { return a + (b - a) * Mathf.Clamp01((float)t); }
+            foreach (var conf in NodeList)
+            {
+                if (conf.Key <= altitudeRatio)
+                    return Util.dLerp(conf.Value.lower.GetAngleOfAttack(position, velocity),
+                                      conf.Value.higher.GetAngleOfAttack(position, velocity),
+                                      (altitudeRatio - conf.Key) * conf.Value.transition);
+            }
 
-            if (altitudeRatio > 0.4)  // Atmospheric entry -> high Altitude switch from 0.6 to 0.5
-            {
-                return dLerp(highAltitude.GetAngleOfAttack(position, velocity), entry.GetAngleOfAttack(position, velocity), (altitudeRatio - 0.5) * 10f);
-            }
-            else if (altitudeRatio > 0.2)  // High Altitude -> low Altitude from 0.35 to 0.25
-            {
-                return dLerp(lowAltitude.GetAngleOfAttack(position, velocity), highAltitude.GetAngleOfAttack(position, velocity), (altitudeRatio - 0.25) * 10f);
-            }
-            else  // Low Altitude -> final from 0.10 to 0.05
-                  // returns entry for non atmospheric body
-            {
-                return dLerp(entry.GetAngleOfAttack(position, velocity), lowAltitude.GetAngleOfAttack(position, velocity), (altitudeRatio - 0.05) * 20f);
-            }
+            return 0; // should never happen
+           
         }
 
         /// <summary>

@@ -109,6 +109,11 @@ namespace Trajectories
             return Math.Max(min, Math.Min(value, max));
         }
 
+        public static double dLerp(double a, double b, double t)
+        {
+            return a + (b - a) * Clamp(t,0d,1d);
+        }
+
         // --------------------------------------------------------------------------
         // --- TIME -----------------------------------------------------------------
 

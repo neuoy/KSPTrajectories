@@ -287,16 +287,76 @@ namespace Trajectories
         }
 
         /// <summary>
-        /// lets controller slightly increase or decrease angle settings
-        /// actually manipulates slider as they are centered on 0 and scaling will never affect pro / retrograde
+        /// provide read/write access to current or next angle except for entry
+        /// due to thin air the entry phase is not efficient to control target, so we ignore it
         /// </summary>
-        public static void rescaleAngle(float factor)
+        public static double? AirAngle
         {
-            DescentProfile.fetch.entry.SliderPos *= factor;
-            DescentProfile.fetch.highAltitude.SliderPos *= factor;
-            DescentProfile.fetch.lowAltitude.SliderPos *= factor;
-            DescentProfile.fetch.finalApproach.SliderPos *= factor;
+            get
+            {
+                if (FlightGlobals.ActiveVessel != null && Trajectory.Target.Body != null)
+                {
+                    Vector3d pos = FlightGlobals.ActiveVessel.GetWorldPos3D() - Trajectory.Target.Body.position;
+                    Vector3d vel = FlightGlobals.ActiveVessel.obt_velocity - Trajectory.Target.Body.getRFrmVel(Trajectory.Target.Body.position + pos);
+                    double altitude = pos.magnitude - Trajectory.Target.Body.Radius;
+                    double altitudeRatio = Trajectory.Target.Body.atmosphere ? altitude / Trajectory.Target.Body.atmosphereDepth : 0;
+
+                    foreach (var conf in DescentProfile.fetch.NodeList)
+                    {
+                        if (conf.Key <= altitudeRatio && conf.Value.higher != DescentProfile.fetch.entry)
+                            return Mathf.Rad2Deg * Util.dLerp(conf.Value.lower.GetAngleOfAttack(pos, vel),
+                                                              conf.Value.higher.GetAngleOfAttack(pos, vel),
+                                                              (altitudeRatio - conf.Key) * conf.Value.transition);
+                    }
+                    
+                }
+
+                return null;
+            }
+            set
+            {
+                if (value.HasValue && FlightGlobals.ActiveVessel != null && Trajectory.Target.Body != null)
+                {
+                    double newvalue = Mathf.Deg2Rad * (double)value;
+                    Vector3d pos = FlightGlobals.ActiveVessel.GetWorldPos3D() - Trajectory.Target.Body.position;
+                    double altitude = pos.magnitude - Trajectory.Target.Body.Radius;
+                    double altitudeRatio = Trajectory.Target.Body.atmosphere ? altitude / Trajectory.Target.Body.atmosphereDepth : 0;
+
+                    foreach (var conf in DescentProfile.fetch.NodeList)
+                    {
+                        if (conf.Key <= altitudeRatio && conf.Value.higher != DescentProfile.fetch.entry)
+                        {
+                            conf.Value.higher.Angle = newvalue;
+                            if ((altitudeRatio - conf.Key)*conf.Value.transition < 1)
+                                conf.Value.lower.Angle = newvalue;
+                        }
+                    }
+
+                }
+            }
         }
+
+        /// <summary>
+        /// are we below entry phase ?
+        /// </summary>
+        public static bool isBelowEntry()
+        {
+            if (FlightGlobals.ActiveVessel != null && Trajectory.Target.Body != null)
+            {
+
+                Vector3d pos = FlightGlobals.ActiveVessel.GetWorldPos3D() - Trajectory.Target.Body.position;
+                Vector3d vel = FlightGlobals.ActiveVessel.obt_velocity - Trajectory.Target.Body.getRFrmVel(Trajectory.Target.Body.position + pos);
+                double altitude = pos.magnitude - Trajectory.Target.Body.Radius;
+                double altitudeRatio = Trajectory.Target.Body.atmosphere ? altitude / Trajectory.Target.Body.atmosphereDepth : 0;
+
+                return DescentProfile.fetch.NodeList.Any(c => c.Value.higher == DescentProfile.fetch.entry && (altitudeRatio - c.Key)*c.Value.transition <= 1);
+
+                
+            }
+            else
+                return false; // neither true or false make sense, but failing condition is good idea
+        }
+
 
         /// <summary>
         /// Clear current calculation, can be called if known outside changes make current values worthless
