@@ -25,6 +25,7 @@ rem if built version is greater than KSP 1.3.1 then we assume latest version and
 IF %KSPversion% GTR 13 xcopy /y "%initialWD%\%TargetName%%KSPversion%.bin" "%initialWD%\%TargetName%14.bin*" > nul
 IF %KSPversion% GTR 13 xcopy /y "%initialWD%\%TargetName%%KSPversion%.bin" "%initialWD%\%TargetName%15.bin*" > nul
 IF %KSPversion% GTR 13 xcopy /y "%initialWD%\%TargetName%%KSPversion%.bin" "%initialWD%\%TargetName%16.bin*" > nul
+IF %KSPversion% GTR 13 xcopy /y "%initialWD%\%TargetName%%KSPversion%.bin" "%initialWD%\%TargetName%17.bin*" > nul
 rem delete Trajectories.bin if it exists
 IF EXIST "%initialWD%\%TargetName%.bin" del "%initialWD%\%TargetName%.bin"
 rem copy Bootstrap bins from build directory to GameData

@@ -19,7 +19,7 @@ namespace Trajectories
         {
             get
             {
-                if (_material == null) _material = new Material(Shader.Find("Particles/Additive"));
+                if (_material == null) _material = new Material(Shader.Find("Legacy Shaders/Particles/Additive"));
                 return _material;
             }
         }
