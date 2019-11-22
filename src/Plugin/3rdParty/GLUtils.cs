@@ -7,6 +7,7 @@ the GNU General Public License (GNU GPL), version 3, revision
 date 29 June 2007.
 */
 
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -19,7 +20,8 @@ namespace Trajectories
         {
             get
             {
-                if (_material == null) _material = new Material(Shader.Find("Particles/Additive"));
+                if (_material == null) _material = new Material(Shader.Find("KSP/Particles/Additive"));
+                if(_material == null) Debug.Log("[Trajectories] CRITICAL: GLUtils._material is null");
                 return _material;
             }
         }
@@ -70,18 +72,37 @@ namespace Trajectories
             , c, map);
         }
 
-        public static void GLTriangle(Vector3d worldVertices1, Vector3d worldVertices2, Vector3d worldVertices3, Color c, bool map)
+        public static void GLTriangle(
+                Vector3d worldVertices1,
+                Vector3d worldVertices2,
+                Vector3d worldVertices3,
+                Color    c,
+                bool     map
+            )
         {
-            GL.PushMatrix();
-            material.SetPass(0);
-            GL.LoadOrtho();
-            GL.Begin(GL.TRIANGLES);
-            GL.Color(c);
-            GLVertex(worldVertices1, map);
-            GLVertex(worldVertices2, map);
-            GLVertex(worldVertices3, map);
-            GL.End();
-            GL.PopMatrix();
+            try
+            {
+                GL.PushMatrix();
+                material?.SetPass(0);
+                GL.LoadOrtho();
+                GL.Begin(GL.TRIANGLES);
+                GL.Color(c);
+                GLVertex(
+                        worldVertices1,
+                        map
+                    );
+                GLVertex(
+                        worldVertices2,
+                        map
+                    );
+                GLVertex(
+                        worldVertices3,
+                        map
+                    );
+                GL.End();
+                GL.PopMatrix();
+            }
+            catch{}
         }
 
         public static void GLVertex(Vector3d worldPosition, bool map = false)
@@ -129,29 +150,55 @@ namespace Trajectories
 
         //If dashed = false, draws 0-1-2-3-4-5...
         //If dashed = true, draws 0-1 2-3 4-5...
-        public static void DrawPath(CelestialBody mainBody, List<Vector3d> points, Color c, bool map, bool dashed = false)
+        public static void DrawPath(
+                CelestialBody  mainBody,
+                List<Vector3d> points,
+                Color          c,
+                bool           map,
+                bool           dashed = false
+            )
         {
-            GL.PushMatrix();
-            material.SetPass(0);
-            GL.LoadPixelMatrix();
-            GL.Begin(GL.LINES);
-            GL.Color(c);
-
-            Vector3d camPos = map ? ScaledSpace.ScaledToLocalSpace(PlanetariumCamera.Camera.transform.position) : (Vector3d)FlightCamera.fetch.mainCamera.transform.position;
-
-            int step = (dashed ? 2 : 1);
-            for (int i = 0; i < points.Count - 1; i += step)
+            try
             {
-                if (!IsOccluded(points[i], mainBody, camPos) && !IsOccluded(points[i + 1], mainBody, camPos))
+                GL.PushMatrix();
+                material?.SetPass(0);
+                GL.LoadPixelMatrix();
+                GL.Begin(GL.LINES);
+                GL.Color(c);
+
+                Vector3d camPos = map
+                                      ? ScaledSpace.ScaledToLocalSpace(PlanetariumCamera.Camera.transform.position)
+                                      : (Vector3d) FlightCamera.fetch.mainCamera.transform.position;
+
+                int step = (dashed ? 2 : 1);
+                for (int i = 0; i < points.Count - 1; i += step)
                 {
-                    GLPixelLine(points[i], points[i + 1], map);
+                    if (!IsOccluded(
+                                points[i],
+                                mainBody,
+                                camPos
+                            )
+                     && !IsOccluded(
+                                points[i + 1],
+                                mainBody,
+                                camPos
+                            ))
+                    {
+                        GLPixelLine(
+                                points[i],
+                                points[i + 1],
+                                map
+                            );
+                    }
                 }
+
+                GL.End();
+                GL.PopMatrix();
             }
-            GL.End();
-            GL.PopMatrix();
+            catch { }
         }
 
-#if false
+        #if false
         public static void DrawOrbit(Orbit o, Color c)
         {
             List<Vector3d> points = new List<Vector3d>();
