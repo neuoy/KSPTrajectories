@@ -1,8 +1,8 @@
 Are you here because you want to:
 
- * Report a Bug?  Click here.
- * Request a feature? Click here.
- * Jump in and contribute? Click here.
+ * Report a Bug?  Click [here](#how-to-report-bugs).
+ * Request a feature? Click [here](#how-to-suggest-features).
+ * Jump in and contribute? Click [here](#how-to-contribute).
 
 Table of Contents
 =================
@@ -352,7 +352,7 @@ And for KSP1.3.1 you can find out which Unity version your current KSP install i
 In this case, the Unity version for your KSP version is 5.4.0p4.
 
 
-The Unity Editor for **KSP v1.4.x** is **Unity v2017.1.3p1** and can be downloaded here: [UnityDownloadAssistant-2017.1.3p1.exe](https://beta.unity3d.com/download/02d73f71d3bd/UnityDownloadAssistant-2017.1.3p1.exe )
+The Unity Editor for **KSP v1.4.x to 1.7.x** is **Unity v2017.1.3p1** and can be downloaded here: [UnityDownloadAssistant-2017.1.3p1.exe](https://beta.unity3d.com/download/02d73f71d3bd/UnityDownloadAssistant-2017.1.3p1.exe )
 
 The Unity Editor for **KSP v1.3.1** is **Unity v5.4.0.p4** and can be downloaded here: [UnityDownloadAssistant-5.4.0p4.exe](https://beta.unity3d.com/download/b15b5ae035b7/UnityDownloadAssistant-5.4.0p4.exe )
 
@@ -374,7 +374,7 @@ If it is not, you download and install by using the **Tools->Extensions and Upda
 Please install the [Trailing Whitespace Visualizer Plugin](https://marketplace.visualstudio.com/items?itemName=MadsKristensen.TrailingWhitespaceVisualizer)
 and make sure that you don't add trailing whitespace.
 
-The Trajectories repository contains a file called `.editorconfig` which should configure your editor automatically if you use Visual Studio 2017.
+The Trajectories repository contains a file called `.editorconfig` which should configure your editor automatically if you use Visual Studio 2017 and up.
 If you use Visual Studio 2015 or older, please set the following options in Visual Studio:
 
 Under Tools -> Options -> Text Editor -> C# -> Tabs:
@@ -398,7 +398,7 @@ To do that, you follow these steps:
   - Rename the `player_win.exe` to `KSP_x64.exe`
   - Copy the `PlayerConnectionConfigFile` file from `misc\VisualStudio\buildscripts\UnityDebug` and put it into your KSP dev `KSP_x64_Data` folder.
 
-This will turn your KSP install into a Development version only. If you want to use this install as a regular (non-Development) install as well, then instead of deleting or renaming `KSP_x64.exe`, you can do the following:
+This will turn your new KSP install into a Development version only. If you want to use this install as a regular (non-Development) install as well (which is recommmended), then instead of deleting or renaming `KSP_x64.exe`, you can do the following:
 
   - Rename the copied file `player_win.exe` now in your KSP dev install folder to `KSP_x64_Dbg.exe`.
   - Create a junction in your KSP dev install folder named `KSP_x64_Dbg_Data` linking to your KSP dev `KSP_x64_Data` folder.
@@ -410,7 +410,7 @@ Now you can choose between the Development version (launch `KSP_x64_Dbg.exe`) an
 
 #### System Environment Variables
 
-To make your life a little easier, the Kerbalism Visual Studio Project respects two environment variables called `KSPDEVDIR` and `KSPBACKPORTDIR`
+To make your life a little easier, the Trajectories Visual Studio Project respects two environment variables called `KSPDEVDIR` and `KSPBACKPORTDIR`
 If you set their values to the paths of the relevant versions of your KSP development installs, the reference and debugging paths inside the project should be set automatically. Obviously `KSPDEVDIR` should point to your KSP1.4.x install and `KSPBACKPORTDIR` to your KSP1.3.1 install. 
 If it is not set, your reference paths and the Debugging paths have to be set manually.
 Please note that you don't need to use both installs if you plan on making private builds but if you plan on making pull requests then it will be appreciated if you make sure your code works for both versions. You can also use the compiler directive `KSP13` in the source to switch relevant code specific to a KSP version.
@@ -442,7 +442,7 @@ To be able to quicklaunch KSP using F5 (or Ctrl-F5), you have to set which exter
 If your reference paths are set up correctly, then building the project should be as simple as Clicking Build -> Build Solution.
 If `KSPDEVDIR` and/or `KSPBACKPORTDIR` is set, then the output path will be the `\GameData\Trajectories\Plugin\` subdirectory of your KSP install. If not, you have to configure the output path yourself in Properties -> Build -> Output Path.
 
-You can use the configuration menu to switch between `Debug` and `Release` for KSP1.4.x and also `Debug 1.3` and `Release 1.3` for KSP1.3.1
+You can use the configuration menu to switch between `Debug` and `Release` for KSP1.4.x to 1.7.x and also `Debug 1.3` and `Release 1.3` for KSP1.3.1
 
 When you are building in Debug mode, one additional file with the ending `.mdb` is created. This file is required for unity debugging.
 
