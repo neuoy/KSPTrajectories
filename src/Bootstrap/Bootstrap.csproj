@@ -15,7 +15,7 @@
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
+    <DebugType>portable</DebugType>
     <Optimize>false</Optimize>
     <OutputPath Condition="Exists('$(KSPDEVDIR)\GameData\Trajectories\Plugin\')">$(KSPDEVDIR)\GameData\Trajectories\Plugin\</OutputPath>
     <OutputPath Condition="!Exists('$(KSPDEVDIR)\GameData\Trajectories\Plugin\')">..\DLLs\obj\Trajectories\Plugin\</OutputPath>

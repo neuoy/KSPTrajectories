@@ -50,7 +50,7 @@ Faq
 Requirements
 ------------
 
-- Any KSP version from 1.3.1 to 1.7.x
+- Any KSP version from 1.3.1 to 1.8.x
 - ModuleManager 3.0.0+
 
 ----
