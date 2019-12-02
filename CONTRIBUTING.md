@@ -352,6 +352,8 @@ And for KSP1.3.1 you can find out which Unity version your current KSP install i
 In this case, the Unity version for your KSP version is 5.4.0p4.
 
 
+The Unity Editor from **KSP v1.8.x** is **Unity v2019.2.2f1** and can be downloaded here: [UnityDownloadAssistant-2019.2.2f1.exe](https://download.unity3d.com/download_unity/ab112815d860/UnityDownloadAssistant-2019.2.2f1.exe )
+
 The Unity Editor for **KSP v1.4.x to 1.7.x** is **Unity v2017.1.3p1** and can be downloaded here: [UnityDownloadAssistant-2017.1.3p1.exe](https://beta.unity3d.com/download/02d73f71d3bd/UnityDownloadAssistant-2017.1.3p1.exe )
 
 The Unity Editor for **KSP v1.3.1** is **Unity v5.4.0.p4** and can be downloaded here: [UnityDownloadAssistant-5.4.0p4.exe](https://beta.unity3d.com/download/b15b5ae035b7/UnityDownloadAssistant-5.4.0p4.exe )
@@ -388,11 +390,27 @@ Under Tools -> Options -> Text Editor -> C# -> Tabs:
 
 You should create a KSP install just for Development that is separate from your install that you use for gaming.
 
+##### For KSP Versions from KSP 1.8.x :
+  - Copy your game install to another location
+  - Remove everything but the `Squad` directory from `GameData`
+    - NB: Keep `SquadExpansion` if you're using or testing with the official Squad Expansion Packs.
+  - Find your Unity install, and go into the subdirectory `Unity\Editor\Data\PlaybackEngines\windowsstandalonesupport\Variations\win64_development_mono`.  
+    Copy the following files into your KSP main directory:  
+      - `UnityPlayer.dll`
+      - `WinPixEventRuntime.dll`
+  - Edit `<KSP Directory>\KSP_x64_Data\boot.config` and add the following line:
+    `player-connection-debug=1`
+
+This will turn your new KSP install into a Development version only. If you want to use this install as a regular (non-Development) install as well (which is recommmended), then instead of overwriting `UnityPlayer.dll`, rename it to `UnityPlayer_release.dll` and copy the new one to `UnityPlayer_debug.dll`.
+
+To switch between debug and release mode you need to copy or rename the relevant dll before launching `KSP_x64.exe`. A simple batch script can help to facilitate this.
+
+##### For KSP Versions before KSP 1.8.x :
 To do that, you follow these steps:
 
   - Copy your game install to another location
   - Remove everything but the `Squad` directory from `GameData`
-  - Find your Unity install, and go into the subdirectory `Unity\Editor\Data\PlaybackEngines\windowsstandalonesupport\Variations\win64_development_mono`.
+  - Find your Unity install, and go into the subdirectory `Unity\Editor\Data\PlaybackEngines\windowsstandalonesupport\Variations\win64_development_mono`.  
     Copy the file `player_win.exe` into your KSP main directory
   - Delete or rename `KSP_x64.exe` in your KSP main directory
   - Rename the `player_win.exe` to `KSP_x64.exe`
@@ -444,7 +462,9 @@ If `KSPDEVDIR` and/or `KSPBACKPORTDIR` is set, then the output path will be the 
 
 You can use the configuration menu to switch between `Debug` and `Release` for KSP1.4.x to 1.7.x and also `Debug 1.3` and `Release 1.3` for KSP1.3.1
 
-When you are building in Debug mode, one additional file with the ending `.mdb` is created. This file is required for unity debugging.
+When building in debug mode, an additional file is created containing the debug symbols, which is necessary for Unity debugging.
+  - For KSP 1.8 and later, this file has the ending `.pdb`.
+  - For earlier KSP versions, this file has the ending `.mdb`.
 
 #### Debugging
 
@@ -481,7 +501,7 @@ If the *"WindowsPlayer"* process doesn't show up in this menu, check that
   - That you created or downloaded the PlayerConnectionConfigFile described [above](#kerbal-space-program-install)
 
 You should now be able to create breakpoints, step through the execution and inspect variables.
-If that doesn't happen (the debugger just doesn't halt where you want it to), make sure that the debugging symbols (.mdb and .pdb) are available in the GameData directory, along with the Trajectories.dll file.
+If that doesn't happen (the debugger just doesn't halt where you want it to), make sure that the debugging symbols (`.mdb` and/or `.pdb`) are available in the `GameData` directory, along with the `Trajectories.dll` file.
 
 Note that while you are halting at a breakpoint, the KSP will become unresponsive. If you try to open it while halted, Windows will suggest to kill it. This is not what you want when debugging ;)
 
@@ -499,8 +519,8 @@ Since this happens within a numeric simulation, this can be rather hard to debug
 To aid debugging such "numeric" problems, the Telemetry module was created. It records certain specified numeric values in a Tab-Separated file that can be read by other tools such as Jupyter, MATLAB, R or even EXCEL.
 
 Here are the steps on how to use the telemetry module:
-  - Download the Telemetry.dll assembly from here: https://github.com/fat-lobyte/KSPTelemetry/releases
-  - Place the assembly somewhere in the GameData folder of your KSP install
+  - Download the `Telemetry.dll` assembly from here: https://github.com/fat-lobyte/KSPTelemetry/releases
+  - Place the assembly somewhere in the `GameData` folder of your KSP install
   - Enable the `DEBUG_TELEMETRY` compilation symbol inside the Trajectories project
   - Within the Trajectories source code, find or create an `Awake()` method of a KSPAddon class, and set up the data channel:
 
@@ -510,7 +530,7 @@ Here are the steps on how to use the telemetry module:
 
     `Telemetry.Send("yourvalue", the_actual_value);`
 
-  - Start your debugging session. As soon as you are in the flight scene, a file called "Trajectories.csv" should appear in the same location where you put the Telemetry.dll file.
+  - Start your debugging session. As soon as you are in the flight scene, a file called "Trajectories.csv" should appear in the same location where you put the `Telemetry.dll` file.
     This file will contain the values of "yourvalue" over the course of time.
 
 
@@ -530,8 +550,8 @@ Here's an example applied inside the *Trajectories.MapOverlay.Render* method:
     refreshMesh();
     Profiler.EndSample();
     ```
-	
-	
+
+
 For more information see the KSP Forum thread [KSP Plugin debugging and profiling for Visual Studio and Monodevelop on all OS](http://forum.kerbalspaceprogram.com/index.php?/topic/102909-ksp-plugin-debugging-and-profiling-for-visual-studio-and-monodevelop-on-all-os/&page=1).
 
 
