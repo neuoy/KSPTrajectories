@@ -188,14 +188,19 @@ namespace Trajectories
             settings_page.padding.right = page_padding;
 
             // create popup dialog and add onDestroy listener
-            popup_dialog = PopupDialog.SpawnPopupDialog(multi_dialog, false, HighLogic.UISkin, false, "");
-            popup_dialog.onDestroy.AddListener(new UnityAction(OnPopupDialogDestroy));
+           SpawnDialog();
 
             //set data field labels justification
             SetDataFieldJustification();
 
             // create textbox event listeners
             SetManualTargetTextBoxEvents();
+        }
+
+        private void SpawnDialog()
+        {
+            popup_dialog = PopupDialog.SpawnPopupDialog(multi_dialog, false, HighLogic.UISkin, false, "");
+            popup_dialog.onDestroy.AddListener(new UnityAction(OnPopupDialogDestroy));
         }
 
         private void Update()
@@ -227,7 +232,7 @@ namespace Trajectories
                 Hide();
                 return;
             }
-            else if (Settings.fetch.MainGUIEnabled && !visible)
+            if (Settings.fetch.MainGUIEnabled && !visible)
             {
                 Show();
             }
@@ -496,6 +501,7 @@ namespace Trajectories
                     ((Screen.height / 2) + popup_dialog.RTrf.position.y) / Screen.height);
                 //Debug.Log("Trajectories: Saving MainGUI window position as " + Settings.fetch.MainGUIWindowPos.ToString());
             }
+            visible = false;
             Settings.fetch.Save();
         }
 
@@ -566,11 +572,13 @@ namespace Trajectories
         /// <summary> Shows window. </summary>
         public void Show()
         {
-            if (popup_dialog != null)
+            if (popup_dialog == null)
             {
-                visible = true;
-                popup_dialog.gameObject.SetActive(true);
+                Allocate();
+                SpawnDialog();
             }
+            visible = true;
+            popup_dialog.gameObject.SetActive(true);
         }
 
         /// <summary> Hides window. </summary>
