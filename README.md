@@ -31,10 +31,26 @@ Supported Aerodynamic models
 
 ----
 
+Faq
+---
+
+- Reportedly works with -
+  - **Deadly Reentry** 
+  - **Real Solar System** 
+  - **Rescaled Kerbin** 
+  - **Outer Planets Mod** 
+- Compatible with **Blizzy's toolbar**. 
+- If you see weird spirals or other crazy lines everywhere, double-check you didn't enable *"fixed-body"* mode by mistake. 
+- If the predicted trajectory seems inaccurate, check that you set the correct orientation in the Descent profile (or checked Prograde or Retrograde), and that you keep that orientation all the time. 
+- It's not possible to predict a trajectory for a future stage. We know this is a highly requested feature, but unless we duplicate big parts of the KSP-internal code, we are limited to simulating the current state of the vessel. 
+- Parachutes are not simulated (that's usually not a problem if you open it near the ground). 
+
+----
+
 Requirements
 ------------
 
-- Any KSP version from 1.3.1 to 1.6.x
+- Any KSP version from 1.3.1 to 1.7.x
 - ModuleManager 3.0.0+
 
 ----
@@ -45,6 +61,17 @@ Installation
 - Download Trajectories.zip from the latest release (https://github.com/neuoy/KSPTrajectories/releases)
 - Unzip the contents into your GameData folder.
 - Don't forget that Trajectories requires ModuleManager to also be installed.
+
+----
+
+Reporting bugs, feature requests and contributing 
+--------------
+
+*Before posting feature requests or bug reports, please read the FAQ.*
+
+- Want to report a bug? click [here](CONTRIBUTING.md#how-to-report-bugs).
+- Do you have a new feature request? Click [here](CONTRIBUTING.md#how-to-suggest-features).
+- Or do you want to contribute to Trajectories? click [here](CONTRIBUTING.md#how-to-contribute).
 
 ----
 
