@@ -21,10 +21,21 @@ IF EXIST "%initialWD%\%TargetName%Bootstrap.dll" xcopy /y "%initialWD%\%TargetNa
 rem rename dll to KSP version specific bin
 echo %TargetName%.dll -^> %TargetName%%KSPversion%.bin
 move /y "%initialWD%\%TargetName%.dll" "%initialWD%\%TargetName%%KSPversion%.bin" > nul
-rem if built version is greater than KSP 1.3.1 then we assume latest version and copy built bin for the other compatible versions
-IF %KSPversion% GTR 13 xcopy /y "%initialWD%\%TargetName%%KSPversion%.bin" "%initialWD%\%TargetName%14.bin*" > nul
-IF %KSPversion% GTR 13 xcopy /y "%initialWD%\%TargetName%%KSPversion%.bin" "%initialWD%\%TargetName%15.bin*" > nul
-IF %KSPversion% GTR 13 xcopy /y "%initialWD%\%TargetName%%KSPversion%.bin" "%initialWD%\%TargetName%16.bin*" > nul
+
+rem only one bin file for KSP 1.3.1
+IF %KSPversion% EQU 13 GOTO ksp13
+IF %KSPversion% GTR 17 GOTO ksp18
+
+rem if built version is KSP 1.7.2 then we copy built bin for the other compatible lower versions 
+xcopy /y "%initialWD%\%TargetName%%KSPversion%.bin" "%initialWD%\%TargetName%14.bin*" > nul
+xcopy /y "%initialWD%\%TargetName%%KSPversion%.bin" "%initialWD%\%TargetName%15.bin*" > nul
+xcopy /y "%initialWD%\%TargetName%%KSPversion%.bin" "%initialWD%\%TargetName%16.bin*" > nul
+xcopy /y "%initialWD%\%TargetName%%KSPversion%.bin" "%initialWD%\%TargetName%17.bin*" > nul
+
+:ksp18
+rem if built version is greater than KSP 1.7.2 then we assume latest version and copy built bin for the other compatible versions
+
+:ksp13
 rem delete Trajectories.bin if it exists
 IF EXIST "%initialWD%\%TargetName%.bin" del "%initialWD%\%TargetName%.bin"
 rem copy Bootstrap bins from build directory to GameData

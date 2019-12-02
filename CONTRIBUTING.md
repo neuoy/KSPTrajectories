@@ -428,10 +428,10 @@ Now you can choose between the Development version (launch `KSP_x64_Dbg.exe`) an
 
 #### System Environment Variables
 
-To make your life a little easier, the Trajectories Visual Studio Project respects two environment variables called `KSPDEVDIR` and `KSPBACKPORTDIR`
-If you set their values to the paths of the relevant versions of your KSP development installs, the reference and debugging paths inside the project should be set automatically. Obviously `KSPDEVDIR` should point to your KSP1.4.x install and `KSPBACKPORTDIR` to your KSP1.3.1 install. 
+To make your life a little easier, the Trajectories Visual Studio Project respects three environment variables called `KSPBACKPORTDIR`, `KSPBACKPORTDIR17` and `KSPDEVDIR`
+If you set their values to the paths of the relevant versions of your KSP development installs, the reference and debugging paths inside the project should be set automatically. `KSPDEVDIR` should point to an install of the latest KSP version currently released, `KSPBACKPORTDIR17` to your KSP1.7.2 install  and `KSPBACKPORTDIR` to your KSP1.3.1 install. 
 If it is not set, your reference paths and the Debugging paths have to be set manually.
-Please note that you don't need to use both installs if you plan on making private builds but if you plan on making pull requests then it will be appreciated if you make sure your code works for both versions. You can also use the compiler directive `KSP13` in the source to switch relevant code specific to a KSP version.
+Please note that you don't need to use more than one install if you plan on making private builds but if you plan on making pull requests then it will be appreciated if you make sure your code works for not only the latest released version but also versions 1.3.1 and 1.7.2. You can also use the compiler directives `KSP13` and `KSP17` in the source to switch relevant code specific to a KSP version.
 
 To set the variable, follow the instructions in this link, before starting a Visual Studio instance:
 
@@ -443,13 +443,13 @@ https://superuser.com/a/949577
 #### Project Setup
 
 Before you can build Trajectories, your Visual Studio has to know where the Unity and KSP assemblies are that it references.
-If you set your `KSPDEVDIR` and/or `KSPBACKPORTDIR` variable as mentioned [above](#system-environment-variables), then this should already be set. If not, then please:
+If you set your `KSPDEVDIR`, `KSPBACKPORTDIR17` and `KSPBACKPORTDIR` variables as mentioned [above](#system-environment-variables), then this should already be set. If not, then please:
 
   - Double-Click the "Properties" page in the Solution Explorer in Visual Studio
   - Change to the **Reference Paths** tab and select the `\KSP_x64_Data\Managed` subdirectory of your KSP dev install
   - Click "Add" to actually add the selected path
  
-To be able to quicklaunch KSP using F5 (or Ctrl-F5), you have to set which external program should start. This should already be set if you set your `KSPDEVDIR` and/or `KSPBACKPORTDIR` environment variable. If not,
+To be able to quicklaunch KSP using F5 (or Ctrl-F5), you have to set which external program should start. This should already be set if you set your environment variables. If not,
   
  - Double-Click the "Properties" page in the Solution Explorer in Visual Studio
  - Change to the **Debug** tab, select "Start External Program" and select the KSP executable that you want to start.
@@ -458,9 +458,9 @@ To be able to quicklaunch KSP using F5 (or Ctrl-F5), you have to set which exter
 #### Building
 
 If your reference paths are set up correctly, then building the project should be as simple as Clicking Build -> Build Solution.
-If `KSPDEVDIR` and/or `KSPBACKPORTDIR` is set, then the output path will be the `\GameData\Trajectories\Plugin\` subdirectory of your KSP install. If not, you have to configure the output path yourself in Properties -> Build -> Output Path.
+If your env variables are set, then the output path will be the `\GameData\Trajectories\Plugin\` subdirectory of the relative KSP install. If not, you have to configure the output path yourself in Properties -> Build -> Output Path.
 
-You can use the configuration menu to switch between `Debug` and `Release` for KSP1.4.x to 1.7.x and also `Debug 1.3` and `Release 1.3` for KSP1.3.1
+You can use the configuration menu to switch between `Debug` and `Release` for KSP1.8.x up, `Debug 1.7` and `Release 1.7` for KSP1.4.0 to 1.7.2 and also `Debug 1.3` and `Release 1.3` for KSP1.3.1
 
 When building in debug mode, an additional file is created containing the debug symbols, which is necessary for Unity debugging.
   - For KSP 1.8 and later, this file has the ending `.pdb`.
