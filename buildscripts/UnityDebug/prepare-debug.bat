@@ -11,6 +11,9 @@ SET KSPversion=%2
 rem make sure the initial working directory is the one containing the current script
 SET scriptPath=%~dp0
 
+rem we dont need mdb files for KSP 1.8.x
+IF %KSPversion% GTR 17 GOTO ksp18
+
 echo Generating Unity Monodevelop Debug files...
 echo %TargetName%Bootstrap.dll -^> %TargetName%Bootstrap.dll.mdb
 "%scriptPath%\pdb2mdb.exe" %TargetName%Bootstrap.dll
@@ -18,3 +21,5 @@ echo %TargetName%.dll -^> %TargetName%.dll.mdb
 "%scriptPath%\pdb2mdb.exe" %TargetName%.dll
 echo %TargetName%.dll.mdb -^> %TargetName%%KSPversion%.bin.mdb
 xcopy /y "%TargetName%.dll.mdb" "%TargetName%%KSPversion%.bin.mdb*" > nul
+
+:ksp18

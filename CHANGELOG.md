@@ -1,8 +1,10 @@
 
-## v2.2.4 for all versions of KSP from 1.3.1 to 1.7.2
+## v2.2.4 for all versions of KSP from 1.3.1 to 1.8.1
  - 20xx-xx-xx
 
 ### Changes since the last release
+
+ * Support for KSP 1.8.x
 
 ### For Developers
  
