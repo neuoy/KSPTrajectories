@@ -1,8 +1,8 @@
 Are you here because you want to:
 
- * Report a Bug?  Click here.
- * Request a feature? Click here.
- * Jump in and contribute? Click here.
+ * Report a Bug?  Click [here](#how-to-report-bugs).
+ * Request a feature? Click [here](#how-to-suggest-features).
+ * Jump in and contribute? Click [here](#how-to-contribute).
 
 Table of Contents
 =================
@@ -352,7 +352,9 @@ And for KSP1.3.1 you can find out which Unity version your current KSP install i
 In this case, the Unity version for your KSP version is 5.4.0p4.
 
 
-The Unity Editor for **KSP v1.4.x** is **Unity v2017.1.3p1** and can be downloaded here: [UnityDownloadAssistant-2017.1.3p1.exe](https://beta.unity3d.com/download/02d73f71d3bd/UnityDownloadAssistant-2017.1.3p1.exe )
+The Unity Editor from **KSP v1.8.x** is **Unity v2019.2.2f1** and can be downloaded here: [UnityDownloadAssistant-2019.2.2f1.exe](https://download.unity3d.com/download_unity/ab112815d860/UnityDownloadAssistant-2019.2.2f1.exe )
+
+The Unity Editor for **KSP v1.4.x to 1.7.x** is **Unity v2017.1.3p1** and can be downloaded here: [UnityDownloadAssistant-2017.1.3p1.exe](https://beta.unity3d.com/download/02d73f71d3bd/UnityDownloadAssistant-2017.1.3p1.exe )
 
 The Unity Editor for **KSP v1.3.1** is **Unity v5.4.0.p4** and can be downloaded here: [UnityDownloadAssistant-5.4.0p4.exe](https://beta.unity3d.com/download/b15b5ae035b7/UnityDownloadAssistant-5.4.0p4.exe )
 
@@ -374,7 +376,7 @@ If it is not, you download and install by using the **Tools->Extensions and Upda
 Please install the [Trailing Whitespace Visualizer Plugin](https://marketplace.visualstudio.com/items?itemName=MadsKristensen.TrailingWhitespaceVisualizer)
 and make sure that you don't add trailing whitespace.
 
-The Trajectories repository contains a file called `.editorconfig` which should configure your editor automatically if you use Visual Studio 2017.
+The Trajectories repository contains a file called `.editorconfig` which should configure your editor automatically if you use Visual Studio 2017 and up.
 If you use Visual Studio 2015 or older, please set the following options in Visual Studio:
 
 Under Tools -> Options -> Text Editor -> C# -> Tabs:
@@ -388,17 +390,33 @@ Under Tools -> Options -> Text Editor -> C# -> Tabs:
 
 You should create a KSP install just for Development that is separate from your install that you use for gaming.
 
+##### For KSP Versions from KSP 1.8.x :
+  - Copy your game install to another location
+  - Remove everything but the `Squad` directory from `GameData`
+    - NB: Keep `SquadExpansion` if you're using or testing with the official Squad Expansion Packs.
+  - Find your Unity install, and go into the subdirectory `Unity\Editor\Data\PlaybackEngines\windowsstandalonesupport\Variations\win64_development_mono`.  
+    Copy the following files into your KSP main directory:  
+      - `UnityPlayer.dll`
+      - `WinPixEventRuntime.dll`
+  - Edit `<KSP Directory>\KSP_x64_Data\boot.config` and add the following line:
+    `player-connection-debug=1`
+
+This will turn your new KSP install into a Development version only. If you want to use this install as a regular (non-Development) install as well (which is recommmended), then instead of overwriting `UnityPlayer.dll`, rename it to `UnityPlayer_release.dll` and copy the new one to `UnityPlayer_debug.dll`.
+
+To switch between debug and release mode you need to copy or rename the relevant dll before launching `KSP_x64.exe`. A simple batch script can help to facilitate this.
+
+##### For KSP Versions before KSP 1.8.x :
 To do that, you follow these steps:
 
   - Copy your game install to another location
   - Remove everything but the `Squad` directory from `GameData`
-  - Find your Unity install, and go into the subdirectory `Unity\Editor\Data\PlaybackEngines\windowsstandalonesupport\Variations\win64_development_mono`.
+  - Find your Unity install, and go into the subdirectory `Unity\Editor\Data\PlaybackEngines\windowsstandalonesupport\Variations\win64_development_mono`.  
     Copy the file `player_win.exe` into your KSP main directory
   - Delete or rename `KSP_x64.exe` in your KSP main directory
   - Rename the `player_win.exe` to `KSP_x64.exe`
   - Copy the `PlayerConnectionConfigFile` file from `misc\VisualStudio\buildscripts\UnityDebug` and put it into your KSP dev `KSP_x64_Data` folder.
 
-This will turn your KSP install into a Development version only. If you want to use this install as a regular (non-Development) install as well, then instead of deleting or renaming `KSP_x64.exe`, you can do the following:
+This will turn your new KSP install into a Development version only. If you want to use this install as a regular (non-Development) install as well (which is recommmended), then instead of deleting or renaming `KSP_x64.exe`, you can do the following:
 
   - Rename the copied file `player_win.exe` now in your KSP dev install folder to `KSP_x64_Dbg.exe`.
   - Create a junction in your KSP dev install folder named `KSP_x64_Dbg_Data` linking to your KSP dev `KSP_x64_Data` folder.
@@ -410,10 +428,10 @@ Now you can choose between the Development version (launch `KSP_x64_Dbg.exe`) an
 
 #### System Environment Variables
 
-To make your life a little easier, the Kerbalism Visual Studio Project respects two environment variables called `KSPDEVDIR` and `KSPBACKPORTDIR`
-If you set their values to the paths of the relevant versions of your KSP development installs, the reference and debugging paths inside the project should be set automatically. Obviously `KSPDEVDIR` should point to your KSP1.4.x install and `KSPBACKPORTDIR` to your KSP1.3.1 install. 
+To make your life a little easier, the Trajectories Visual Studio Project respects three environment variables called `KSPBACKPORTDIR`, `KSPBACKPORTDIR17` and `KSPDEVDIR`
+If you set their values to the paths of the relevant versions of your KSP development installs, the reference and debugging paths inside the project should be set automatically. `KSPDEVDIR` should point to an install of the latest KSP version currently released, `KSPBACKPORTDIR17` to your KSP1.7.2 install  and `KSPBACKPORTDIR` to your KSP1.3.1 install. 
 If it is not set, your reference paths and the Debugging paths have to be set manually.
-Please note that you don't need to use both installs if you plan on making private builds but if you plan on making pull requests then it will be appreciated if you make sure your code works for both versions. You can also use the compiler directive `KSP13` in the source to switch relevant code specific to a KSP version.
+Please note that you don't need to use more than one install if you plan on making private builds but if you plan on making pull requests then it will be appreciated if you make sure your code works for not only the latest released version but also versions 1.3.1 and 1.7.2. You can also use the compiler directives `KSP13` and `KSP17` in the source to switch relevant code specific to a KSP version.
 
 To set the variable, follow the instructions in this link, before starting a Visual Studio instance:
 
@@ -425,13 +443,13 @@ https://superuser.com/a/949577
 #### Project Setup
 
 Before you can build Trajectories, your Visual Studio has to know where the Unity and KSP assemblies are that it references.
-If you set your `KSPDEVDIR` and/or `KSPBACKPORTDIR` variable as mentioned [above](#system-environment-variables), then this should already be set. If not, then please:
+If you set your `KSPDEVDIR`, `KSPBACKPORTDIR17` and `KSPBACKPORTDIR` variables as mentioned [above](#system-environment-variables), then this should already be set. If not, then please:
 
   - Double-Click the "Properties" page in the Solution Explorer in Visual Studio
   - Change to the **Reference Paths** tab and select the `\KSP_x64_Data\Managed` subdirectory of your KSP dev install
   - Click "Add" to actually add the selected path
  
-To be able to quicklaunch KSP using F5 (or Ctrl-F5), you have to set which external program should start. This should already be set if you set your `KSPDEVDIR` and/or `KSPBACKPORTDIR` environment variable. If not,
+To be able to quicklaunch KSP using F5 (or Ctrl-F5), you have to set which external program should start. This should already be set if you set your environment variables. If not,
   
  - Double-Click the "Properties" page in the Solution Explorer in Visual Studio
  - Change to the **Debug** tab, select "Start External Program" and select the KSP executable that you want to start.
@@ -440,11 +458,13 @@ To be able to quicklaunch KSP using F5 (or Ctrl-F5), you have to set which exter
 #### Building
 
 If your reference paths are set up correctly, then building the project should be as simple as Clicking Build -> Build Solution.
-If `KSPDEVDIR` and/or `KSPBACKPORTDIR` is set, then the output path will be the `\GameData\Trajectories\Plugin\` subdirectory of your KSP install. If not, you have to configure the output path yourself in Properties -> Build -> Output Path.
+If your env variables are set, then the output path will be the `\GameData\Trajectories\Plugin\` subdirectory of the relative KSP install. If not, you have to configure the output path yourself in Properties -> Build -> Output Path.
 
-You can use the configuration menu to switch between `Debug` and `Release` for KSP1.4.x and also `Debug 1.3` and `Release 1.3` for KSP1.3.1
+You can use the configuration menu to switch between `Debug` and `Release` for KSP1.8.x up, `Debug 1.7` and `Release 1.7` for KSP1.4.0 to 1.7.2 and also `Debug 1.3` and `Release 1.3` for KSP1.3.1
 
-When you are building in Debug mode, one additional file with the ending `.mdb` is created. This file is required for unity debugging.
+When building in debug mode, an additional file is created containing the debug symbols, which is necessary for Unity debugging.
+  - For KSP 1.8 and later, this file has the ending `.pdb`.
+  - For earlier KSP versions, this file has the ending `.mdb`.
 
 #### Debugging
 
@@ -481,7 +501,7 @@ If the *"WindowsPlayer"* process doesn't show up in this menu, check that
   - That you created or downloaded the PlayerConnectionConfigFile described [above](#kerbal-space-program-install)
 
 You should now be able to create breakpoints, step through the execution and inspect variables.
-If that doesn't happen (the debugger just doesn't halt where you want it to), make sure that the debugging symbols (.mdb and .pdb) are available in the GameData directory, along with the Trajectories.dll file.
+If that doesn't happen (the debugger just doesn't halt where you want it to), make sure that the debugging symbols (`.mdb` and/or `.pdb`) are available in the `GameData` directory, along with the `Trajectories.dll` file.
 
 Note that while you are halting at a breakpoint, the KSP will become unresponsive. If you try to open it while halted, Windows will suggest to kill it. This is not what you want when debugging ;)
 
@@ -499,8 +519,8 @@ Since this happens within a numeric simulation, this can be rather hard to debug
 To aid debugging such "numeric" problems, the Telemetry module was created. It records certain specified numeric values in a Tab-Separated file that can be read by other tools such as Jupyter, MATLAB, R or even EXCEL.
 
 Here are the steps on how to use the telemetry module:
-  - Download the Telemetry.dll assembly from here: https://github.com/fat-lobyte/KSPTelemetry/releases
-  - Place the assembly somewhere in the GameData folder of your KSP install
+  - Download the `Telemetry.dll` assembly from here: https://github.com/fat-lobyte/KSPTelemetry/releases
+  - Place the assembly somewhere in the `GameData` folder of your KSP install
   - Enable the `DEBUG_TELEMETRY` compilation symbol inside the Trajectories project
   - Within the Trajectories source code, find or create an `Awake()` method of a KSPAddon class, and set up the data channel:
 
@@ -510,7 +530,7 @@ Here are the steps on how to use the telemetry module:
 
     `Telemetry.Send("yourvalue", the_actual_value);`
 
-  - Start your debugging session. As soon as you are in the flight scene, a file called "Trajectories.csv" should appear in the same location where you put the Telemetry.dll file.
+  - Start your debugging session. As soon as you are in the flight scene, a file called "Trajectories.csv" should appear in the same location where you put the `Telemetry.dll` file.
     This file will contain the values of "yourvalue" over the course of time.
 
 
@@ -530,8 +550,8 @@ Here's an example applied inside the *Trajectories.MapOverlay.Render* method:
     refreshMesh();
     Profiler.EndSample();
     ```
-	
-	
+
+
 For more information see the KSP Forum thread [KSP Plugin debugging and profiling for Visual Studio and Monodevelop on all OS](http://forum.kerbalspaceprogram.com/index.php?/topic/102909-ksp-plugin-debugging-and-profiling-for-visual-studio-and-monodevelop-on-all-os/&page=1).
 
 
