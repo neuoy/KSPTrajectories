@@ -14,6 +14,7 @@
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
     <RunPostBuildEvent>OnBuildSuccess</RunPostBuildEvent>
+    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -31,6 +32,7 @@
     <StartWorkingDirectory>$(KSPDEVDIR)</StartWorkingDirectory>
     <RunPostBuildEvent>OnBuildSuccess</RunPostBuildEvent>
     <LangVersion>latest</LangVersion>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>none</DebugType>
@@ -50,6 +52,7 @@
     <StartWorkingDirectory>$(KSPDEVDIR)</StartWorkingDirectory>
     <RunPostBuildEvent>OnBuildSuccess</RunPostBuildEvent>
     <LangVersion>latest</LangVersion>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug 1.7|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>

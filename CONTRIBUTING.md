@@ -352,9 +352,9 @@ And for KSP1.3.1 you can find out which Unity version your current KSP install i
 In this case, the Unity version for your KSP version is 5.4.0p4.
 
 
-The Unity Editor from **KSP v1.8.x** is **Unity v2019.2.2f1** and can be downloaded here: [UnityDownloadAssistant-2019.2.2f1.exe](https://download.unity3d.com/download_unity/ab112815d860/UnityDownloadAssistant-2019.2.2f1.exe )
+The Unity Editor from **KSP v1.8.0** is **Unity v2019.2.2f1** and can be downloaded here: [UnityDownloadAssistant-2019.2.2f1.exe](https://download.unity3d.com/download_unity/ab112815d860/UnityDownloadAssistant-2019.2.2f1.exe )
 
-The Unity Editor for **KSP v1.4.x to 1.7.x** is **Unity v2017.1.3p1** and can be downloaded here: [UnityDownloadAssistant-2017.1.3p1.exe](https://beta.unity3d.com/download/02d73f71d3bd/UnityDownloadAssistant-2017.1.3p1.exe )
+The Unity Editor for **KSP v1.4.2 to 1.7.3** is **Unity v2017.1.3p1** and can be downloaded here: [UnityDownloadAssistant-2017.1.3p1.exe](https://beta.unity3d.com/download/02d73f71d3bd/UnityDownloadAssistant-2017.1.3p1.exe )
 
 The Unity Editor for **KSP v1.3.1** is **Unity v5.4.0.p4** and can be downloaded here: [UnityDownloadAssistant-5.4.0p4.exe](https://beta.unity3d.com/download/b15b5ae035b7/UnityDownloadAssistant-5.4.0p4.exe )
 
@@ -414,7 +414,7 @@ To do that, you follow these steps:
     Copy the file `player_win.exe` into your KSP main directory
   - Delete or rename `KSP_x64.exe` in your KSP main directory
   - Rename the `player_win.exe` to `KSP_x64.exe`
-  - Copy the `PlayerConnectionConfigFile` file from `misc\VisualStudio\buildscripts\UnityDebug` and put it into your KSP dev `KSP_x64_Data` folder.
+  - Copy the `PlayerConnectionConfigFile` file from the `buildscripts\UnityDebug` directory and put it into your KSP dev `KSP_x64_Data` folder.
 
 This will turn your new KSP install into a Development version only. If you want to use this install as a regular (non-Development) install as well (which is recommmended), then instead of deleting or renaming `KSP_x64.exe`, you can do the following:
 
