@@ -1,10 +1,12 @@
 
-## v2.2.4 for all versions of KSP from 1.3.1 to 1.8.1
- - 20xx-xx-xx
+## v2.3.0 for all versions of KSP from 1.3.1 to 1.8.1
+ - 2019-12-03
 
 ### Changes since the last release
 
- * Support for KSP 1.8.x
+ - Support for KSP 1.8.x
+ - In-Flight trajectory not showing bug fixed by Xyphos
+ - GUI disappearing bug #164 fixed thanks to whale2 and mwerle 
 
 ### For Developers
  
