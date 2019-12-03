@@ -41,13 +41,13 @@ namespace Trajectories
         private static Vector3d bodyPosition = Vector3d.zero;
         private static Vector3 vertex = Vector3.zero;
 
-        private void Awake()
+        public void Awake()
         {
             line = FlightCamera.fetch.mainCamera.gameObject.AddComponent<TrajectoryLine>();
             targetingCross = FlightCamera.fetch.mainCamera.gameObject.AddComponent<TargetingCross>();
         }
 
-        private void OnDestroy()
+        public void OnDestroy()
         {
             if (line != null)
                 Destroy(line);
@@ -59,7 +59,7 @@ namespace Trajectories
             targetingCross = null;
         }
 
-        private void Update()
+        public void Update()
         {
             line.enabled = false;
             targetingCross.enabled = false;

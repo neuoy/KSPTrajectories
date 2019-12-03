@@ -138,7 +138,7 @@ namespace Trajectories
         }
 
         // Awake is called only once when the script instance is being loaded. Used in place of the constructor for initialization.
-        private void Awake()
+        public void Awake()
         {
             if (Settings.fetch.DefaultDescentIsRetro)
                 Reset();
@@ -146,7 +146,7 @@ namespace Trajectories
                 Reset(0d);
         }
 
-        private void OnDestroy()
+        public void OnDestroy()
         {
             fetch = null;
             entry = null;
@@ -189,7 +189,7 @@ namespace Trajectories
             finalApproach.RefreshSliderPos();
         }
 
-        private void Update()
+        public void Update()
         {
             if (attachedVessel != FlightGlobals.ActiveVessel)
             {

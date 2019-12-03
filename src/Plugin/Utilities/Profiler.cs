@@ -121,7 +121,7 @@ namespace Trajectories
         }
 
         // Awake is called only once when the script instance is being loaded. Used in place of the constructor for initialization.
-        private void Awake()
+        public void Awake()
         {
             // create popup dialog
             popup_dialog = PopupDialog.SpawnPopupDialog(multi_dialog, false, HighLogic.UISkin, false, "");
@@ -129,7 +129,7 @@ namespace Trajectories
                 popup_dialog.gameObject.SetActive(false);
         }
 
-        private void Update()
+        public void Update()
         {
             if ((Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl)) &&
                      Input.GetKeyUp(KeyCode.P) && popup_dialog != null)
@@ -170,7 +170,7 @@ namespace Trajectories
             tot_frames_txt = tot_frames.ToString() + " Frames";
         }
 
-        private void FixedUpdate()
+        public void FixedUpdate()
         {
             foreach (KeyValuePair<string, Entry> p in Fetch.entries)
             {
@@ -187,7 +187,7 @@ namespace Trajectories
             ++tot_frames;
         }
 
-        private void OnDestroy()
+        public void OnDestroy()
         {
             Fetch = null;
             if (popup_dialog != null)

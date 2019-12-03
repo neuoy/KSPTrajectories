@@ -172,7 +172,7 @@ namespace Trajectories
         }
 
         // Awake is called only once when the script instance is being loaded. Used in place of the constructor for initialization.
-        private void Awake()
+        public void Awake()
         {
             // create and display App launch button
             AppLauncherButton.Create();
@@ -203,7 +203,7 @@ namespace Trajectories
             popup_dialog.onDestroy.AddListener(new UnityAction(OnPopupDialogDestroy));
         }
 
-        private void Update()
+        public void Update()
         {
             // initialization for dialog box window position
             if (spawned != 2 && popup_dialog != null)
@@ -240,7 +240,7 @@ namespace Trajectories
             UpdatePages();
         }
 
-        private void OnDestroy()
+        public void OnDestroy()
         {
             Fetch = null;
 

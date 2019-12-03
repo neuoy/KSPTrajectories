@@ -88,21 +88,21 @@ namespace Trajectories
         }
 
         // Awake is called only once when the script instance is being loaded. Used in place of the constructor for initialization.
-        private void Awake()
+        public void Awake()
         {
             material = MapView.fetch.orbitLinesMaterial;
             map_traj_renderer = PlanetariumCamera.Camera.gameObject.AddComponent<MapTrajectoryRenderer>();
             map_traj_renderer.Visible(false);
         }
 
-        private void OnDestroy()
+        public void OnDestroy()
         {
             if (map_traj_renderer != null)
                 Destroy(map_traj_renderer);
             map_traj_renderer = null;
         }
 
-        private void Update()
+        public void Update()
         {
             // return if no renderer or camera
             if ((map_traj_renderer == null) || (PlanetariumCamera.Camera == null))

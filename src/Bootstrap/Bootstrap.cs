@@ -39,9 +39,9 @@ namespace TrajectoriesBootstrap
             if (Util.IsDllLoaded || (Util.FindTrajectoriesAssembly(Util.BinName) != null))
                 print("[TrajectoriesBootstrap] WARNING: TRAJECTORIES HAS ALREADY LOADED BEFORE US!");
 
-            string load_bin = Path.Combine(AssemblyDirectory(Assembly.GetExecutingAssembly()), "Trajectories.bin");
-            string our_bin = Path.Combine(AssemblyDirectory(Assembly.GetExecutingAssembly()), Util.BinName + ".bin");
-            string possible_dll = Path.Combine(AssemblyDirectory(Assembly.GetExecutingAssembly()), "Trajectories.dll");
+            string load_bin = Path.Combine(AssemblyDirectory(), "Trajectories.bin");
+            string our_bin = Path.Combine(AssemblyDirectory(), Util.BinName + ".bin");
+            string possible_dll = Path.Combine(AssemblyDirectory(), "Trajectories.dll");
 
             if (File.Exists(our_bin))
             {
@@ -130,7 +130,7 @@ namespace TrajectoriesBootstrap
             }
         }
 
-        public string AssemblyDirectory(Assembly a)
+        public string AssemblyDirectory()
         {
             string codeBase = Assembly.GetExecutingAssembly().CodeBase;
             UriBuilder uri = new UriBuilder(codeBase);

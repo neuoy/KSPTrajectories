@@ -105,7 +105,7 @@ namespace Trajectories
         float lastStringRenderTime = 0.0f;
         const float stringRenderInterval = 0.5f;
 
-        private void FixedUpdate()
+        public void FixedUpdate()
         {
             if (Settings.fetch.NewGui)
                 return;
@@ -407,7 +407,7 @@ namespace Trajectories
         /// This plugin should be able to run in VAB/SPH, Flight, Space Center, and Tracking Station scenes.
         /// </summary>
         /// <returns>True if valid; false if not valid.</returns>
-        Boolean IsValidScene()
+        public Boolean IsValidScene()
         {
             return HighLogic.LoadedSceneIsEditor || HighLogic.LoadedSceneIsFlight || HighLogic.LoadedScene == GameScenes.SPACECENTER || HighLogic.LoadedScene == GameScenes.TRACKSTATION;
         }
