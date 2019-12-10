@@ -25,6 +25,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Diagnostics;
 using UnityEngine;
+using KSP.Localization;
 
 namespace Trajectories
 {
@@ -37,6 +38,40 @@ namespace Trajectories
             if (messages.ContainsKey(id))
                 ScreenMessages.RemoveMessage(messages[id]);
             messages[id] = ScreenMessages.PostScreenMessage(message);
+        }
+
+        ///<summary> writes a message to the log </summary>
+        public static void Log(string message, params object[] param) => UnityEngine.Debug.Log(string.Format("[{0}] {1}",
+            MainGUI.TrajectoriesTitle, string.Format(message, param)));
+
+        ///<summary> writes a debug message to the log with stack trace info added </summary>
+        [Conditional("DEBUG")]
+        public static void DebugLog(string message, params object[] param)
+        {
+            StackTrace stackTrace = new StackTrace();
+            UnityEngine.Debug.Log(string.Format("[{0}] Debug: {1}.{2} - {3}",
+                MainGUI.TrajectoriesTitle, stackTrace.GetFrame(1).GetMethod().ReflectedType.Name,
+                stackTrace.GetFrame(1).GetMethod().Name, string.Format(message, param)));
+        }
+
+        ///<summary> writes a debug warning message to the log with stack trace info added </summary>
+        [Conditional("DEBUG")]
+        public static void DebugLogWarning(string message, params object[] param)
+        {
+            StackTrace stackTrace = new StackTrace();
+            UnityEngine.Debug.LogWarning(string.Format("[{0}] Warning: {1}.{2} - {3}",
+                MainGUI.TrajectoriesTitle, stackTrace.GetFrame(1).GetMethod().ReflectedType.Name,
+                stackTrace.GetFrame(1).GetMethod().Name, string.Format(message, param)));
+        }
+
+        ///<summary> writes a debug error message to the log with stack trace info added </summary>
+        [Conditional("DEBUG")]
+        public static void DebugLogError(string message, params object[] param)
+        {
+            StackTrace stackTrace = new StackTrace();
+            UnityEngine.Debug.LogError(string.Format("[{0}] Error: {1}.{2} - {3}",
+                MainGUI.TrajectoriesTitle, stackTrace.GetFrame(1).GetMethod().ReflectedType.Name,
+                stackTrace.GetFrame(1).GetMethod().Name, string.Format(message, param)));
         }
 
         public static MethodInfo GetMethodEx(this Type type, string methodName, BindingFlags flags)
