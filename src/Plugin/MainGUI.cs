@@ -20,18 +20,18 @@
 */
 
 using System;
-using System.Linq;
 using System.Collections.Generic;
+using System.Linq;
 using KSP.Localization;
+using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
-using TMPro;
 
 namespace Trajectories
 {
     /// <summary> MainGUI window handler. </summary>
     [KSPAddon(KSPAddon.Startup.Flight, false)]
-    public sealed class MainGUI: MonoBehaviour
+    public sealed class MainGUI : MonoBehaviour
     {
         // constants
         private const float width = 370.0f;
@@ -93,9 +93,9 @@ namespace Trajectories
         private static DialogGUILabel target_distance_longitude_label;
 
         // display update strings
-        private static string aerodynamic_model_hdrtxt = Localizer.Format("#autoLOC_Trajectories_AeroModel") + ": ";
-        private static string calculation_time_hdrtxt = Localizer.Format("#autoLOC_Trajectories_CalcTime") + ": ";
-        private static string errors_hdrtxt = Localizer.Format("#autoLOC_Trajectories_Errors") + ": ";
+        private static readonly string aerodynamic_model_hdrtxt = Localizer.Format("#autoLOC_Trajectories_AeroModel") + ": ";
+        private static readonly string calculation_time_hdrtxt = Localizer.Format("#autoLOC_Trajectories_CalcTime") + ": ";
+        private static readonly string errors_hdrtxt = Localizer.Format("#autoLOC_Trajectories_Errors") + ": ";
 
         private static string max_gforce_txt = "";
         private static string impact_latitude_txt = "";
@@ -147,7 +147,7 @@ namespace Trajectories
 
         // display update timer
         private static double update_timer = Util.Clocks;
-        private static double update_fps = 10;  // Frames per second the data values displayed in the Gui will update.
+        private const double update_fps = 10;  // Frames per second the data values displayed in the Gui will update.
 
         // permit global access
         public static MainGUI Fetch
@@ -240,7 +240,7 @@ namespace Trajectories
             UpdatePages();
         }
 
-        public void OnDestroy()
+        public static void OnDestroy()
         {
             Fetch = null;
 
@@ -493,7 +493,7 @@ namespace Trajectories
         /// </summary>
         private void OnPopupDialogDestroy()
         {
-            // save popup position. Note. PopupDialog.RTrf is an offset from the center of the screeen.
+            // save popup position. Note. PopupDialog.RTrf is an offset from the center of the screen.
             if (popup_dialog != null)
             {
                 Settings.fetch.MainGUIWindowPos = new Vector2(
@@ -546,21 +546,15 @@ namespace Trajectories
         /// <summary>
         /// Locks out the keyboards input
         /// </summary>
-        private static void KeyboardLockout(string inString)
-        {
-            InputLockManager.SetControlLock(ControlTypes.KEYBOARDINPUT, "TrajectoriesKeyboardLockout");
-        }
+        private static void KeyboardLockout(string inString) => InputLockManager.SetControlLock(ControlTypes.KEYBOARDINPUT, "TrajectoriesKeyboardLockout");
 
         /// <summary>
         /// Removes the keyboard lockout
         /// </summary>
-        private static void KeyboardUnlock(string inString)
-        {
-            InputLockManager.RemoveControlLock("TrajectoriesKeyboardLockout");
-        }
+        private static void KeyboardUnlock(string inString) => InputLockManager.RemoveControlLock("TrajectoriesKeyboardLockout");
 
         /// <summary>
-        /// Sets the logarithmic slider positon for the plugin setting IntegrationStepSize
+        /// Sets the logarithmic slider position for the plug-in setting IntegrationStepSize
         /// </summary>
         private static void SetIntegratorSlider()
         {
@@ -581,7 +575,7 @@ namespace Trajectories
         }
 
         /// <summary> Hides window. </summary>
-        public void Hide()
+        public static void Hide()
         {
             if (popup_dialog != null)
             {
@@ -664,25 +658,13 @@ namespace Trajectories
         #endregion
 
         #region  OnButtonClick methods called by the GuiButtons and Toggles
-        private void OnButtonClick_Info()
-        {
-            ChangePage(PageType.INFO);
-        }
+        private void OnButtonClick_Info() => ChangePage(PageType.INFO);
 
-        private void OnButtonClick_Target()
-        {
-            ChangePage(PageType.TARGET);
-        }
+        private void OnButtonClick_Target() => ChangePage(PageType.TARGET);
 
-        private void OnButtonClick_Descent()
-        {
-            ChangePage(PageType.DESCENT);
-        }
+        private void OnButtonClick_Descent() => ChangePage(PageType.DESCENT);
 
-        private void OnButtonClick_Settings()
-        {
-            ChangePage(PageType.SETTINGS);
-        }
+        private void OnButtonClick_Settings() => ChangePage(PageType.SETTINGS);
 
         private static void OnButtonClick_DisplayTrajectories(bool inState)
         {
@@ -705,40 +687,19 @@ namespace Trajectories
 
         }
 
-        private static void OnButtonClick_DisplayTrajectoriesInFlight(bool inState)
-        {
-            Settings.fetch.DisplayTrajectoriesInFlight = inState;
-        }
+        private static void OnButtonClick_DisplayTrajectoriesInFlight(bool inState) => Settings.fetch.DisplayTrajectoriesInFlight = inState;
 
-        private static void OnButtonClick_BodyFixedMode(bool inState)
-        {
-            Settings.fetch.BodyFixedMode = inState;
-        }
+        private static void OnButtonClick_BodyFixedMode(bool inState) => Settings.fetch.BodyFixedMode = inState;
 
-        private static void OnButtonClick_DisplayCompleteTrajectory(bool inState)
-        {
-            Settings.fetch.DisplayCompleteTrajectory = inState;
-        }
+        private static void OnButtonClick_DisplayCompleteTrajectory(bool inState) => Settings.fetch.DisplayCompleteTrajectory = inState;
 
-        private static void OnButtonClick_UseCache(bool inState)
-        {
-            Settings.fetch.UseCache = inState;
-        }
+        private static void OnButtonClick_UseCache(bool inState) => Settings.fetch.UseCache = inState;
 
-        private static void OnButtonClick_UseDescentRetro(bool inState)
-        {
-            Settings.fetch.DefaultDescentIsRetro = inState;
-        }
+        private static void OnButtonClick_UseDescentRetro(bool inState) => Settings.fetch.DefaultDescentIsRetro = inState;
 
-        private static void OnButtonClick_AutoUpdateAerodynamicModel(bool inState)
-        {
-            Settings.fetch.AutoUpdateAerodynamicModel = inState;
-        }
+        private static void OnButtonClick_AutoUpdateAerodynamicModel(bool inState) => Settings.fetch.AutoUpdateAerodynamicModel = inState;
 
-        private static void OnButtonClick_Update()
-        {
-            Trajectory.fetch.InvalidateAerodynamicModel();
-        }
+        private static void OnButtonClick_Update() => Trajectory.fetch.InvalidateAerodynamicModel();
 
         private static void OnButtonClick_UseBlizzyToolbar(bool inState)
         {
@@ -813,7 +774,7 @@ namespace Trajectories
 
         private static void OnButtonClick_TargetKSC()
         {
-            var homebody = FlightGlobals.GetHomeBody();
+            CelestialBody homebody = FlightGlobals.GetHomeBody();
 
             double latitude = SpaceCenter.Instance.Latitude;
             double longitude = SpaceCenter.Instance.Longitude;
@@ -866,10 +827,7 @@ namespace Trajectories
             }
         }
 
-        private static void OnButtonClick_TargetClear()
-        {
-            Trajectory.Target.Clear();
-        }
+        private static void OnButtonClick_TargetClear() => Trajectory.Target.Clear();
 
         private static string OnTextInput_TargetManual(string inString)
         {
@@ -909,20 +867,11 @@ namespace Trajectories
 
         #region Callback methods for the Gui components
         // Callback methods are used by the Gui to retrieve information it needs either for displaying or setting values.
-        private static void OnSliderSet_MaxPatches(float invalue)
-        {
-            Settings.fetch.MaxPatchCount = (int)invalue;
-        }
+        private static void OnSliderSet_MaxPatches(float invalue) => Settings.fetch.MaxPatchCount = (int)invalue;
 
-        private static void OnSliderSet_MaxFramesPatch(float invalue)
-        {
-            Settings.fetch.MaxFramesPerPatch = (int)invalue;
-        }
+        private static void OnSliderSet_MaxFramesPatch(float invalue) => Settings.fetch.MaxFramesPerPatch = (int)invalue;
 
-        private static void OnSliderSet_IntegrationStep(float invalue)
-        {
-            IntegratorSliderPos = invalue;
-        }
+        private static void OnSliderSet_IntegrationStep(float invalue) => IntegratorSliderPos = invalue;
 
         private static void OnSliderSet_EntryAngle(float invalue)
         {
@@ -1160,7 +1109,7 @@ namespace Trajectories
                     double impactAlt;
                     lastPatchBody.GetLatLonAlt(impactPos, out impactLat, out impatLon, out impactAlt);
 
-                    // get get latitude, longitude and altitude for target position
+                    // get latitude, longitude and altitude for target position
                     double targetLat;
                     double targetLon;
                     double targetAlt;
