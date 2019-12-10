@@ -245,6 +245,7 @@ namespace Trajectories
 
         public static void OnDestroy()
         {
+            //Util.DebugLog("");
             Fetch = null;
 
             if (popup_dialog != null)
@@ -502,7 +503,8 @@ namespace Trajectories
                 Settings.fetch.MainGUIWindowPos = new Vector2(
                     ((Screen.width / 2) + popup_dialog.RTrf.position.x) / Screen.width,
                     ((Screen.height / 2) + popup_dialog.RTrf.position.y) / Screen.height);
-                //Debug.Log("Trajectories: Saving MainGUI window position as " + Settings.fetch.MainGUIWindowPos.ToString());
+                //Util.DebugLog("Saving MainGUI window position as {0}", Settings.fetch.MainGUIWindowPos.ToString());
+                multi_dialog.dialogRect.Set(Settings.fetch.MainGUIWindowPos.x, Settings.fetch.MainGUIWindowPos.y, width, height);
             }
             visible = false;
             Settings.fetch.Save();
