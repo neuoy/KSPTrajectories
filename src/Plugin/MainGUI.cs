@@ -93,6 +93,7 @@ namespace Trajectories
         private static DialogGUILabel target_distance_longitude_label;
 
         // display update strings
+        private static readonly string trajectories_title = Localizer.Format("#autoLOC_Trajectories_Title");
         private static readonly string aerodynamic_model_hdrtxt = Localizer.Format("#autoLOC_Trajectories_AeroModel") + ": ";
         private static readonly string calculation_time_hdrtxt = Localizer.Format("#autoLOC_Trajectories_CalcTime") + ": ";
         private static readonly string errors_hdrtxt = Localizer.Format("#autoLOC_Trajectories_Errors") + ": ";
@@ -149,6 +150,8 @@ namespace Trajectories
         private static double update_timer = Util.Clocks;
         private const double update_fps = 10;  // Frames per second the data values displayed in the Gui will update.
 
+        public static string TrajectoriesTitle => trajectories_title;
+
         // permit global access
         public static MainGUI Fetch
         {
@@ -164,7 +167,7 @@ namespace Trajectories
             // version string
             version_txt = " v" + typeof(MainGUI).Assembly.GetName().Version;
             version_txt = version_txt.Remove(version_txt.LastIndexOf("."));
-            Debug.Log(Localizer.Format("#autoLOC_Trajectories_Title") + version_txt);
+            Util.DebugLog(version_txt);
 
             // allocate and define window for use in the popup dialog
             Allocate();
