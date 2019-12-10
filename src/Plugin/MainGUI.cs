@@ -208,6 +208,9 @@ namespace Trajectories
 
         public void Update()
         {
+            if (Util.IsPaused)
+                return;
+
             // initialization for dialog box window position
             if (spawned != 2 && popup_dialog != null)
             {
