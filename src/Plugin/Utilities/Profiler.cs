@@ -19,10 +19,10 @@
   along with Trajectories.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+using System.Diagnostics;
 #if DEBUG_PROFILER
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using KSP.Localization;
 using UnityEngine;
 using UnityEngine.Events;
