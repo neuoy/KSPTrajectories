@@ -195,15 +195,15 @@ namespace Trajectories
 
             //set data field labels justification
             SetDataFieldJustification();
-
-            // create textbox event listeners
-            SetManualTargetTextBoxEvents();
         }
 
         private void SpawnDialog()
         {
             popup_dialog = PopupDialog.SpawnPopupDialog(multi_dialog, false, HighLogic.UISkin, false, "");
             popup_dialog.onDestroy.AddListener(new UnityAction(OnPopupDialogDestroy));
+
+            // create textbox event listeners
+            SetManualTargetTextBoxEvents();
         }
 
         public void Update()
@@ -549,6 +549,7 @@ namespace Trajectories
             tmpro_manual_target_textinput = manual_target_textinput.uiItem.GetComponent<TMP_InputField>();
             tmpro_manual_target_textinput.onSelect.AddListener(new UnityAction<string>(KeyboardLockout));
             tmpro_manual_target_textinput.onDeselect.AddListener(new UnityAction<string>(KeyboardUnlock));
+            tmpro_manual_target_textinput.onEndEdit.AddListener(new UnityAction<string>(KeyboardUnlock));
         }
 
         /// <summary>
