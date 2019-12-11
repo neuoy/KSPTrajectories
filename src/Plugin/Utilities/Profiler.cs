@@ -25,6 +25,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using KSP.Localization;
 using UnityEngine;
+using UnityEngine.Events;
 #endif
 
 namespace Trajectories
@@ -37,7 +38,7 @@ namespace Trajectories
 #if DEBUG_PROFILER
     /// <summary> Simple profiler for measuring the execution time of code placed between the Start and Stop methods. </summary>
     [KSPAddon(KSPAddon.Startup.Flight, false)]
-    public sealed class Profiler: MonoBehaviour
+    public sealed class Profiler : MonoBehaviour
     {
         // constants
         private const float width = 500.0f;
@@ -52,6 +53,7 @@ namespace Trajectories
         // popup window
         private static MultiOptionDialog multi_dialog;
         private static PopupDialog popup_dialog;
+        private static DialogGUIScrollList scroll_list;
         private static DialogGUIVerticalLayout dialog_items;
 
         // an entry in the profiler
@@ -72,27 +74,21 @@ namespace Trajectories
         }
 
         // store all entries
-        private Dictionary<string, Entry> entries = new Dictionary<string, Entry>();
+        private static readonly Dictionary<string, Entry> entries = new Dictionary<string, Entry>();
 
         // display update timer
         private static double update_timer = Util.Clocks;
-        private static double timeout = Stopwatch.Frequency / update_fps;
+        private static readonly double timeout = Stopwatch.Frequency / update_fps;
         private const double update_fps = 5.0;      // Frames per second the entry value display will update.
         private static long tot_frames = 0;         // total physics frames used for avg calculation
         private static string tot_frames_txt = "";  // total physics frames display string
 
-
-        // permit global access
-        public static Profiler Fetch { get; private set; } = null;
-
         //  constructor
         public Profiler()
         {
-            // enable global access
-            Fetch = this;
-
             // create window
             dialog_items = new DialogGUIVerticalLayout();
+            scroll_list = new DialogGUIScrollList(new Vector2(), false, true, dialog_items);
             multi_dialog = new MultiOptionDialog(
                "TrajectoriesProfilerWindow",
                "",
@@ -116,39 +112,54 @@ namespace Trajectories
                            new DialogGUILabel("<b>CALLS</b>", value_width - 15f),
                            new DialogGUILabel("<b>AVG</b>", value_width - 10f))),
                    // create scrollbox for entry data
-                   new DialogGUIScrollList(new Vector2(), false, true, dialog_items)
+                   scroll_list
                });
         }
 
         // Awake is called only once when the script instance is being loaded. Used in place of the constructor for initialization.
-        public void Awake()
+        public void Awake() => SpawnDialog();
+
+        private static void SpawnDialog()
         {
             // create popup dialog
             popup_dialog = PopupDialog.SpawnPopupDialog(multi_dialog, false, HighLogic.UISkin, false, "");
-            if (popup_dialog != null)
-                popup_dialog.gameObject.SetActive(false);
+            popup_dialog.onDestroy.AddListener(new UnityAction(OnPopupDialogDestroy));
         }
 
         public void Update()
         {
-            if ((Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl)) &&
-                     Input.GetKeyUp(KeyCode.P) && popup_dialog != null)
-            {
-                visible = !visible;
-                popup_dialog.gameObject.SetActive(visible);
-            }
+            if (Util.IsPaused)
+                return;
 
-            // skip updates for a smoother display
+            // skip calculations for a smoother display
             if (((Util.Clocks - update_timer) > timeout) && visible)
             {
                 update_timer = Util.Clocks;
                 Calculate();
             }
+
+            // hide or show the dialog box
+            if ((Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl)) && Input.GetKeyUp(KeyCode.P))
+                visible = !visible;
+
+            if (visible)
+            {
+                if (popup_dialog == null)
+                {
+                    SpawnDialog();
+                    scroll_list.children.Add(new DialogGUIVerticalLayout());
+                }
+                popup_dialog.gameObject.SetActive(true);
+            }
+            else if (popup_dialog != null)
+            {
+                popup_dialog.gameObject.SetActive(false);
+            }
         }
 
         private static void Calculate()
         {
-            foreach (KeyValuePair<string, Entry> p in Fetch.entries)
+            foreach (KeyValuePair<string, Entry> p in entries)
             {
                 Entry e = p.Value;
 
@@ -172,7 +183,7 @@ namespace Trajectories
 
         public void FixedUpdate()
         {
-            foreach (KeyValuePair<string, Entry> p in Fetch.entries)
+            foreach (KeyValuePair<string, Entry> p in entries)
             {
                 Entry e = p.Value;
 
@@ -187,13 +198,29 @@ namespace Trajectories
             ++tot_frames;
         }
 
-        public void OnDestroy()
+        public static void OnDestroy()
         {
-            Fetch = null;
             if (popup_dialog != null)
             {
                 popup_dialog.Dismiss();
                 popup_dialog = null;
+            }
+        }
+
+        /// <summary>
+        /// Called when the PopupDialog OnDestroy method is called. Used for saving the window position.
+        /// </summary>
+        private static void OnPopupDialogDestroy()
+        {
+            // save popup position. Note. PopupDialog.RTrf is an offset from the center of the screen.
+            if (popup_dialog != null)
+            {
+                Vector2 window_pos = new Vector2(
+                    ((Screen.width / 2) + popup_dialog.RTrf.position.x) / Screen.width,
+                    ((Screen.height / 2) + popup_dialog.RTrf.position.y) / Screen.height);
+                //Util.DebugLog("Saving profiler window position as {0}", window_pos.ToString());
+                multi_dialog.dialogRect.Set(window_pos.x, window_pos.y, width, height);
+                scroll_list.children.Clear();
             }
         }
 
@@ -224,7 +251,7 @@ namespace Trajectories
 
         private static void OnButtonClick_Reset()
         {
-            foreach (KeyValuePair<string, Entry> e in Fetch.entries)
+            foreach (KeyValuePair<string, Entry> e in entries)
             {
                 e.Value.tot_calls = 0L;
                 e.Value.tot_time = 0.0;
@@ -233,13 +260,12 @@ namespace Trajectories
             tot_frames = 0L;
         }
 
-        private static void OnButtonClick_ShowZero(bool inState)
-        {
-            show_zero = inState;
-        }
+        private static void OnButtonClick_ShowZero(bool inState) => show_zero = inState;
 
-        private void AddDialogItem(string e_name)
+        private static void AddDialogItem(string e_name)
         {
+            //Util.DebugLog("{0}: {1}", e_name, dialog_items.children.Count.ToString());
+
             // add item
             dialog_items.AddChild(
                 new DialogGUIHorizontalLayout(
@@ -256,33 +282,27 @@ namespace Trajectories
         }
 #endif
 
-        [System.Diagnostics.Conditional("DEBUG_PROFILER")]
+        [Conditional("DEBUG_PROFILER")]
         /// <summary> Start a profiler entry. </summary>
         public static void Start(string e_name)
         {
 #if DEBUG_PROFILER
-            if (Fetch == null)
-                return;
-
-            if (!Fetch.entries.ContainsKey(e_name))
+            if (!entries.ContainsKey(e_name))
             {
-                Fetch.entries.Add(e_name, new Entry());
-                Fetch.AddDialogItem(e_name);
+                entries.Add(e_name, new Entry());
+                AddDialogItem(e_name);
             }
 
-            Fetch.entries[e_name].start = Util.Clocks;
+            entries[e_name].start = Util.Clocks;
 #endif
         }
 
-        [System.Diagnostics.Conditional("DEBUG_PROFILER")]
+        [Conditional("DEBUG_PROFILER")]
         /// <summary> Stop a profiler entry. </summary>
         public static void Stop(string e_name)
         {
 #if DEBUG_PROFILER
-            if (Fetch == null)
-                return;
-
-            Entry e = Fetch.entries[e_name];
+            Entry e = entries[e_name];
 
             ++e.calls;
             e.time += Util.Clocks - e.start;
@@ -292,20 +312,17 @@ namespace Trajectories
 #if DEBUG_PROFILER
 
         /// <summary> Profile a function scope. </summary>
-        public class ProfileScope : IDisposable
+        internal sealed class ProfileScope : IDisposable
         {
             public ProfileScope(string name)
             {
                 this.name = name;
-                Profiler.Start(name);
+                Start(name);
             }
 
-            public void Dispose()
-            {
-                Profiler.Stop(name);
-            }
+            public void Dispose() => Stop(name);
 
-            private string name;
+            private readonly string name;
         }
 
 #endif
