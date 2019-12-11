@@ -4,7 +4,12 @@
 
 ### Changes since the last release
 
+ - GUI not holding position bug #172 fixed.
+ - Target text entry keyboard lockout bug fixed. 
+
 ### For Developers
+
+ - Profiler GUI disappearing and not holding position bugs fixed, similar issues to #164 and #172.
  
 ### Known Issues
 
