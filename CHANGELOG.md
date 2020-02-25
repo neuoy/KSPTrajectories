@@ -1,9 +1,10 @@
 
-## v2.3.1 for all versions of KSP from 1.3.1 to 1.8.x
- - 20xx-xx-xx
+## v2.3.1 for all versions of KSP from 1.3.1 to 1.9.x
+ - 2020-02-25
 
 ### Changes since the last release
 
+ - Support for KSP 1.9.x
  - GUI not holding position bug #172 fixed.
  - Target text entry keyboard lockout bug fixed. 
 

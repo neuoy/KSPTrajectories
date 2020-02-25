@@ -11,7 +11,7 @@ SET KSPversion=%2
 rem make sure the initial working directory is the one containing the current script
 SET scriptPath=%~dp0
 
-rem we dont need mdb files for KSP 1.8.x
+rem we dont need mdb files for KSP 1.8.x and above
 IF %KSPversion% GTR 17 GOTO ksp18
 
 echo Generating Unity Monodevelop Debug files...

@@ -34,6 +34,7 @@ xcopy /y "%initialWD%\%TargetName%%KSPversion%.bin" "%initialWD%\%TargetName%17.
 
 :ksp18
 rem if built version is greater than KSP 1.7.2 then we assume latest version and copy built bin for the other compatible versions
+xcopy /y "%initialWD%\%TargetName%%KSPversion%.bin" "%initialWD%\%TargetName%18.bin*" > nul
 
 :ksp13
 rem delete Trajectories.bin if it exists
