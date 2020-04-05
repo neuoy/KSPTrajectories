@@ -130,6 +130,9 @@ namespace Trajectories
         public static Vector3 SimAeroForce(Vessel _vessel, Vector3 v_wrld_vel, double altitude, double latitude = 0.0)
         {
             Profiler.Start("SimAeroForce");
+            Quaternion toLocal = _vessel.transform.localRotation.Inverse();
+            //if (VesselAerodynamicModel.DebugParts)
+               // Debug.Log("alt: " + altitude + " vel: " + (toLocal * v_wrld_vel.normalized).ToString("F1") );
 
             CelestialBody body = _vessel.mainBody;
             double pressure = body.GetPressure(altitude);
@@ -149,20 +152,23 @@ namespace Trajectories
             double soundSpeed = body.GetSpeedOfSound(pressure, rho);
             double mach = v_wrld_vel.magnitude / soundSpeed;
             if (mach > 25.0) { mach = 25.0; }
+            float pseudoreynolds = (float)(rho * v_wrld_vel.magnitude);
+            float pseudoredragmult = PhysicsGlobals.DragCurvePseudoReynolds.Evaluate(pseudoreynolds);
+            float liftQ = (float)dyn_pressure * 1000;
 
             // Loop through all parts, accumulating drag and lift.
             for (int i = 0; i < _vessel.Parts.Count; ++i)
             {
                 // need checks on shielded components
                 Part p = _vessel.Parts[i];
-                #if DEBUG
+#if DEBUG
                 TrajectoriesDebug partDebug = VesselAerodynamicModel.DebugParts ? p.FindModuleImplementing<TrajectoriesDebug>() : null;
                 if (partDebug != null)
                 {
-                    partDebug.Drag = 0;
-                    partDebug.Lift = 0;
+                    partDebug.Drag = Vector3.zero;
+                    partDebug.Lift = Vector3.zero;
                 }
-                #endif
+#endif
 
                 if (p.ShieldedFromAirstream || p.Rigidbody == null)
                 {
@@ -205,8 +211,6 @@ namespace Trajectories
                                 //Debug.Log(String.Format("Trajectories: Caught NRE on Drag Initialization.  Should be fixed now.  {0}", e));
                             }
 
-                            float pseudoreynolds = (float)(rho * Mathf.Abs(v_wrld_vel.magnitude));
-                            float pseudoredragmult = PhysicsGlobals.DragCurvePseudoReynolds.Evaluate(pseudoreynolds);
                             drag = p_drag_data.areaDrag * PhysicsGlobals.DragCubeMultiplier * pseudoredragmult;
 
                             liftForce = p_drag_data.liftForce;
@@ -240,9 +244,9 @@ namespace Trajectories
 #if DEBUG
                 if (partDebug != null)
                 {
-                    partDebug.Drag += (float)dragForce.magnitude;
+                    partDebug.Drag += dragForce;
                 }
-                #endif
+#endif
                 total_drag += dragForce;
 
                 // If it isn't a wing or lifter, get body lift.
@@ -256,52 +260,106 @@ namespace Trajectories
                     bodyLift = Vector3.ProjectOnPlane(bodyLift, sim_dragVectorDir);
                     // Only accumulate forces for non-LiftModules
                     total_lift += bodyLift;
-
+#if DEBUG
+                    if (partDebug != null)
+                    {
+                        partDebug.Lift += bodyLift;
+                    }
+#endif
 
                     Profiler.Stop("SimAeroForce#BodyLift");
                 }
-
-
-                Profiler.Start("SimAeroForce#LiftingSurface");
-
-                // Find ModuleLifingSurface for wings and liftforce.
-                // Should catch control surface as it is a subclass
-                for (int j = 0; j < p.Modules.Count; ++j)
+                else
                 {
-                    var m = p.Modules[j];
-                    float mcs_mod;
-                    if (m is ModuleLiftingSurface)
+
+                    Profiler.Start("SimAeroForce#LiftingSurface");
+
+                    // loop over ModuleLifingSurface for wings and liftforce.
+                    // will catch control surface as it is a subclass
+                    foreach (var wing in p.FindModulesImplementing<ModuleLiftingSurface>())
                     {
-                        mcs_mod = 1.0f;
-                        double liftQ = dyn_pressure * 1000;
-                        ModuleLiftingSurface wing = (ModuleLiftingSurface)m;
-                        Vector3 nVel = Vector3.zero;
-                        Vector3 liftVector = Vector3.zero;
-                        float liftdot;
-                        float absdot;
-                        wing.SetupCoefficients(v_wrld_vel, out nVel, out liftVector, out liftdot, out absdot);
+                        float mcs_mod = 0f;
 
-                        double prevMach = p.machNumber;
-                        p.machNumber = mach;
-                        Vector3 local_lift = mcs_mod * wing.GetLiftVector(liftVector, liftdot, absdot, liftQ, (float)mach);
-                        Vector3 local_drag = mcs_mod * wing.GetDragVector(nVel, absdot, liftQ);
-                        p.machNumber = prevMach;
+                        if (wing is ModuleControlSurface)
+                        {
+                            mcs_mod = (wing as ModuleControlSurface).ctrlSurfaceArea;
+                        }
 
+                        Vector3 liftVector = wing.transformSign * p.transform.forward;
+                        float liftdot = Vector3.Dot(sim_dragVectorDir, liftVector);
+                        float absdot = Mathf.Abs(liftdot);
+
+                        // fixed wing proportion for control surfaces
+                        Vector3 local_lift = (1.0f - mcs_mod) * Mathf.Sign(liftdot)
+                                                                * wing.liftCurve.Evaluate(absdot)
+                                                                * wing.liftMachCurve.Evaluate((float)mach)
+                                                                * wing.deflectionLiftCoeff
+                                                                * liftQ * PhysicsGlobals.LiftMultiplier
+                                                                * -liftVector;
+
+                        //(wing.GetLiftVector(liftVector, liftdot, absdot, liftQ, (float)mach));
+                        Vector3 local_drag = (1.0f - mcs_mod) * wing.dragCurve.Evaluate(absdot)
+                                                                * wing.dragMachCurve.Evaluate((float)mach)
+                                                                * wing.deflectionLiftCoeff
+                                                                * liftQ * PhysicsGlobals.LiftDragMultiplier
+                                                                * -sim_dragVectorDir;
                         total_lift += local_lift;
                         total_drag += local_drag;
-
-                        #if DEBUG
+#if DEBUG
                         if (partDebug != null)
                         {
-                            partDebug.Lift += (float)local_lift.magnitude;
-                            partDebug.Drag += (float)local_drag.magnitude;
+                            partDebug.Lift += local_lift;
+                            partDebug.Drag += local_drag;
                         }
-                        #endif
+#endif
+
+                        if (wing is ModuleControlSurface)
+                        {
+                            // assume new KSP 1.8 deploy angle as average angle of control surface
+                            // 
+                            ModuleControlSurface mcs = wing as ModuleControlSurface;
+
+                            if (mcs.deploy)
+                            {
+                                Quaternion mcs_rot = Quaternion.AngleAxis((mcs.deployInvert ^ mcs.mirrorDeploy ? 1f: -1f)*mcs.deployAngle, p.transform.right);
+                                
+                                liftVector = mcs_rot * liftVector;
+                                liftdot = Vector3.Dot(sim_dragVectorDir, liftVector);
+                                absdot = Mathf.Abs(liftdot);
+                                /*if (v_wrld_vel.magnitude > 2100 && v_wrld_vel.magnitude < 2130)
+                                {
+                                    Debug.Log("Traj MCS " + mcs.part.name + " has " + mcs.deployAngle + " angle and orientation " + (mcs.deployInvert ^ mcs.mirrorDeploy ? " pos " : " neg "));
+                                    Debug.Log(String.Format("Traj MCS mcs_rot={0:F1}, part up={1:F2}, liftVector={2:F2}, sim_dragVectorDir={3:F2}", mcs_rot.eulerAngles, wing.transformSign * p.transform.forward, liftVector, sim_dragVectorDir));
+                                }*/
+                            }                        
+
+                            local_lift = mcs_mod * Mathf.Sign(liftdot)
+                                                    * wing.liftCurve.Evaluate(absdot)
+                                                    * wing.liftMachCurve.Evaluate((float)mach)
+                                                    * wing.deflectionLiftCoeff
+                                                    * liftQ * PhysicsGlobals.LiftMultiplier
+                                                    * -liftVector;
+
+                            local_drag = mcs_mod * wing.dragCurve.Evaluate(absdot)
+                                                    * wing.dragMachCurve.Evaluate((float)mach)
+                                                    * wing.deflectionLiftCoeff
+                                                    * liftQ * PhysicsGlobals.LiftDragMultiplier
+                                                    * -sim_dragVectorDir;
+
+                            total_lift += local_lift;
+                            total_drag += local_drag;
+#if DEBUG
+                            if (partDebug != null)
+                            {
+                                partDebug.Lift += local_lift;
+                                partDebug.Drag += local_drag;
+                            }
+#endif
+                        }
                     }
+
+                    Profiler.Stop("SimAeroForce#LiftingSurface");
                 }
-
-                Profiler.Stop("SimAeroForce#LiftingSurface");
-
             }
             // RETURN STUFF
             Vector3 force = total_lift + total_drag;
