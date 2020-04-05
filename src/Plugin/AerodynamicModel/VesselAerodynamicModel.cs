@@ -80,14 +80,12 @@ namespace Trajectories
         {
             Debug.Log("Trajectories: Initializing cache");
 
-            double maxCacheVelocity = 10000.0;
-            double maxCacheAoA = 180.0 / 180.0 * Math.PI;
+            // resolution = step size for true values, others are interpolated
+            int velocityResolution = 50; // m/s
+            int angleOfAttackResolution = 1; // degree, internal converted to radian
+            int altitudeResolution = 200; // m
 
-            int velocityResolution = 32;
-            int angleOfAttackResolution = 33; // even number to include exactly 0°
-            int altitudeResolution = 32;
-
-            cachedForces = new AeroForceCache(maxCacheVelocity, maxCacheAoA, body_.atmosphereDepth, velocityResolution, angleOfAttackResolution, altitudeResolution, this);
+            cachedForces = new AeroForceCache(velocityResolution, angleOfAttackResolution, altitudeResolution, this);
 
             isValid = true;
 
