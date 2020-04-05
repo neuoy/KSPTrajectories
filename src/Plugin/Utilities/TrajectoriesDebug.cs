@@ -18,16 +18,21 @@
   along with Trajectories.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+using UnityEngine;
+
 namespace Trajectories
 {
 #if DEBUG
     public class TrajectoriesDebug : PartModule
     {
-        [KSPField(isPersistant = false, guiActive = true)]
-        public float Drag;
+        [KSPField(isPersistant = false, guiActive = true, guiFormat = "F1",guiName = "Traj Drag")]
+        public Vector3 Drag;
 
-        [KSPField(isPersistant = false, guiActive = true)]
-        public float Lift;
+        [KSPField(isPersistant = false, guiActive = true, guiFormat = "F1", guiName = "Traj Lift")]
+        public Vector3 Lift;
+
     }
 #endif
+
+ 
 }
