@@ -172,7 +172,7 @@ namespace Trajectories
         /// Compute the aerodynamic forces that would be applied to the vessel if it was in the specified situation (air velocity, altitude and angle of attack).
         /// </summary>
         /// <returns>The computed aerodynamic forces in world space</returns>
-        public Vector3d ComputeForces(double altitude, Vector3d airVelocity, Vector3d vup, double angleOfAttack)
+        public Vector3d ComputeForces(double altitude, Vector3d airVelocity, Vector3d vup, double angleOfAttack, bool applyScale = true)
         {
             Profiler.Start("ComputeForces");
             if (!vessel_.mainBody.atmosphere)
@@ -210,10 +210,14 @@ namespace Trajectories
             //turn force back as airVelocity was rotated for simulated calculation
             Vector3d localForce = aoaRotation.Inverse() * vesselRotation.Inverse() * totalForce;
 
-            
+            // somehow we miss true forces by some percent, which seem pretty constant in local coordinates
+            // so we simply apply correction factor computed by comparing current forces
+            if (applyScale)
+                localForce = Vector3d.Scale(localForce, Trajectory.fetch.GlobalCorrectionFactor);
+
             Vector3d res = Quaternion.LookRotation(-vup, airVelocity) * localForce;
 
-            /*
+            /*if (applyScale==false)
             {
                 Debug.Log(String.Format("Traj Debug Input local airVel={0:F1}, local airVelfixedAoA={1:F1}", (Vector3) airVelocity, vesselRotation.Inverse() * airVelocityForFixedAoA));
                 Debug.Log(String.Format("Traj Debug Input angleOfAttack={0:F1}, aoaRotation={1:F1}, vesselRotation={2:F1}", angleOfAttack, aoaRotation.eulerAngles, vesselRotation.eulerAngles));
