@@ -139,7 +139,22 @@ namespace Trajectories
             return "[" + v.x.ToString(format) + ", " + v.y.ToString(format) + ", " + v.z.ToString(format) + "]";
         }
 
+        public static double Clamp(double value, double min, double max)
+        {
+            return Math.Max(min, Math.Min(value, max));
+        }
 
+        public static Vector3d Clamp(Vector3d value, double min, double max)
+        {
+            return new Vector3d(Math.Max(min, Math.Min(value.x, max)),
+                                Math.Max(min, Math.Min(value.y, max)),
+                                Math.Max(min, Math.Min(value.z, max)));
+        }
+
+        public static double dLerp(double a, double b, double t)
+        {
+            return a + (b - a) * Clamp(t, 0d, 1d);
+        }
 
         // --------------------------------------------------------------------------
         // --- TIME -----------------------------------------------------------------

@@ -727,9 +727,8 @@ namespace Trajectories
         {
             if (inState != DescentProfile.fetch.ProgradeEntry)
             {
-                DescentProfile.fetch.ProgradeEntry = inState;
                 if (inState)
-                    DescentProfile.fetch.Reset(0d);
+                    DescentProfile.fetch.Reset();
                 DescentProfile.fetch.Save();
             }
         }
@@ -738,9 +737,8 @@ namespace Trajectories
         {
             if (inState != DescentProfile.fetch.RetrogradeEntry)
             {
-                DescentProfile.fetch.RetrogradeEntry = inState;
                 if (inState)
-                    DescentProfile.fetch.Reset();
+                    DescentProfile.fetch.Reset(retrograde: true);
                 DescentProfile.fetch.Save();
             }
         }

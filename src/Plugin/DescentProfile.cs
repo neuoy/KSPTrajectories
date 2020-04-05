@@ -20,9 +20,10 @@
   along with Trajectories.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-using System;
-using System.Linq;
 using KSP.Localization;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace Trajectories
@@ -50,6 +51,7 @@ namespace Trajectories
                 }
             }
 
+            // Angle in radiant
             public double Angle
             {
                 get => angle;
@@ -60,7 +62,7 @@ namespace Trajectories
                     else
                         angle = value;
 
-                    double calc_angle = angle * 180.0 / Math.PI;
+                    double calc_angle = angle * Mathf.Rad2Deg;
                     if (calc_angle <= -100d || calc_angle >= 100d)
                         Angle_txt = calc_angle.ToString("F1") + "°";
                     else if (calc_angle <= -10d || calc_angle >= 10d)
@@ -104,6 +106,14 @@ namespace Trajectories
                 return Math.Acos(Vector3d.Dot(position, velocity) / (position.magnitude * velocity.magnitude)) - Math.PI * 0.5 + Angle;
             }
 
+            public double GetAngleOfAttack(double AoS)
+            {
+                if (!Horizon)
+                    return Angle;
+                else
+                    return AoS + Angle;
+            }
+
             [Obsolete("use MainGUI")]
             public void DoGUI()
             {
@@ -121,7 +131,9 @@ namespace Trajectories
         public Node lowAltitude;
         public Node finalApproach;
 
-        public bool ProgradeEntry { get; set; }
+        public SortedList<double, (Node higher, Node lower, double transition)> NodeList;
+
+        public bool ProgradeEntry { get { return !RetrogradeEntry; } }
 
         public bool RetrogradeEntry { get; set; }
 
@@ -138,15 +150,12 @@ namespace Trajectories
         }
 
         // Awake is called only once when the script instance is being loaded. Used in place of the constructor for initialization.
-        public void Awake()
+        private void Awake()
         {
-            if (Settings.fetch.DefaultDescentIsRetro)
-                Reset();
-            else
-                Reset(0d);
+            Reset(Settings.fetch.DefaultDescentIsRetro);
         }
 
-        public void OnDestroy()
+        private void OnDestroy()
         {
             fetch = null;
             entry = null;
@@ -155,28 +164,34 @@ namespace Trajectories
             finalApproach = null;
         }
 
+        class revSort : IComparer<double> { public int Compare(double x, double y) { return y.CompareTo(x);  } }
+
         private void Allocate()
         {
             entry = new Node(Localizer.Format("#autoLOC_Trajectories_Entry"), Localizer.Format("#autoLOC_Trajectories_EntryDesc"));
             highAltitude = new Node(Localizer.Format("#autoLOC_Trajectories_High"), Localizer.Format("#autoLOC_Trajectories_HighDesc"));
             lowAltitude = new Node(Localizer.Format("#autoLOC_Trajectories_Low"), Localizer.Format("#autoLOC_Trajectories_LowDesc"));
             finalApproach = new Node(Localizer.Format("#autoLOC_Trajectories_Ground"), Localizer.Format("#autoLOC_Trajectories_GroundDesc"));
+            // stores connection between the different settings
+            NodeList = new SortedList<double, (Node higher, Node lower, double transition)>(new revSort())
+            {
+                { 0.50, (entry,        highAltitude,  8) }, // 0.55+1/5=0.575 -> 0.55 is transition interval
+                { 0.25, (highAltitude, lowAltitude,   10) }, // 0.25+1/20=0.3 -> 0.25
+                { 0.05, (lowAltitude,  finalApproach, 20) }  // 0.05+1/20=0.1 -> 0.05
+            };
         }
 
-        public void Reset(double AoA = Math.PI)
+        public void Reset(bool retrograde = false)
         {
-            //Debug.Log(string.Format("Resetting vessel descent profile to {0} degrees", AoA));
-            entry.Angle = AoA;
-            entry.Horizon = false;
-            highAltitude.Angle = AoA;
-            highAltitude.Horizon = false;
-            lowAltitude.Angle = AoA;
-            lowAltitude.Horizon = false;
-            finalApproach.Angle = AoA;
-            finalApproach.Horizon = false;
+            Debug.Log(string.Format("Resetting vessel descent profile with option retrograde: ", retrograde));
 
-            ProgradeEntry = AoA == 0d;
-            RetrogradeEntry = AoA == Math.PI;
+            RetrogradeEntry = retrograde;
+
+            double orientationAngle = retrograde ? Math.PI : 0d;
+
+            entry.Angle = highAltitude.Angle = lowAltitude.Angle = finalApproach.Angle = orientationAngle; 
+            
+            entry.Horizon = highAltitude.Horizon = lowAltitude.Horizon = finalApproach.Horizon = false;
 
             RefreshSliders();
         }
@@ -199,10 +214,8 @@ namespace Trajectories
                 if (attachedVessel == null)
                 {
                     //Debug.Log("No vessel");
-                    if (Settings.fetch.DefaultDescentIsRetro)
-                        Reset();
-                    else
-                        Reset(0d);
+                    Reset(Settings.fetch.DefaultDescentIsRetro);
+                    
                 }
                 else
                 {
@@ -210,18 +223,13 @@ namespace Trajectories
                     if (module == null)
                     {
                         //Debug.Log("No TrajectoriesVesselSettings module");
-                        if (Settings.fetch.DefaultDescentIsRetro)
-                            Reset();
-                        else
-                            Reset(0d);
+                        Reset(Settings.fetch.DefaultDescentIsRetro);
+                        
                     }
                     else if (!module.Initialized)
                     {
                         //Debug.Log("Initializing TrajectoriesVesselSettings module");
-                        if (Settings.fetch.DefaultDescentIsRetro)
-                            Reset();
-                        else
-                            Reset(0d);
+                        Reset(Settings.fetch.DefaultDescentIsRetro);
 
                         module.EntryAngle = entry.Angle;
                         module.EntryHorizon = entry.Horizon;
@@ -249,7 +257,7 @@ namespace Trajectories
                         finalApproach.Angle = module.GroundAngle;
                         finalApproach.Horizon = module.GroundHorizon;
 
-                        ProgradeEntry = module.ProgradeEntry;
+                        //ProgradeEntry = module.ProgradeEntry;
                         RetrogradeEntry = module.RetrogradeEntry;
 
                         RefreshSliders();
@@ -301,19 +309,19 @@ namespace Trajectories
 
             if (newPrograde && !ProgradeEntry)
             {
-                Reset(0d);
+                Reset();
                 Save();
             }
             else if (newRetrograde && !RetrogradeEntry)
             {
-                Reset();
+                Reset(true);
                 Save();
             }
         }
 
         public void CheckGUI()
         {
-            double? AoA = entry.Horizon ? (double?)null : entry.Angle;
+            /*double? AoA = entry.Horizon ? (double?)null : entry.Angle;
 
             if (highAltitude.Angle != AoA || highAltitude.Horizon)
                 AoA = null;
@@ -321,20 +329,7 @@ namespace Trajectories
                 AoA = null;
             if (finalApproach.Angle != AoA || finalApproach.Horizon)
                 AoA = null;
-
-            if (!AoA.HasValue)
-            {
-                ProgradeEntry = false;
-                RetrogradeEntry = false;
-            }
-            else
-            {
-                if (Math.Abs(AoA.Value) < 0.00001)
-                    ProgradeEntry = true;
-                if (Math.Abs((Math.Abs(AoA.Value) - Math.PI)) < 0.00001)
-                    RetrogradeEntry = true;
-            }
-
+                */
             Save();
         }
 
@@ -348,39 +343,49 @@ namespace Trajectories
             double altitude = position.magnitude - body.Radius;
             double altitudeRatio = body.atmosphere ? altitude / body.atmosphereDepth : 0;
 
-            Node a, b;
-            double aCoeff;
-
-            if (altitudeRatio > 0.5)  // Atmospheric entry
+            foreach (var conf in NodeList)
             {
-                a = entry;
-                b = highAltitude;
-                aCoeff = Math.Min((altitudeRatio - 0.5) * 2.0, 1.0);
-            }
-            else if (altitudeRatio > 0.25)  // High Altitude
-            {
-                a = highAltitude;
-                b = lowAltitude;
-                aCoeff = altitudeRatio * 4.0 - 1.0;
-            }
-            else if (altitudeRatio > 0.05)  // Low Altitude
-            {
-                a = lowAltitude;
-                b = finalApproach;
-                aCoeff = altitudeRatio * 5.0 - 0.25;
-
-                aCoeff = 1.0 - aCoeff;
-                aCoeff = 1.0 - aCoeff * aCoeff;
-            }
-            else    // Final Approach or Non-Atmospheric Body
-            {
-                return finalApproach.GetAngleOfAttack(position, velocity);
+                if (conf.Key <= altitudeRatio)
+                    return Util.dLerp(conf.Value.lower.GetAngleOfAttack(position, velocity),
+                                      conf.Value.higher.GetAngleOfAttack(position, velocity),
+                                      (altitudeRatio - conf.Key) * conf.Value.transition);
             }
 
-            double aAoA = a.GetAngleOfAttack(position, velocity);
-            double bAoA = b.GetAngleOfAttack(position, velocity);
+            return 0; // should never happen
+           
+        }
 
-            return aAoA * aCoeff + bAoA * (1.0 - aCoeff);
+        /// <summary>
+        /// Computes the orientation Quaternion for API (intended for MechJeb).
+        /// Note: we are using Unity directions, not KSP swapped forward/up stuff
+        /// </summary>
+        public Quaternion GetUnityOrientation(CelestialBody body, Vector3d position, Vector3d velocity)
+        {
+            if (ProgradeEntry)
+            {
+                return Quaternion.AngleAxis((float) GetAngleOfAttack(body, position, velocity) * Mathf.Rad2Deg, Vector3.right);
+            }
+            else
+            {
+                //retrograde is actually 180° rotation around Vesselup to keep orientation and then pitch for remaining AoA, not pitch by nearly 180°
+                return Quaternion.AngleAxis((float) GetAngleOfAttack(body, position, velocity) * Mathf.Rad2Deg - 180f, Vector3.right) * Quaternion.AngleAxis(180f, Vector3.up);
+            }
+        }
+
+        /// <summary>
+        /// Computes the orientation Quaternion for rotations in ksp coordinates (flying up instead of forward)
+        /// </summary>
+        public Quaternion GetKspOrientation(CelestialBody body, Vector3d position, Vector3d velocity)
+        {
+            if (ProgradeEntry)
+            {
+                return Quaternion.AngleAxis((float)GetAngleOfAttack(body, position, velocity) * Mathf.Rad2Deg, Vector3.right);
+            }
+            else
+            {
+                //retrograde is actually 180° rotation around Vesselup to keep orientation and then pitch for remaining AoA, not pitch by nearly 180°
+                return Quaternion.AngleAxis((float)GetAngleOfAttack(body, position, velocity) * Mathf.Rad2Deg - 180f, Vector3.right) * Quaternion.AngleAxis(180f, Vector3.forward);
+            }
         }
     }
 }
