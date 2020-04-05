@@ -57,6 +57,10 @@ namespace Trajectories
                 get => angle;
                 set
                 {
+                    if (fetch.RetrogradeEntry)
+                        value = Util.Clamp(value, 0.5 * Math.PI, Math.PI);
+                    else
+                        value = Util.Clamp(value, -0.5 * Math.PI, 0);
                     if (Math.Abs(value) < 0.00001)
                         angle = 0d;
                     else
@@ -77,8 +81,8 @@ namespace Trajectories
                 get => sliderPos;
                 set
                 {
-                    sliderPos = value;
-                    Angle = value * value * value * Math.PI; // This helps to have high precision near 0° while still allowing big angles
+                    sliderPos = Mathf.Clamp(value, -Mathf.PI * 0.5f, 0f);
+                    Angle = (fetch.RetrogradeEntry ? Math.PI : 0d ) +  value; 
                 }
             }
 
@@ -91,11 +95,11 @@ namespace Trajectories
 
             public void RefreshSliderPos()
             {
-                float position = (float)Math.Pow(Math.Abs(Angle) / Math.PI, 1d / 3d);
-                if (Angle < 0d)
-                    SliderPos = -position;
-                else
-                    SliderPos = position;
+                //Debug.Log(string.Format("Setting slider for angle {0} with retrograde is {1}", Angle, fetch.RetrogradeEntry));
+                // pos is interval [-pi/2,0]
+                float position = (float) (Angle - (fetch.RetrogradeEntry ? Math.PI : 0d) );
+                //Debug.Log("New sliderpos abs value is " + position);
+                SliderPos = position;
             }
 
             public double GetAngleOfAttack(Vector3d position, Vector3d velocity)
@@ -120,7 +124,7 @@ namespace Trajectories
                 GUILayout.BeginHorizontal();
                 GUILayout.Label(new GUIContent(Name, Description), GUILayout.Width(45));
                 Horizon = GUILayout.Toggle(Horizon, new GUIContent(Horizon_txt, "AoA = Angle of Attack = angle relatively to the velocity vector.\nHoriz = angle relatively to the horizon."), GUILayout.Width(45));
-                SliderPos = GUILayout.HorizontalSlider(SliderPos, -1.0f, 1.0f, GUILayout.Width(90));
+                SliderPos = GUILayout.HorizontalSlider(SliderPos, -Mathf.PI * 0.5f, 0.0f, GUILayout.Width(90));
                 GUILayout.Label(Angle_txt, GUILayout.Width(42));
                 GUILayout.EndHorizontal();
             }
@@ -189,8 +193,11 @@ namespace Trajectories
 
             double orientationAngle = retrograde ? Math.PI : 0d;
 
-            entry.Angle = highAltitude.Angle = lowAltitude.Angle = finalApproach.Angle = orientationAngle; 
-            
+            entry.Angle = orientationAngle - Math.PI/4; // 45 degree front up
+            highAltitude.Angle = orientationAngle - Math.PI/12; // 15 degree front up
+            lowAltitude.Angle = orientationAngle - Math.PI /18 ; // 10 degree front up
+            finalApproach.Angle = orientationAngle;
+
             entry.Horizon = highAltitude.Horizon = lowAltitude.Horizon = finalApproach.Horizon = false;
 
             RefreshSliders();
@@ -215,7 +222,7 @@ namespace Trajectories
                 {
                     //Debug.Log("No vessel");
                     Reset(Settings.fetch.DefaultDescentIsRetro);
-                    
+
                 }
                 else
                 {
@@ -224,7 +231,7 @@ namespace Trajectories
                     {
                         //Debug.Log("No TrajectoriesVesselSettings module");
                         Reset(Settings.fetch.DefaultDescentIsRetro);
-                        
+
                     }
                     else if (!module.Initialized)
                     {

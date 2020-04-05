@@ -391,28 +391,28 @@ namespace Trajectories
                     new DialogGUIToggle(() => { return DescentProfile.fetch.entry.Horizon; },
                         () => { return DescentProfile.fetch.entry.Horizon_txt; }, OnButtonClick_EntryHorizon, 60f),
                     new DialogGUISlider(() => { return DescentProfile.fetch.entry.SliderPos; },
-                        -1f, 1f, false, slider_width, -1, OnSliderSet_EntryAngle),
+                        -Mathf.PI * 0.5f, 0.0f, false, slider_width, -1, OnSliderSet_EntryAngle),
                     new DialogGUILabel(() => { return DescentProfile.fetch.entry.Angle_txt; }, 36f)),
                 new DialogGUIHorizontalLayout(
                     new DialogGUILabel(DescentProfile.fetch.highAltitude.Name, true),
                     new DialogGUIToggle(() => { return DescentProfile.fetch.highAltitude.Horizon; },
                         () => { return DescentProfile.fetch.highAltitude.Horizon_txt; }, OnButtonClick_HighHorizon, 60f),
                     new DialogGUISlider(() => { return DescentProfile.fetch.highAltitude.SliderPos; },
-                        -1f, 1f, false, slider_width, -1, OnSliderSet_HighAngle),
+                        -Mathf.PI * 0.5f, 0.0f, false, slider_width, -1, OnSliderSet_HighAngle),
                     new DialogGUILabel(() => { return DescentProfile.fetch.highAltitude.Angle_txt; }, 36f)),
                 new DialogGUIHorizontalLayout(
                     new DialogGUILabel(DescentProfile.fetch.lowAltitude.Name, true),
                     new DialogGUIToggle(() => { return DescentProfile.fetch.lowAltitude.Horizon; },
                         () => { return DescentProfile.fetch.lowAltitude.Horizon_txt; }, OnButtonClick_LowHorizon, 60f),
                     new DialogGUISlider(() => { return DescentProfile.fetch.lowAltitude.SliderPos; },
-                        -1f, 1f, false, slider_width, -1, OnSliderSet_LowAngle),
+                        -Mathf.PI * 0.5f, 0.0f, false, slider_width, -1, OnSliderSet_LowAngle),
                     new DialogGUILabel(() => { return DescentProfile.fetch.lowAltitude.Angle_txt; }, 36f)),
                 new DialogGUIHorizontalLayout(
                     new DialogGUILabel(DescentProfile.fetch.finalApproach.Name, true),
                     new DialogGUIToggle(() => { return DescentProfile.fetch.finalApproach.Horizon; },
                         () => { return DescentProfile.fetch.finalApproach.Horizon_txt; }, OnButtonClick_GroundHorizon, 60f),
                     new DialogGUISlider(() => { return DescentProfile.fetch.finalApproach.SliderPos; },
-                        -1f, 1f, false, slider_width, -1, OnSliderSet_GroundAngle),
+                        -Mathf.PI * 0.5f, 0.0f, false, slider_width, -1, OnSliderSet_GroundAngle),
                     new DialogGUILabel(() => { return DescentProfile.fetch.finalApproach.Angle_txt; }, 36f))
                 );
 
@@ -727,8 +727,7 @@ namespace Trajectories
         {
             if (inState != DescentProfile.fetch.ProgradeEntry)
             {
-                if (inState)
-                    DescentProfile.fetch.Reset();
+                DescentProfile.fetch.Reset();
                 DescentProfile.fetch.Save();
             }
         }
@@ -737,8 +736,7 @@ namespace Trajectories
         {
             if (inState != DescentProfile.fetch.RetrogradeEntry)
             {
-                if (inState)
-                    DescentProfile.fetch.Reset(retrograde: true);
+                DescentProfile.fetch.Reset(retrograde: true);
                 DescentProfile.fetch.Save();
             }
         }
