@@ -181,15 +181,24 @@ namespace Trajectories
                 return Vector3d.zero;
 
             Transform vesselTransform = vessel_.ReferenceTransform;
+            Quaternion vesselRotation = vesselTransform.rotation;
+            Quaternion aoaRotation;
+            if (angleOfAttack < 0.5 * Mathf.PI) //FIXME: extend interface to return/push quaternion from Decentprofile instead of this big angle hack for retrograde
+            {
+                //prograde
+                aoaRotation = Quaternion.AngleAxis((float)angleOfAttack * Mathf.Rad2Deg, Vector3.right);
+            }
+            else
+            {
+                //retrograde is actually 180° rotation around Vesselup to keep orientation and then pitch for remaining AoA, not pitch by nearly 180°
+                aoaRotation = Quaternion.AngleAxis((float)angleOfAttack*Mathf.Rad2Deg - 180f, Vector3.right) * Quaternion.AngleAxis(180f, Vector3.forward);
+            }
 
-            // this is weird, but the vessel orientation does not match the reference transform (up is forward), this code fixes it but I don't know if it'll work in all cases
-            Vector3d vesselBackward = (Vector3d)(-vesselTransform.up.normalized);
-            Vector3d vesselForward = -vesselBackward;
-            Vector3d vesselUp = (Vector3d)(-vesselTransform.forward.normalized);
-            Vector3d vesselRight = Vector3d.Cross(vesselUp, vesselBackward).normalized;
 
-            Vector3d airVelocityForFixedAoA = (vesselForward * Math.Cos(-angleOfAttack) + vesselUp * Math.Sin(-angleOfAttack)) * airVelocity.magnitude;
+            //Vector3d airVelocityForFixedAoA = (vesselForward * Math.Cos(-angleOfAttack) + vesselUp * Math.Sin(-angleOfAttack)) * airVelocity.magnitude;
+            Vector3d airVelocityForFixedAoA = airVelocity.magnitude * (Vector3d) (vesselRotation * aoaRotation * Vector3d.up);
 
+            //actually compute Force using simualted air flow
             Vector3d totalForce = ComputeForces_Model(airVelocityForFixedAoA, altitude);
 
             if (Double.IsNaN(totalForce.x) || Double.IsNaN(totalForce.y) || Double.IsNaN(totalForce.z))
@@ -198,37 +207,19 @@ namespace Trajectories
                 return Vector3d.zero; // Don't send NaN into the simulation as it would cause bad things (infinite loops, crash, etc.). I think this case only happens at the atmosphere edge, so the total force should be 0 anyway.
             }
 
-            // convert the force computed by the model (depends on the current vessel orientation, which is irrelevant for the prediction) to the predicted vessel orientation (which depends on the predicted velocity)
-            Vector3d localForce = new Vector3d(Vector3d.Dot(vesselRight, totalForce), Vector3d.Dot(vesselUp, totalForce), Vector3d.Dot(vesselBackward, totalForce));
+            //turn force back as airVelocity was rotated for simulated calculation
+            Vector3d localForce = aoaRotation.Inverse() * vesselRotation.Inverse() * totalForce;
 
-            //if (Double.IsNaN(localForce.x) || Double.IsNaN(localForce.y) || Double.IsNaN(localForce.z))
-            //    throw new Exception("localForce is NAN");
+            
+            Vector3d res = Quaternion.LookRotation(-vup, airVelocity) * localForce;
 
-            Vector3d velForward = airVelocity.normalized;
-            Vector3d velBackward = -velForward;
-            Vector3d velRight = Vector3d.Cross(vup, velBackward);
-            if (velRight.sqrMagnitude < 0.001)
+            /*
             {
-                velRight = Vector3d.Cross(vesselUp, velBackward);
-                if (velRight.sqrMagnitude < 0.001)
-                {
-                    velRight = Vector3d.Cross(vesselBackward, velBackward).normalized;
-                }
-                else
-                {
-                    velRight = velRight.normalized;
-                }
-            }
-            else
-                velRight = velRight.normalized;
-            Vector3d velUp = Vector3d.Cross(velBackward, velRight).normalized;
+                Debug.Log(String.Format("Traj Debug Input local airVel={0:F1}, local airVelfixedAoA={1:F1}", (Vector3) airVelocity, vesselRotation.Inverse() * airVelocityForFixedAoA));
+                Debug.Log(String.Format("Traj Debug Input angleOfAttack={0:F1}, aoaRotation={1:F1}, vesselRotation={2:F1}", angleOfAttack, aoaRotation.eulerAngles, vesselRotation.eulerAngles));
+                Debug.Log(String.Format("Traj Debug Result local force={0:F1}, result force={1:F1}", vesselRotation.Inverse() * totalForce, (Vector3) res));
+            }*/
 
-            Vector3d predictedVesselForward = velForward * Math.Cos(angleOfAttack) + velUp * Math.Sin(angleOfAttack);
-            Vector3d predictedVesselBackward = -predictedVesselForward;
-            Vector3d predictedVesselRight = velRight;
-            Vector3d predictedVesselUp = Vector3d.Cross(predictedVesselBackward, predictedVesselRight).normalized;
-
-            Vector3d res = predictedVesselRight * localForce.x + predictedVesselUp * localForce.y + predictedVesselBackward * localForce.z;
             if (Double.IsNaN(res.x) || Double.IsNaN(res.y) || Double.IsNaN(res.z))
             {
                 Debug.Log("Trajectories: res is NaN (altitude=" + altitude + ", airVelocity=" + airVelocity.magnitude + ", angleOfAttack=" + angleOfAttack);
