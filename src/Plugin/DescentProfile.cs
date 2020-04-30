@@ -258,7 +258,6 @@ namespace Trajectories
                         module.GroundAngle = finalApproach.Angle;
                         module.GroundHorizon = finalApproach.Horizon;
 
-                        module.ProgradeEntry = ProgradeEntry;
                         module.RetrogradeEntry = RetrogradeEntry;
 
                         module.Initialized = true;
@@ -275,7 +274,6 @@ namespace Trajectories
                         finalApproach.Angle = module.GroundAngle;
                         finalApproach.Horizon = module.GroundHorizon;
 
-                        //ProgradeEntry = module.ProgradeEntry;
                         RetrogradeEntry = module.RetrogradeEntry;
 
                         RefreshSliders();
@@ -303,7 +301,6 @@ namespace Trajectories
                 module.GroundAngle = finalApproach.Angle;
                 module.GroundHorizon = finalApproach.Horizon;
 
-                module.ProgradeEntry = ProgradeEntry;
                 module.RetrogradeEntry = RetrogradeEntry;
                 module.Initialized = true;
             }
