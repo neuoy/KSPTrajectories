@@ -135,7 +135,18 @@ namespace Trajectories
         public Node lowAltitude;
         public Node finalApproach;
 
-        public SortedList<double, (Node higher, Node lower, double transition)> NodeList;
+        public struct NodeTransition
+        {
+            public Node higher;
+            public Node lower;
+            public double transition;
+            public NodeTransition(Node _higher, Node _lower, double _transition)
+            {
+                higher = _higher; lower = _lower; transition = _transition;
+            }
+        };
+
+        public SortedList<double, NodeTransition> NodeList;
 
         public bool ProgradeEntry { get { return !RetrogradeEntry; } }
 
@@ -177,11 +188,11 @@ namespace Trajectories
             lowAltitude = new Node(Localizer.Format("#autoLOC_Trajectories_Low"), Localizer.Format("#autoLOC_Trajectories_LowDesc"));
             finalApproach = new Node(Localizer.Format("#autoLOC_Trajectories_Ground"), Localizer.Format("#autoLOC_Trajectories_GroundDesc"));
             // stores connection between the different settings
-            NodeList = new SortedList<double, (Node higher, Node lower, double transition)>(new revSort())
+            NodeList = new SortedList<double, NodeTransition>(new revSort())
             {
-                { 0.50, (entry,        highAltitude,  8) }, // 0.55+1/5=0.575 -> 0.55 is transition interval
-                { 0.25, (highAltitude, lowAltitude,   10) }, // 0.25+1/20=0.3 -> 0.25
-                { 0.05, (lowAltitude,  finalApproach, 20) }  // 0.05+1/20=0.1 -> 0.05
+                { 0.50, new NodeTransition(entry,        highAltitude,  8) }, // 0.55+1/5=0.575 -> 0.55 is transition interval
+                { 0.25, new NodeTransition(highAltitude, lowAltitude,   10) }, // 0.25+1/20=0.3 -> 0.25
+                { 0.05, new NodeTransition(lowAltitude,  finalApproach, 20) }  // 0.05+1/20=0.1 -> 0.05
             };
         }
 

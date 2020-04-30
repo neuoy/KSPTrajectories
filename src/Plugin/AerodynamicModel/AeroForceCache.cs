@@ -30,7 +30,14 @@ namespace Trajectories
         private double AoAResolution { get;  set; }
         private int AltitudeResolution { get;  set; }
 
-        private Dictionary<(int, int, int), Vector2> _cache;
+        struct cacheKey
+        {
+            public int v;
+            public int aoa;
+            public int alt;
+        };
+
+        private Dictionary<cacheKey, Vector2> _cache;
 
         private VesselAerodynamicModel Model;
 
@@ -42,7 +49,7 @@ namespace Trajectories
             AoAResolution =  aoaRes * Mathf.Deg2Rad;
             AltitudeResolution = altRes;
             
-            _cache = new Dictionary<(int, int, int), Vector2>();
+            _cache = new Dictionary<cacheKey, Vector2>();
 
         }
 
@@ -96,7 +103,7 @@ namespace Trajectories
         {
 
             Vector2 f;
-            if (! _cache.TryGetValue((v, a, m), out f))
+            if (! _cache.TryGetValue(new cacheKey { v=v, aoa=a, alt=m }, out f))
                 f = ComputeCacheEntry(v, a, m);
 
             return f;
@@ -110,7 +117,7 @@ namespace Trajectories
 
             Vector2 packedForce = Model.PackForces(Model.ComputeForces(currentAltitude, velocity, new Vector3(0, 1, 0), AoA), currentAltitude, velocity.x);
 
-            _cache.Add((v, a, m), packedForce);
+            _cache.Add(new cacheKey { v = v, aoa = a, alt = m }, packedForce);
 
             return packedForce;
         }
