@@ -73,6 +73,7 @@ namespace Trajectories
                         Angle_txt = calc_angle.ToString("F2") + "°";
                     else
                         Angle_txt = calc_angle.ToString("F3") + "°";
+                    Trajectory.fetch.clearUpToDate();
                 }
             }
 
@@ -353,22 +354,25 @@ namespace Trajectories
         /// (in world frame, but relative to the body) with the specified velocity
         /// (relative to the air, so it takes the body rotation into account)
         /// </summary>
-        public double GetAngleOfAttack(CelestialBody body, Vector3d position, Vector3d velocity)
+        public double GetAngleOfAttack(CelestialBody body, double altitude, Vector3d vup, Vector3d velocity)
         {
-            double altitude = position.magnitude - body.Radius;
             double altitudeRatio = body.atmosphere ? altitude / body.atmosphereDepth : 0;
 
             foreach (var conf in NodeList)
             {
                 if (conf.Key <= altitudeRatio)
-                    return Util.dLerp(conf.Value.lower.GetAngleOfAttack(position, velocity),
-                                      conf.Value.higher.GetAngleOfAttack(position, velocity),
+                    return Util.dLerp(conf.Value.lower.GetAngleOfAttack(vup, velocity),
+                                      conf.Value.higher.GetAngleOfAttack(vup, velocity),
                                       (altitudeRatio - conf.Key) * conf.Value.transition);
             }
-
             return 0; // should never happen
-           
         }
+        public double GetAngleOfAttack(CelestialBody body, Vector3d position, Vector3d velocity)
+        {
+            double altitude = position.magnitude - body.Radius;
+            return GetAngleOfAttack(body, altitude, position, velocity);
+        }
+
 
         /// <summary>
         /// Computes the orientation Quaternion for API (intended for MechJeb).
@@ -390,16 +394,16 @@ namespace Trajectories
         /// <summary>
         /// Computes the orientation Quaternion for rotations in ksp coordinates (flying up instead of forward)
         /// </summary>
-        public Quaternion GetKspOrientation(CelestialBody body, Vector3d position, Vector3d velocity)
+        public Quaternion GetKspOrientation(CelestialBody body, double altitude, Vector3d vup, Vector3d velocity)
         {
             if (ProgradeEntry)
             {
-                return Quaternion.AngleAxis((float)GetAngleOfAttack(body, position, velocity) * Mathf.Rad2Deg, Vector3.right);
+                return Quaternion.AngleAxis((float)GetAngleOfAttack(body, altitude, vup, velocity) * Mathf.Rad2Deg, Vector3.right);
             }
             else
             {
                 //retrograde is actually 180° rotation around Vesselup to keep orientation and then pitch for remaining AoA, not pitch by nearly 180°
-                return Quaternion.AngleAxis((float)GetAngleOfAttack(body, position, velocity) * Mathf.Rad2Deg - 180f, Vector3.right) * Quaternion.AngleAxis(180f, Vector3.forward);
+                return Quaternion.AngleAxis((float)GetAngleOfAttack(body, altitude, vup, velocity) * Mathf.Rad2Deg - 180f, Vector3.right) * Quaternion.AngleAxis(180f, Vector3.forward);
             }
         }
     }

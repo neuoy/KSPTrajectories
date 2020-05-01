@@ -103,7 +103,7 @@ namespace Trajectories
         /// </summary>
         public static double? GetEndTime()
         {
-            if (FlightGlobals.ActiveVessel != null)
+            if (FlightGlobals.ActiveVessel != null && Trajectory.fetch.upToDate)
             {
                 foreach (Trajectory.Patch patch in Trajectory.fetch.Patches)
                 {
@@ -120,7 +120,7 @@ namespace Trajectories
         /// </summary>
         public static double? GetTimeTillImpact()
         {
-            if (FlightGlobals.ActiveVessel != null)
+            if (FlightGlobals.ActiveVessel != null && Trajectory.fetch.upToDate)
             {
                 foreach (Trajectory.Patch patch in Trajectory.fetch.Patches)
                 {
@@ -136,7 +136,7 @@ namespace Trajectories
         /// </summary>
         public static Vector3? GetImpactPosition()
         {
-            if (FlightGlobals.ActiveVessel != null)
+            if (FlightGlobals.ActiveVessel != null && Trajectory.fetch.upToDate)
             {
                 foreach (Trajectory.Patch patch in Trajectory.fetch.Patches)
                 {
@@ -148,11 +148,27 @@ namespace Trajectories
         }
 
         /// <summary>
+        /// Returns the raw impact position of the trajectory without rotating it back by body rotation or Null if no active vessel or calculated trajectory.
+        /// </summary>
+        public static Vector3? GetTrueImpactPosition()
+        {
+            if (FlightGlobals.ActiveVessel != null && Trajectory.fetch.upToDate)
+            {
+                foreach (Trajectory.Patch patch in Trajectory.fetch.Patches)
+                {
+                    if (patch.ImpactPosition != null)
+                        return patch.RawImpactPosition;
+                }
+            }
+            return null;
+        }
+
+        /// <summary>
         /// Returns the calculated impact velocity of the trajectory or Null if no active vessel or calculated trajectory.
         /// </summary>
         public static Vector3? GetImpactVelocity()
         {
-            if (FlightGlobals.ActiveVessel != null)
+            if (FlightGlobals.ActiveVessel != null && Trajectory.fetch.upToDate)
             {
                 foreach (Trajectory.Patch patch in Trajectory.fetch.Patches)
                 {
@@ -168,7 +184,7 @@ namespace Trajectories
         /// </summary>
         public static Orbit GetSpaceOrbit()
         {
-            if (FlightGlobals.ActiveVessel != null)
+            if (FlightGlobals.ActiveVessel != null && Trajectory.fetch.upToDate)
             {
                 foreach (Trajectory.Patch patch in Trajectory.fetch.Patches)
                 {
@@ -334,56 +350,6 @@ namespace Trajectories
         }
 
         /// <summary>
-        /// provide read/write access to next configured angle
-        /// ignores transition phases
-        /// </summary>
-        public static double? nextAoA
-        {
-            get
-            {
-                if (FlightGlobals.ActiveVessel != null && Trajectory.Target.Body != null)
-                {
-                    Vector3d pos = FlightGlobals.ActiveVessel.GetWorldPos3D() - Trajectory.Target.Body.position;
-                    Vector3d vel = FlightGlobals.ActiveVessel.obt_velocity - Trajectory.Target.Body.getRFrmVel(Trajectory.Target.Body.position + pos);
-                    double altitude = pos.magnitude - Trajectory.Target.Body.Radius;
-                    double altitudeRatio = Trajectory.Target.Body.atmosphere ? altitude / Trajectory.Target.Body.atmosphereDepth : 0;
-
-                    foreach (var conf in DescentProfile.fetch.NodeList)
-                    {
-                        if (conf.Key <= altitudeRatio && (altitudeRatio - conf.Key) * conf.Value.transition > 1)
-                        {
-                            return Mathf.Rad2Deg * conf.Value.higher.GetAngleOfAttack(pos, vel);
-                        }
-                    }
-                    return Mathf.Rad2Deg * DescentProfile.fetch.finalApproach.GetAngleOfAttack(pos, vel);
-                }
-
-                return null;
-            }
-            set
-            {
-                if (value.HasValue && FlightGlobals.ActiveVessel != null && Trajectory.Target.Body != null)
-                {
-                    double newvalue = Mathf.Deg2Rad * (double)value;
-                    Vector3d pos = FlightGlobals.ActiveVessel.GetWorldPos3D() - Trajectory.Target.Body.position;
-                    Vector3d vel = FlightGlobals.ActiveVessel.obt_velocity - Trajectory.Target.Body.getRFrmVel(Trajectory.Target.Body.position + pos);
-                    double altitude = pos.magnitude - Trajectory.Target.Body.Radius;
-                    double altitudeRatio = Trajectory.Target.Body.atmosphere ? altitude / Trajectory.Target.Body.atmosphereDepth : 0;
-
-                    foreach (var conf in DescentProfile.fetch.NodeList)
-                    {
-                        if (conf.Key <= altitudeRatio && (altitudeRatio - conf.Key) * conf.Value.transition > 1)
-                        {
-                            double delta = newvalue - conf.Value.higher.GetAngleOfAttack(pos, vel);
-                            conf.Value.higher.Angle += delta;
-                            break;
-                        }
-                    }
-                }
-            }
-        }
-
-        /// <summary>
         /// are we below entry phase ?
         /// </summary>
         public static bool isBelowEntry()
@@ -395,34 +361,17 @@ namespace Trajectories
                 double altitudeRatio = Trajectory.Target.Body.atmosphere ? altitude / Trajectory.Target.Body.atmosphereDepth : 0;
 
                 return DescentProfile.fetch.NodeList.Any(c => c.Value.higher == DescentProfile.fetch.entry && altitudeRatio < c.Key );
-
-                
             }
             else
                 return false; // neither true or false make sense, but failing condition is good idea
         }
-
-        public static bool isTransitionAlt()
-        {
-            if (FlightGlobals.ActiveVessel != null && Trajectory.Target.Body != null)
-            {
-                Vector3d pos = FlightGlobals.ActiveVessel.GetWorldPos3D() - Trajectory.Target.Body.position;
-                double altitude = pos.magnitude - Trajectory.Target.Body.Radius;
-                double altitudeRatio = Trajectory.Target.Body.atmosphere ? altitude / Trajectory.Target.Body.atmosphereDepth : 0;
-
-                return DescentProfile.fetch.NodeList.Any(c => altitudeRatio >= c.Key && (altitudeRatio - c.Key) * c.Value.transition <= 1d);
-            }
-            else
-                return false;
-        }
-
 
         /// <summary>
         /// Clear current calculation, can be called if known outside changes make current values worthless
         /// </summary>
         public static void invalidateCalculation()
         {
-            Trajectory.fetch.InvalidateCalculation();
+            //Trajectory.fetch.clearUpToDate();
         }
 
         /// <summary>

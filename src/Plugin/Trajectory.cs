@@ -242,11 +242,13 @@ namespace Trajectories
 
         public List<Patch> Patches { get { return patches_; } }
 
-        public void InvalidateCalculation()
+        public bool upToDate = false;
+        public void clearUpToDate()
         {
-            patches_.Clear();  patchesBackBuffer_.Clear();
-            maxAccel_ = maxAccelBackBuffer_ = 0;
+            patchesBackBuffer_.Clear();
+            maxAccelBackBuffer_ = 0;
             if (partialComputation_ != null) { partialComputation_.Dispose(); partialComputation_ = null; }
+            upToDate = false;
         }
 
         private Stopwatch incrementTime_;
@@ -422,7 +424,7 @@ namespace Trajectories
 
                         // feed correction into Settings, internal calculation will smooth it
                         GlobalCorrectionFactor = newScale;
-                        UnityEngine.Debug.Log(String.Format("Trajectories adjusting global Correction to {0}", GlobalCorrectionFactor));
+                        //UnityEngine.Debug.Log(String.Format("Trajectories adjusting global Correction to {0}", GlobalCorrectionFactor));
                     }
                     else if (altitudeAboveSea > body.atmosphereDepth)
                     {
@@ -569,6 +571,7 @@ namespace Trajectories
                     // Reset partial computation
                     partialComputation_.Dispose();
                     partialComputation_ = null;
+                    upToDate = true;
                 }
 
                 // how long did the calculation in this frame take?

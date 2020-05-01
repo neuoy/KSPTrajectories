@@ -182,19 +182,8 @@ namespace Trajectories
 
             Transform vesselTransform = vessel_.ReferenceTransform;
             Quaternion vesselRotation = vesselTransform.rotation;
-            Quaternion aoaRotation;
-            if (angleOfAttack < 0.5 * Mathf.PI) //FIXME: extend interface to return/push quaternion from Decentprofile instead of this big angle hack for retrograde
-            {
-                //prograde
-                aoaRotation = Quaternion.AngleAxis((float)angleOfAttack * Mathf.Rad2Deg, Vector3.right);
-            }
-            else
-            {
-                //retrograde is actually 180° rotation around Vesselup to keep orientation and then pitch for remaining AoA, not pitch by nearly 180°
-                aoaRotation = Quaternion.AngleAxis((float)angleOfAttack*Mathf.Rad2Deg - 180f, Vector3.right) * Quaternion.AngleAxis(180f, Vector3.forward);
-            }
-
-
+            Quaternion aoaRotation = DescentProfile.fetch.GetKspOrientation(vessel_.mainBody, altitude, vup, airVelocity);
+            
             //Vector3d airVelocityForFixedAoA = (vesselForward * Math.Cos(-angleOfAttack) + vesselUp * Math.Sin(-angleOfAttack)) * airVelocity.magnitude;
             Vector3d airVelocityForFixedAoA = airVelocity.magnitude * (Vector3d) (vesselRotation * aoaRotation * Vector3d.up);
 
