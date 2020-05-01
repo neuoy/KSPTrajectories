@@ -313,6 +313,7 @@ namespace Trajectories
                         }
 #endif
 
+#if !(KSP13 || KSP17)
                         if (wing is ModuleControlSurface)
                         {
                             // assume new KSP 1.8 deploy angle as average angle of control surface
@@ -331,8 +332,8 @@ namespace Trajectories
                                     Debug.Log("Traj MCS " + mcs.part.name + " has " + mcs.deployAngle + " angle and orientation " + (mcs.deployInvert ^ mcs.mirrorDeploy ? " pos " : " neg "));
                                     Debug.Log(String.Format("Traj MCS mcs_rot={0:F1}, part up={1:F2}, liftVector={2:F2}, sim_dragVectorDir={3:F2}", mcs_rot.eulerAngles, wing.transformSign * p.transform.forward, liftVector, sim_dragVectorDir));
                                 }*/
-                            }                        
-
+                            }
+                            
                             local_lift = mcs_mod * Mathf.Sign(liftdot)
                                                     * wing.liftCurve.Evaluate(absdot)
                                                     * wing.liftMachCurve.Evaluate((float)mach)
@@ -356,6 +357,7 @@ namespace Trajectories
                             }
 #endif
                         }
+#endif
                     }
 
                     Profiler.Stop("SimAeroForce#LiftingSurface");
