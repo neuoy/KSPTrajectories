@@ -58,8 +58,8 @@ namespace Trajectories
         public Vector3d GetForce(double velocity, double angleOfAttack, double altitude)
         {
             float vFrac = (float)(velocity / MaxVelocity * (double)(InternalArray.GetLength(0) - 1));
-            int vFloor = Math.Min(InternalArray.GetLength(0) - 2, (int)vFrac);
-            vFrac = Math.Min(1.0f, vFrac - (float)vFloor);
+            int vFloor = Math.Max(0, Math.Min(InternalArray.GetLength(0) - 2, (int)vFrac));
+            vFrac = Math.Max(0.0f, Math.Min(1.0f, vFrac - (float)vFloor));
 
             float aFrac = (float)((angleOfAttack / MaxAoA * 0.5 + 0.5) * (double)(InternalArray.GetLength(1) - 1));
             int aFloor = Math.Max(0, Math.Min(InternalArray.GetLength(1) - 2, (int)aFrac));
