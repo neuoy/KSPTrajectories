@@ -121,9 +121,14 @@ namespace Trajectories
 
         private static void SpawnDialog()
         {
-            // create popup dialog
-            popup_dialog = PopupDialog.SpawnPopupDialog(multi_dialog, false, HighLogic.UISkin, false, "");
-            popup_dialog.onDestroy.AddListener(new UnityAction(OnPopupDialogDestroy));
+            if (multi_dialog != null)
+            {
+                ClampToScreen();
+
+                // create popup dialog
+                popup_dialog = PopupDialog.SpawnPopupDialog(multi_dialog, false, HighLogic.UISkin, false, "");
+                popup_dialog.onDestroy.AddListener(new UnityAction(OnPopupDialogDestroy));
+            }
         }
 
         public void Update()
@@ -208,6 +213,58 @@ namespace Trajectories
         }
 
         /// <summary>
+        /// Defaults window to center of screen and also ensures it remains within the screen bounds.
+        /// </summary>
+        private static void ClampToScreen()
+        {
+            float border = 50f;
+            bool adjusted = false;
+
+            if (multi_dialog.dialogRect.position.x <= 0.0f || multi_dialog.dialogRect.position.y <= 0.0f)
+            {
+                // default window to center of screen
+                multi_dialog.dialogRect.Set(0.5f, 0.5f, width, height);
+                adjusted = true;
+            }
+            else
+            {
+                // ensure window remains within the screen bounds
+                Vector2 pos = new Vector2(((multi_dialog.dialogRect.position.x * Screen.width) - (Screen.width / 2)) * GameSettings.UI_SCALE,
+                                          ((multi_dialog.dialogRect.position.y * Screen.height) - (Screen.height / 2)) * GameSettings.UI_SCALE);
+
+                if (pos.x > (Screen.width / 2) - border)
+                {
+                    pos.x = (Screen.width / 2) - (border + (width / 2));
+                    adjusted = true;
+                }
+                else if (pos.x < ((Screen.width / 2) - border) * -1f)
+                {
+                    pos.x = ((Screen.width / 2) - (border + (width / 2))) * -1f;
+                    adjusted = true;
+                }
+
+                if (pos.y > (Screen.height / 2) - border)
+                {
+                    pos.y = (Screen.height / 2) - (border + (height / 2));
+                    adjusted = true;
+                }
+                else if (pos.y < ((Screen.height / 2) - border) * -1f)
+                {
+                    pos.y = ((Screen.height / 2) - (border + (height / 2))) * -1f;
+                    adjusted = true;
+                }
+
+                if (adjusted)
+                {
+                    multi_dialog.dialogRect.Set(
+                        ((Screen.width / 2) + (pos.x / GameSettings.UI_SCALE)) / Screen.width,
+                        ((Screen.height / 2) + (pos.y / GameSettings.UI_SCALE)) / Screen.height,
+                        width, height);
+                }
+            }
+        }
+
+        /// <summary>
         /// Called when the PopupDialog OnDestroy method is called. Used for saving the window position.
         /// </summary>
         private static void OnPopupDialogDestroy()
@@ -216,8 +273,8 @@ namespace Trajectories
             if (popup_dialog != null)
             {
                 Vector2 window_pos = new Vector2(
-                    ((Screen.width / 2) + popup_dialog.RTrf.position.x) / Screen.width,
-                    ((Screen.height / 2) + popup_dialog.RTrf.position.y) / Screen.height);
+                    ((Screen.width / 2) + (popup_dialog.RTrf.position.x / GameSettings.UI_SCALE)) / Screen.width,
+                    ((Screen.height / 2) + (popup_dialog.RTrf.position.y / GameSettings.UI_SCALE)) / Screen.height);
                 //Util.DebugLog("Saving profiler window position as {0}", window_pos.ToString());
                 multi_dialog.dialogRect.Set(window_pos.x, window_pos.y, width, height);
                 scroll_list.children.Clear();

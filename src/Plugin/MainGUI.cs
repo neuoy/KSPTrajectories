@@ -199,11 +199,17 @@ namespace Trajectories
 
         private void SpawnDialog()
         {
-            popup_dialog = PopupDialog.SpawnPopupDialog(multi_dialog, false, HighLogic.UISkin, false, "");
-            popup_dialog.onDestroy.AddListener(new UnityAction(OnPopupDialogDestroy));
+            if (multi_dialog != null)
+            {
+                if (ClampToScreen())
+                    multi_dialog.dialogRect.Set(Settings.fetch.MainGUIWindowPos.x, Settings.fetch.MainGUIWindowPos.y, width, height);
 
-            // create textbox event listeners
-            SetManualTargetTextBoxEvents();
+                popup_dialog = PopupDialog.SpawnPopupDialog(multi_dialog, false, HighLogic.UISkin, false, "");
+                popup_dialog.onDestroy.AddListener(new UnityAction(OnPopupDialogDestroy));
+
+                // create textbox event listeners
+                SetManualTargetTextBoxEvents();
+            }
         }
 
         public void Update()
@@ -261,14 +267,65 @@ namespace Trajectories
         }
 
         /// <summary>
+        /// Defaults window to center of screen and also ensures it remains within the screen bounds.
+        /// Returns true if position is adjusted.
+        /// </summary>
+        private static bool ClampToScreen()
+        {
+            float border = 50f;
+            bool adjusted = false;
+
+            if (Settings.fetch.MainGUIWindowPos.x <= 0.0f || Settings.fetch.MainGUIWindowPos.y <= 0.0f)
+            {
+                // default window to center of screen
+                Settings.fetch.MainGUIWindowPos = new Vector2(0.5f, 0.5f);
+                adjusted = true;
+            }
+            else
+            {
+                // ensure window remains within the screen bounds
+                Vector2 pos = new Vector2(((Settings.fetch.MainGUIWindowPos.x * Screen.width) - (Screen.width / 2)) * GameSettings.UI_SCALE,
+                                          ((Settings.fetch.MainGUIWindowPos.y * Screen.height) - (Screen.height / 2)) * GameSettings.UI_SCALE);
+
+                if (pos.x > (Screen.width / 2) - border)
+                {
+                    pos.x = (Screen.width / 2) - (border + (width / 2));
+                    adjusted = true;
+                }
+                else if (pos.x < ((Screen.width / 2) - border) * -1f)
+                {
+                    pos.x = ((Screen.width / 2) - (border + (width / 2))) * -1f;
+                    adjusted = true;
+                }
+
+                if (pos.y > (Screen.height / 2) - border)
+                {
+                    pos.y = (Screen.height / 2) - (border + (height / 2));
+                    adjusted = true;
+                }
+                else if (pos.y < ((Screen.height / 2) - border) * -1f)
+                {
+                    pos.y = ((Screen.height / 2) - (border + (height / 2))) * -1f;
+                    adjusted = true;
+                }
+
+                if (adjusted)
+                {
+                    Settings.fetch.MainGUIWindowPos = new Vector2(
+                        ((Screen.width / 2) + (pos.x / GameSettings.UI_SCALE)) / Screen.width,
+                        ((Screen.height / 2) + (pos.y / GameSettings.UI_SCALE)) / Screen.height);
+                }
+            }
+            return adjusted;
+        }
+
+        /// <summary>
         /// Allocates any classes, variables etc needed for the MainGUI,
         ///   note that this method should be called from the constructor.
         /// </summary>
         private void Allocate()
         {
-            // default window to center of screen
-            if (Settings.fetch.MainGUIWindowPos.x <= 0.0f || Settings.fetch.MainGUIWindowPos.y <= 0.0f)
-                Settings.fetch.MainGUIWindowPos = new Vector2(0.5f, 0.5f);
+            ClampToScreen();
 
             // create manual target text input box
             manual_target_textinput = new DialogGUITextInput(manual_target_txt, " ", false, 35, OnTextInput_TargetManual, 23);
@@ -504,9 +561,9 @@ namespace Trajectories
             if (popup_dialog != null)
             {
                 Settings.fetch.MainGUIWindowPos = new Vector2(
-                    ((Screen.width / 2) + popup_dialog.RTrf.position.x) / Screen.width,
-                    ((Screen.height / 2) + popup_dialog.RTrf.position.y) / Screen.height);
-                //Util.DebugLog("Saving MainGUI window position as {0}", Settings.fetch.MainGUIWindowPos.ToString());
+                    ((Screen.width / 2) + (popup_dialog.RTrf.position.x / GameSettings.UI_SCALE)) / Screen.width,
+                    ((Screen.height / 2) + (popup_dialog.RTrf.position.y / GameSettings.UI_SCALE)) / Screen.height);
+                //Util.DebugLog("Saving MainGUI window position as {0}", Settings.fetch.MainGUIWindowPos.ToString("F4"));
                 multi_dialog.dialogRect.Set(Settings.fetch.MainGUIWindowPos.x, Settings.fetch.MainGUIWindowPos.y, width, height);
             }
             visible = false;

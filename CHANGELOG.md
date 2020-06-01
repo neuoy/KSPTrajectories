@@ -4,9 +4,11 @@
 
 ### Changes since the last release
 
+ - GUI is now clamped to the screen area, eliminating it from being off screen after resolution or scale changes.
 
 ### For Developers
 
+ - Profiler is now clamped to the screen area, eliminating it from being off screen after resolution or scale changes.
  
 ### Known Issues
 
