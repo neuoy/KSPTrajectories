@@ -36,8 +36,9 @@ namespace Trajectories
             public string Description { get; private set; }
             public string Horizon_txt { get; private set; }
             public string Angle_txt { get; private set; }
-            private bool horizon;   // If true, angle is relative to horizon, otherwise it's relative to velocity (i.e. angle of attack)
-            private double angle;   // In radians
+            private bool horizon;       // If true, angle is relative to horizon, otherwise it's relative to velocity (i.e. angle of attack)
+            private double angle_rad;   // In radians
+            private double angle_deg;   // In degrees
             private float sliderPos;
 
             public bool Horizon
@@ -50,23 +51,43 @@ namespace Trajectories
                 }
             }
 
-            public double Angle
+            public double AngleRad
             {
-                get => angle;
+                get => angle_rad;
                 set
                 {
                     if (Math.Abs(value) < 0.00001)
-                        angle = 0d;
+                        angle_rad = 0d;
                     else
-                        angle = value;
+                        angle_rad = value;
 
-                    double calc_angle = angle * 180.0 / Math.PI;
-                    if (calc_angle <= -100d || calc_angle >= 100d)
-                        Angle_txt = calc_angle.ToString("F1") + "°";
-                    else if (calc_angle <= -10d || calc_angle >= 10d)
-                        Angle_txt = calc_angle.ToString("F2") + "°";
+                    angle_deg = angle_rad * (180.0 / Math.PI);
+                    if (angle_deg <= -100d || angle_deg >= 100d)
+                        Angle_txt = angle_deg.ToString("F1") + "°";
+                    else if (angle_deg <= -10d || angle_deg >= 10d)
+                        Angle_txt = angle_deg.ToString("F2") + "°";
                     else
-                        Angle_txt = calc_angle.ToString("F3") + "°";
+                        Angle_txt = angle_deg.ToString("F3") + "°";
+                }
+            }
+
+            public double AngleDeg
+            {
+                get => angle_deg;
+                set
+                {
+                    if (Math.Abs(value) < 0.00001)
+                        angle_deg = 0d;
+                    else
+                        angle_deg = value;
+
+                    angle_rad = angle_deg * (Math.PI / 180.0);
+                    if (angle_deg <= -100d || angle_deg >= 100d)
+                        Angle_txt = angle_deg.ToString("F1") + "°";
+                    else if (angle_deg <= -10d || angle_deg >= 10d)
+                        Angle_txt = angle_deg.ToString("F2") + "°";
+                    else
+                        Angle_txt = angle_deg.ToString("F3") + "°";
                 }
             }
 
@@ -76,7 +97,7 @@ namespace Trajectories
                 set
                 {
                     sliderPos = value;
-                    Angle = value * value * value * Math.PI; // This helps to have high precision near 0° while still allowing big angles
+                    AngleRad = value * value * value * Math.PI; // This helps to have high precision near 0° while still allowing big angles
                 }
             }
 
@@ -89,19 +110,19 @@ namespace Trajectories
 
             public void RefreshSliderPos()
             {
-                float position = (float)Math.Pow(Math.Abs(Angle) / Math.PI, 1d / 3d);
-                if (Angle < 0d)
-                    SliderPos = -position;
+                float position = (float)Math.Pow(Math.Abs(AngleRad) / Math.PI, 1d / 3d);
+                if (AngleRad < 0d)
+                    sliderPos = -position;
                 else
-                    SliderPos = position;
+                    sliderPos = position;
             }
 
             public double GetAngleOfAttack(Vector3d position, Vector3d velocity)
             {
                 if (!Horizon)
-                    return Angle;
+                    return AngleRad;
 
-                return Math.Acos(Vector3d.Dot(position, velocity) / (position.magnitude * velocity.magnitude)) - Math.PI * 0.5 + Angle;
+                return Math.Acos(Vector3d.Dot(position, velocity) / (position.magnitude * velocity.magnitude)) - Math.PI * 0.5 + AngleRad;
             }
 
             [Obsolete("use MainGUI")]
@@ -166,13 +187,13 @@ namespace Trajectories
         public void Reset(double AoA = Math.PI)
         {
             //Debug.Log(string.Format("Resetting vessel descent profile to {0} degrees", AoA));
-            entry.Angle = AoA;
+            entry.AngleRad = AoA;
             entry.Horizon = false;
-            highAltitude.Angle = AoA;
+            highAltitude.AngleRad = AoA;
             highAltitude.Horizon = false;
-            lowAltitude.Angle = AoA;
+            lowAltitude.AngleRad = AoA;
             lowAltitude.Horizon = false;
-            finalApproach.Angle = AoA;
+            finalApproach.AngleRad = AoA;
             finalApproach.Horizon = false;
 
             ProgradeEntry = AoA == 0d;
@@ -223,13 +244,13 @@ namespace Trajectories
                         else
                             Reset(0d);
 
-                        module.EntryAngle = entry.Angle;
+                        module.EntryAngle = entry.AngleRad;
                         module.EntryHorizon = entry.Horizon;
-                        module.HighAngle = highAltitude.Angle;
+                        module.HighAngle = highAltitude.AngleRad;
                         module.HighHorizon = highAltitude.Horizon;
-                        module.LowAngle = lowAltitude.Angle;
+                        module.LowAngle = lowAltitude.AngleRad;
                         module.LowHorizon = lowAltitude.Horizon;
-                        module.GroundAngle = finalApproach.Angle;
+                        module.GroundAngle = finalApproach.AngleRad;
                         module.GroundHorizon = finalApproach.Horizon;
 
                         module.ProgradeEntry = ProgradeEntry;
@@ -240,13 +261,13 @@ namespace Trajectories
                     else
                     {
                         //Debug.Log("Reading settings...");
-                        entry.Angle = module.EntryAngle;
+                        entry.AngleRad = module.EntryAngle;
                         entry.Horizon = module.EntryHorizon;
-                        highAltitude.Angle = module.HighAngle;
+                        highAltitude.AngleRad = module.HighAngle;
                         highAltitude.Horizon = module.HighHorizon;
-                        lowAltitude.Angle = module.LowAngle;
+                        lowAltitude.AngleRad = module.LowAngle;
                         lowAltitude.Horizon = module.LowHorizon;
-                        finalApproach.Angle = module.GroundAngle;
+                        finalApproach.AngleRad = module.GroundAngle;
                         finalApproach.Horizon = module.GroundHorizon;
 
                         ProgradeEntry = module.ProgradeEntry;
@@ -268,13 +289,13 @@ namespace Trajectories
             //Debug.Log("Saving vessel descent profile");
             foreach (var module in attachedVessel.Parts.SelectMany(p => p.Modules.OfType<TrajectoriesVesselSettings>()))
             {
-                module.EntryAngle = entry.Angle;
+                module.EntryAngle = entry.AngleRad;
                 module.EntryHorizon = entry.Horizon;
-                module.HighAngle = highAltitude.Angle;
+                module.HighAngle = highAltitude.AngleRad;
                 module.HighHorizon = highAltitude.Horizon;
-                module.LowAngle = lowAltitude.Angle;
+                module.LowAngle = lowAltitude.AngleRad;
                 module.LowHorizon = lowAltitude.Horizon;
-                module.GroundAngle = finalApproach.Angle;
+                module.GroundAngle = finalApproach.AngleRad;
                 module.GroundHorizon = finalApproach.Horizon;
 
                 module.ProgradeEntry = ProgradeEntry;
@@ -313,13 +334,13 @@ namespace Trajectories
 
         public void CheckGUI()
         {
-            double? AoA = entry.Horizon ? (double?)null : entry.Angle;
+            double? AoA = entry.Horizon ? (double?)null : entry.AngleRad;
 
-            if (highAltitude.Angle != AoA || highAltitude.Horizon)
+            if (highAltitude.AngleRad != AoA || highAltitude.Horizon)
                 AoA = null;
-            if (lowAltitude.Angle != AoA || lowAltitude.Horizon)
+            if (lowAltitude.AngleRad != AoA || lowAltitude.Horizon)
                 AoA = null;
-            if (finalApproach.Angle != AoA || finalApproach.Horizon)
+            if (finalApproach.AngleRad != AoA || finalApproach.Horizon)
                 AoA = null;
 
             if (!AoA.HasValue)
