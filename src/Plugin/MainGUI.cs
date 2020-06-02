@@ -39,7 +39,8 @@ namespace Trajectories
         private const float button_width = 75.0f;
         private const float button_height = 25.0f;
         private const float targetbutton_width = 120.0f;
-        private const float slider_width = 170.0f;
+        private const float descent_slider_width = 124.0f;
+        private const float settings_slider_width = 195.0f;
         private const float integrator_slidermin = 1.0f;
         private const float integrator_slidermax = 50.0f;
         private const float lat_long_width = 28.0f;
@@ -71,12 +72,33 @@ namespace Trajectories
         private static DialogGUIVerticalLayout descent_page;
         private static DialogGUIVerticalLayout settings_page;
 
+        private static UnityAction<string> keyboard_lockout_action;
+        private static UnityAction<string> keyboard_unlock_action;
+
         // manual target text input
         private static string manual_target_txt = "";
         private static bool manual_target_txt_ok = false;
         private static bool manual_target_txt_changed = false;
         private static DialogGUITextInput manual_target_textinput;
         private static TMP_InputField tmpro_manual_target_textinput;
+
+        // descent profile text inputs
+        // entry text input
+        private static string descent_entry_txt = "";
+        private static DialogGUITextInput descent_entry_textinput;
+        private static TMP_InputField tmpro_descent_entry_textinput;
+        // high text input
+        private static string descent_high_txt = "";
+        private static DialogGUITextInput descent_high_textinput;
+        private static TMP_InputField tmpro_descent_high_textinput;
+        // low text input
+        private static string descent_low_txt = "";
+        private static DialogGUITextInput descent_low_textinput;
+        private static TMP_InputField tmpro_descent_low_textinput;
+        // ground text input
+        private static string descent_ground_txt = "";
+        private static DialogGUITextInput descent_ground_textinput;
+        private static TMP_InputField tmpro_descent_ground_textinput;
 
         // data field labels
         private static DialogGUILabel impact_latitude_label;
@@ -207,8 +229,8 @@ namespace Trajectories
                 popup_dialog = PopupDialog.SpawnPopupDialog(multi_dialog, false, HighLogic.UISkin, false, "");
                 popup_dialog.onDestroy.AddListener(new UnityAction(OnPopupDialogDestroy));
 
-                // create textbox event listeners
-                SetManualTargetTextBoxEvents();
+                // create text input box event listeners
+                SetTextInputBoxEvents();
             }
         }
 
@@ -330,6 +352,12 @@ namespace Trajectories
             // create manual target text input box
             manual_target_textinput = new DialogGUITextInput(manual_target_txt, " ", false, 35, OnTextInput_TargetManual, 23);
 
+            // create descent profile text input boxes
+            descent_entry_textinput = new DialogGUITextInput(descent_entry_txt, " ", false, 6, OnTextInput_DescentEntry, 23);
+            descent_high_textinput = new DialogGUITextInput(descent_high_txt, " ", false, 6, OnTextInput_DescentHigh, 23);
+            descent_low_textinput = new DialogGUITextInput(descent_low_txt, " ", false, 6, OnTextInput_DescentLow, 23);
+            descent_ground_textinput = new DialogGUITextInput(descent_ground_txt, " ", false, 6, OnTextInput_DescentGround, 23);
+
             // create data field labels
             impact_latitude_label = new DialogGUILabel(() => { return impact_latitude_txt; }, 65);
             impact_longitude_label = new DialogGUILabel(() => { return impact_longitude_txt; }, 65);
@@ -443,34 +471,38 @@ namespace Trajectories
                         Localizer.Format("#autoLOC_900597"), OnButtonClick_Prograde),
                     new DialogGUIToggle(() => { return DescentProfile.fetch.RetrogradeEntry; },
                         Localizer.Format("#autoLOC_900607"), OnButtonClick_Retrograde)),
-                new DialogGUIHorizontalLayout(
-                    new DialogGUILabel(DescentProfile.fetch.entry.Name, true),
+                new DialogGUIHorizontalLayout(TextAnchor.MiddleLeft,
+                    new DialogGUILabel(DescentProfile.fetch.entry.Name, 45f),
                     new DialogGUIToggle(() => { return DescentProfile.fetch.entry.Horizon; },
                         () => { return DescentProfile.fetch.entry.Horizon_txt; }, OnButtonClick_EntryHorizon, 60f),
                     new DialogGUISlider(() => { return DescentProfile.fetch.entry.SliderPos; },
-                        -1f, 1f, false, slider_width, -1, OnSliderSet_EntryAngle),
-                    new DialogGUILabel(() => { return DescentProfile.fetch.entry.Angle_txt; }, 36f)),
-                new DialogGUIHorizontalLayout(
-                    new DialogGUILabel(DescentProfile.fetch.highAltitude.Name, true),
+                        -1f, 1f, false, descent_slider_width, -1, OnSliderSet_EntryAngle),
+                    new DialogGUILabel(() => { return DescentProfile.fetch.entry.Angle_txt; }, 36f),
+                    descent_entry_textinput),
+                new DialogGUIHorizontalLayout(TextAnchor.MiddleLeft,
+                    new DialogGUILabel(DescentProfile.fetch.highAltitude.Name, 45f),
                     new DialogGUIToggle(() => { return DescentProfile.fetch.highAltitude.Horizon; },
                         () => { return DescentProfile.fetch.highAltitude.Horizon_txt; }, OnButtonClick_HighHorizon, 60f),
                     new DialogGUISlider(() => { return DescentProfile.fetch.highAltitude.SliderPos; },
-                        -1f, 1f, false, slider_width, -1, OnSliderSet_HighAngle),
-                    new DialogGUILabel(() => { return DescentProfile.fetch.highAltitude.Angle_txt; }, 36f)),
-                new DialogGUIHorizontalLayout(
-                    new DialogGUILabel(DescentProfile.fetch.lowAltitude.Name, true),
+                        -1f, 1f, false, descent_slider_width, -1, OnSliderSet_HighAngle),
+                    new DialogGUILabel(() => { return DescentProfile.fetch.highAltitude.Angle_txt; }, 36f),
+                    descent_high_textinput),
+                new DialogGUIHorizontalLayout(TextAnchor.MiddleLeft,
+                    new DialogGUILabel(DescentProfile.fetch.lowAltitude.Name, 45f),
                     new DialogGUIToggle(() => { return DescentProfile.fetch.lowAltitude.Horizon; },
                         () => { return DescentProfile.fetch.lowAltitude.Horizon_txt; }, OnButtonClick_LowHorizon, 60f),
                     new DialogGUISlider(() => { return DescentProfile.fetch.lowAltitude.SliderPos; },
-                        -1f, 1f, false, slider_width, -1, OnSliderSet_LowAngle),
-                    new DialogGUILabel(() => { return DescentProfile.fetch.lowAltitude.Angle_txt; }, 36f)),
-                new DialogGUIHorizontalLayout(
-                    new DialogGUILabel(DescentProfile.fetch.finalApproach.Name, true),
+                        -1f, 1f, false, descent_slider_width, -1, OnSliderSet_LowAngle),
+                    new DialogGUILabel(() => { return DescentProfile.fetch.lowAltitude.Angle_txt; }, 36f),
+                    descent_low_textinput),
+                new DialogGUIHorizontalLayout(TextAnchor.MiddleLeft,
+                    new DialogGUILabel(DescentProfile.fetch.finalApproach.Name, 45f),
                     new DialogGUIToggle(() => { return DescentProfile.fetch.finalApproach.Horizon; },
                         () => { return DescentProfile.fetch.finalApproach.Horizon_txt; }, OnButtonClick_GroundHorizon, 60f),
                     new DialogGUISlider(() => { return DescentProfile.fetch.finalApproach.SliderPos; },
-                        -1f, 1f, false, slider_width, -1, OnSliderSet_GroundAngle),
-                    new DialogGUILabel(() => { return DescentProfile.fetch.finalApproach.Angle_txt; }, 36f))
+                        -1f, 1f, false, descent_slider_width, -1, OnSliderSet_GroundAngle),
+                    new DialogGUILabel(() => { return DescentProfile.fetch.finalApproach.Angle_txt; }, 36f),
+                    descent_ground_textinput)
                 );
 
             settings_page = new DialogGUIVerticalLayout(false, true, 0, new RectOffset(), TextAnchor.UpperCenter,
@@ -488,17 +520,17 @@ namespace Trajectories
                 new DialogGUIHorizontalLayout(
                     new DialogGUILabel(Localizer.Format("#autoLOC_Trajectories_MaxPatches"), true),
                     new DialogGUISlider(() => { return Settings.fetch.MaxPatchCount; },
-                        3f, 10f, true, slider_width + 10f, -1, OnSliderSet_MaxPatches),
+                        3f, 10f, true, settings_slider_width + 10f, -1, OnSliderSet_MaxPatches),
                     new DialogGUILabel(() => { return Settings.fetch.MaxPatchCount.ToString(); }, 25f)),
                 new DialogGUIHorizontalLayout(
                     new DialogGUILabel(Localizer.Format("#autoLOC_Trajectories_MaxFramesPatch"), true),
                     new DialogGUISlider(() => { return Settings.fetch.MaxFramesPerPatch; },
-                        1f, 50f, true, slider_width + 10f, -1, OnSliderSet_MaxFramesPatch),
+                        1f, 50f, true, settings_slider_width + 10f, -1, OnSliderSet_MaxFramesPatch),
                     new DialogGUILabel(() => { return Settings.fetch.MaxFramesPerPatch.ToString(); }, 25f)),
                 new DialogGUIHorizontalLayout(
                     new DialogGUILabel(Localizer.Format("#autoLOC_Trajectories_IntegrationStep"), true),
                     new DialogGUISlider(() => { return IntegratorSliderPos; },
-                        integrator_slidermin, integrator_slidermax, false, slider_width + 10f, -1, OnSliderSet_IntegrationStep),
+                        integrator_slidermin, integrator_slidermax, false, settings_slider_width + 10f, -1, OnSliderSet_IntegrationStep),
                     new DialogGUILabel(() => { return Settings.fetch.IntegrationStepSize.ToString("F2"); }, 25f)),
                 new DialogGUIHorizontalLayout(
                     new DialogGUILabel(() => { return calculation_time_txt; }, true),
@@ -596,17 +628,50 @@ namespace Trajectories
         }
 
         /// <summary>
-        /// Creates the event listeners for the manual target text input box
+        /// Creates the event listeners for the text input boxes
         /// </summary>
-        private static void SetManualTargetTextBoxEvents()
+        private static void SetTextInputBoxEvents()
         {
-            if (manual_target_textinput?.uiItem == null)
-                return;
+            keyboard_lockout_action = new UnityAction<string>(KeyboardLockout);
+            keyboard_unlock_action = new UnityAction<string>(KeyboardUnlock);
 
-            tmpro_manual_target_textinput = manual_target_textinput.uiItem.GetComponent<TMP_InputField>();
-            tmpro_manual_target_textinput.onSelect.AddListener(new UnityAction<string>(KeyboardLockout));
-            tmpro_manual_target_textinput.onDeselect.AddListener(new UnityAction<string>(KeyboardUnlock));
-            tmpro_manual_target_textinput.onEndEdit.AddListener(new UnityAction<string>(KeyboardUnlock));
+            // manual target text input
+            if (manual_target_textinput?.uiItem != null)
+            {
+                tmpro_manual_target_textinput = manual_target_textinput.uiItem.GetComponent<TMP_InputField>();
+                tmpro_manual_target_textinput.onSelect.AddListener(keyboard_lockout_action);
+                tmpro_manual_target_textinput.onDeselect.AddListener(keyboard_unlock_action);
+                tmpro_manual_target_textinput.onEndEdit.AddListener(keyboard_unlock_action);
+            }
+            // descent profile text inputs
+            if (descent_entry_textinput?.uiItem != null)
+            {
+                tmpro_descent_entry_textinput = descent_entry_textinput.uiItem.GetComponent<TMP_InputField>();
+                tmpro_descent_entry_textinput.onSelect.AddListener(keyboard_lockout_action);
+                tmpro_descent_entry_textinput.onDeselect.AddListener(keyboard_unlock_action);
+                tmpro_descent_entry_textinput.onEndEdit.AddListener(keyboard_unlock_action);
+            }
+            if (descent_high_textinput?.uiItem != null)
+            {
+                tmpro_descent_high_textinput = descent_high_textinput.uiItem.GetComponent<TMP_InputField>();
+                tmpro_descent_high_textinput.onSelect.AddListener(keyboard_lockout_action);
+                tmpro_descent_high_textinput.onDeselect.AddListener(keyboard_unlock_action);
+                tmpro_descent_high_textinput.onEndEdit.AddListener(keyboard_unlock_action);
+            }
+            if (descent_low_textinput?.uiItem != null)
+            {
+                tmpro_descent_low_textinput = descent_low_textinput.uiItem.GetComponent<TMP_InputField>();
+                tmpro_descent_low_textinput.onSelect.AddListener(keyboard_lockout_action);
+                tmpro_descent_low_textinput.onDeselect.AddListener(keyboard_unlock_action);
+                tmpro_descent_low_textinput.onEndEdit.AddListener(keyboard_unlock_action);
+            }
+            if (descent_ground_textinput?.uiItem != null)
+            {
+                tmpro_descent_ground_textinput = descent_ground_textinput.uiItem.GetComponent<TMP_InputField>();
+                tmpro_descent_ground_textinput.onSelect.AddListener(keyboard_lockout_action);
+                tmpro_descent_ground_textinput.onDeselect.AddListener(keyboard_unlock_action);
+                tmpro_descent_ground_textinput.onEndEdit.AddListener(keyboard_unlock_action);
+            }
         }
 
         /// <summary>
@@ -929,6 +994,106 @@ namespace Trajectories
             Trajectory.Target.Save();
             return null;
         }
+
+        private static string OnTextInput_DescentEntry(string inString)
+        {
+            string trimmed = inString.Trim();
+            float angle;
+
+            if (float.TryParse(inString, out angle))
+            {
+                descent_entry_txt = trimmed;
+            }
+            else
+            {
+                descent_entry_txt = inString;
+            }
+
+            descent_entry_textinput.text = descent_entry_txt;
+
+            if (angle >= -180f && angle <= 180f)
+            {
+                DescentProfile.fetch.entry.AngleDeg = angle;
+                DescentProfile.fetch.CheckGUI();
+                DescentProfile.fetch.entry.RefreshSliderPos();
+            }
+            return null;
+        }
+
+        private static string OnTextInput_DescentHigh(string inString)
+        {
+            string trimmed = inString.Trim();
+            float angle;
+
+            if (float.TryParse(inString, out angle))
+            {
+                descent_high_txt = trimmed;
+            }
+            else
+            {
+                descent_high_txt = inString;
+            }
+
+            descent_high_textinput.text = descent_high_txt;
+
+            if (angle >= -180f && angle <= 180f)
+            {
+                DescentProfile.fetch.highAltitude.AngleDeg = angle;
+                DescentProfile.fetch.CheckGUI();
+                DescentProfile.fetch.highAltitude.RefreshSliderPos();
+            }
+            return null;
+        }
+
+        private static string OnTextInput_DescentLow(string inString)
+        {
+            string trimmed = inString.Trim();
+            float angle;
+
+            if (float.TryParse(inString, out angle))
+            {
+                descent_low_txt = trimmed;
+            }
+            else
+            {
+                descent_low_txt = inString;
+            }
+
+            descent_low_textinput.text = descent_low_txt;
+
+            if (angle >= -180f && angle <= 180f)
+            {
+                DescentProfile.fetch.lowAltitude.AngleDeg = angle;
+                DescentProfile.fetch.CheckGUI();
+                DescentProfile.fetch.lowAltitude.RefreshSliderPos();
+            }
+            return null;
+        }
+
+        private static string OnTextInput_DescentGround(string inString)
+        {
+            string trimmed = inString.Trim();
+            float angle;
+
+            if (float.TryParse(inString, out angle))
+            {
+                descent_ground_txt = trimmed;
+            }
+            else
+            {
+                descent_ground_txt = inString;
+            }
+
+            descent_ground_textinput.text = descent_ground_txt;
+
+            if (angle >= -180f && angle <= 180f)
+            {
+                DescentProfile.fetch.finalApproach.AngleDeg = angle;
+                DescentProfile.fetch.CheckGUI();
+                DescentProfile.fetch.finalApproach.RefreshSliderPos();
+            }
+            return null;
+        }
         #endregion
 
         #region Callback methods for the Gui components
@@ -999,9 +1164,9 @@ namespace Trajectories
             //set data field label justification
             SetDataFieldJustification();
 
-            // create textbox event listeners
-            if (inpage == PageType.TARGET)
-                SetManualTargetTextBoxEvents();
+            // create text input box event listeners
+            if (inpage == PageType.TARGET || inpage == PageType.DESCENT)
+                SetTextInputBoxEvents();
         }
 
         /// <summary> Updates the strings used by the Gui components to display changing values/data </summary>
