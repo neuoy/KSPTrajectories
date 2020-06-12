@@ -22,10 +22,9 @@
 
 using System;
 using System.Collections.Generic;
-using System.Reflection;
 using System.Diagnostics;
+using System.Reflection;
 using UnityEngine;
-using KSP.Localization;
 
 namespace Trajectories
 {
@@ -78,7 +77,7 @@ namespace Trajectories
         {
             try
             {
-                var res = type.GetMethod(methodName, flags);
+                MethodInfo res = type.GetMethod(methodName, flags);
                 if (res == null)
                     throw new Exception("method not found");
                 return res;
@@ -93,7 +92,7 @@ namespace Trajectories
         {
             try
             {
-                var res = type.GetMethod(methodName, types);
+                MethodInfo res = type.GetMethod(methodName, types);
                 if (res == null)
                     throw new Exception("method not found");
                 return res;
@@ -108,7 +107,7 @@ namespace Trajectories
         {
             try
             {
-                var res = type.GetMethod(methodName, flags, null, types, null);
+                MethodInfo res = type.GetMethod(methodName, flags, null, types, null);
                 if (res == null)
                     throw new Exception("method not found");
                 return res;
@@ -140,25 +139,13 @@ namespace Trajectories
         // --------------------------------------------------------------------------
         // --- Vectors --------------------------------------------------------------
 
-        public static Vector3d SwapYZ(Vector3d v)
-        {
-            return new Vector3d(v.x, v.z, v.y);
-        }
+        public static Vector3d SwapYZ(Vector3d v) => new Vector3d(v.x, v.z, v.y);
 
-        public static Vector3 SwapYZ(Vector3 v)
-        {
-            return new Vector3(v.x, v.z, v.y);
-        }
+        public static Vector3 SwapYZ(Vector3 v) => new Vector3(v.x, v.z, v.y);
 
-        public static string ToString(this Vector3d v, string format = "0.000")
-        {
-            return "[" + v.x.ToString(format) + ", " + v.y.ToString(format) + ", " + v.z.ToString(format) + "]";
-        }
+        public static string ToString(this Vector3d v, string format = "0.000") => "[" + v.x.ToString(format) + ", " + v.y.ToString(format) + ", " + v.z.ToString(format) + "]";
 
-        public static string ToString(this Vector3 v, string format = "0.000")
-        {
-            return "[" + v.x.ToString(format) + ", " + v.y.ToString(format) + ", " + v.z.ToString(format) + "]";
-        }
+        public static string ToString(this Vector3 v, string format = "0.000") => "[" + v.x.ToString(format) + ", " + v.y.ToString(format) + ", " + v.z.ToString(format) + "]";
 
 
 
@@ -166,13 +153,7 @@ namespace Trajectories
         // --- TIME -----------------------------------------------------------------
 
         /// <summary> Return hours in a KSP day. </summary>
-        public static double HoursInDay
-        {
-            get
-            {
-                return GameSettings.KERBIN_TIME ? 6.0 : 24.0;
-            }
-        }
+        public static double HoursInDay => GameSettings.KERBIN_TIME ? 6.0 : 24.0;
 
         /// <summary> Return days in a KSP year. </summary>
         public static double DaysInYear
@@ -186,31 +167,16 @@ namespace Trajectories
         }
 
         /// <summary> Get current time in clocks. </summary>
-        public static double Clocks
-        {
-            get
-            {
-                return Stopwatch.GetTimestamp();
-            }
-        }
+        public static double Clocks => Stopwatch.GetTimestamp();
 
         /// <summary> Convert from clocks to microseconds. </summary>
-        public static double Microseconds(double clocks)
-        {
-            return clocks * 1000000.0 / Stopwatch.Frequency;
-        }
+        public static double Microseconds(double clocks) => clocks * 1000000.0 / Stopwatch.Frequency;
 
         /// <summary> Convert from clocks to milliseconds. </summary>
-        public static double Milliseconds(double clocks)
-        {
-            return clocks * 1000.0 / Stopwatch.Frequency;
-        }
+        public static double Milliseconds(double clocks) => clocks * 1000.0 / Stopwatch.Frequency;
 
         /// <summary> Convert from clocks to seconds. </summary>
-        public static double Seconds(double clocks)
-        {
-            return clocks / Stopwatch.Frequency;
-        }
+        public static double Seconds(double clocks) => clocks / Stopwatch.Frequency;
 
 
 
@@ -218,58 +184,22 @@ namespace Trajectories
         // --- GAME LOGIC -----------------------------------------------------------
 
         /// <summary> Returns true if the current scene is flight. </summary>
-        public static bool IsFlight
-        {
-            get
-            {
-                return HighLogic.LoadedSceneIsFlight;
-            }
-        }
+        public static bool IsFlight => HighLogic.LoadedSceneIsFlight;
 
         /// <summary> Returns true if the current scene is editor. </summary>
-        public static bool IsEditor
-        {
-            get
-            {
-                return HighLogic.LoadedSceneIsEditor;
-            }
-        }
+        public static bool IsEditor => HighLogic.LoadedSceneIsEditor;
 
         /// <summary> Returns true if the current scene is not the main menu. </summary>
-        public static bool IsGame
-        {
-            get
-            {
-                return HighLogic.LoadedSceneIsGame;
-            }
-        }
+        public static bool IsGame => HighLogic.LoadedSceneIsGame;
 
         /// <summary> Returns true if the current scene is tracking station. </summary>
-        public static bool IsTrackingStation
-        {
-            get
-            {
-                return (HighLogic.LoadedScene == GameScenes.TRACKSTATION);
-            }
-        }
+        public static bool IsTrackingStation => (HighLogic.LoadedScene == GameScenes.TRACKSTATION);
 
         /// <summary> Returns true if the current view is map. </summary>
-        public static bool IsMap
-        {
-            get
-            {
-                return MapView.MapIsEnabled;
-            }
-        }
+        public static bool IsMap => MapView.MapIsEnabled;
 
         /// <summary> Returns true if game is paused. </summary>
-        public static bool IsPaused
-        {
-            get
-            {
-                return FlightDriver.Pause || Planetarium.Pause;
-            }
-        }
+        public static bool IsPaused => FlightDriver.Pause || Planetarium.Pause;
 
         /// <summary> Check if patched conics are available in the current save. </summary>
         /// <returns>True if patched conics are available</returns>
@@ -292,27 +222,18 @@ namespace Trajectories
         // --- RANDOM ---------------------------------------------------------------
 
         /// <summary> Random number generator. </summary>
-        static System.Random rng = new System.Random();
+        private static System.Random rng = new System.Random();
 
         /// <summary> Returns random integer in [0..max_value] range. </summary>
-        public static int RandomInt(int max_value)
-        {
-            return rng.Next(max_value);
-        }
+        public static int RandomInt(int max_value) => rng.Next(max_value);
 
         /// <summary> Returns random float in [0..1] range. </summary>
-        public static float RandomFloat()
-        {
-            return (float)rng.NextDouble();
-        }
+        public static float RandomFloat() => (float)rng.NextDouble();
 
         /// <summary> Returns random double in [0..1] range. </summary>
-        public static double RandomDouble()
-        {
-            return rng.NextDouble();
-        }
+        public static double RandomDouble() => rng.NextDouble();
 
-        static int fast_float_seed = 1;
+        private static int fast_float_seed = 1;
         /// <summary> Returns random float in [-1,+1] range.
         /// Note: it is less random than the c# RNG, but is way faster. </summary>
         public static float FastRandomFloat()
