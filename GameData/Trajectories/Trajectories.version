@@ -2,7 +2,7 @@
 "NAME":"Trajectories","URL":"http://ksp-avc.cybutek.net/version.php?id=63",
 "DOWNLOAD":"https://spacedock.info/mod/396/Trajectories",
 "CHANGE_LOG_URL":"https://github.com/neuoy/KSPTrajectories/releases",
-"VERSION":{"MAJOR":2,"MINOR":3,"PATCH":2,"BUILD":0},
+"VERSION":{"MAJOR":2,"MINOR":3,"PATCH":3,"BUILD":0},
 "KSP_VERSION":{"MAJOR":1,"MINOR":9,"PATCH":1},
 "KSP_VERSION_MIN":{"MAJOR":1,"MINOR":3,"PATCH":1},
 "KSP_VERSION_MAX":{"MAJOR":1,"MINOR":9,"PATCH":99}
