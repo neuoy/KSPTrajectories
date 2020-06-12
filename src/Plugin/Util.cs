@@ -1,7 +1,7 @@
 ﻿/*
   Copyright© (c) 2014-2017 Youen Toupin, (aka neuoy).
   Copyright© (c) 2017-2018 A.Korsunsky, (aka fat-lobyte).
-  Copyright© (c) 2017-2018 S.Gray, (aka PiezPiedPy).
+  Copyright© (c) 2017-2020 S.Gray, (aka PiezPiedPy).
 
   This file is part of Trajectories.
   Trajectories is available under the terms of GPL-3.0-or-later.
@@ -118,6 +118,27 @@ namespace Trajectories
                 throw new Exception("Failed to GetMethod " + methodName + " on type " + type.FullName + " with types " + types.ToString() + ":\n" + e.Message + "\n" + e.StackTrace);
             }
         }
+
+
+        // --------------------------------------------------------------------------
+        // --- Math --------------------------------------------------------------
+
+        /// <summary>
+        /// Clamps a double value using the absolute value for comparison, optional return values for min and max can be passed
+        /// </summary>
+        public static double ClampAbs(double value, double min, double max, double rtn_min = 0d, double rtn_max = 1d)
+        {
+            if (Math.Abs(value) < min)
+                return rtn_min;
+            else if (Math.Abs(value) > max)
+                return rtn_max;
+            else
+                return value;
+        }
+
+
+        // --------------------------------------------------------------------------
+        // --- Vectors --------------------------------------------------------------
 
         public static Vector3d SwapYZ(Vector3d v)
         {
