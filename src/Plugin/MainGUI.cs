@@ -1,5 +1,4 @@
 ﻿/*
-  Copyright© (c) 2017-2018 S.Gray, (aka PiezPiedPy).
   Copyright© (c) 2017-2020 S.Gray, (aka PiezPiedPy).
   Copyright© (c) 2017-2018 A.Korsunsky, (aka fat-lobyte).
 
@@ -40,7 +39,7 @@ namespace Trajectories
         private const float button_width = 75.0f;
         private const float button_height = 25.0f;
         private const float targetbutton_width = 120.0f;
-        private const float descent_slider_width = 124.0f;
+        private const float descent_slider_width = 130.0f;
         private const float settings_slider_width = 195.0f;
         private const float integrator_slidermin = 1.0f;
         private const float integrator_slidermax = 50.0f;
@@ -468,7 +467,7 @@ namespace Trajectories
 
             descent_page = new DialogGUIVerticalLayout(false, true, 0, new RectOffset(), TextAnchor.UpperCenter,
                 new DialogGUIHorizontalLayout(false, false, 0, new RectOffset(), TextAnchor.MiddleCenter,
-                    new DialogGUIToggle(() => { return DescentProfile.fetch.ProgradeEntry; },
+                    new DialogGUIToggle(() => { return !DescentProfile.fetch.RetrogradeEntry; },
                         Localizer.Format("#autoLOC_900597"), OnButtonClick_Prograde),
                     new DialogGUIToggle(() => { return DescentProfile.fetch.RetrogradeEntry; },
                         Localizer.Format("#autoLOC_900607"), OnButtonClick_Retrograde)),
@@ -478,7 +477,7 @@ namespace Trajectories
                         () => { return DescentProfile.fetch.entry.Horizon_txt; }, OnButtonClick_EntryHorizon, 60f),
                     new DialogGUISlider(() => { return DescentProfile.fetch.entry.SliderPos; },
                         -1f, 1f, false, descent_slider_width, -1, OnSliderSet_EntryAngle),
-                    new DialogGUILabel(() => { return DescentProfile.fetch.entry.Angle_txt; }, 36f),
+                    new DialogGUILabel(() => { return DescentProfile.fetch.entry.Angle_txt; }, 30f),
                     descent_entry_textinput),
                 new DialogGUIHorizontalLayout(TextAnchor.MiddleLeft,
                     new DialogGUILabel(DescentProfile.fetch.highAltitude.Name, 45f),
@@ -486,7 +485,7 @@ namespace Trajectories
                         () => { return DescentProfile.fetch.highAltitude.Horizon_txt; }, OnButtonClick_HighHorizon, 60f),
                     new DialogGUISlider(() => { return DescentProfile.fetch.highAltitude.SliderPos; },
                         -1f, 1f, false, descent_slider_width, -1, OnSliderSet_HighAngle),
-                    new DialogGUILabel(() => { return DescentProfile.fetch.highAltitude.Angle_txt; }, 36f),
+                    new DialogGUILabel(() => { return DescentProfile.fetch.highAltitude.Angle_txt; }, 30f),
                     descent_high_textinput),
                 new DialogGUIHorizontalLayout(TextAnchor.MiddleLeft,
                     new DialogGUILabel(DescentProfile.fetch.lowAltitude.Name, 45f),
@@ -494,7 +493,7 @@ namespace Trajectories
                         () => { return DescentProfile.fetch.lowAltitude.Horizon_txt; }, OnButtonClick_LowHorizon, 60f),
                     new DialogGUISlider(() => { return DescentProfile.fetch.lowAltitude.SliderPos; },
                         -1f, 1f, false, descent_slider_width, -1, OnSliderSet_LowAngle),
-                    new DialogGUILabel(() => { return DescentProfile.fetch.lowAltitude.Angle_txt; }, 36f),
+                    new DialogGUILabel(() => { return DescentProfile.fetch.lowAltitude.Angle_txt; }, 30f),
                     descent_low_textinput),
                 new DialogGUIHorizontalLayout(TextAnchor.MiddleLeft,
                     new DialogGUILabel(DescentProfile.fetch.finalApproach.Name, 45f),
@@ -502,7 +501,7 @@ namespace Trajectories
                         () => { return DescentProfile.fetch.finalApproach.Horizon_txt; }, OnButtonClick_FinalHorizon, 60f),
                     new DialogGUISlider(() => { return DescentProfile.fetch.finalApproach.SliderPos; },
                         -1f, 1f, false, descent_slider_width, -1, OnSliderSet_GroundAngle),
-                    new DialogGUILabel(() => { return DescentProfile.fetch.finalApproach.Angle_txt; }, 36f),
+                    new DialogGUILabel(() => { return DescentProfile.fetch.finalApproach.Angle_txt; }, 30f),
                     descent_final_textinput)
                 );
 
@@ -848,48 +847,38 @@ namespace Trajectories
 
         private static void OnButtonClick_Prograde(bool inState)
         {
-            if (inState != DescentProfile.fetch.ProgradeEntry)
-            {
-                DescentProfile.fetch.ProgradeEntry = inState;
-                if (inState)
-                    DescentProfile.fetch.Reset(0d);
-                DescentProfile.fetch.Save();
-            }
+            DescentProfile.fetch.RetrogradeEntry = !inState;
+            DescentProfile.fetch.Save();
         }
 
         private static void OnButtonClick_Retrograde(bool inState)
         {
-            if (inState != DescentProfile.fetch.RetrogradeEntry)
-            {
-                DescentProfile.fetch.RetrogradeEntry = inState;
-                if (inState)
-                    DescentProfile.fetch.Reset();
-                DescentProfile.fetch.Save();
-            }
+            DescentProfile.fetch.RetrogradeEntry = inState;
+            DescentProfile.fetch.Save();
         }
 
         private static void OnButtonClick_EntryHorizon(bool inState)
         {
             DescentProfile.fetch.entry.Horizon = inState;
-            DescentProfile.fetch.CheckGUI();
+            DescentProfile.fetch.Save();
         }
 
         private static void OnButtonClick_HighHorizon(bool inState)
         {
             DescentProfile.fetch.highAltitude.Horizon = inState;
-            DescentProfile.fetch.CheckGUI();
+            DescentProfile.fetch.Save();
         }
 
         private static void OnButtonClick_LowHorizon(bool inState)
         {
             DescentProfile.fetch.lowAltitude.Horizon = inState;
-            DescentProfile.fetch.CheckGUI();
+            DescentProfile.fetch.Save();
         }
 
         private static void OnButtonClick_FinalHorizon(bool inState)
         {
             DescentProfile.fetch.finalApproach.Horizon = inState;
-            DescentProfile.fetch.CheckGUI();
+            DescentProfile.fetch.Save();
         }
 
         private static void OnButtonClick_TargetImpact()
@@ -1012,11 +1001,11 @@ namespace Trajectories
 
             descent_entry_textinput.text = descent_entry_txt;
 
-            if (angle >= -180f && angle <= 180f)
+            if (Math.Abs(angle) <= 180f)
             {
                 DescentProfile.fetch.entry.AngleDeg = angle;
-                DescentProfile.fetch.CheckGUI();
-                DescentProfile.fetch.entry.RefreshSliderPos();
+                DescentProfile.fetch.RefreshGui();
+                DescentProfile.fetch.Save();
             }
             return null;
         }
@@ -1037,11 +1026,11 @@ namespace Trajectories
 
             descent_high_textinput.text = descent_high_txt;
 
-            if (angle >= -180f && angle <= 180f)
+            if (Math.Abs(angle) <= 180f)
             {
                 DescentProfile.fetch.highAltitude.AngleDeg = angle;
-                DescentProfile.fetch.CheckGUI();
-                DescentProfile.fetch.highAltitude.RefreshSliderPos();
+                DescentProfile.fetch.RefreshGui();
+                DescentProfile.fetch.Save();
             }
             return null;
         }
@@ -1062,11 +1051,11 @@ namespace Trajectories
 
             descent_low_textinput.text = descent_low_txt;
 
-            if (angle >= -180f && angle <= 180f)
+            if (Math.Abs(angle) <= 180f)
             {
                 DescentProfile.fetch.lowAltitude.AngleDeg = angle;
-                DescentProfile.fetch.CheckGUI();
-                DescentProfile.fetch.lowAltitude.RefreshSliderPos();
+                DescentProfile.fetch.RefreshGui();
+                DescentProfile.fetch.Save();
             }
             return null;
         }
@@ -1087,11 +1076,11 @@ namespace Trajectories
 
             descent_final_textinput.text = descent_final_txt;
 
-            if (angle >= -180f && angle <= 180f)
+            if (Math.Abs(angle) <= 180f)
             {
                 DescentProfile.fetch.finalApproach.AngleDeg = angle;
-                DescentProfile.fetch.CheckGUI();
-                DescentProfile.fetch.finalApproach.RefreshSliderPos();
+                DescentProfile.fetch.RefreshGui();
+                DescentProfile.fetch.Save();
             }
             return null;
         }
@@ -1108,25 +1097,29 @@ namespace Trajectories
         private static void OnSliderSet_EntryAngle(float invalue)
         {
             DescentProfile.fetch.entry.SliderPos = invalue;
-            DescentProfile.fetch.CheckGUI();
+            DescentProfile.fetch.RefreshGui();
+            DescentProfile.fetch.Save();
         }
 
         private static void OnSliderSet_HighAngle(float invalue)
         {
             DescentProfile.fetch.highAltitude.SliderPos = invalue;
-            DescentProfile.fetch.CheckGUI();
+            DescentProfile.fetch.RefreshGui();
+            DescentProfile.fetch.Save();
         }
 
         private static void OnSliderSet_LowAngle(float invalue)
         {
             DescentProfile.fetch.lowAltitude.SliderPos = invalue;
-            DescentProfile.fetch.CheckGUI();
+            DescentProfile.fetch.RefreshGui();
+            DescentProfile.fetch.Save();
         }
 
         private static void OnSliderSet_GroundAngle(float invalue)
         {
             DescentProfile.fetch.finalApproach.SliderPos = invalue;
-            DescentProfile.fetch.CheckGUI();
+            DescentProfile.fetch.RefreshGui();
+            DescentProfile.fetch.Save();
         }
         #endregion
 

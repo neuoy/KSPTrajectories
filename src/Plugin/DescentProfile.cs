@@ -30,16 +30,20 @@ namespace Trajectories
     [KSPAddon(KSPAddon.Startup.Flight, false)]
     public sealed class DescentProfile : MonoBehaviour
     {
+        private const double GUI_MAX_ANGLE = Math.PI / 2d;
+
         public class Node
         {
+            private bool retrograde;
+            private bool horizon;           // If true, angle is relative to horizon, otherwise it's relative to velocity (i.e. angle of attack)
+            private double angle_rad;       // In radians
+            private double angle_deg;       // In degrees
+            private float sliderPos;
+
             public string Name { get; private set; }
             public string Description { get; private set; }
             public string Horizon_txt { get; private set; }
             public string Angle_txt { get; private set; }
-            private bool horizon;       // If true, angle is relative to horizon, otherwise it's relative to velocity (i.e. angle of attack)
-            private double angle_rad;   // In radians
-            private double angle_deg;   // In degrees
-            private float sliderPos;
 
             public bool Horizon
             {
@@ -56,18 +60,9 @@ namespace Trajectories
                 get => angle_rad;
                 set
                 {
-                    if (Math.Abs(value) < 0.00001)
-                        angle_rad = 0d;
-                    else
-                        angle_rad = value;
-
-                    angle_deg = angle_rad * (180.0 / Math.PI);
-                    if (angle_deg <= -100d || angle_deg >= 100d)
-                        Angle_txt = angle_deg.ToString("F1") + "°";
-                    else if (angle_deg <= -10d || angle_deg >= 10d)
-                        Angle_txt = angle_deg.ToString("F2") + "°";
-                    else
-                        Angle_txt = angle_deg.ToString("F3") + "°";
+                    angle_rad = Util.ClampAbs(value, 0.00001d, Math.PI, 0d, Math.PI);
+                    angle_deg = angle_rad * Mathf.Rad2Deg;
+                    RefreshGui();
                 }
             }
 
@@ -76,18 +71,25 @@ namespace Trajectories
                 get => angle_deg;
                 set
                 {
-                    if (Math.Abs(value) < 0.00001)
-                        angle_deg = 0d;
-                    else
-                        angle_deg = value;
+                    angle_deg = Util.ClampAbs(value, 0.00001d, 180d, 0d, 180d);
+                    angle_rad = angle_deg * Mathf.Deg2Rad;
+                    RefreshGui();
+                }
+            }
 
-                    angle_rad = angle_deg * (Math.PI / 180.0);
-                    if (angle_deg <= -100d || angle_deg >= 100d)
-                        Angle_txt = angle_deg.ToString("F1") + "°";
-                    else if (angle_deg <= -10d || angle_deg >= 10d)
-                        Angle_txt = angle_deg.ToString("F2") + "°";
-                    else
-                        Angle_txt = angle_deg.ToString("F3") + "°";
+            public bool Retrograde
+            {
+                get => retrograde;
+                set
+                {
+                    retrograde = value;
+                    if ((retrograde && (Math.Abs(angle_rad) < GUI_MAX_ANGLE)) || (!retrograde && (Math.Abs(angle_rad) > GUI_MAX_ANGLE)))
+                    {
+                        if (angle_rad < 0d)
+                            AngleRad = -Math.PI - angle_rad;
+                        else
+                            AngleRad = Math.PI - angle_rad;
+                    }
                 }
             }
 
@@ -96,8 +98,20 @@ namespace Trajectories
                 get => sliderPos;
                 set
                 {
-                    sliderPos = value;
-                    AngleRad = value * value * value * Math.PI; // This helps to have high precision near 0° while still allowing big angles
+                    // convert slider position into radians rounded to 0.5 degrees
+                    double gui_angle_rad = (Math.Round(((value * GUI_MAX_ANGLE) * Mathf.Rad2Deg) * 2d, 0) * 0.5d) * Mathf.Deg2Rad;
+
+                    if (retrograde)
+                    {
+                        if (gui_angle_rad < 0d)
+                            AngleRad = -Math.PI - gui_angle_rad;
+                        else
+                            AngleRad = Math.PI - gui_angle_rad;
+                    }
+                    else
+                    {
+                        AngleRad = gui_angle_rad;
+                    }
                 }
             }
 
@@ -108,13 +122,30 @@ namespace Trajectories
                 Description = description;
             }
 
-            public void RefreshSliderPos()
+            public void RefreshGui()
             {
-                float position = (float)Math.Pow(Math.Abs(AngleRad) / Math.PI, 1d / 3d);
-                if (AngleRad < 0d)
+                // check if angle is retrograde or prograde
+                double gui_angle_rad = AngleRad;
+
+                if (Math.Abs(gui_angle_rad) > GUI_MAX_ANGLE)
+                {
+                    // angle is retrograde
+                    retrograde = true;
+                    if (gui_angle_rad < 0d)
+                        gui_angle_rad = -Math.PI - gui_angle_rad;
+                    else
+                        gui_angle_rad = Math.PI - gui_angle_rad;
+                }
+
+                // update gui descent page slider position
+                float position = (float)(Math.Abs(gui_angle_rad) / GUI_MAX_ANGLE);
+                if (gui_angle_rad < 0d)
                     sliderPos = -position;
                 else
                     sliderPos = position;
+
+                // update gui descent page angle text
+                Angle_txt = (gui_angle_rad * Mathf.Rad2Deg).ToString("F1") + "°";
             }
 
             public double GetAngleOfAttack(Vector3d position, Vector3d velocity)
@@ -137,16 +168,29 @@ namespace Trajectories
             }
         }
 
+        private Vessel attachedVessel;
+        private bool retrograde_entry;
+
         public Node entry;
         public Node highAltitude;
         public Node lowAltitude;
         public Node finalApproach;
 
-        public bool ProgradeEntry { get; set; }
-
-        public bool RetrogradeEntry { get; set; }
-
-        private Vessel attachedVessel;
+        /// <summary>
+        /// Sets the profile to Pro/Retrograde or Returns true if a Retrograde entry is selected.
+        /// </summary>
+        public bool RetrogradeEntry
+        {
+            get => retrograde_entry;
+            set
+            {
+                entry.Retrograde = value;
+                highAltitude.Retrograde = value;
+                lowAltitude.Retrograde = value;
+                finalApproach.Retrograde = value;
+                retrograde_entry = value;
+            }
+        }
 
         // permit global access
         public static DescentProfile fetch { get; private set; } = null;
@@ -162,9 +206,9 @@ namespace Trajectories
         public void Awake()
         {
             if (Settings.fetch.DefaultDescentIsRetro)
-                Reset();
+                Reset();    // Reset to 180 degrees (retrograde)
             else
-                Reset(0d);
+                Reset(0d);  // Reset to 0 degrees (prograde)
         }
 
         public void OnDestroy()
@@ -184,9 +228,14 @@ namespace Trajectories
             finalApproach = new Node(Localizer.Format("#autoLOC_Trajectories_Final"), Localizer.Format("#autoLOC_Trajectories_FinalDesc"));
         }
 
+        /// <summary>
+        /// Resets the descent profile to the given AoA value in radians, default value is Retrograde =(PI = 180 degrees)
+        /// </summary>
         public void Reset(double AoA = Math.PI)
         {
-            //Debug.Log(string.Format("Resetting vessel descent profile to {0} degrees", AoA));
+            //Util.DebugLog("Resetting vessel descent profile to {0} degrees", AoA));
+            RetrogradeEntry = Math.Abs(AoA) > GUI_MAX_ANGLE;   // sets to prograde entry if AoA is greater than +-PI/2 (+-90 degrees)
+
             entry.AngleRad = AoA;
             entry.Horizon = false;
             highAltitude.AngleRad = AoA;
@@ -196,30 +245,29 @@ namespace Trajectories
             finalApproach.AngleRad = AoA;
             finalApproach.Horizon = false;
 
-            ProgradeEntry = AoA == 0d;
-            RetrogradeEntry = AoA == Math.PI;
-
-            RefreshSliders();
+            RefreshGui();
         }
 
-        private void RefreshSliders()
+        public void RefreshGui()
         {
-            entry.RefreshSliderPos();
-            highAltitude.RefreshSliderPos();
-            lowAltitude.RefreshSliderPos();
-            finalApproach.RefreshSliderPos();
+            entry.RefreshGui();
+            highAltitude.RefreshGui();
+            lowAltitude.RefreshGui();
+            finalApproach.RefreshGui();
+
+            RetrogradeEntry = entry.Retrograde || highAltitude.Retrograde || lowAltitude.Retrograde || finalApproach.Retrograde;
         }
 
         public void Update()
         {
             if (attachedVessel != FlightGlobals.ActiveVessel)
             {
-                //Debug.Log("Loading vessel descent profile");
+                //Util.DebugLog("Loading vessels descent profile");
                 attachedVessel = FlightGlobals.ActiveVessel;
 
                 if (attachedVessel == null)
                 {
-                    //Debug.Log("No vessel");
+                    //Util.DebugLog("No vessel");
                     if (Settings.fetch.DefaultDescentIsRetro)
                         Reset();
                     else
@@ -230,7 +278,7 @@ namespace Trajectories
                     TrajectoriesVesselSettings module = attachedVessel.Parts.SelectMany(p => p.Modules.OfType<TrajectoriesVesselSettings>()).FirstOrDefault();
                     if (module == null)
                     {
-                        //Debug.Log("No TrajectoriesVesselSettings module");
+                        //Util.DebugLog("No TrajectoriesVesselSettings module");
                         if (Settings.fetch.DefaultDescentIsRetro)
                             Reset();
                         else
@@ -238,7 +286,7 @@ namespace Trajectories
                     }
                     else if (!module.Initialized)
                     {
-                        //Debug.Log("Initializing TrajectoriesVesselSettings module");
+                        //Util.DebugLog("Initializing TrajectoriesVesselSettings module");
                         if (Settings.fetch.DefaultDescentIsRetro)
                             Reset();
                         else
@@ -253,14 +301,15 @@ namespace Trajectories
                         module.GroundAngle = finalApproach.AngleRad;
                         module.GroundHorizon = finalApproach.Horizon;
 
-                        module.ProgradeEntry = ProgradeEntry;
                         module.RetrogradeEntry = RetrogradeEntry;
 
                         module.Initialized = true;
                     }
                     else
                     {
-                        //Debug.Log("Reading settings...");
+                        //Util.DebugLog("Reading settings...");
+                        RetrogradeEntry = module.RetrogradeEntry;
+
                         entry.AngleRad = module.EntryAngle;
                         entry.Horizon = module.EntryHorizon;
                         highAltitude.AngleRad = module.HighAngle;
@@ -270,12 +319,10 @@ namespace Trajectories
                         finalApproach.AngleRad = module.GroundAngle;
                         finalApproach.Horizon = module.GroundHorizon;
 
-                        ProgradeEntry = module.ProgradeEntry;
-                        RetrogradeEntry = module.RetrogradeEntry;
 
-                        RefreshSliders();
+                        RefreshGui();
 
-                        //Debug.Log("Descent profile loaded");
+                        //Util.DebugLog("Descent profile loaded");
                     }
                 }
             }
@@ -286,8 +333,8 @@ namespace Trajectories
             if (attachedVessel == null)
                 return;
 
-            //Debug.Log("Saving vessel descent profile");
-            foreach (var module in attachedVessel.Parts.SelectMany(p => p.Modules.OfType<TrajectoriesVesselSettings>()))
+            //Util.DebugLog("Saving vessels descent profile");
+            foreach (TrajectoriesVesselSettings module in attachedVessel.Parts.SelectMany(p => p.Modules.OfType<TrajectoriesVesselSettings>()))
             {
                 module.EntryAngle = entry.AngleRad;
                 module.EntryHorizon = entry.Horizon;
@@ -298,7 +345,6 @@ namespace Trajectories
                 module.GroundAngle = finalApproach.AngleRad;
                 module.GroundHorizon = finalApproach.Horizon;
 
-                module.ProgradeEntry = ProgradeEntry;
                 module.RetrogradeEntry = RetrogradeEntry;
                 module.Initialized = true;
             }
@@ -311,16 +357,15 @@ namespace Trajectories
             highAltitude.DoGUI();
             lowAltitude.DoGUI();
             finalApproach.DoGUI();
-            CheckGUI();
         }
 
         [Obsolete("use MainGUI")]
         public void DoQuickControlsGUI()
         {
-            bool newPrograde = GUILayout.Toggle(ProgradeEntry, "Progr.", GUILayout.Width(50));
+            bool newPrograde = GUILayout.Toggle(!RetrogradeEntry, "Progr.", GUILayout.Width(50));
             bool newRetrograde = GUILayout.Toggle(RetrogradeEntry, "Retro.", GUILayout.Width(50));
 
-            if (newPrograde && !ProgradeEntry)
+            if (newPrograde && RetrogradeEntry)
             {
                 Reset(0d);
                 Save();
@@ -330,33 +375,6 @@ namespace Trajectories
                 Reset();
                 Save();
             }
-        }
-
-        public void CheckGUI()
-        {
-            double? AoA = entry.Horizon ? (double?)null : entry.AngleRad;
-
-            if (highAltitude.AngleRad != AoA || highAltitude.Horizon)
-                AoA = null;
-            if (lowAltitude.AngleRad != AoA || lowAltitude.Horizon)
-                AoA = null;
-            if (finalApproach.AngleRad != AoA || finalApproach.Horizon)
-                AoA = null;
-
-            if (!AoA.HasValue)
-            {
-                ProgradeEntry = false;
-                RetrogradeEntry = false;
-            }
-            else
-            {
-                if (Math.Abs(AoA.Value) < 0.00001)
-                    ProgradeEntry = true;
-                if (Math.Abs((Math.Abs(AoA.Value) - Math.PI)) < 0.00001)
-                    RetrogradeEntry = true;
-            }
-
-            Save();
         }
 
         /// <summary>
