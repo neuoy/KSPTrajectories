@@ -1,7 +1,7 @@
 ﻿/*
   Copyright© (c) 2016-2017 Youen Toupin, (aka neuoy).
   Copyright© (c) 2017-2018 A.Korsunsky, (aka fat-lobyte).
-  Copyright© (c) 2017-2018 S.Gray, (aka PiezPiedPy).
+  Copyright© (c) 2017-2020 S.Gray, (aka PiezPiedPy).
 
   This file is part of Trajectories.
   Trajectories is available under the terms of GPL-3.0-or-later.
@@ -20,6 +20,7 @@
   along with Trajectories.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+using System;
 using System.Linq;
 using UnityEngine;
 
@@ -226,29 +227,28 @@ namespace Trajectories
         }
 
         /// <summary>
-        /// Set the trajectories descent profile to Prograde.
+        /// Sets the trajectories descent profile to Prograde or returns its current state, returns null if no active vessel.
         /// </summary>
         public static bool? ProgradeEntry
         {
             get
             {
                 if (FlightGlobals.ActiveVessel != null)
-                    return DescentProfile.fetch.ProgradeEntry;
+                    return !DescentProfile.fetch.RetrogradeEntry;
                 return null;
             }
             set
             {
-                if ((FlightGlobals.ActiveVessel != null) && !DescentProfile.fetch.ProgradeEntry)
+                if ((FlightGlobals.ActiveVessel != null) && DescentProfile.fetch.RetrogradeEntry)
                 {
-                    DescentProfile.fetch.ProgradeEntry = true;
-                    DescentProfile.fetch.Reset(0d);
+                    DescentProfile.fetch.RetrogradeEntry = false;
                     DescentProfile.fetch.Save();
                 }
             }
         }
 
         /// <summary>
-        /// Set the trajectories descent profile to Prograde.
+        /// Sets the trajectories descent profile to Prograde or returns its current state, returns null if no active vessel.
         /// </summary>
         public static bool? RetrogradeEntry
         {
@@ -263,7 +263,82 @@ namespace Trajectories
                 if ((FlightGlobals.ActiveVessel != null) && !DescentProfile.fetch.RetrogradeEntry)
                 {
                     DescentProfile.fetch.RetrogradeEntry = true;
-                    DescentProfile.fetch.Reset();
+                    DescentProfile.fetch.Save();
+                }
+            }
+        }
+
+        /// <summary>
+        /// Resets the trajectories descent profile to the passed AoA value in radians, default value is Retrograde =(PI = 180°)
+        /// </summary>
+        public static void ResetDescentProfile(double AoA = Math.PI)
+        {
+            if (FlightGlobals.ActiveVessel != null)
+            {
+                DescentProfile.fetch.Reset(AoA);
+                DescentProfile.fetch.Save();
+            }
+        }
+
+        /// <summary>
+        /// Returns or sets the trajectories descent profile to the passed AoA values in radians, also sets Prograde/Retrograde if any values are greater than +-PI/2 (+-90°).
+        ///  Note. use with the ProgradeEntry and RetrogradeEntry methods if using angles as displayed in the gui with max +-PI/2 (+-90°).
+        /// Vector4 (x = entry angle, y = high altitude angle, z = low altitude angle, w = final approach angle)
+        /// Returns null if no active vessel.
+        /// </summary>
+        public static Vector4? DescentProfileAngles
+        {
+            get
+            {
+                if (FlightGlobals.ActiveVessel != null)
+                {
+                    return new Vector4(
+                        (float)DescentProfile.fetch.entry.AngleRad,
+                        (float)DescentProfile.fetch.highAltitude.AngleRad,
+                        (float)DescentProfile.fetch.lowAltitude.AngleRad,
+                        (float)DescentProfile.fetch.finalApproach.AngleRad);
+                }
+                return null;
+            }
+            set
+            {
+                if (FlightGlobals.ActiveVessel != null && value.HasValue)
+                {
+                    DescentProfile.fetch.entry.AngleRad = value.Value.x;
+                    DescentProfile.fetch.highAltitude.AngleRad = value.Value.y;
+                    DescentProfile.fetch.lowAltitude.AngleRad = value.Value.z;
+                    DescentProfile.fetch.finalApproach.AngleRad = value.Value.w;
+                    DescentProfile.fetch.Save();
+                }
+            }
+        }
+
+        /// <summary>
+        /// Returns or set the trajectories descent profile modes, 1 = AoA, 0 = Horizon, returns null if no active vessel.
+        /// Vector4 (x = entry mode, y = high altitude mode, z = low altitude mode, w = final approach mode)
+        /// </summary>
+        public static Vector4? DescentProfileModes
+        {
+            get
+            {
+                if (FlightGlobals.ActiveVessel != null)
+                {
+                    return new Vector4(
+                        DescentProfile.fetch.entry.Horizon ? 0f : 1f,
+                        DescentProfile.fetch.highAltitude.Horizon ? 0f : 1f,
+                        DescentProfile.fetch.lowAltitude.Horizon ? 0f : 1f,
+                        DescentProfile.fetch.finalApproach.Horizon ? 0f : 1f);
+                }
+                return null;
+            }
+            set
+            {
+                if (FlightGlobals.ActiveVessel != null && value.HasValue)
+                {
+                    DescentProfile.fetch.entry.Horizon = value.Value.x == 0f ? true : false;
+                    DescentProfile.fetch.highAltitude.Horizon = value.Value.y == 0f ? true : false;
+                    DescentProfile.fetch.lowAltitude.Horizon = value.Value.z == 0f ? true : false;
+                    DescentProfile.fetch.finalApproach.Horizon = value.Value.w == 0f ? true : false;
                     DescentProfile.fetch.Save();
                 }
             }
@@ -272,7 +347,7 @@ namespace Trajectories
         /// <summary>
         /// Triggers a recalculation of the trajectory.
         /// </summary>
-        private static void UpdateTrajectory()
+        public static void UpdateTrajectory()
         {
             if (FlightGlobals.ActiveVessel != null)
                 Trajectory.fetch.ComputeTrajectory(FlightGlobals.ActiveVessel, DescentProfile.fetch);
