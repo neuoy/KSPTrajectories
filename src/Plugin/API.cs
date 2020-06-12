@@ -21,7 +21,6 @@
 */
 
 using System;
-using System.Linq;
 using UnityEngine;
 
 namespace Trajectories
@@ -87,14 +86,8 @@ namespace Trajectories
         /// </summary>
         public static bool AlwaysUpdate
         {
-            get
-            {
-                return Settings.fetch.AlwaysUpdate;
-            }
-            set
-            {
-                Settings.fetch.AlwaysUpdate = value;
-            }
+            get => Settings.fetch.AlwaysUpdate;
+            set => Settings.fetch.AlwaysUpdate = value;
         }
 
         /// <summary>
