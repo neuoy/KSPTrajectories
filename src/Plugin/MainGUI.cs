@@ -1,5 +1,6 @@
 ﻿/*
   Copyright© (c) 2017-2018 S.Gray, (aka PiezPiedPy).
+  Copyright© (c) 2017-2020 S.Gray, (aka PiezPiedPy).
   Copyright© (c) 2017-2018 A.Korsunsky, (aka fat-lobyte).
 
   This file is part of Trajectories.
@@ -96,8 +97,8 @@ namespace Trajectories
         private static DialogGUITextInput descent_low_textinput;
         private static TMP_InputField tmpro_descent_low_textinput;
         // ground text input
-        private static string descent_ground_txt = "";
-        private static DialogGUITextInput descent_ground_textinput;
+        private static string descent_final_txt = "";
+        private static DialogGUITextInput descent_final_textinput;
         private static TMP_InputField tmpro_descent_ground_textinput;
 
         // data field labels
@@ -356,7 +357,7 @@ namespace Trajectories
             descent_entry_textinput = new DialogGUITextInput(descent_entry_txt, " ", false, 6, OnTextInput_DescentEntry, 23);
             descent_high_textinput = new DialogGUITextInput(descent_high_txt, " ", false, 6, OnTextInput_DescentHigh, 23);
             descent_low_textinput = new DialogGUITextInput(descent_low_txt, " ", false, 6, OnTextInput_DescentLow, 23);
-            descent_ground_textinput = new DialogGUITextInput(descent_ground_txt, " ", false, 6, OnTextInput_DescentGround, 23);
+            descent_final_textinput = new DialogGUITextInput(descent_final_txt, " ", false, 6, OnTextInput_DescentFinal, 23);
 
             // create data field labels
             impact_latitude_label = new DialogGUILabel(() => { return impact_latitude_txt; }, 65);
@@ -498,11 +499,11 @@ namespace Trajectories
                 new DialogGUIHorizontalLayout(TextAnchor.MiddleLeft,
                     new DialogGUILabel(DescentProfile.fetch.finalApproach.Name, 45f),
                     new DialogGUIToggle(() => { return DescentProfile.fetch.finalApproach.Horizon; },
-                        () => { return DescentProfile.fetch.finalApproach.Horizon_txt; }, OnButtonClick_GroundHorizon, 60f),
+                        () => { return DescentProfile.fetch.finalApproach.Horizon_txt; }, OnButtonClick_FinalHorizon, 60f),
                     new DialogGUISlider(() => { return DescentProfile.fetch.finalApproach.SliderPos; },
                         -1f, 1f, false, descent_slider_width, -1, OnSliderSet_GroundAngle),
                     new DialogGUILabel(() => { return DescentProfile.fetch.finalApproach.Angle_txt; }, 36f),
-                    descent_ground_textinput)
+                    descent_final_textinput)
                 );
 
             settings_page = new DialogGUIVerticalLayout(false, true, 0, new RectOffset(), TextAnchor.UpperCenter,
@@ -665,9 +666,9 @@ namespace Trajectories
                 tmpro_descent_low_textinput.onDeselect.AddListener(keyboard_unlock_action);
                 tmpro_descent_low_textinput.onEndEdit.AddListener(keyboard_unlock_action);
             }
-            if (descent_ground_textinput?.uiItem != null)
+            if (descent_final_textinput?.uiItem != null)
             {
-                tmpro_descent_ground_textinput = descent_ground_textinput.uiItem.GetComponent<TMP_InputField>();
+                tmpro_descent_ground_textinput = descent_final_textinput.uiItem.GetComponent<TMP_InputField>();
                 tmpro_descent_ground_textinput.onSelect.AddListener(keyboard_lockout_action);
                 tmpro_descent_ground_textinput.onDeselect.AddListener(keyboard_unlock_action);
                 tmpro_descent_ground_textinput.onEndEdit.AddListener(keyboard_unlock_action);
@@ -885,7 +886,7 @@ namespace Trajectories
             DescentProfile.fetch.CheckGUI();
         }
 
-        private static void OnButtonClick_GroundHorizon(bool inState)
+        private static void OnButtonClick_FinalHorizon(bool inState)
         {
             DescentProfile.fetch.finalApproach.Horizon = inState;
             DescentProfile.fetch.CheckGUI();
@@ -965,8 +966,8 @@ namespace Trajectories
             string[] latLng = inString.Split(new char[] { ',', ';' });
             if (latLng.Length == 2)
             {
-                latLng[0] = latLng[0].Trim();
-                latLng[1] = latLng[1].Trim();
+                latLng[0].Trim();
+                latLng[1].Trim();
 
                 double lat;
                 double lng;
@@ -1070,21 +1071,21 @@ namespace Trajectories
             return null;
         }
 
-        private static string OnTextInput_DescentGround(string inString)
+        private static string OnTextInput_DescentFinal(string inString)
         {
             string trimmed = inString.Trim();
             float angle;
 
             if (float.TryParse(inString, out angle))
             {
-                descent_ground_txt = trimmed;
+                descent_final_txt = trimmed;
             }
             else
             {
-                descent_ground_txt = inString;
+                descent_final_txt = inString;
             }
 
-            descent_ground_textinput.text = descent_ground_txt;
+            descent_final_textinput.text = descent_final_txt;
 
             if (angle >= -180f && angle <= 180f)
             {
