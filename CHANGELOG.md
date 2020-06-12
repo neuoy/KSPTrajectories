@@ -1,13 +1,16 @@
 
 ## v2.3.2 for all versions of KSP from 1.3.1 to 1.9.x
- - 2020-xx-xx
+ - 2020-06-12
 
 ### Changes since the last release
-
+ - Descent Profile angles are now relative to the prograde/retrograde toggles. i.e. old style 135° is now 45° Retrograde.
+     Old style angles can still be entered via the text input boxes or the API and will be converted automatically.
+ - Descent Profile angles can now be entered via text input boxes.
  - GUI is now clamped to the screen area, eliminating it from being off screen after resolution or scale changes.
 
 ### For Developers
 
+ - New API functions added for the Descent Profile `ResetDescentProfile DescentProfileAngles DescentProfileModes`.
  - Profiler is now clamped to the screen area, eliminating it from being off screen after resolution or scale changes.
  
 ### Known Issues
