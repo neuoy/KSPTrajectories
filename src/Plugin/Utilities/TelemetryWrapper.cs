@@ -96,7 +96,7 @@ namespace Trajectories
 
             if (versionMajor != APIVersionMajor || versionMinor < APIVersionMinor)
             {
-                Util.DebugLog("Telemetry module version {1}.{2}" + versionMajor + "." + versionMinor + " is incompatible with the wrapper version {3}.{4}",
+                Util.DebugLog("Telemetry module version {1}.{2} is incompatible with the wrapper version {3}.{4}",
                                 versionMajor, versionMinor, APIVersionMajor, APIVersionMinor);
                 return;
             }
