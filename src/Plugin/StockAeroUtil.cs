@@ -1,6 +1,7 @@
 ﻿/*
   Copyright© (c) 2015-2017 Youen Toupin, (aka neuoy).
   Copyright© (c) 2017-2018 A.Korsunsky, (aka fat-lobyte).
+  Copyright© (c) 2017-2020 S.Gray, (aka PiezPiedPy).
 
   This file is part of Trajectories.
   Trajectories is available under the terms of GPL-3.0-or-later.
@@ -20,7 +21,7 @@
 */
 
 // StockAeroUtil by atomicfury.
- 
+
 //#define PRECOMPUTE_CACHE
 using System;
 using UnityEngine;
@@ -197,12 +198,12 @@ namespace Trajectories
                             {
                                 cubes.AddSurfaceDragDirection(-sim_dragVectorDirLocal, (float)mach, ref p_drag_data);
                             }
-                            catch (Exception)
+                            catch (Exception e)
                             {
                                 cubes.SetDrag(sim_dragVectorDirLocal, (float)mach);
                                 cubes.ForceUpdate(true, true);
                                 cubes.AddSurfaceDragDirection(-sim_dragVectorDirLocal, (float)mach, ref p_drag_data);
-                                //Debug.Log(String.Format("Trajectories: Caught NRE on Drag Initialization.  Should be fixed now.  {0}", e));
+                                Util.DebugLogError("Exception {0} on drag initialization", e);
                             }
 
                             float pseudoreynolds = (float)(rho * Mathf.Abs(v_wrld_vel.magnitude));

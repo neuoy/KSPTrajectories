@@ -1,7 +1,7 @@
 ﻿/*
   Copyright© (c) 2014-2017 Youen Toupin, (aka neuoy).
   Copyright© (c) 2017-2018 A.Korsunsky, (aka fat-lobyte).
-  Copyright© (c) 2017-2018 S.Gray, (aka PiezPiedPy).
+  Copyright© (c) 2017-2020 S.Gray, (aka PiezPiedPy).
 
   This file is part of Trajectories.
   Trajectories is available under the terms of GPL-3.0-or-later.
@@ -119,27 +119,27 @@ namespace Trajectories
 
                 ConfigError = true;
 
-                Debug.Log("Error loading Trajectories config: " + e.ToString());
+                Util.LogError("Loading Trajectories config: {0}", e.ToString());
 
                 string TrajPluginPath = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
-                Debug.Log("Trajectories is installed in: " + TrajPluginPath);
+                Util.Log("Installed at: {0}", TrajPluginPath);
                 TrajPluginPath += "/PluginData/" + System.Reflection.Assembly.GetExecutingAssembly().FullName + "/config.xml";
                 if (System.IO.File.Exists(TrajPluginPath))
                 {
-                    Debug.Log("Clearing config file...");
+                    Util.Log("Clearing config file...");
                     int idx = 1;
                     while (System.IO.File.Exists(TrajPluginPath + ".bak." + idx))
                         ++idx;
                     System.IO.File.Move(TrajPluginPath, TrajPluginPath + ".bak." + idx);
 
-                    Debug.Log("Creating new config...");
+                    Util.Log("Creating new config...");
                     config.load();
 
-                    Debug.Log("New config created");
+                    Util.Log("New config created");
                 }
                 else
                 {
-                    Debug.Log("No config file exists");
+                    Util.Log("No config file exists");
                     throw;
                 }
             }
@@ -151,7 +151,7 @@ namespace Trajectories
 
         public void Save()
         {
-            Debug.Log("Trajectories: Saving settings.");
+            Util.Log("Saving settings");
             Serialize(true);
         }
 

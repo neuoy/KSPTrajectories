@@ -1,5 +1,5 @@
 /*
-  Copyright© (c) 2017-2018 S.Gray, (aka PiezPiedPy).
+  Copyright© (c) 2017-2020 S.Gray, (aka PiezPiedPy).
 
   This file is part of Trajectories.
   Trajectories is available under the terms of GPL-3.0-or-later.
@@ -84,7 +84,7 @@ namespace Trajectories
             if (ToolbarManager.ToolbarAvailable && Settings.fetch.UseBlizzyToolbar)
             {
                 // setup a toolbar button for the blizzy toolbar
-                Debug.Log("Trajectories: Using Blizzy toolbar");
+                Util.Log("Using Blizzy toolbar");
                 blizzy_toolbar_button = ToolbarManager.Instance.add(Localizer.Format("#autoLOC_Trajectories_Title"), "TrajectoriesGUI");
                 blizzy_toolbar_button.Visibility = BlizzyToolbarButtonVisibility.fetch;
                 blizzy_toolbar_button.TexturePath = "Trajectories/Textures/icon-blizzy";
@@ -94,7 +94,7 @@ namespace Trajectories
             else
             {
                 // setup a toolbar button for the stock toolbar
-                Debug.Log("Trajectories: Using KSP stock toolbar");
+                Util.Log("Using KSP stock toolbar");
                 string TrajTexturePath = KSPUtil.ApplicationRootPath + "GameData/Trajectories/Textures/";
                 normal_icon_texture = new Texture2D(36, 36);
                 active_icon_texture = new Texture2D(36, 36);

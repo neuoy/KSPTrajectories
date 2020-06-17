@@ -1,6 +1,7 @@
 ﻿/*
   Copyright© (c) 2016-2017 Youen Toupin, (aka neuoy).
   Copyright© (c) 2017-2018 A.Korsunsky, (aka fat-lobyte).
+  Copyright© (c) 2017-2020 S.Gray, (aka PiezPiedPy).
 
   This file is part of Trajectories.
   Trajectories is available under the terms of GPL-3.0-or-later.
@@ -26,7 +27,7 @@ using UnityEngine;
 
 namespace Trajectories
 {
-    // this class abstracts the game aerodynamic computations to provide an unified interface wether the stock drag is used, or a supported mod is installed
+    // this class abstracts the game aerodynamic computations to provide an unified interface whether the stock drag is used, or a supported mod is installed
     public abstract class VesselAerodynamicModel
     {
         private double mass_;
@@ -78,7 +79,7 @@ namespace Trajectories
 
         private void InitCache()
         {
-            Debug.Log("Trajectories: Initializing cache");
+            Util.DebugLog("Initializing cache");
 
             double maxCacheVelocity = 10000.0;
             double maxCacheAoA = 180.0 / 180.0 * Math.PI;
@@ -196,7 +197,7 @@ namespace Trajectories
 
             if (Double.IsNaN(totalForce.x) || Double.IsNaN(totalForce.y) || Double.IsNaN(totalForce.z))
             {
-                Debug.Log(string.Format("Trajectories: WARNING: {0} totalForce is NAN (altitude={1}, airVelocity={2}, angleOfAttack={3}", AerodynamicModelName, altitude, airVelocity.magnitude, angleOfAttack));
+                Util.LogWarning("{0} totalForce is NaN (altitude={1}, airVelocity={2}, angleOfAttack={3}", AerodynamicModelName, altitude, airVelocity.magnitude, angleOfAttack);
                 return Vector3d.zero; // Don't send NaN into the simulation as it would cause bad things (infinite loops, crash, etc.). I think this case only happens at the atmosphere edge, so the total force should be 0 anyway.
             }
 
@@ -233,7 +234,7 @@ namespace Trajectories
             Vector3d res = predictedVesselRight * localForce.x + predictedVesselUp * localForce.y + predictedVesselBackward * localForce.z;
             if (Double.IsNaN(res.x) || Double.IsNaN(res.y) || Double.IsNaN(res.z))
             {
-                Debug.Log("Trajectories: res is NaN (altitude=" + altitude + ", airVelocity=" + airVelocity.magnitude + ", angleOfAttack=" + angleOfAttack);
+                Util.LogWarning("{0} res is NaN (altitude={1}, airVelocity={2}, angleOfAttack={3}", AerodynamicModelName, altitude, airVelocity.magnitude, angleOfAttack);
                 return new Vector3d(0, 0, 0); // Don't send NaN into the simulation as it would cause bad things (infinite loops, crash, etc.). I think this case only happens at the atmosphere edge, so the total force should be 0 anyway.
             }
 

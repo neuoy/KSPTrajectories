@@ -1,7 +1,7 @@
 ﻿/*
   Copyright© (c) 2016-2017 Youen Toupin, (aka neuoy).
   Copyright© (c) 2017-2018 A.Korsunsky, (aka fat-lobyte).
-  Copyright© (c) 2017-2018 S.Gray, (aka PiezPiedPy).
+  Copyright© (c) 2017-2020 S.Gray, (aka PiezPiedPy).
 
   This file is part of Trajectories.
   Trajectories is available under the terms of GPL-3.0-or-later.
@@ -40,13 +40,13 @@ namespace Trajectories
 
         protected override Vector3d ComputeForces_Model(Vector3d airVelocity, double altitude)
         {
-            //Debug.Log("Trajectories: getting FAR forces");
+            //Util.DebugLog("Getting FAR forces");
             if (vessel_ == null || vessel_.packed)
                 return Vector3.zero;
 
             if (airVelocity.x == 0d || airVelocity.y == 0d || airVelocity.z == 0d)
             {
-                //Debug.LogWarning(string.Format("Trajectories: Getting FAR forces - Velocity: {0} | Altitude: {1}", airVelocity, altitude));
+                Util.DebugLogWarning("Zero in FAR air velocity: {0} at altitude: {1}", airVelocity, altitude);
                 return Vector3.zero;
             }
 

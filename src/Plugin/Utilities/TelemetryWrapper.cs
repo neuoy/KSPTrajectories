@@ -90,15 +90,14 @@ namespace Trajectories
 
             if (telemetryServiceType == null)
             {
-                UnityEngine.Debug.Log(thisAssemblyName + " could not find Telemetry module. Continuing without Telemetry.");
+                Util.DebugLog("Could not find telemetry module, continuing without telemetry");
                 return;
             }
 
             if (versionMajor != APIVersionMajor || versionMinor < APIVersionMinor)
             {
-                UnityEngine.Debug.Log(thisAssemblyName +
-                    " Telemetry module version " + versionMajor + "." + versionMinor + " is incompatible with the Wrapper version "
-                    + APIVersionMajor + "." + APIVersionMinor);
+                Util.DebugLog("Telemetry module version {1}.{2}" + versionMajor + "." + versionMinor + " is incompatible with the wrapper version {3}.{4}",
+                                versionMajor, versionMinor, APIVersionMajor, APIVersionMinor);
                 return;
             }
 
@@ -108,7 +107,7 @@ namespace Trajectories
             addChannelMethod = telemetryServiceType.GetMethod("AddChannel");
             sendMethod = telemetryServiceType.GetMethod("Send");
 
-            UnityEngine.Debug.Log(thisAssemblyName + " connected to Telemetry module.");
+            Util.DebugLog("Connected to telemetry module");
 #endif
         }
     }

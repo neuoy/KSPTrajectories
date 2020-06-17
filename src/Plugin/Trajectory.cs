@@ -1,7 +1,7 @@
 ﻿/*
   Copyright© (c) 2014-2017 Youen Toupin, (aka neuoy).
   Copyright© (c) 2014-2018 A.Korsunsky, (aka fat-lobyte).
-  Copyright© (c) 2017-2018 S.Gray, (aka PiezPiedPy).
+  Copyright© (c) 2017-2020 S.Gray, (aka PiezPiedPy).
 
   This file is part of Trajectories.
   Trajectories is available under the terms of GPL-3.0-or-later.
@@ -49,7 +49,7 @@ namespace Trajectories
             // velocity in world frame relatively to the reference body
             public Vector3d Velocity { get; set; }
 
-            // tells wether the patch starting from this state is superimposed on a stock KSP patch, or null if
+            // tells whether the patch starting from this state is superimposed on a stock KSP patch, or null if
             // something makes it diverge (atmospheric entry for example)
             public Orbit StockPatch { get; set; }
 
@@ -152,7 +152,7 @@ namespace Trajectories
             {
                 Body = body;
                 WorldPosition = position;
-                
+
                 Save();
             }
 
@@ -175,7 +175,7 @@ namespace Trajectories
             public static void SetFromLatLonAlt(CelestialBody body, double latitude, double longitude, double? altitude = null)
             {
                 Body = body;
-            
+
                 if (!altitude.HasValue)
                 {
                     Vector3d relPos = body.GetWorldSurfacePosition(latitude, longitude, 2.0) - body.position;
@@ -205,15 +205,15 @@ namespace Trajectories
                 if (fetch.attachedVessel == null)
                     return;
 
-                //UnityEngine.Debug.Log("Trajectories: Writing target profile settings...");
-                foreach (var module in FlightGlobals.ActiveVessel.Parts.SelectMany(p => p.Modules.OfType<TrajectoriesVesselSettings>()))
+                Util.DebugLog("Saving target profile settings...");
+                foreach (TrajectoriesVesselSettings module in FlightGlobals.ActiveVessel.Parts.SelectMany(p => p.Modules.OfType<TrajectoriesVesselSettings>()))
                 {
                     module.TargetBody = Body == null ? "" : Body.name;
                     module.TargetPosition_x = LocalPosition.HasValue ? LocalPosition.Value.x : 0d;
                     module.TargetPosition_y = LocalPosition.HasValue ? LocalPosition.Value.y : 0d;
                     module.TargetPosition_z = LocalPosition.HasValue ? LocalPosition.Value.z : 0d;
                     module.ManualTargetTxt = ManualText;
-                    //UnityEngine.Debug.Log("Trajectories: Target profile saved");
+                    Util.DebugLog("Target profile saved for {0}", module.moduleName);
                 }
             }
         }
@@ -472,11 +472,11 @@ namespace Trajectories
             {
                 if (attachedVessel != FlightGlobals.ActiveVessel)
                 {
-                    //UnityEngine.Debug.Log("Trajectories: Loading vessel target profile");
+                    Util.DebugLog("Loading vessel target profile");
                     attachedVessel = FlightGlobals.ActiveVessel;
                     if (attachedVessel == null)
                     {
-                        //UnityEngine.Debug.Log("Trajectories: No vessel");
+                        Util.DebugLog("No vessel");
                         Target.Clear();
                         Target.ManualText = "";
                     }
@@ -486,17 +486,17 @@ namespace Trajectories
                             .OfType<TrajectoriesVesselSettings>()).FirstOrDefault();
                         if (module == null)
                         {
-                            //UnityEngine.Debug.Log("Trajectories: No TrajectoriesVesselSettings module");
+                            Util.DebugLog("No TrajectoriesVesselSettings module");
                             Target.Clear();
                             Target.ManualText = "";
                         }
                         else
                         {
-                            //UnityEngine.Debug.Log("Trajectories: Reading target settings...");
+                            Util.DebugLog("Reading target settings...");
                             Target.SetFromLocalPos(FlightGlobals.Bodies.FirstOrDefault(b => b.name == module.TargetBody),
                                 new Vector3d(module.TargetPosition_x, module.TargetPosition_y, module.TargetPosition_z));
                             Target.ManualText = module.ManualTargetTxt;
-                            //UnityEngine.Debug.Log("Trajectories: Target profile loaded");
+                            Util.DebugLog("Target profile loaded");
                         }
                     }
                 }
@@ -673,7 +673,7 @@ namespace Trajectories
                 ++loopCount;
                 if (loopCount > 1000)
                 {
-                    UnityEngine.Debug.Log("WARNING: infinite loop? (Trajectories.Trajectory.AddPatch, atmosphere limit search)");
+                    Util.LogWarning("Infinite loop? Trajectory.AddPatch or atmosphere limit search");
                     ++errorCount_;
                     break;
                 }
@@ -767,7 +767,7 @@ namespace Trajectories
         {
             if (null == attachedVessel.patchedConicSolver)
             {
-                UnityEngine.Debug.LogWarning("Trajectories: AddPatch() attempted when patchedConicsSolver is null; Skipping.");
+                Util.LogWarning("Trajectory.AddPatch attempted when patchedConicsSolver is null, Skipping.");
                 yield break;
             }
 
@@ -941,7 +941,7 @@ namespace Trajectories
                     patch.IsAtmospheric = true;
                     patch.StartingState.StockPatch = null;
 
-                    // lower dt would be more accurate, but a tradeoff has to be found between performances and accuracy
+                    // lower dt would be more accurate, but a trade-off has to be found between performances and accuracy
                     double dt = Settings.fetch.IntegrationStepSize;
 
                     // some shallow entries can result in very long flight. For performances reasons,
@@ -978,7 +978,7 @@ namespace Trajectories
 
                     #region Acceleration Functor
 
-                    // function that calculates the acceleration under current parmeters
+                    // function that calculates the acceleration under current parameters
                     Func<Vector3d, Vector3d, Vector3d> accelerationFunc = (position, velocity) =>
                     {
                         Profiler.Start("accelerationFunc inside");

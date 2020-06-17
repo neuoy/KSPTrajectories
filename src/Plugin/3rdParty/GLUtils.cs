@@ -22,7 +22,7 @@ namespace Trajectories
             {
                 if (_material == null) _material = new Material(Shader.Find("KSP/Particles/Additive"));
                 if (_material == null) _material = new Material(Shader.Find("Particles/Additive"));
-                if (_material == null) Debug.Log("[Trajectories] CRITICAL: GLUtils._material is null");
+                if (_material == null) Util.LogError("GLUtils material is null");
                 return _material;
             }
         }

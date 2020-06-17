@@ -1,4 +1,7 @@
 ﻿/*
+  Copyright© (c) 2016-2017 Youen Toupin, (aka neuoy).
+  Copyright© (c) 2017-2020 S.Gray, (aka PiezPiedPy).
+
   This file is part of Trajectories.
   Trajectories is available under the terms of GPL-3.0-or-later.
   See the LICENSE.md file for more details.
@@ -46,13 +49,11 @@ namespace Trajectories
                 }
                 catch (Exception e)
                 {
-                    Debug.Log("Trajectories: failed to interface with assembly " + loadedAssembly.name);
-                    Debug.Log("Using stock model instead");
-                    Debug.Log(e.ToString());
+                    Util.LogError("Failed to interface with assembly {0}, exception was {1}, using stock model instead", loadedAssembly.name, e.ToString());
                 }
             }
 
-            // Using stock model if no other aerodynamic is detected or if any error occured
+            // Using stock model if no other aerodynamic is detected or if any error occurred
             return new StockModel(ship, body);
         }
     }

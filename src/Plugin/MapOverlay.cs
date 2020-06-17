@@ -1,7 +1,7 @@
 ﻿/*
   Copyright© (c) 2014-2017 Youen Toupin, (aka neuoy).
   Copyright© (c) 2017-2018 A.Korsunsky, (aka fat-lobyte).
-  Copyright© (c) 2017-2018 S.Gray, (aka PiezPiedPy).
+  Copyright© (c) 2017-2020 S.Gray, (aka PiezPiedPy).
 
   This file is part of Trajectories.
   Trajectories is available under the terms of GPL-3.0-or-later.
@@ -88,21 +88,21 @@ namespace Trajectories
         }
 
         // Awake is called only once when the script instance is being loaded. Used in place of the constructor for initialization.
-        public void Awake()
+        public static void Awake()
         {
             material = MapView.fetch.orbitLinesMaterial;
             map_traj_renderer = PlanetariumCamera.Camera.gameObject.AddComponent<MapTrajectoryRenderer>();
             map_traj_renderer.Visible(false);
         }
 
-        public void OnDestroy()
+        public static void OnDestroy()
         {
             if (map_traj_renderer != null)
                 Destroy(map_traj_renderer);
             map_traj_renderer = null;
         }
 
-        public void Update()
+        public static void Update()
         {
             // return if no renderer or camera
             if ((map_traj_renderer == null) || (PlanetariumCamera.Camera == null))
@@ -114,14 +114,14 @@ namespace Trajectories
             // hide or show the Map trajectory
             if ((!Util.IsMap || !Settings.fetch.DisplayTrajectories) && visible)
             {
-                //Debug.Log("Trajectories: Hide map trajectory");
+                //Util.DebugLog("Hide map trajectory");
                 visible = false;
                 map_traj_renderer.Visible(false);
                 return;
             }
             else if (Util.IsMap && Settings.fetch.DisplayTrajectories && !visible)
             {
-                //Debug.Log("Trajectories: Show map trajectory");
+                //Util.DebugLog("Show map trajectory");
                 visible = true;
                 map_traj_renderer.Visible(true);
             }
@@ -147,7 +147,7 @@ namespace Trajectories
             // create a new mesh if a Non-Active mesh is not found
             if (mesh_found == null)
             {
-                //Debug.Log("Trajectories: Adding map trajectory mesh " + map_traj_renderer.meshes.Count);
+                //Util.DebugLog("Adding map trajectory mesh {0}", map_traj_renderer.meshes.Count);
 
                 GameObject newMesh = new GameObject();
                 newMesh.AddComponent<MeshFilter>();
@@ -250,7 +250,7 @@ namespace Trajectories
             vertices[startIndex + 1] = p1;
 
             // in 2D mode, if one point is in front of the screen and the other is behind, we don't draw the segment
-            // (to achieve this, we draw degenerated triangles, i.e. triangles that have two identical vertices which
+            // (to achieve this, we draw degenerated triangles, i.e. triangles that have two identical verticies which
             // make them "flat")
             if (!MapView.Draw3DLines && (start.z > 0) != (end.z > 0))
             {
@@ -278,7 +278,7 @@ namespace Trajectories
                 for (int count = 0; count < 100; ++count)
                 {
                     if (count == 99)
-                        Debug.Log("Trajectories: *WARNING* Infinite loop in map view renderer. (InitMeshFromOrbit)");
+                        Util.LogWarning("Infinite loop in map view renderer");
                     double ta = orbit.TrueAnomalyAtUT(time);
                     while (ta < prevTA)
                         ta += 2.0 * Math.PI;
@@ -298,7 +298,7 @@ namespace Trajectories
                 stepUT[utIdx++] = time;
                 if (utIdx >= stepUT.Length - 1)
                 {
-                    //Debug.Log("ut overflow", "ut overflow");
+                    Util.DebugLogWarning("UT overflow");
                     break; // this should never happen, but better stop than overflow if it does
                 }
             }

@@ -43,6 +43,14 @@ namespace Trajectories
         public static void Log(string message, params object[] param) => UnityEngine.Debug.Log(string.Format("[{0}] {1}",
             MainGUI.TrajectoriesTitle, string.Format(message, param)));
 
+        ///<summary> writes a warning message to the log </summary>
+        public static void LogWarning(string message, params object[] param) => UnityEngine.Debug.LogWarning(string.Format("[{0}] Warning: {1}",
+            MainGUI.TrajectoriesTitle, string.Format(message, param)));
+
+        ///<summary> writes an error message to the log </summary>
+        public static void LogError(string message, params object[] param) => UnityEngine.Debug.LogError(string.Format("[{0}] Error: {1}",
+            MainGUI.TrajectoriesTitle, string.Format(message, param)));
+
         ///<summary> writes a debug message to the log with stack trace info added </summary>
         [Conditional("DEBUG")]
         public static void DebugLog(string message, params object[] param)
