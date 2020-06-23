@@ -3,7 +3,8 @@
  - 2020-xx-xx
 
 ### Changes since the last release
-
+ - Due to performance issues with larger craft, the Cache is now enabled by default. For higher precision,
+   it can still be turned on manually.
 
 ### For Developers
 
