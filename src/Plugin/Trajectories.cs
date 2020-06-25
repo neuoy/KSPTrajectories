@@ -93,7 +93,9 @@ namespace Trajectories
             NavBallOverlay.Update();
             MainGUI.Update();
             if (!Settings.NewGui)
+#pragma warning disable CS0618 // Type or member is obsolete
                 OldGUI.Update();
+#pragma warning restore CS0618 // Type or member is obsolete
         }
 
 #if DEBUG && DEBUG_TELEMETRY
@@ -103,7 +105,9 @@ namespace Trajectories
         internal void OnGUI()
         {
             if (!Settings.NewGui)
+#pragma warning disable CS0618 // Type or member is obsolete
                 OldGUI.OnGUI();
+#pragma warning restore CS0618 // Type or member is obsolete
         }
 
         internal void OnDestroy()
