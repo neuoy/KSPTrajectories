@@ -251,6 +251,48 @@ namespace Trajectories
         }
 
 
+        // --- CONFIG ---------------------------------------------------------------
+
+        // get a config node from the config system
+        public static ConfigNode ParseConfig(string path)
+        {
+            return GameDatabase.Instance.GetConfigNode(path) ?? new ConfigNode();
+        }
+
+        // get a set of config nodes from the config system
+        public static ConfigNode[] ParseConfigs(string path)
+        {
+            return GameDatabase.Instance.GetConfigNodes(path);
+        }
+
+        // get a value from config
+        public static T ConfigValue<T>(ConfigNode node, string key, T default_value)
+        {
+            try
+            {
+                return node.HasValue(key) ? (T)Convert.ChangeType(node.GetValue(key), typeof(T)) : default_value;
+            }
+            catch (Exception e)
+            {
+                LogError("While trying to parse '{0}' from {1} ({2})", key, node.name, e.Message);
+                return default_value;
+            }
+        }
+
+        // get an enum from config
+        public static T ConfigEnum<T>(ConfigNode node, string key, T default_value)
+        {
+            try
+            {
+                return node.HasValue(key) ? (T)Enum.Parse(typeof(T), node.GetValue(key)) : default_value;
+            }
+            catch (Exception e)
+            {
+                LogError("Invalid enum in '{0}' from {1} ({2})", key, node.name, e.Message);
+                return default_value;
+            }
+        }
+
 
         /// <summary>
         /// Calculate the shortest great-circle distance between two points on a sphere which are given by latitude and longitude.
