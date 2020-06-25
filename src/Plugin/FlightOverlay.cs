@@ -1,6 +1,6 @@
 ﻿/*
   Copyright© (c) 2017-2018 A.Korsunsky, (aka fat-lobyte).
-  Copyright© (c) 2017-2018 S.Gray, (aka PiezPiedPy).
+  Copyright© (c) 2017-2020 S.Gray, (aka PiezPiedPy).
 
   This file is part of Trajectories.
   Trajectories is available under the terms of GPL-3.0-or-later.
@@ -19,16 +19,66 @@
   along with Trajectories.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
 namespace Trajectories
 {
-    [KSPAddon(KSPAddon.Startup.Flight, false)]
-    public sealed class FlightOverlay: MonoBehaviour
+    internal static class FlightOverlay
     {
+        private sealed class TrajectoryLine : MonoBehaviour
+        {
+            internal List<Vector3d> Vertices = new List<Vector3d>();
+            internal CelestialBody Body = null;
+
+            internal void OnPostRender()
+            {
+                if (Body == null || Vertices == null || Vertices.Count == 0)
+                    return;
+
+                GLUtils.DrawPath(Body, Vertices, Color.blue, false, false);
+            }
+        }
+
+        private sealed class TargetingCross : MonoBehaviour
+        {
+            internal const double markerSize = 2.0d; // in meters
+
+            private static double impactLat = 0d;
+            private static double impactLon = 0d;
+            private static double impactAlt = 0d;
+            private static Vector3 screen_point;
+            private static Vector3 cam_pos;
+            private static double cross_dist = 0d;
+
+            internal Vector3? ImpactPosition { get; set; }
+            internal CelestialBody ImpactBody { get; set; }
+
+            internal void OnPostRender()
+            {
+                if (ImpactPosition == null || ImpactBody == null)
+                    return;
+
+                // get impact position, translate to latitude and longitude
+                ImpactBody.GetLatLonAlt(ImpactPosition.Value + ImpactBody.position, out impactLat, out impactLon, out impactAlt);
+
+                // only draw if visible on the camera
+                screen_point = PlanetariumCamera.Camera.WorldToViewportPoint(ImpactPosition.Value + ImpactBody.position);
+                if (!(screen_point.z > 0 && screen_point.x > 0 && screen_point.x < 1 && screen_point.y > 0 && screen_point.y < 1))
+                    return;
+
+                // resize marker in respect to distance from camera.
+                cam_pos = ScaledSpace.ScaledToLocalSpace(PlanetariumCamera.Camera.transform.position) - ImpactBody.position;
+                cross_dist = System.Math.Max(Vector3.Distance(cam_pos, ImpactPosition.Value) / 80.0d, 1.0d);
+
+                // draw ground marker at this position
+                GLUtils.DrawGroundMarker(ImpactBody, impactLat, impactLon, Color.red, false, 0, Math.Min(markerSize * cross_dist, 1500.0d));
+            }
+        }
+
         private const int defaultVertexCount = 32;
-        private const float lineWidth = 2.0f;
+        //private const float lineWidth = 2.0f;
 
         private static TrajectoryLine line;
         private static TargetingCross targetingCross;
@@ -41,38 +91,40 @@ namespace Trajectories
         private static Vector3d bodyPosition = Vector3d.zero;
         private static Vector3 vertex = Vector3.zero;
 
-        public void Awake()
+        internal static void Start()
         {
+            Util.DebugLog("Constructing");
             line = FlightCamera.fetch.mainCamera.gameObject.AddComponent<TrajectoryLine>();
             targetingCross = FlightCamera.fetch.mainCamera.gameObject.AddComponent<TargetingCross>();
         }
 
-        public void OnDestroy()
+        internal static void Destroy()
         {
+            Util.DebugLog("");
             if (line != null)
-                Destroy(line);
+                UnityEngine.Object.Destroy(line);
 
             if (targetingCross != null)
-                Destroy(targetingCross);
+                UnityEngine.Object.Destroy(targetingCross);
 
             line = null;
             targetingCross = null;
         }
 
-        public void Update()
+        internal static void Update()
         {
             line.enabled = false;
             targetingCross.enabled = false;
 
-            if (!Settings.fetch.DisplayTrajectories
+            if (!Settings.DisplayTrajectories
                 || Util.IsMap
-                || !Settings.fetch.DisplayTrajectoriesInFlight
-                || Trajectory.fetch.Patches.Count == 0)
+                || !Settings.DisplayTrajectoriesInFlight
+                || Trajectory.Patches.Count == 0)
                 return;
 
             line.Vertices.Clear();
 
-            lastPatch = Trajectory.fetch.Patches[Trajectory.fetch.Patches.Count - 1];
+            lastPatch = Trajectory.Patches[Trajectory.Patches.Count - 1];
             bodyPosition = lastPatch.StartingState.ReferenceBody.position;
             if (lastPatch.IsAtmospheric)
             {
@@ -90,7 +142,7 @@ namespace Trajectories
                 for (uint i = 0; i < defaultVertexCount; ++i)
                 {
                     vertex = Util.SwapYZ(orbit.getRelativePositionAtUT(time));
-                    if (Settings.fetch.BodyFixedMode)
+                    if (Settings.BodyFixedMode)
                         vertex = Trajectory.CalculateRotatedPosition(orbit.referenceBody, vertex, time);
 
                     vertex += bodyPosition;
@@ -115,57 +167,6 @@ namespace Trajectories
                 targetingCross.ImpactPosition = null;
                 targetingCross.ImpactBody = null;
             }
-        }
-    }
-
-    public class TrajectoryLine: MonoBehaviour
-    {
-        public List<Vector3d> Vertices = new List<Vector3d>();
-        public CelestialBody Body = null;
-
-        public void OnPostRender()
-        {
-            if (Body == null || Vertices == null || Vertices.Count == 0)
-                return;
-
-            GLUtils.DrawPath(Body, Vertices, Color.blue, false, false);
-        }
-    }
-
-    public class TargetingCross: MonoBehaviour
-    {
-        public const double markerSize = 2.0d; // in meters
-
-        private static double impactLat = 0d;
-        private static double impactLon = 0d;
-        private static double impactAlt = 0d;
-        private static Vector3 screen_point;
-        private static Vector3 cam_pos;
-        private static double cross_dist = 0d;
-
-        public Vector3? ImpactPosition { get; internal set; }
-        public CelestialBody ImpactBody { get; internal set; }
-
-
-        public void OnPostRender()
-        {
-            if (ImpactPosition == null || ImpactBody == null)
-                return;
-
-            // get impact position, translate to latitude and longitude
-            ImpactBody.GetLatLonAlt(ImpactPosition.Value + ImpactBody.position, out impactLat, out impactLon, out impactAlt);
-
-            // only draw if visable on the camera
-            screen_point = PlanetariumCamera.Camera.WorldToViewportPoint(ImpactPosition.Value + ImpactBody.position);
-            if (!(screen_point.z > 0 && screen_point.x > 0 && screen_point.x < 1 && screen_point.y > 0 && screen_point.y < 1))
-                return;
-
-            // resize marker in respect to distance from camera.
-            cam_pos = ScaledSpace.ScaledToLocalSpace(PlanetariumCamera.Camera.transform.position) - ImpactBody.position;
-            cross_dist = System.Math.Max(Vector3.Distance(cam_pos, ImpactPosition.Value) / 80.0d, 1.0d);
-
-            // draw ground marker at this position
-            GLUtils.DrawGroundMarker(ImpactBody, impactLat, impactLon, Color.red, false, 0, System.Math.Min(markerSize * cross_dist, 1500.0d));
         }
     }
 }

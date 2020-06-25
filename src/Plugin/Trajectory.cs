@@ -33,27 +33,28 @@ namespace Trajectories
     /// Handles trajectory prediction, performing a lightweight physical simulation to
     /// predict a vessels trajectory in space and atmosphere.
     /// </summary>
-    [KSPAddon(KSPAddon.Startup.Flight, false)]
-    class Trajectory: MonoBehaviour
+    internal static class Trajectory
     {
-        public class VesselState
+        internal class VesselState
         {
-            public CelestialBody ReferenceBody { get; set; }
+            internal CelestialBody ReferenceBody { get; set; }
 
             // universal time
-            public double Time { get; set; }
+            internal double Time { get; set; }
 
             // position in world frame relatively to the reference body
-            public Vector3d Position { get; set; }
+            internal Vector3d Position { get; set; }
 
             // velocity in world frame relatively to the reference body
-            public Vector3d Velocity { get; set; }
+            internal Vector3d Velocity { get; set; }
 
             // tells whether the patch starting from this state is superimposed on a stock KSP patch, or null if
             // something makes it diverge (atmospheric entry for example)
-            public Orbit StockPatch { get; set; }
+            internal Orbit StockPatch { get; set; }
 
-            public VesselState(Vessel vessel)
+            internal VesselState() { }
+
+            internal VesselState(Vessel vessel)
             {
                 ReferenceBody = vessel.orbit.referenceBody;
                 Time = Planetarium.GetUniversalTime();
@@ -61,94 +62,85 @@ namespace Trajectories
                 Velocity = vessel.obt_velocity;
                 StockPatch = vessel.orbit;
             }
-
-            public VesselState()
-            {
-            }
         }
 
-        public struct Point
+        internal struct Point
         {
-            public Vector3 pos;
-            public Vector3 aerodynamicForce;
-            public Vector3 orbitalVelocity;
+            internal Vector3 pos;
+            internal Vector3 aerodynamicForce;
+            internal Vector3 orbitalVelocity;
 
             /// <summary>
             /// Ground altitude above (or under) sea level, in meters.
             /// </summary>
-            public float groundAltitude;
+            internal float groundAltitude;
 
             /// <summary>
             /// Universal time
             /// </summary>
-            public double time;
+            internal double time;
         }
 
-        public class Patch
+        internal class Patch
         {
-            public VesselState StartingState { get; set; }
+            internal VesselState StartingState { get; set; }
 
-            public double EndTime { get; set; }
+            internal double EndTime { get; set; }
 
-            public bool IsAtmospheric { get; set; }
+            internal bool IsAtmospheric { get; set; }
 
             // // position array in body space (world frame centered on the body) ; only used when isAtmospheric is true
-            public Point[] AtmosphericTrajectory { get; set; }
+            internal Point[] AtmosphericTrajectory { get; set; }
 
             // only used when isAtmospheric is false
-            public Orbit SpaceOrbit { get; set; }
+            internal Orbit SpaceOrbit { get; set; }
 
-            public Vector3? ImpactPosition { get; set; }
+            internal Vector3? ImpactPosition { get; set; }
 
-            public Vector3? RawImpactPosition { get; set; }
+            internal Vector3? RawImpactPosition { get; set; }
 
-            public Vector3? ImpactVelocity { get; set; }
+            internal Vector3? ImpactVelocity { get; set; }
         }
 
-        public static class Target
+        internal static class Target
         {
             /// <summary>
             /// Tests if the target has been set.
             /// </summary>
             /// <returns></returns>
-            public static bool HasTarget()
-            {
-                return LocalPosition.HasValue && Body != null;
-            }
+            internal static bool HasTarget() => LocalPosition.HasValue && Body != null;
 
             /// <summary>
             /// Targets reference body
             /// </summary>
-            public static CelestialBody Body { get; set; } = null;
+            internal static CelestialBody Body { get; set; } = null;
 
             /// <summary>
             /// Targets position in WorldSpace
             /// </summary>
-            public static Vector3d? WorldPosition
+            internal static Vector3d? WorldPosition
             {
                 get => LocalPosition.HasValue ? Body?.transform?.TransformDirection(LocalPosition.Value) : null;
-                set
-                {
+                set =>
                     // A transform that has double precision would be nice so we can have target precision in meter's
                     LocalPosition = value.HasValue ? Body?.transform?.InverseTransformDirection(value.Value) : null;
-                }
             }
 
             /// <summary>
             /// Targets position in LocalSpace relative to the target body
             /// </summary>
-            public static Vector3d? LocalPosition { get; private set; } = null;
+            internal static Vector3d? LocalPosition { get; private set; } = null;
 
             /// <summary>
             /// Manual target TextBox string
             /// </summary>
-            public static string ManualText { get; set; } = "";
+            internal static string ManualText { get; set; } = "";
 
             /// <summary>
             /// Sets the target to a body and a World position
             /// Saves the target to the active vessel.
             /// </summary>
-            public static void SetFromWorldPos(CelestialBody body, Vector3d position)
+            internal static void SetFromWorldPos(CelestialBody body, Vector3d position)
             {
                 Body = body;
                 WorldPosition = position;
@@ -160,7 +152,7 @@ namespace Trajectories
             /// Sets the target to a body and a body-relative position
             /// Saves the target to the active vessel.
             /// </summary>
-            public static void SetFromLocalPos(CelestialBody body, Vector3d position)
+            internal static void SetFromLocalPos(CelestialBody body, Vector3d position)
             {
                 Body = body;
                 LocalPosition = position;
@@ -172,7 +164,7 @@ namespace Trajectories
             /// Sets the target to a body and a World position. If the altitude is not given, it will be calculated as the surface altitude at that latitude/longitude.
             /// Saves the target to the active vessel.
             /// </summary>
-            public static void SetFromLatLonAlt(CelestialBody body, double latitude, double longitude, double? altitude = null)
+            internal static void SetFromLatLonAlt(CelestialBody body, double latitude, double longitude, double? altitude = null)
             {
                 Body = body;
 
@@ -190,7 +182,7 @@ namespace Trajectories
             /// <summary>
             /// Clears the target
             /// </summary>
-            public static void Clear()
+            internal static void Clear()
             {
                 Body = null;
                 LocalPosition = null;
@@ -200,9 +192,9 @@ namespace Trajectories
             /// <summary>
             /// Saves the target to the active vessel module
             /// </summary>
-            public static void Save()
+            internal static void Save()
             {
-                if (fetch.attachedVessel == null)
+                if (attachedVessel == null)
                     return;
 
                 Util.DebugLog("Saving target profile settings...");
@@ -213,21 +205,21 @@ namespace Trajectories
                     module.TargetPosition_y = LocalPosition.HasValue ? LocalPosition.Value.y : 0d;
                     module.TargetPosition_z = LocalPosition.HasValue ? LocalPosition.Value.z : 0d;
                     module.ManualTargetTxt = ManualText;
-                    Util.DebugLog("Target profile saved for {0}", module.moduleName);
+                    Util.DebugLog("Target profile saved");
                 }
             }
         }
 
-        public const double integrator_min = 0.1d;         // RK4 Integrator minimum step size
-        public const double integrator_max = 5.0d;         // RK4 Integrator maximum step size
+        internal const double integrator_min = 0.1d;         // RK4 Integrator minimum step size
+        internal const double integrator_max = 5.0d;         // RK4 Integrator maximum step size
 
-        private int MaxIncrementTime { get { return 2; } }
+        private static int MaxIncrementTime => 2;
 
-        private Vessel attachedVessel;
+        private static Vessel attachedVessel;
 
-        private VesselAerodynamicModel aerodynamicModel_;
+        private static VesselAerodynamicModel aerodynamicModel_;
 
-        public string AerodynamicModelName
+        internal static string AerodynamicModelName
         {
             get
             {
@@ -236,59 +228,114 @@ namespace Trajectories
             }
         }
 
-        private List<Patch> patches_ = new List<Patch>();
+        private static List<Patch> patches_ = new List<Patch>();
 
-        private List<Patch> patchesBackBuffer_ = new List<Patch>();
+        private static List<Patch> patchesBackBuffer_ = new List<Patch>();
 
-        public List<Patch> Patches { get { return patches_; } }
+        internal static List<Patch> Patches => patches_;
 
-        private Stopwatch incrementTime_;
+        private static Stopwatch incrementTime_;
 
-        private IEnumerator<bool> partialComputation_;
+        private static IEnumerator<bool> partialComputation_;
 
-        private float maxAccel_;
+        private static float maxAccel_;
 
-        private float maxAccelBackBuffer_;
+        private static float maxAccelBackBuffer_;
 
-        public float MaxAccel { get { return maxAccel_; } }
+        internal static float MaxAccel => maxAccel_;
 
         private static int errorCount_;
 
-        public int ErrorCount { get { return errorCount_; } }
+        internal static int ErrorCount => errorCount_;
 
-        /// <summary>
-        /// Trajectory calculation time in last frame
-        /// </summary>
+        ///<summary> Trajectory calculation time of last frame </summary>
         private static float frameTime_;
 
         private static float computationTime_;
 
-        public float ComputationTime { get { return computationTime_ * 0.001f; } }
+        internal static float ComputationTime => computationTime_ * 0.001f;
 
         private static Stopwatch gameFrameTime_;
 
         private static float averageGameFrameTime_;
 
-        public float GameFrameTime { get { return averageGameFrameTime_ * 0.001f; } }
+        internal static float GameFrameTime => averageGameFrameTime_ * 0.001f;
 
-        // permit global access
-        public static Trajectory fetch { get; private set; } = null;
-
-        //  constructor
-        public Trajectory()
+        internal static void Start()
         {
-            fetch = this;
+            Util.DebugLog("Constructing");
+
+#if DEBUG && DEBUG_TELEMETRY
+            ConstructTelemetry();
+#endif
         }
 
-        private void OnDestroy()
+        internal static void Destroy()
         {
-            fetch = null;
+            Util.DebugLog("");
+        }
+
+        internal static void Update()
+        {
+            // compute frame time
+            computationTime_ = computationTime_ * 0.99f + frameTime_ * 0.01f;
+            float offset = frameTime_ - computationTime_;
+            frameTime_ = 0;
+
+            if (gameFrameTime_ != null)
+            {
+                float t = (float)gameFrameTime_.ElapsedMilliseconds;
+                averageGameFrameTime_ = averageGameFrameTime_ * 0.99f + t * 0.01f;
+            }
+            gameFrameTime_ = Stopwatch.StartNew();
+
+            if (Util.IsFlight)
+            {
+                if (attachedVessel != FlightGlobals.ActiveVessel)
+                {
+                    Util.DebugLog("Loading vessels target profile");
+                    attachedVessel = FlightGlobals.ActiveVessel;
+                    if (attachedVessel == null)
+                    {
+                        Util.DebugLog("No vessel");
+                        Target.Clear();
+                        Target.ManualText = "";
+                    }
+                    else
+                    {
+                        TrajectoriesVesselSettings module = attachedVessel.Parts.SelectMany(p => p.Modules
+                            .OfType<TrajectoriesVesselSettings>()).FirstOrDefault();
+                        if (module == null)
+                        {
+                            Util.DebugLog("No TrajectoriesVesselSettings module");
+                            Target.Clear();
+                            Target.ManualText = "";
+                        }
+                        else
+                        {
+                            Util.DebugLog("Reading profile settings...");
+                            Target.SetFromLocalPos(FlightGlobals.Bodies.FirstOrDefault(b => b.name == module.TargetBody),
+                                new Vector3d(module.TargetPosition_x, module.TargetPosition_y, module.TargetPosition_z));
+                            Target.ManualText = module.ManualTargetTxt;
+                            Util.Log("Target profile loaded");
+                        }
+                    }
+                }
+
+                // should the trajectory be calculated?
+                if (attachedVessel != null &&
+                    (Settings.DisplayTrajectories || Settings.AlwaysUpdate || Target.WorldPosition.HasValue))
+                {
+                    if (attachedVessel.Parts.Count != 0)
+                        ComputeTrajectory(attachedVessel);
+                }
+            }
+
         }
 
 #if DEBUG && DEBUG_TELEMETRY
 
-        // Awake is called only once when the script instance is being loaded. Used in place of the constructor for initialization.
-        public void Awake()
+        internal static void ConstructTelemetry()
         {
             // Add telemetry channels for real and predicted variable values
             Telemetry.AddChannel<double>("ut");
@@ -317,17 +364,11 @@ namespace Trajectories
             //Telemetry.AddChannel<double>("force_reference");
         }
 
-        public void FixedUpdate()
-        {
-            DebugTelemetry();
-        }
-
         private static Vector3d PreviousFramePos;
         private static Vector3d PreviousFrameVelocity;
         private static double PreviousFrameTime = 0;
 
-
-        public void DebugTelemetry()
+        internal static void DebugTelemetry()
         {
             if (HighLogic.LoadedScene != GameScenes.FLIGHT)
                 return;
@@ -371,7 +412,7 @@ namespace Trajectories
                         AoA = -AoA;
 
                     VesselAerodynamicModel.DebugParts = true;
-                    Vector3d referenceForce = aerodynamicModel_.ComputeForces(20000, new Vector3d(0, 0, 1500), new Vector3d(0,1,0), 0);
+                    Vector3d referenceForce = aerodynamicModel_.ComputeForces(20000, new Vector3d(0, 0, 1500), new Vector3d(0, 1, 0), 0);
                     VesselAerodynamicModel.DebugParts = false;
 
                     Vector3d predictedForce = aerodynamicModel_.ComputeForces(altitudeAboveSea, airVelocity, vesselUp, AoA);
@@ -454,70 +495,9 @@ namespace Trajectories
         }
 #endif
 
-        public void Update()
-        {
-            // compute frame time
-            computationTime_ = computationTime_ * 0.99f + frameTime_ * 0.01f;
-            float offset = frameTime_ - computationTime_;
-            frameTime_ = 0;
+        internal static void InvalidateAerodynamicModel() => aerodynamicModel_.Invalidate();
 
-            if (gameFrameTime_ != null)
-            {
-                float t = (float)gameFrameTime_.ElapsedMilliseconds;
-                averageGameFrameTime_ = averageGameFrameTime_ * 0.99f + t * 0.01f;
-            }
-            gameFrameTime_ = Stopwatch.StartNew();
-
-            if (Util.IsFlight)
-            {
-                if (attachedVessel != FlightGlobals.ActiveVessel)
-                {
-                    Util.DebugLog("Loading vessel target profile");
-                    attachedVessel = FlightGlobals.ActiveVessel;
-                    if (attachedVessel == null)
-                    {
-                        Util.DebugLog("No vessel");
-                        Target.Clear();
-                        Target.ManualText = "";
-                    }
-                    else
-                    {
-                        TrajectoriesVesselSettings module = attachedVessel.Parts.SelectMany(p => p.Modules
-                            .OfType<TrajectoriesVesselSettings>()).FirstOrDefault();
-                        if (module == null)
-                        {
-                            Util.DebugLog("No TrajectoriesVesselSettings module");
-                            Target.Clear();
-                            Target.ManualText = "";
-                        }
-                        else
-                        {
-                            Util.DebugLog("Reading target settings...");
-                            Target.SetFromLocalPos(FlightGlobals.Bodies.FirstOrDefault(b => b.name == module.TargetBody),
-                                new Vector3d(module.TargetPosition_x, module.TargetPosition_y, module.TargetPosition_z));
-                            Target.ManualText = module.ManualTargetTxt;
-                            Util.DebugLog("Target profile loaded");
-                        }
-                    }
-                }
-
-                // should the trajectory be calculated?
-                if (attachedVessel != null &&
-                    (Settings.fetch.DisplayTrajectories || Settings.fetch.AlwaysUpdate || Target.WorldPosition.HasValue))
-                {
-                    if (attachedVessel.Parts.Count != 0)
-                        ComputeTrajectory(attachedVessel, DescentProfile.fetch);
-                }
-            }
-
-        }
-
-        public void InvalidateAerodynamicModel()
-        {
-            aerodynamicModel_.Invalidate();
-        }
-
-        public void ComputeTrajectory(Vessel vessel, DescentProfile profile)
+        internal static void ComputeTrajectory(Vessel vessel)
         {
             try
             {
@@ -541,7 +521,7 @@ namespace Trajectories
                     }
 
                     // Create enumerator for Trajectory increment calculator
-                    partialComputation_ = ComputeTrajectoryIncrement(vessel, profile).GetEnumerator();
+                    partialComputation_ = ComputeTrajectoryIncrement(vessel).GetEnumerator();
                 }
 
                 // we are finished when there are no more partial computations to be done
@@ -552,7 +532,7 @@ namespace Trajectories
                 {
                     // swap the buffers for the patches and the maximum acceleration,
                     // "publishing" the results
-                    var tmp = patches_;
+                    List<Patch> tmp = patches_;
                     patches_ = patchesBackBuffer_;
                     patchesBackBuffer_ = tmp;
 
@@ -573,7 +553,7 @@ namespace Trajectories
             }
         }
 
-        private IEnumerable<bool> ComputeTrajectoryIncrement(Vessel vessel, DescentProfile profile)
+        private static IEnumerable<bool> ComputeTrajectoryIncrement(Vessel vessel)
         {
             // create or update aerodynamic model
             if (aerodynamicModel_ == null || !aerodynamicModel_.isValidFor(vessel, vessel.mainBody))
@@ -582,10 +562,10 @@ namespace Trajectories
                 aerodynamicModel_.IncrementalUpdate();
 
             // create new VesselState from vessel, or null if it's on the ground
-            var state = vessel.LandedOrSplashed ? null : new VesselState(vessel);
+            VesselState state = vessel.LandedOrSplashed ? null : new VesselState(vessel);
 
             // iterate over patches until MaxPatchCount is reached
-            for (int patchIdx = 0; patchIdx < Settings.fetch.MaxPatchCount; ++patchIdx)
+            for (int patchIdx = 0; patchIdx < Settings.MaxPatchCount; ++patchIdx)
             {
                 // stop if we don't have a vessel state
                 if (state == null)
@@ -599,8 +579,8 @@ namespace Trajectories
                 if (null != attachedVessel.patchedConicSolver)
                 {
                     // search through maneuver nodes of the vessel
-                    var maneuverNodes = attachedVessel.patchedConicSolver.maneuverNodes;
-                    foreach (var node in maneuverNodes)
+                    List<ManeuverNode> maneuverNodes = attachedVessel.patchedConicSolver.maneuverNodes;
+                    foreach (ManeuverNode node in maneuverNodes)
                     {
                         // if the maneuver node time corresponds to the end time of the last patch
                         if (node.UT == state.Time)
@@ -612,7 +592,7 @@ namespace Trajectories
                     }
 
                     // Add one patch, then pause execution after every patch
-                    foreach (var result in AddPatch(state, profile))
+                    foreach (bool result in AddPatch(state))
                         yield return false;
                 }
 
@@ -624,7 +604,7 @@ namespace Trajectories
         /// relativePosition is in world frame, but relative to the body (i.e. inertial body space)
         /// returns the altitude above sea level (can be negative for bodies without ocean)
         /// </summary>
-        public static double GetGroundAltitude(CelestialBody body, Vector3 relativePosition)
+        internal static double GetGroundAltitude(CelestialBody body, Vector3 relativePosition)
         {
             if (body.pqsController == null)
                 return 0;
@@ -639,7 +619,7 @@ namespace Trajectories
             return elevation;
         }
 
-        public static double RealMaxAtmosphereAltitude(CelestialBody body)
+        internal static double RealMaxAtmosphereAltitude(CelestialBody body)
         {
             if (!body.atmosphere)
                 return 0;
@@ -647,11 +627,11 @@ namespace Trajectories
             return body.atmosphereDepth;
         }
 
-        private Orbit CreateOrbitFromState(VesselState state)
+        private static Orbit CreateOrbitFromState(VesselState state)
         {
-            var orbit = new Orbit();
+            Orbit orbit = new Orbit();
             orbit.UpdateFromStateVectors(Util.SwapYZ(state.Position), Util.SwapYZ(state.Velocity), state.ReferenceBody, state.Time);
-            var pars = new PatchedConics.SolverParameters
+            PatchedConics.SolverParameters pars = new PatchedConics.SolverParameters
             {
                 FollowManeuvers = false
             };
@@ -659,7 +639,7 @@ namespace Trajectories
             return orbit;
         }
 
-        private double FindOrbitBodyIntersection(Orbit orbit, double startTime, double endTime, double bodyAltitude)
+        private static double FindOrbitBodyIntersection(Orbit orbit, double startTime, double endTime, double bodyAltitude)
         {
             // binary search of entry time in atmosphere
             // I guess an analytic solution could be found, but I'm too lazy to search it
@@ -691,12 +671,12 @@ namespace Trajectories
             return to;
         }
 
-        private VesselState AddPatch_outState;
+        private static VesselState AddPatch_outState;
 
-        struct SimulationState
+        private struct SimulationState
         {
-            public Vector3d position;
-            public Vector3d velocity;
+            internal Vector3d position;
+            internal Vector3d velocity;
         }
 
         /// <summary>
@@ -707,10 +687,7 @@ namespace Trajectories
         /// <param name="dt">Time step interval</param>
         /// <param name="accel">Stores the value of the accelerationFunc at the current time step</param>
         /// <returns></returns>
-        static SimulationState VerletStep(SimulationState state,
-            Func<Vector3d, Vector3d, Vector3d> accelerationFunc,
-            double dt,
-            out Vector3d accel)
+        private static SimulationState VerletStep(SimulationState state, Func<Vector3d, Vector3d, Vector3d> accelerationFunc, double dt, out Vector3d accel)
         {
 
             Profiler.Start("accelerationFunc outside");
@@ -735,11 +712,7 @@ namespace Trajectories
         /// <param name="dt">Time step interval</param>
         /// <param name="accel">Stores the value of the accelerationFunc at the current time step</param>
         /// <returns></returns>
-        static SimulationState RK4Step(
-            SimulationState state,
-            Func<Vector3d, Vector3d, Vector3d> accelerationFunc,
-            double dt,
-            out Vector3d accel)
+        private static SimulationState RK4Step(SimulationState state, Func<Vector3d, Vector3d, Vector3d> accelerationFunc, double dt, out Vector3d accel)
         {
             Vector3d p1 = state.position;
             Vector3d v1 = state.velocity;
@@ -763,7 +736,7 @@ namespace Trajectories
             return state;
         }
 
-        private IEnumerable<bool> AddPatch(VesselState startingState, DescentProfile profile)
+        private static IEnumerable<bool> AddPatch(VesselState startingState)
         {
             if (null == attachedVessel.patchedConicSolver)
             {
@@ -773,7 +746,7 @@ namespace Trajectories
 
             CelestialBody body = startingState.ReferenceBody;
 
-            var patch = new Patch
+            Patch patch = new Patch
             {
                 StartingState = startingState,
                 IsAtmospheric = false,
@@ -783,15 +756,15 @@ namespace Trajectories
 
             // the flight plan does not always contain the first patches (before the first maneuver node),
             // so we populate it with the current orbit and associated encounters etc.
-            var flightPlan = new List<Orbit>();
-            for (var orbit = attachedVessel.orbit; orbit != null && orbit.activePatch; orbit = orbit.nextPatch)
+            List<Orbit> flightPlan = new List<Orbit>();
+            for (Orbit orbit = attachedVessel.orbit; orbit != null && orbit.activePatch; orbit = orbit.nextPatch)
             {
                 if (attachedVessel.patchedConicSolver.flightPlan.Contains(orbit))
                     break;
                 flightPlan.Add(orbit);
             }
 
-            foreach (var orbit in attachedVessel.patchedConicSolver.flightPlan)
+            foreach (Orbit orbit in attachedVessel.patchedConicSolver.flightPlan)
             {
                 flightPlan.Add(orbit);
             }
@@ -942,7 +915,7 @@ namespace Trajectories
                     patch.StartingState.StockPatch = null;
 
                     // lower dt would be more accurate, but a trade-off has to be found between performances and accuracy
-                    double dt = Settings.fetch.IntegrationStepSize;
+                    double dt = Settings.IntegrationStepSize;
 
                     // some shallow entries can result in very long flight. For performances reasons,
                     // we limit the prediction duration
@@ -954,7 +927,7 @@ namespace Trajectories
                     // also used for ground collision checks
                     double trajectoryInterval = 10.0;
 
-                    var buffer = new List<Point[]>
+                    List<Point[]> buffer = new List<Point[]>
                     {
                         new Point[chunkSize]
                     };
@@ -974,7 +947,7 @@ namespace Trajectories
                     bool hitGround = false;
                     int iteration = 0;
                     int incrementIterations = 0;
-                    int minIterationsPerIncrement = maxIterations / Settings.fetch.MaxFramesPerPatch;
+                    int minIterationsPerIncrement = maxIterations / Settings.MaxFramesPerPatch;
 
                     #region Acceleration Functor
 
@@ -990,7 +963,7 @@ namespace Trajectories
                         // aero force
                         Vector3d vel_air = velocity - body.getRFrmVel(body.position + position);
 
-                        double aoa = profile.GetAngleOfAttack(body, position, vel_air);
+                        double aoa = DescentProfile.GetAngleOfAttack(body, position, vel_air) ?? 0d;
 
                         Profiler.Start("GetForces");
                         Vector3d force_aero = aerodynamicModel_.GetForces(body, position, vel_air, aoa);
@@ -1039,9 +1012,9 @@ namespace Trajectories
                             int totalCount = (buffer.Count - 1) * chunkSize + nextPosIdx;
                             patch.AtmosphericTrajectory = new Point[totalCount];
                             int outIdx = 0;
-                            foreach (var chunk in buffer)
+                            foreach (Point[] chunk in buffer)
                             {
-                                foreach (var p in chunk)
+                                foreach (Point p in chunk)
                                 {
                                     if (outIdx == totalCount)
                                         break;
@@ -1142,7 +1115,7 @@ namespace Trajectories
                                 nextPosIdx = 0;
                             }
                             Vector3d nextPos = state.position;
-                            if (Settings.fetch.BodyFixedMode)
+                            if (Settings.BodyFixedMode)
                             {
                                 nextPos = CalculateRotatedPosition(body, nextPos, currentTime);
                             }
@@ -1186,20 +1159,19 @@ namespace Trajectories
             }
         }
 
-        public static Vector3 CalculateRotatedPosition(CelestialBody body, Vector3 relativePosition, double time)
+        internal static Vector3 CalculateRotatedPosition(CelestialBody body, Vector3 relativePosition, double time)
         {
             float angle = (float)(-(time - Planetarium.GetUniversalTime()) * body.angularVelocity.magnitude / Math.PI * 180.0);
             Quaternion bodyRotation = Quaternion.AngleAxis(angle, body.angularVelocity.normalized);
             return bodyRotation * relativePosition;
         }
 
-        public static Vector3d GetWorldPositionAtUT(Orbit orbit, double ut)
+        internal static Vector3d GetWorldPositionAtUT(Orbit orbit, double ut)
         {
             Vector3d worldPos = Util.SwapYZ(orbit.getRelativePositionAtUT(ut));
             if (orbit.referenceBody != FlightGlobals.Bodies[0])
                 worldPos += GetWorldPositionAtUT(orbit.referenceBody.orbit, ut);
             return worldPos;
         }
-
     }
 }

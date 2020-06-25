@@ -42,7 +42,7 @@ namespace Trajectories
         private int referencePartCount = 0;
         private DateTime nextAllowedAutomaticUpdate = DateTime.Now;
 
-        public bool UseCache { get { return Settings.fetch.UseCache; } }
+        public bool UseCache { get { return Settings.UseCache; } }
         protected AeroForceCache cachedForces;
 
         public static bool Verbose { get; set; }
@@ -100,7 +100,7 @@ namespace Trajectories
             if (vessel != vessel_ || body_ != body)
                 return false;
 
-            if (Settings.fetch.AutoUpdateAerodynamicModel)
+            if (Settings.AutoUpdateAerodynamicModel)
             {
                 double newRefDrag = ComputeReferenceDrag();
                 if (referenceDrag == 0)

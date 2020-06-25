@@ -30,8 +30,7 @@ using UnityEngine.Events;
 namespace Trajectories
 {
     /// <summary> MainGUI window handler. </summary>
-    [KSPAddon(KSPAddon.Startup.Flight, false)]
-    public sealed class MainGUI : MonoBehaviour
+    internal static class MainGUI
     {
         // constants
         private const float width = 370.0f;
@@ -45,9 +44,6 @@ namespace Trajectories
         private const float integrator_slidermax = 50.0f;
         private const float lat_long_width = 28.0f;
         private const int page_padding = 10;
-
-        // version string
-        private static string version_txt = " vX.X.X";
 
         // page type enum
         private enum PageType
@@ -151,18 +147,18 @@ namespace Trajectories
 
                 // round off step;
                 if (stepsize < 0.25)
-                    Settings.fetch.IntegrationStepSize = Math.Round(stepsize * 100, MidpointRounding.AwayFromZero) / 100;    // 0.01
+                    Settings.IntegrationStepSize = Math.Round(stepsize * 100, MidpointRounding.AwayFromZero) / 100;    // 0.01
                 else if (stepsize < 0.5)
-                    Settings.fetch.IntegrationStepSize = Math.Round(stepsize * 20, MidpointRounding.AwayFromZero) / 20;     // 0.05
+                    Settings.IntegrationStepSize = Math.Round(stepsize * 20, MidpointRounding.AwayFromZero) / 20;     // 0.05
                 else if (stepsize < 1)
-                    Settings.fetch.IntegrationStepSize = Math.Round(stepsize * 10, MidpointRounding.AwayFromZero) / 10;     // 0.1
+                    Settings.IntegrationStepSize = Math.Round(stepsize * 10, MidpointRounding.AwayFromZero) / 10;     // 0.1
                 else if (stepsize < 2)
-                    Settings.fetch.IntegrationStepSize = Math.Round(stepsize * 4, MidpointRounding.AwayFromZero) / 4;       // 0.25
+                    Settings.IntegrationStepSize = Math.Round(stepsize * 4, MidpointRounding.AwayFromZero) / 4;       // 0.25
                 else
-                    Settings.fetch.IntegrationStepSize = Math.Round(stepsize * 2, MidpointRounding.AwayFromZero) / 2;       // 0.5
+                    Settings.IntegrationStepSize = Math.Round(stepsize * 2, MidpointRounding.AwayFromZero) / 2;       // 0.5
 
                 // set slider pos
-                integrator_sliderPos = (float)(integrator_slidermin + (Math.Log(Settings.fetch.IntegrationStepSize) -
+                integrator_sliderPos = (float)(integrator_slidermin + (Math.Log(Settings.IntegrationStepSize) -
                     Math.Log(Trajectory.integrator_min)) / (Math.Log(Trajectory.integrator_max) - Math.Log(Trajectory.integrator_min)) *
                     (integrator_slidermax - integrator_slidermin));
             }
@@ -172,35 +168,17 @@ namespace Trajectories
         private static double update_timer = Util.Clocks;
         private const double update_fps = 10;  // Frames per second the data values displayed in the Gui will update.
 
-        public static string TrajectoriesTitle => trajectories_title;
+        internal static string TrajectoriesTitle => trajectories_title;
 
-        // permit global access
-        public static MainGUI Fetch
+        /// <summary>
+        /// Allocates required resources
+        /// </summary>
+        internal static void Start()
         {
-            get; private set;
-        } = null;
-
-        //  constructor
-        public MainGUI()
-        {
-            // enable global access
-            Fetch = this;
-
-            // version string
-            version_txt = " v" + typeof(MainGUI).Assembly.GetName().Version;
-            version_txt = version_txt.Remove(version_txt.LastIndexOf("."));
-            Util.DebugLog(version_txt);
-
+            Util.DebugLog(multi_dialog != null ? "Resetting" : "Constructing");
             // allocate and define window for use in the popup dialog
-            Allocate();
-            spawned = 0;
-        }
-
-        // Awake is called only once when the script instance is being loaded. Used in place of the constructor for initialization.
-        public void Awake()
-        {
-            // create and display App launch button
-            AppLauncherButton.Create();
+            if (multi_dialog == null)
+                Allocate();
 
             // set page padding
             info_page.padding.left = page_padding;
@@ -213,32 +191,24 @@ namespace Trajectories
             settings_page.padding.right = page_padding;
 
             // create popup dialog and add onDestroy listener
+            spawned = 0;
             SpawnDialog();
 
             //set data field labels justification
             SetDataFieldJustification();
         }
 
-        private void SpawnDialog()
+        /// <summary> Releases held resources. </summary>
+        internal static void Destroy()
         {
-            if (multi_dialog != null)
-            {
-                if (ClampToScreen())
-                    multi_dialog.dialogRect.Set(Settings.fetch.MainGUIWindowPos.x, Settings.fetch.MainGUIWindowPos.y, width, height);
+            Util.DebugLog("");
 
-                popup_dialog = PopupDialog.SpawnPopupDialog(multi_dialog, false, HighLogic.UISkin, false, "");
-                popup_dialog.onDestroy.AddListener(new UnityAction(OnPopupDialogDestroy));
-
-                // create text input box event listeners
-                SetTextInputBoxEvents();
-            }
+            DeSpawn();
+            multi_dialog = null;
         }
 
-        public void Update()
+        internal static void Update()
         {
-            if (Util.IsPaused)
-                return;
-
             // initialization for dialog box window position
             if (spawned != 2 && popup_dialog != null)
             {
@@ -261,12 +231,12 @@ namespace Trajectories
                 KeyboardUnlock("");
 
             // hide or show the dialog box
-            if ((!Settings.fetch.MainGUIEnabled || PlanetariumCamera.Camera == null) && visible)
+            if ((!Settings.MainGUIEnabled || PlanetariumCamera.Camera == null) && visible)
             {
                 Hide();
                 return;
             }
-            else if (Settings.fetch.MainGUIEnabled && (!visible || popup_dialog == null))
+            else if (Settings.MainGUIEnabled && (!visible || popup_dialog == null))
             {
                 Show();
             }
@@ -274,18 +244,31 @@ namespace Trajectories
             UpdatePages();
         }
 
-        public static void OnDestroy()
+        internal static void DeSpawn()
         {
-            //Util.DebugLog("");
-            Fetch = null;
+            Util.DebugLog("");
+
+            KeyboardUnlock("");
 
             if (popup_dialog != null)
-            {
                 popup_dialog.Dismiss();
-                popup_dialog = null;
-            }
 
-            AppLauncherButton.Destroy();
+            popup_dialog = null;
+        }
+
+        private static void SpawnDialog()
+        {
+            if (multi_dialog != null)
+            {
+                if (ClampToScreen())
+                    multi_dialog.dialogRect.Set(Settings.MainGUIWindowPos.x, Settings.MainGUIWindowPos.y, width, height);
+
+                popup_dialog = PopupDialog.SpawnPopupDialog(multi_dialog, false, HighLogic.UISkin, false, "");
+                popup_dialog.onDestroy.AddListener(new UnityAction(OnPopupDialogDestroy));
+
+                // create text input box event listeners
+                SetTextInputBoxEvents();
+            }
         }
 
         /// <summary>
@@ -297,17 +280,17 @@ namespace Trajectories
             float border = 50f;
             bool adjusted = false;
 
-            if (Settings.fetch.MainGUIWindowPos.x <= 0.0f || Settings.fetch.MainGUIWindowPos.y <= 0.0f)
+            if (Settings.MainGUIWindowPos.x <= 0.0f || Settings.MainGUIWindowPos.y <= 0.0f)
             {
                 // default window to center of screen
-                Settings.fetch.MainGUIWindowPos = new Vector2(0.5f, 0.5f);
+                Settings.MainGUIWindowPos = new Vector2(0.5f, 0.5f);
                 adjusted = true;
             }
             else
             {
                 // ensure window remains within the screen bounds
-                Vector2 pos = new Vector2(((Settings.fetch.MainGUIWindowPos.x * Screen.width) - (Screen.width / 2)) * GameSettings.UI_SCALE,
-                                          ((Settings.fetch.MainGUIWindowPos.y * Screen.height) - (Screen.height / 2)) * GameSettings.UI_SCALE);
+                Vector2 pos = new Vector2(((Settings.MainGUIWindowPos.x * Screen.width) - (Screen.width / 2)) * GameSettings.UI_SCALE,
+                                          ((Settings.MainGUIWindowPos.y * Screen.height) - (Screen.height / 2)) * GameSettings.UI_SCALE);
 
                 if (pos.x > (Screen.width / 2) - border)
                 {
@@ -333,7 +316,7 @@ namespace Trajectories
 
                 if (adjusted)
                 {
-                    Settings.fetch.MainGUIWindowPos = new Vector2(
+                    Settings.MainGUIWindowPos = new Vector2(
                         ((Screen.width / 2) + (pos.x / GameSettings.UI_SCALE)) / Screen.width,
                         ((Screen.height / 2) + (pos.y / GameSettings.UI_SCALE)) / Screen.height);
                 }
@@ -345,7 +328,7 @@ namespace Trajectories
         /// Allocates any classes, variables etc needed for the MainGUI,
         ///   note that this method should be called from the constructor.
         /// </summary>
-        private void Allocate()
+        private static void Allocate()
         {
             ClampToScreen();
 
@@ -363,32 +346,29 @@ namespace Trajectories
             impact_longitude_label = new DialogGUILabel(() => { return impact_longitude_txt; }, 65);
             impact_vertical_label = new DialogGUILabel(() => { return impact_vertical_txt; }, 65);
             impact_horizontal_label = new DialogGUILabel(() => { return impact_horizontal_txt; }, 65);
-            info_distance_label = new DialogGUILabel(() => { return Trajectory.Target.Body == null ? "" :
-                target_distance_txt; }, 60);
-            info_distance_latitude_label = new DialogGUILabel(() => { return Trajectory.Target.Body == null ? "" :
-                target_distance_latitude_txt; }, 80);
-            info_distance_longitude_label = new DialogGUILabel(() => { return Trajectory.Target.Body == null ? "" :
-                target_distance_longitude_txt; }, 80);
+            info_distance_label = new DialogGUILabel(() => { return Trajectory.Target.Body == null ? "" : target_distance_txt; }, 60);
+            info_distance_latitude_label = new DialogGUILabel(() => { return Trajectory.Target.Body == null ? "" : target_distance_latitude_txt; }, 80);
+            info_distance_longitude_label = new DialogGUILabel(() => { return Trajectory.Target.Body == null ? "" : target_distance_longitude_txt; }, 80);
             target_latitude_label = new DialogGUILabel(() => { return target_latitude_txt; }, 65);
             target_longitude_label = new DialogGUILabel(() => { return target_longitude_txt; }, 65);
             target_distance_label = new DialogGUILabel(() => { return target_distance_txt; }, 60);
             target_distance_latitude_label = new DialogGUILabel(() => { return target_distance_latitude_txt; }, 80);
             target_distance_longitude_label = new DialogGUILabel(() => { return target_distance_longitude_txt; }, 80);
 
-            // set integrator sliderpos;
+            // set integrator slider pos;
             SetIntegratorSlider();
 
             // create pages
             info_page = new DialogGUIVerticalLayout(false, true, 0, new RectOffset(), TextAnchor.UpperCenter,
                 new DialogGUIHorizontalLayout(
-                    new DialogGUIToggle(() => { return Util.IsPatchedConicsAvailable ? Settings.fetch.DisplayTrajectories : false; },
+                    new DialogGUIToggle(() => { return Util.IsPatchedConicsAvailable ? Settings.DisplayTrajectories : false; },
                         Localizer.Format("#autoLOC_Trajectories_ShowTrajectory"), OnButtonClick_DisplayTrajectories),
-                    new DialogGUIToggle(() => { return Settings.fetch.DisplayTrajectoriesInFlight; },
+                    new DialogGUIToggle(() => { return Settings.DisplayTrajectoriesInFlight; },
                         Localizer.Format("#autoLOC_Trajectories_InFlight"), OnButtonClick_DisplayTrajectoriesInFlight)),
                 new DialogGUIHorizontalLayout(
-                    new DialogGUIToggle(() => { return Settings.fetch.BodyFixedMode; },
+                    new DialogGUIToggle(() => { return Settings.BodyFixedMode; },
                         Localizer.Format("#autoLOC_Trajectories_FixedBody"), OnButtonClick_BodyFixedMode),
-                    new DialogGUIToggle(() => { return Settings.fetch.DisplayCompleteTrajectory; },
+                    new DialogGUIToggle(() => { return Settings.DisplayCompleteTrajectory; },
                         Localizer.Format("#autoLOC_Trajectories_Complete"), OnButtonClick_DisplayCompleteTrajectory)),
                 new DialogGUIHorizontalLayout(TextAnchor.MiddleRight,
                     new DialogGUILabel(Localizer.Format("#autoLOC_Trajectories_MaxGforce"), true),
@@ -467,82 +447,82 @@ namespace Trajectories
 
             descent_page = new DialogGUIVerticalLayout(false, true, 0, new RectOffset(), TextAnchor.UpperCenter,
                 new DialogGUIHorizontalLayout(false, false, 0, new RectOffset(), TextAnchor.MiddleCenter,
-                    new DialogGUIToggle(() => { return !DescentProfile.fetch.RetrogradeEntry; },
+                    new DialogGUIToggle(() => { return !DescentProfile.RetrogradeEntry; },
                         Localizer.Format("#autoLOC_900597"), OnButtonClick_Prograde),
-                    new DialogGUIToggle(() => { return DescentProfile.fetch.RetrogradeEntry; },
+                    new DialogGUIToggle(() => { return DescentProfile.RetrogradeEntry; },
                         Localizer.Format("#autoLOC_900607"), OnButtonClick_Retrograde)),
                 new DialogGUIHorizontalLayout(TextAnchor.MiddleLeft,
-                    new DialogGUILabel(DescentProfile.fetch.entry.Name, 45f),
-                    new DialogGUIToggle(() => { return DescentProfile.fetch.entry.Horizon; },
-                        () => { return DescentProfile.fetch.entry.Horizon_txt; }, OnButtonClick_EntryHorizon, 60f),
-                    new DialogGUISlider(() => { return DescentProfile.fetch.entry.SliderPos; },
+                    new DialogGUILabel(DescentProfile.atmos_entry.Name, 45f),
+                    new DialogGUIToggle(() => { return DescentProfile.atmos_entry.Horizon; },
+                        () => { return DescentProfile.atmos_entry.Horizon_txt; }, OnButtonClick_EntryHorizon, 60f),
+                    new DialogGUISlider(() => { return DescentProfile.atmos_entry.SliderPos; },
                         -1f, 1f, false, descent_slider_width, -1, OnSliderSet_EntryAngle),
-                    new DialogGUILabel(() => { return DescentProfile.fetch.entry.Angle_txt; }, 30f),
+                    new DialogGUILabel(() => { return DescentProfile.atmos_entry.Angle_txt; }, 30f),
                     descent_entry_textinput),
                 new DialogGUIHorizontalLayout(TextAnchor.MiddleLeft,
-                    new DialogGUILabel(DescentProfile.fetch.highAltitude.Name, 45f),
-                    new DialogGUIToggle(() => { return DescentProfile.fetch.highAltitude.Horizon; },
-                        () => { return DescentProfile.fetch.highAltitude.Horizon_txt; }, OnButtonClick_HighHorizon, 60f),
-                    new DialogGUISlider(() => { return DescentProfile.fetch.highAltitude.SliderPos; },
+                    new DialogGUILabel(DescentProfile.high_altitude.Name, 45f),
+                    new DialogGUIToggle(() => { return DescentProfile.high_altitude.Horizon; },
+                        () => { return DescentProfile.high_altitude.Horizon_txt; }, OnButtonClick_HighHorizon, 60f),
+                    new DialogGUISlider(() => { return DescentProfile.high_altitude.SliderPos; },
                         -1f, 1f, false, descent_slider_width, -1, OnSliderSet_HighAngle),
-                    new DialogGUILabel(() => { return DescentProfile.fetch.highAltitude.Angle_txt; }, 30f),
+                    new DialogGUILabel(() => { return DescentProfile.high_altitude.Angle_txt; }, 30f),
                     descent_high_textinput),
                 new DialogGUIHorizontalLayout(TextAnchor.MiddleLeft,
-                    new DialogGUILabel(DescentProfile.fetch.lowAltitude.Name, 45f),
-                    new DialogGUIToggle(() => { return DescentProfile.fetch.lowAltitude.Horizon; },
-                        () => { return DescentProfile.fetch.lowAltitude.Horizon_txt; }, OnButtonClick_LowHorizon, 60f),
-                    new DialogGUISlider(() => { return DescentProfile.fetch.lowAltitude.SliderPos; },
+                    new DialogGUILabel(DescentProfile.low_altitude.Name, 45f),
+                    new DialogGUIToggle(() => { return DescentProfile.low_altitude.Horizon; },
+                        () => { return DescentProfile.low_altitude.Horizon_txt; }, OnButtonClick_LowHorizon, 60f),
+                    new DialogGUISlider(() => { return DescentProfile.low_altitude.SliderPos; },
                         -1f, 1f, false, descent_slider_width, -1, OnSliderSet_LowAngle),
-                    new DialogGUILabel(() => { return DescentProfile.fetch.lowAltitude.Angle_txt; }, 30f),
+                    new DialogGUILabel(() => { return DescentProfile.low_altitude.Angle_txt; }, 30f),
                     descent_low_textinput),
                 new DialogGUIHorizontalLayout(TextAnchor.MiddleLeft,
-                    new DialogGUILabel(DescentProfile.fetch.finalApproach.Name, 45f),
-                    new DialogGUIToggle(() => { return DescentProfile.fetch.finalApproach.Horizon; },
-                        () => { return DescentProfile.fetch.finalApproach.Horizon_txt; }, OnButtonClick_FinalHorizon, 60f),
-                    new DialogGUISlider(() => { return DescentProfile.fetch.finalApproach.SliderPos; },
+                    new DialogGUILabel(DescentProfile.final_approach.Name, 45f),
+                    new DialogGUIToggle(() => { return DescentProfile.final_approach.Horizon; },
+                        () => { return DescentProfile.final_approach.Horizon_txt; }, OnButtonClick_FinalHorizon, 60f),
+                    new DialogGUISlider(() => { return DescentProfile.final_approach.SliderPos; },
                         -1f, 1f, false, descent_slider_width, -1, OnSliderSet_GroundAngle),
-                    new DialogGUILabel(() => { return DescentProfile.fetch.finalApproach.Angle_txt; }, 30f),
+                    new DialogGUILabel(() => { return DescentProfile.final_approach.Angle_txt; }, 30f),
                     descent_final_textinput)
                 );
 
             settings_page = new DialogGUIVerticalLayout(false, true, 0, new RectOffset(), TextAnchor.UpperCenter,
-                new DialogGUIToggle(() => { return ToolbarManager.ToolbarAvailable ? Settings.fetch.UseBlizzyToolbar : false; },
+                new DialogGUIToggle(() => { return ToolbarManager.ToolbarAvailable ? Settings.UseBlizzyToolbar : false; },
                     Localizer.Format("#autoLOC_Trajectories_UseBlizzyToolbar"), OnButtonClick_UseBlizzyToolbar),
-                new DialogGUIToggle(() => { return Settings.fetch.DefaultDescentIsRetro; },
+                new DialogGUIToggle(() => { return Settings.DefaultDescentIsRetro; },
                     Localizer.Format("#autoLOC_Trajectories_DefaultDescent"), OnButtonClick_UseDescentRetro),
                 new DialogGUIHorizontalLayout(false, false, 0, new RectOffset(), TextAnchor.MiddleCenter,
-                    new DialogGUIToggle(() => { return Settings.fetch.UseCache; },
+                    new DialogGUIToggle(() => { return Settings.UseCache; },
                         Localizer.Format("#autoLOC_Trajectories_UseCache"), OnButtonClick_UseCache),
-                    new DialogGUIToggle(() => { return Settings.fetch.AutoUpdateAerodynamicModel; },
+                    new DialogGUIToggle(() => { return Settings.AutoUpdateAerodynamicModel; },
                         Localizer.Format("#autoLOC_Trajectories_AutoUpdate"), OnButtonClick_AutoUpdateAerodynamicModel),
                     new DialogGUIButton(Localizer.Format("#autoLOC_Trajectories_Update"),
                         OnButtonClick_Update, button_width, button_height, false)),
                 new DialogGUIHorizontalLayout(
                     new DialogGUILabel(Localizer.Format("#autoLOC_Trajectories_MaxPatches"), true),
-                    new DialogGUISlider(() => { return Settings.fetch.MaxPatchCount; },
+                    new DialogGUISlider(() => { return Settings.MaxPatchCount; },
                         3f, 10f, true, settings_slider_width + 10f, -1, OnSliderSet_MaxPatches),
-                    new DialogGUILabel(() => { return Settings.fetch.MaxPatchCount.ToString(); }, 25f)),
+                    new DialogGUILabel(() => { return Settings.MaxPatchCount.ToString(); }, 25f)),
                 new DialogGUIHorizontalLayout(
                     new DialogGUILabel(Localizer.Format("#autoLOC_Trajectories_MaxFramesPatch"), true),
-                    new DialogGUISlider(() => { return Settings.fetch.MaxFramesPerPatch; },
+                    new DialogGUISlider(() => { return Settings.MaxFramesPerPatch; },
                         1f, 50f, true, settings_slider_width + 10f, -1, OnSliderSet_MaxFramesPatch),
-                    new DialogGUILabel(() => { return Settings.fetch.MaxFramesPerPatch.ToString(); }, 25f)),
+                    new DialogGUILabel(() => { return Settings.MaxFramesPerPatch.ToString(); }, 25f)),
                 new DialogGUIHorizontalLayout(
                     new DialogGUILabel(Localizer.Format("#autoLOC_Trajectories_IntegrationStep"), true),
                     new DialogGUISlider(() => { return IntegratorSliderPos; },
                         integrator_slidermin, integrator_slidermax, false, settings_slider_width + 10f, -1, OnSliderSet_IntegrationStep),
-                    new DialogGUILabel(() => { return Settings.fetch.IntegrationStepSize.ToString("F2"); }, 25f)),
+                    new DialogGUILabel(() => { return Settings.IntegrationStepSize.ToString("F2"); }, 25f)),
                 new DialogGUIHorizontalLayout(
                     new DialogGUILabel(() => { return calculation_time_txt; }, true),
                     new DialogGUILabel(() => { return num_errors_txt; }, true)),
                 new DialogGUIHorizontalLayout(true, false, 0, new RectOffset(), TextAnchor.MiddleCenter,
                     new DialogGUILabel(() => { return aerodynamic_model_txt; }, true),
-                    new DialogGUIToggle(() => { return Settings.fetch.NewGui; },
+                    new DialogGUIToggle(() => { return Settings.NewGui; },
                         Localizer.Format("#autoLOC_Trajectories_NewGui"), OnButtonClick_NewGui))
                 );
 
             // create page box with current page inserted into page box
-            switch ((PageType)Settings.fetch.MainGUICurrentPage)
+            switch ((PageType)Settings.MainGUICurrentPage)
             {
                 case PageType.TARGET:
                     page_box = new DialogGUIBox(null, -1, -1, () => true, target_page);
@@ -562,11 +542,11 @@ namespace Trajectories
             multi_dialog = new MultiOptionDialog(
                "TrajectoriesMainGUI",
                "",
-               Localizer.Format("#autoLOC_Trajectories_Title") + " -" + version_txt,
+               Localizer.Format("#autoLOC_Trajectories_Title") + " - v" + Trajectories.Version,
                HighLogic.UISkin,
                // window origin is center of rect, position is offset from lower left corner of screen and normalized
                // i.e (0.5, 0.5 is screen center)
-               new Rect(Settings.fetch.MainGUIWindowPos.x, Settings.fetch.MainGUIWindowPos.y, width, height),
+               new Rect(Settings.MainGUIWindowPos.x, Settings.MainGUIWindowPos.y, width, height),
                new DialogGUIBase[]
                {
                    // create page select buttons
@@ -587,19 +567,19 @@ namespace Trajectories
         /// <summary>
         /// Called when the PopupDialog OnDestroy method is called. Used for saving the MainGUI window position.
         /// </summary>
-        private void OnPopupDialogDestroy()
+        private static void OnPopupDialogDestroy()
         {
             // save popup position. Note. PopupDialog.RTrf is an offset from the center of the screen.
             if (popup_dialog != null)
             {
-                Settings.fetch.MainGUIWindowPos = new Vector2(
+                Settings.MainGUIWindowPos = new Vector2(
                     ((Screen.width / 2) + (popup_dialog.RTrf.position.x / GameSettings.UI_SCALE)) / Screen.width,
                     ((Screen.height / 2) + (popup_dialog.RTrf.position.y / GameSettings.UI_SCALE)) / Screen.height);
-                //Util.DebugLog("Saving MainGUI window position as {0}", Settings.fetch.MainGUIWindowPos.ToString("F4"));
-                multi_dialog.dialogRect.Set(Settings.fetch.MainGUIWindowPos.x, Settings.fetch.MainGUIWindowPos.y, width, height);
+                //Util.DebugLog("Saving MainGUI window position as {0}", Settings.MainGUIWindowPos.ToString("F4"));
+                multi_dialog.dialogRect.Set(Settings.MainGUIWindowPos.x, Settings.MainGUIWindowPos.y, width, height);
             }
             visible = false;
-            Settings.fetch.Save();
+            Settings.Save();
         }
 
         /// <summary>
@@ -607,7 +587,7 @@ namespace Trajectories
         /// </summary>
         private static void SetDataFieldJustification()
         {
-            if (Settings.fetch.MainGUICurrentPage == (int)PageType.INFO && impact_latitude_label.text != null)
+            if (Settings.MainGUICurrentPage == (int)PageType.INFO && impact_latitude_label.text != null)
             {
                 impact_latitude_label.text.alignment = TextAlignmentOptions.MidlineRight;
                 impact_longitude_label.text.alignment = TextAlignmentOptions.MidlineRight;
@@ -617,7 +597,7 @@ namespace Trajectories
                 info_distance_latitude_label.text.alignment = TextAlignmentOptions.MidlineRight;
                 info_distance_longitude_label.text.alignment = TextAlignmentOptions.MidlineRight;
             }
-            else if (Settings.fetch.MainGUICurrentPage == (int)PageType.TARGET && target_latitude_label.text != null)
+            else if (Settings.MainGUICurrentPage == (int)PageType.TARGET && target_latitude_label.text != null)
             {
                 target_latitude_label.text.alignment = TextAlignmentOptions.MidlineRight;
                 target_longitude_label.text.alignment = TextAlignmentOptions.MidlineRight;
@@ -689,13 +669,13 @@ namespace Trajectories
         /// </summary>
         private static void SetIntegratorSlider()
         {
-            IntegratorSliderPos = (float)(integrator_slidermin + (Math.Log(Settings.fetch.IntegrationStepSize) -
+            IntegratorSliderPos = (float)(integrator_slidermin + (Math.Log(Settings.IntegrationStepSize) -
                 Math.Log(Trajectory.integrator_min)) / (Math.Log(Trajectory.integrator_max) - Math.Log(Trajectory.integrator_min)) *
                 (integrator_slidermax - integrator_slidermin));
         }
 
         /// <summary> Shows window. </summary>
-        public void Show()
+        public static void Show()
         {
             if (popup_dialog == null)
             {
@@ -720,28 +700,28 @@ namespace Trajectories
         //  A page select button will call its ButtonEnabler method which returns false if the currently viewed page matches the button
         private static bool ButtonEnabler_Info()
         {
-            if ((PageType)Settings.fetch.MainGUICurrentPage == PageType.INFO)
+            if ((PageType)Settings.MainGUICurrentPage == PageType.INFO)
                 return false;
             return true;
         }
 
         private static bool ButtonEnabler_Target()
         {
-            if ((PageType)Settings.fetch.MainGUICurrentPage == PageType.TARGET)
+            if ((PageType)Settings.MainGUICurrentPage == PageType.TARGET)
                 return false;
             return true;
         }
 
         private static bool ButtonEnabler_Descent()
         {
-            if ((PageType)Settings.fetch.MainGUICurrentPage == PageType.DESCENT)
+            if ((PageType)Settings.MainGUICurrentPage == PageType.DESCENT)
                 return false;
             return true;
         }
 
         private static bool ButtonEnabler_Settings()
         {
-            if ((PageType)Settings.fetch.MainGUICurrentPage == PageType.SETTINGS)
+            if ((PageType)Settings.MainGUICurrentPage == PageType.SETTINGS)
                 return false;
             return true;
         }
@@ -749,7 +729,7 @@ namespace Trajectories
         private static bool ButtonEnabler_TargetImpact()
         {
             // grab the last patch that was calculated
-            Trajectory.Patch lastPatch = Trajectory.fetch?.Patches.LastOrDefault();
+            Trajectory.Patch lastPatch = Trajectory.Patches.LastOrDefault();
 
             if (lastPatch != null && lastPatch.ImpactPosition.HasValue)
                 return true;
@@ -789,13 +769,13 @@ namespace Trajectories
         #endregion
 
         #region  OnButtonClick methods called by the GuiButtons and Toggles
-        private void OnButtonClick_Info() => ChangePage(PageType.INFO);
+        private static void OnButtonClick_Info() => ChangePage(PageType.INFO);
 
-        private void OnButtonClick_Target() => ChangePage(PageType.TARGET);
+        private static void OnButtonClick_Target() => ChangePage(PageType.TARGET);
 
-        private void OnButtonClick_Descent() => ChangePage(PageType.DESCENT);
+        private static void OnButtonClick_Descent() => ChangePage(PageType.DESCENT);
 
-        private void OnButtonClick_Settings() => ChangePage(PageType.SETTINGS);
+        private static void OnButtonClick_Settings() => ChangePage(PageType.SETTINGS);
 
         private static void OnButtonClick_DisplayTrajectories(bool inState)
         {
@@ -803,13 +783,13 @@ namespace Trajectories
             if (inState && !Util.IsPatchedConicsAvailable)
             {
                 ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_Trajectories_ConicsErr"));
-                Settings.fetch.DisplayTrajectories = false;
+                Settings.DisplayTrajectories = false;
                 if (AppLauncherButton.IconStyle != AppLauncherButton.IconStyleType.NORMAL)
                     AppLauncherButton.ChangeIcon(AppLauncherButton.IconStyleType.NORMAL);
                 return;
             }
 
-            Settings.fetch.DisplayTrajectories = inState;
+            Settings.DisplayTrajectories = inState;
             // change app toolbar button icon state
             if (inState && (AppLauncherButton.IconStyle == AppLauncherButton.IconStyleType.NORMAL))
                 AppLauncherButton.ChangeIcon(AppLauncherButton.IconStyleType.ACTIVE);
@@ -818,73 +798,73 @@ namespace Trajectories
 
         }
 
-        private static void OnButtonClick_DisplayTrajectoriesInFlight(bool inState) => Settings.fetch.DisplayTrajectoriesInFlight = inState;
+        private static void OnButtonClick_DisplayTrajectoriesInFlight(bool inState) => Settings.DisplayTrajectoriesInFlight = inState;
 
-        private static void OnButtonClick_BodyFixedMode(bool inState) => Settings.fetch.BodyFixedMode = inState;
+        private static void OnButtonClick_BodyFixedMode(bool inState) => Settings.BodyFixedMode = inState;
 
-        private static void OnButtonClick_DisplayCompleteTrajectory(bool inState) => Settings.fetch.DisplayCompleteTrajectory = inState;
+        private static void OnButtonClick_DisplayCompleteTrajectory(bool inState) => Settings.DisplayCompleteTrajectory = inState;
 
-        private static void OnButtonClick_UseCache(bool inState) => Settings.fetch.UseCache = inState;
+        private static void OnButtonClick_UseCache(bool inState) => Settings.UseCache = inState;
 
-        private static void OnButtonClick_UseDescentRetro(bool inState) => Settings.fetch.DefaultDescentIsRetro = inState;
+        private static void OnButtonClick_UseDescentRetro(bool inState) => Settings.DefaultDescentIsRetro = inState;
 
-        private static void OnButtonClick_AutoUpdateAerodynamicModel(bool inState) => Settings.fetch.AutoUpdateAerodynamicModel = inState;
+        private static void OnButtonClick_AutoUpdateAerodynamicModel(bool inState) => Settings.AutoUpdateAerodynamicModel = inState;
 
-        private static void OnButtonClick_Update() => Trajectory.fetch.InvalidateAerodynamicModel();
+        private static void OnButtonClick_Update() => Trajectory.InvalidateAerodynamicModel();
 
         private static void OnButtonClick_UseBlizzyToolbar(bool inState)
         {
             if (ToolbarManager.ToolbarAvailable)
-                Settings.fetch.UseBlizzyToolbar = inState;
+                Settings.UseBlizzyToolbar = inState;
         }
 
         private static void OnButtonClick_NewGui(bool inState)
         {
-            Settings.fetch.NewGui = inState;
-            Settings.fetch.MainGUIEnabled = inState;
-            Settings.fetch.GUIEnabled = !inState;
+            Settings.NewGui = inState;
+            Settings.MainGUIEnabled = inState;
+            Settings.GUIEnabled = !inState;
         }
 
         private static void OnButtonClick_Prograde(bool inState)
         {
-            DescentProfile.fetch.RetrogradeEntry = !inState;
-            DescentProfile.fetch.Save();
+            DescentProfile.RetrogradeEntry = !inState;
+            DescentProfile.Save();
         }
 
         private static void OnButtonClick_Retrograde(bool inState)
         {
-            DescentProfile.fetch.RetrogradeEntry = inState;
-            DescentProfile.fetch.Save();
+            DescentProfile.RetrogradeEntry = inState;
+            DescentProfile.Save();
         }
 
         private static void OnButtonClick_EntryHorizon(bool inState)
         {
-            DescentProfile.fetch.entry.Horizon = inState;
-            DescentProfile.fetch.Save();
+            DescentProfile.atmos_entry.Horizon = inState;
+            DescentProfile.Save();
         }
 
         private static void OnButtonClick_HighHorizon(bool inState)
         {
-            DescentProfile.fetch.highAltitude.Horizon = inState;
-            DescentProfile.fetch.Save();
+            DescentProfile.high_altitude.Horizon = inState;
+            DescentProfile.Save();
         }
 
         private static void OnButtonClick_LowHorizon(bool inState)
         {
-            DescentProfile.fetch.lowAltitude.Horizon = inState;
-            DescentProfile.fetch.Save();
+            DescentProfile.low_altitude.Horizon = inState;
+            DescentProfile.Save();
         }
 
         private static void OnButtonClick_FinalHorizon(bool inState)
         {
-            DescentProfile.fetch.finalApproach.Horizon = inState;
-            DescentProfile.fetch.Save();
+            DescentProfile.final_approach.Horizon = inState;
+            DescentProfile.Save();
         }
 
         private static void OnButtonClick_TargetImpact()
         {
             // grab the last patch that was calculated
-            Trajectory.Patch lastPatch = Trajectory.fetch?.Patches.LastOrDefault();
+            Trajectory.Patch lastPatch = Trajectory.Patches.LastOrDefault();
 
             if (lastPatch != null && lastPatch.ImpactPosition.HasValue)
             {
@@ -1003,9 +983,9 @@ namespace Trajectories
 
             if (Math.Abs(angle) <= 180f)
             {
-                DescentProfile.fetch.entry.AngleDeg = angle;
-                DescentProfile.fetch.RefreshGui();
-                DescentProfile.fetch.Save();
+                DescentProfile.atmos_entry.AngleDeg = angle;
+                DescentProfile.RefreshGui();
+                DescentProfile.Save();
             }
             return null;
         }
@@ -1028,9 +1008,9 @@ namespace Trajectories
 
             if (Math.Abs(angle) <= 180f)
             {
-                DescentProfile.fetch.highAltitude.AngleDeg = angle;
-                DescentProfile.fetch.RefreshGui();
-                DescentProfile.fetch.Save();
+                DescentProfile.high_altitude.AngleDeg = angle;
+                DescentProfile.RefreshGui();
+                DescentProfile.Save();
             }
             return null;
         }
@@ -1053,9 +1033,9 @@ namespace Trajectories
 
             if (Math.Abs(angle) <= 180f)
             {
-                DescentProfile.fetch.lowAltitude.AngleDeg = angle;
-                DescentProfile.fetch.RefreshGui();
-                DescentProfile.fetch.Save();
+                DescentProfile.low_altitude.AngleDeg = angle;
+                DescentProfile.RefreshGui();
+                DescentProfile.Save();
             }
             return null;
         }
@@ -1078,9 +1058,9 @@ namespace Trajectories
 
             if (Math.Abs(angle) <= 180f)
             {
-                DescentProfile.fetch.finalApproach.AngleDeg = angle;
-                DescentProfile.fetch.RefreshGui();
-                DescentProfile.fetch.Save();
+                DescentProfile.final_approach.AngleDeg = angle;
+                DescentProfile.RefreshGui();
+                DescentProfile.Save();
             }
             return null;
         }
@@ -1088,38 +1068,38 @@ namespace Trajectories
 
         #region Callback methods for the Gui components
         // Callback methods are used by the Gui to retrieve information it needs either for displaying or setting values.
-        private static void OnSliderSet_MaxPatches(float invalue) => Settings.fetch.MaxPatchCount = (int)invalue;
+        private static void OnSliderSet_MaxPatches(float invalue) => Settings.MaxPatchCount = (int)invalue;
 
-        private static void OnSliderSet_MaxFramesPatch(float invalue) => Settings.fetch.MaxFramesPerPatch = (int)invalue;
+        private static void OnSliderSet_MaxFramesPatch(float invalue) => Settings.MaxFramesPerPatch = (int)invalue;
 
         private static void OnSliderSet_IntegrationStep(float invalue) => IntegratorSliderPos = invalue;
 
         private static void OnSliderSet_EntryAngle(float invalue)
         {
-            DescentProfile.fetch.entry.SliderPos = invalue;
-            DescentProfile.fetch.RefreshGui();
-            DescentProfile.fetch.Save();
+            DescentProfile.atmos_entry.SliderPos = invalue;
+            DescentProfile.RefreshGui();
+            DescentProfile.Save();
         }
 
         private static void OnSliderSet_HighAngle(float invalue)
         {
-            DescentProfile.fetch.highAltitude.SliderPos = invalue;
-            DescentProfile.fetch.RefreshGui();
-            DescentProfile.fetch.Save();
+            DescentProfile.high_altitude.SliderPos = invalue;
+            DescentProfile.RefreshGui();
+            DescentProfile.Save();
         }
 
         private static void OnSliderSet_LowAngle(float invalue)
         {
-            DescentProfile.fetch.lowAltitude.SliderPos = invalue;
-            DescentProfile.fetch.RefreshGui();
-            DescentProfile.fetch.Save();
+            DescentProfile.low_altitude.SliderPos = invalue;
+            DescentProfile.RefreshGui();
+            DescentProfile.Save();
         }
 
         private static void OnSliderSet_GroundAngle(float invalue)
         {
-            DescentProfile.fetch.finalApproach.SliderPos = invalue;
-            DescentProfile.fetch.RefreshGui();
-            DescentProfile.fetch.Save();
+            DescentProfile.final_approach.SliderPos = invalue;
+            DescentProfile.RefreshGui();
+            DescentProfile.Save();
         }
         #endregion
 
@@ -1127,7 +1107,7 @@ namespace Trajectories
         /// <summary> Changes the page inside the page box. </summary>
         private static void ChangePage(PageType inpage)
         {
-            Settings.fetch.MainGUICurrentPage = (int)inpage;
+            Settings.MainGUICurrentPage = (int)inpage;
 
             // remove current page from page box
             page_box.children[0].uiItem.gameObject.DestroyGameObjectImmediate();
@@ -1171,7 +1151,7 @@ namespace Trajectories
                 return;
             update_timer = Util.Clocks;
 
-            switch ((PageType)Settings.fetch.MainGUICurrentPage)
+            switch ((PageType)Settings.MainGUICurrentPage)
             {
                 case PageType.INFO:
                     UpdateInfoPage();
@@ -1194,13 +1174,13 @@ namespace Trajectories
         private static void UpdateInfoPage()
         {
             // grab the last patch that was calculated
-            Trajectory.Patch lastPatch = Trajectory.fetch?.Patches.LastOrDefault();
+            Trajectory.Patch lastPatch = Trajectory.Patches.LastOrDefault();
 
             // max G-force
-            max_gforce_txt = string.Format("{0:0.00}", Settings.fetch.DisplayTrajectories ? Trajectory.fetch.MaxAccel / 9.81 : 0);
+            max_gforce_txt = string.Format("{0:0.00}", Settings.DisplayTrajectories ? Trajectory.MaxAccel / 9.81 : 0);
 
             // impact values
-            if (lastPatch != null && lastPatch.ImpactPosition.HasValue && Settings.fetch.DisplayTrajectories)
+            if (lastPatch != null && lastPatch.ImpactPosition.HasValue && Settings.DisplayTrajectories)
             {
                 // calculate body offset impact position
                 CelestialBody lastPatchBody = lastPatch.StartingState.ReferenceBody;
@@ -1243,7 +1223,7 @@ namespace Trajectories
         private static void UpdateTargetPage()
         {
             // grab the last patch that was calculated
-            Trajectory.Patch lastPatch = Trajectory.fetch?.Patches.LastOrDefault();
+            Trajectory.Patch lastPatch = Trajectory.Patches.LastOrDefault();
             CelestialBody targetBody = Trajectory.Target.Body;
 
             // target position and distance values
@@ -1282,36 +1262,23 @@ namespace Trajectories
         /// <summary> Updates the strings used by the settings page to display changing values/data </summary>
         private static void UpdateSettingsPage()
         {
-            Trajectory traj = Trajectory.fetch;
+            // aerodynamic model
+            aerodynamic_model_txt = aerodynamic_model_hdrtxt + Trajectory.AerodynamicModelName;
 
-            if (traj != null)
-            {
-                // aerodynamic model
-                aerodynamic_model_txt = aerodynamic_model_hdrtxt + Trajectory.fetch.AerodynamicModelName;
+            // performance
+            calculation_time_txt = calculation_time_hdrtxt +
+                string.Format("{0:0.0}ms | {1:0.0} %", Trajectory.ComputationTime * 1000.0f,
+                    (Trajectory.ComputationTime / Trajectory.GameFrameTime) * 100.0f);
 
-                // performance
-                calculation_time_txt = calculation_time_hdrtxt +
-                    string.Format("{0:0.0}ms | {1:0.0} %", traj.ComputationTime * 1000.0f,
-                        (traj.ComputationTime / traj.GameFrameTime) * 100.0f);
-
-                // num errors
-                num_errors_txt = errors_hdrtxt + string.Format("{0:0}", traj.ErrorCount);
-            }
-            else
-            {
-                calculation_time_txt = calculation_time_hdrtxt + "0.0ms | 0.0 %";
-                num_errors_txt = errors_hdrtxt + "0";
-                aerodynamic_model_txt = aerodynamic_model_hdrtxt + "---";
-
-
-            }
+            // num errors
+            num_errors_txt = errors_hdrtxt + string.Format("{0:0}", Trajectory.ErrorCount);
         }
 
         /// <summary> Updates the strings used by the info and target page to display target distance </summary>
         private static void UpdateTargetDistance()
         {
             // grab the last patch that was calculated
-            Trajectory.Patch lastPatch = Trajectory.fetch?.Patches.LastOrDefault();
+            Trajectory.Patch lastPatch = Trajectory.Patches.LastOrDefault();
             CelestialBody targetBody = Trajectory.Target.Body;
             CelestialBody lastPatchBody = lastPatch?.StartingState.ReferenceBody;
 
@@ -1323,7 +1290,7 @@ namespace Trajectories
 
                 // target distance values
                 if (lastPatch != null && lastPatch.ImpactPosition.HasValue && lastPatchBody == targetBody &&
-                    Settings.fetch.DisplayTrajectories)
+                    Settings.DisplayTrajectories)
                 {
                     // calculate body offset impact position
                     Vector3d impactPos = lastPatch.ImpactPosition.Value + lastPatchBody.position;

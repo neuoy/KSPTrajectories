@@ -29,33 +29,50 @@ namespace Trajectories
     /// <summary>
     /// Trajectory map view overlay handler
     /// </summary>
-    [KSPAddon(KSPAddon.Startup.Flight, false)]
-    public sealed class MapOverlay: MonoBehaviour
+    internal static class MapOverlay
     {
         /// <summary>
         /// Trajectory map view renderer
         /// </summary>
-        private sealed class MapTrajectoryRenderer: MonoBehaviour
+        private sealed class MapTrajectoryRenderer : MonoBehaviour
         {
-            public List<GameObject> meshes = new List<GameObject>();
+            internal List<GameObject> meshes = new List<GameObject>();
 
-            public void OnPreRender()
+            internal void OnPreRender()
             {
                 if (meshes != null)
-                    fetch.RenderMesh();
+                    MapOverlay.RenderMesh();
             }
 
             /// <summary>
-            /// Shows or hides the rendered trajectory on the map view
+            /// Shows or hides the rendered trajectory on the map view or returns its visible state
             /// </summary>
-            public void Visible(bool show)
+            internal bool Visible
             {
-                if (meshes != null)
+                get
                 {
-                    foreach (GameObject mesh in meshes)
-                        mesh.GetComponent<MeshRenderer>().enabled = show;
+                    if (meshes != null)
+                    {
+                        bool visible = true;
 
-                    enabled = show;
+                        foreach (GameObject mesh in meshes)
+                            visible &= mesh.GetComponent<MeshRenderer>().enabled;
+                        return visible & enabled;
+                    }
+                    return false;
+                }
+                set
+                {
+                    if (meshes != null)
+                    {
+                        foreach (GameObject mesh in meshes)
+                            mesh.GetComponent<MeshRenderer>().enabled = value;
+                        enabled = value;
+                    }
+                    else
+                    {
+                        enabled = false;
+                    }
                 }
             }
         }
@@ -69,72 +86,70 @@ namespace Trajectories
         private static Material material;
 
         // Map trajectory renderer
-        private static MapTrajectoryRenderer map_traj_renderer;
+        private static MapTrajectoryRenderer map_renderer;
 
         // visible flag
         private static bool visible = false;
 
-        // permit global access
-        public static MapOverlay fetch
+        /// <summary>
+        /// Allocates new nodes or resets existing nodes
+        /// </summary>
+        internal static void Start()
         {
-            get; private set;
-        } = null;
-
-        //  constructor
-        public MapOverlay()
-        {
-            // enable global access
-            fetch = this;
+            Util.DebugLog(material != null ? "Resetting" : "Constructing");
+            material ??= MapView.fetch.orbitLinesMaterial;
+            map_renderer = PlanetariumCamera.Camera.gameObject.AddComponent<MapTrajectoryRenderer>();
+            map_renderer.Visible = false;
         }
 
-        // Awake is called only once when the script instance is being loaded. Used in place of the constructor for initialization.
-        public static void Awake()
+        internal static void Destroy()
         {
-            material = MapView.fetch.orbitLinesMaterial;
-            map_traj_renderer = PlanetariumCamera.Camera.gameObject.AddComponent<MapTrajectoryRenderer>();
-            map_traj_renderer.Visible(false);
+            Util.DebugLog("");
+            DestroyRenderer();
+            material = null;
         }
 
-        public static void OnDestroy()
-        {
-            if (map_traj_renderer != null)
-                Destroy(map_traj_renderer);
-            map_traj_renderer = null;
-        }
-
-        public static void Update()
+        internal static void Update()
         {
             // return if no renderer or camera
-            if ((map_traj_renderer == null) || (PlanetariumCamera.Camera == null))
+            if ((map_renderer == null) || (PlanetariumCamera.Camera == null))
             {
                 visible = false;
                 return;
             }
 
             // hide or show the Map trajectory
-            if ((!Util.IsMap || !Settings.fetch.DisplayTrajectories) && visible)
+            if ((!Util.IsMap || !Settings.DisplayTrajectories) && visible)
             {
                 //Util.DebugLog("Hide map trajectory");
                 visible = false;
-                map_traj_renderer.Visible(false);
+                map_renderer.Visible = false;
                 return;
             }
-            else if (Util.IsMap && Settings.fetch.DisplayTrajectories && !visible)
+            else if (Util.IsMap && Settings.DisplayTrajectories && !visible)
             {
                 //Util.DebugLog("Show map trajectory");
                 visible = true;
-                map_traj_renderer.Visible(true);
+                map_renderer.Visible = true;
             }
+        }
+
+        internal static void DestroyRenderer()
+        {
+            Util.DebugLog("");
+            if (map_renderer != null)
+                Trajectories.Destroy(map_renderer);
+            map_renderer = null;
         }
 
         /// <summary>
         /// Returns first found Non-Active mesh, if none are found then adds a new mesh to the end of the list.
         /// </summary>
-        private GameObject GetMesh()
+        private static GameObject GetMesh()
         {
             // find a Non-Active mesh in the list
             GameObject mesh_found = null;
-            foreach (GameObject mesh in map_traj_renderer.meshes)
+            foreach (GameObject mesh in map_renderer.meshes)
             {
                 if (!mesh.activeSelf)
                 {
@@ -155,7 +170,7 @@ namespace Trajectories
                 renderer.enabled = visible;
                 renderer.receiveShadows = false;
                 newMesh.layer = MapView.Draw3DLines ? layer3D : layer2D;
-                map_traj_renderer.meshes.Add(newMesh);
+                map_renderer.meshes.Add(newMesh);
 
                 mesh_found = newMesh;
             }
@@ -165,19 +180,19 @@ namespace Trajectories
             return mesh_found;
         }
 
-        private void RenderMesh()
+        private static void RenderMesh()
         {
             // set all meshes to Non-Active to init mesh list search.
-            foreach (GameObject mesh in map_traj_renderer.meshes)
+            foreach (GameObject mesh in map_renderer.meshes)
             {
                 mesh.SetActive(false);
             }
 
             // create/update meshes from Trajectory patches.
-            foreach (Trajectory.Patch patch in Trajectory.fetch.Patches)
+            foreach (Trajectory.Patch patch in Trajectory.Patches)
             {
-                if (patch.StartingState.StockPatch != null && !Settings.fetch.BodyFixedMode &&
-                    !Settings.fetch.DisplayCompleteTrajectory)
+                if (patch.StartingState.StockPatch != null && !Settings.BodyFixedMode &&
+                    !Settings.DisplayCompleteTrajectory)
                     continue;
 
                 if (patch.IsAtmospheric && patch.AtmosphericTrajectory.Length < 2)
@@ -219,7 +234,7 @@ namespace Trajectories
             }
         }
 
-        private void MakeRibbonEdge(Vector3d prevPos, Vector3d edgeCenter, float width, Vector3[] vertices, int startIndex)
+        private static void MakeRibbonEdge(Vector3d prevPos, Vector3d edgeCenter, float width, Vector3[] vertices, int startIndex)
         {
             // Code taken from RemoteTech mod
 
@@ -260,7 +275,7 @@ namespace Trajectories
             }
         }
 
-        private void InitMeshFromOrbit(Vector3 bodyPosition, Mesh mesh, Orbit orbit, double startTime, double duration, Color color)
+        private static void InitMeshFromOrbit(Vector3 bodyPosition, Mesh mesh, Orbit orbit, double startTime, double duration, Color color)
         {
             int steps = 128;
 
@@ -314,7 +329,7 @@ namespace Trajectories
                 double time = stepUT[i];
 
                 Vector3 curMeshPos = Util.SwapYZ(orbit.getRelativePositionAtUT(time));
-                if (Settings.fetch.BodyFixedMode)
+                if (Settings.BodyFixedMode)
                 {
                     curMeshPos = Trajectory.CalculateRotatedPosition(orbit.referenceBody, curMeshPos, time);
                 }
@@ -358,7 +373,7 @@ namespace Trajectories
             mesh.MarkDynamic();
         }
 
-        private void InitMeshFromTrajectory(Vector3 bodyPosition, Mesh mesh, Trajectory.Point[] trajectory, Color color)
+        private static void InitMeshFromTrajectory(Vector3 bodyPosition, Mesh mesh, Trajectory.Point[] trajectory, Color color)
         {
             Vector3[] vertices = new Vector3[trajectory.Length * 2];
             Vector2[] uvs = new Vector2[trajectory.Length * 2];
@@ -402,7 +417,7 @@ namespace Trajectories
             mesh.RecalculateBounds();
         }
 
-        private void InitMeshCrosshair(CelestialBody body, Mesh mesh, Vector3 position, Color color)
+        private static void InitMeshCrosshair(CelestialBody body, Mesh mesh, Vector3 position, Color color)
         {
             Vector3[] vertices = new Vector3[8];
             Vector2[] uvs = new Vector2[8];

@@ -22,92 +22,106 @@
 
 using System;
 using System.Linq;
+using System.Reflection;
+using KSP.IO;
 using UnityEngine;
 
 namespace Trajectories
 {
-    class Settings
+    internal sealed class Settings
     {
-        private class Persistent: Attribute
+        #region User settings
+        private sealed class Persistent : Attribute
         {
-            public object DefaultValue;
-            public Persistent(object Default) { DefaultValue = Default; }
+            internal object DefaultValue;
+            internal Persistent(object Default) => DefaultValue = Default;
         }
 
-        public static Settings fetch { get { settings_ = settings_ ?? new Settings(); return settings_; } }
-
-        #region User settings
         [Persistent(Default: false)]
-        public bool DisplayTargetGUI { get; set; }
+        internal static bool DisplayTargetGUI { get; set; }
 
         [Persistent(Default: false)]
-        public bool DisplayDescentProfileGUI { get; set; }
+        internal static bool DisplayDescentProfileGUI { get; set; }
 
         [Persistent(Default: false)]
-        public bool DisplaySettingsGUI { get; set; }
+        internal static bool DisplaySettingsGUI { get; set; }
 
         [Persistent(Default: true)]
-        public bool UseBlizzyToolbar { get; set; }
+        internal static bool UseBlizzyToolbar { get; set; }
 
         [Persistent(Default: true)]
-        public bool DisplayTrajectories { get; set; }
+        internal static bool DisplayTrajectories { get; set; }
 
         [Persistent(Default: false)]
-        public bool DisplayTrajectoriesInFlight { get; set; }
+        internal static bool DisplayTrajectoriesInFlight { get; set; }
 
         [Persistent(Default: false)]
-        public bool AlwaysUpdate { get; set; } //Compute trajectory even if DisplayTrajectories && MapView.MapIsEnabled == false.
+        internal static bool AlwaysUpdate { get; set; } //Compute trajectory even if DisplayTrajectories && MapView.MapIsEnabled == false.
 
         [Persistent(Default: false)]
-        public bool DisplayCompleteTrajectory { get; set; }
+        internal static bool DisplayCompleteTrajectory { get; set; }
 
         [Persistent(Default: false)]
-        public bool BodyFixedMode { get; set; }
+        internal static bool BodyFixedMode { get; set; }
 
         [Persistent(Default: true)]
-        public bool AutoUpdateAerodynamicModel { get; set; }
+        internal static bool AutoUpdateAerodynamicModel { get; set; }
 
         [Persistent(Default: null)]
-        public Rect MapGUIWindowPos { get; set; }
+        internal static Rect MapGUIWindowPos { get; set; }
 
         [Persistent(Default: false)]
-        public bool MainGUIEnabled { get; set; }
+        internal static bool MainGUIEnabled { get; set; }
 
         [Persistent(Default: null)]
-        public Vector2 MainGUIWindowPos { get; set; }
+        internal static Vector2 MainGUIWindowPos { get; set; }
 
         [Persistent(Default: null)]
-        public int MainGUICurrentPage { get; set; }
+        internal static int MainGUICurrentPage { get; set; }
 
         [Persistent(Default: false)]
-        public bool GUIEnabled { get; set; }
+        internal static bool GUIEnabled { get; set; }
 
         [Persistent(Default: true)]
-        public bool NewGui { get; set; }
+        internal static bool NewGui { get; set; }
 
         [Persistent(Default: 2.0d)]
-        public double IntegrationStepSize { get; set; }
+        internal static double IntegrationStepSize { get; set; }
 
         [Persistent(Default: 4)]
-        public int MaxPatchCount { get; set; }
+        internal static int MaxPatchCount { get; set; }
 
         [Persistent(Default: 15)]
-        public int MaxFramesPerPatch { get; set; }
+        internal static int MaxFramesPerPatch { get; set; }
 
         [Persistent(Default: true)]
-        public bool UseCache { get; set; }
+        internal static bool UseCache { get; set; }
 
         [Persistent(Default: true)]
-        public bool DefaultDescentIsRetro { get; set; }
+        internal static bool DefaultDescentIsRetro { get; set; }
         #endregion
 
-        private KSP.IO.PluginConfiguration config;
-
+        private static PluginConfiguration config;
         private static bool ConfigError = false;
 
-        public Settings()
+        //  constructor
+        static Settings()
         {
-            config = KSP.IO.PluginConfiguration.CreateForType<Settings>();
+            Util.DebugLog("");
+            config ??= PluginConfiguration.CreateForType<Settings>();
+        }
+
+        internal static void Destroy()
+        {
+            Util.DebugLog("");
+            config = null;
+        }
+
+        internal static void Load()
+        {
+            Util.Log("Loading settings");
+            config ??= PluginConfiguration.CreateForType<Settings>();
+
             try
             {
                 config.load();
@@ -119,7 +133,7 @@ namespace Trajectories
 
                 ConfigError = true;
 
-                Util.LogError("Loading Trajectories config: {0}", e.ToString());
+                Util.LogError("Loading config: {0}", e.ToString());
 
                 string TrajPluginPath = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
                 Util.Log("Installed at: {0}", TrajPluginPath);
@@ -144,20 +158,20 @@ namespace Trajectories
                 }
             }
 
-            Serialize(false);
-
+            Serialize();
             MapGUIWindowPos = new Rect(MapGUIWindowPos.xMin, MapGUIWindowPos.yMin, 1, MapGUIWindowPos.height); // width will be auto-sized to fit contents
         }
 
-        public void Save()
+        internal static void Save()
         {
             Util.Log("Saving settings");
             Serialize(true);
         }
 
-        private void Serialize(bool write)
+        private static void Serialize(bool write = false)
         {
-            var props = from p in this.GetType().GetProperties()
+            Util.DebugLog("");
+            var props = from p in typeof(Settings).GetProperties(BindingFlags.NonPublic | BindingFlags.Static)
                         let attr = p.GetCustomAttributes(typeof(Persistent), true)
                         where attr.Length == 1
                         select new { Property = p, Attribute = attr.First() as Persistent };
@@ -165,15 +179,13 @@ namespace Trajectories
             foreach (var prop in props)
             {
                 if (write)
-                    config.SetValue(prop.Property.Name, prop.Property.GetValue(this, null));
+                    config.SetValue(prop.Property.Name, prop.Property.GetValue(Trajectories.Settings, null));
                 else
-                    prop.Property.SetValue(this, config.GetValue<object>(prop.Property.Name, prop.Attribute.DefaultValue), null);
+                    prop.Property.SetValue(Trajectories.Settings, config.GetValue(prop.Property.Name, prop.Attribute.DefaultValue), null);
             }
 
             if (write)
                 config.save();
         }
-
-        private static Settings settings_;
     }
 }

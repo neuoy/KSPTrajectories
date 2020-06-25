@@ -21,7 +21,6 @@
 using System;
 using System.Diagnostics;
 using System.Reflection;
-using UnityEngine;
 
 namespace Trajectories
 {
@@ -50,7 +49,7 @@ namespace Trajectories
             MethodInfo addChannelMethodConcrete =
                 addChannelMethod.MakeGenericMethod(typeof(ChannelType));
 
-            var parameters = new object[] { thisAssemblyName + "/" + id, format };
+            object[] parameters = new object[] { thisAssemblyName + "/" + id, format };
             addChannelMethodConcrete.Invoke(telemetryServiceInstance, parameters);
 #endif
         }
@@ -62,7 +61,7 @@ namespace Trajectories
             if (telemetryServiceInstance == null)
                 return;
 
-            var parameters = new object[] { thisAssemblyName + "/" + id, value };
+            object[] parameters = new object[] { thisAssemblyName + "/" + id, value };
             sendMethod.Invoke(telemetryServiceInstance, parameters);
 #endif
         }
@@ -75,14 +74,14 @@ namespace Trajectories
 
             // Search for telemetry assembly
             Type telemetryServiceType = null;
-            foreach (var loadedAssembly in AssemblyLoader.loadedAssemblies)
+            foreach (AssemblyLoader.LoadedAssembly loadedAssembly in AssemblyLoader.loadedAssemblies)
             {
                 if (loadedAssembly.name != "Telemetry")
                     continue;
 
                 telemetryServiceType = loadedAssembly.assembly.GetType("Telemetry.TelemetryService");
 
-                var fvi = FileVersionInfo.GetVersionInfo(loadedAssembly.path);
+                FileVersionInfo fvi = FileVersionInfo.GetVersionInfo(loadedAssembly.path);
 
                 versionMajor = fvi.FileMajorPart;
                 versionMinor = fvi.FileMinorPart;
