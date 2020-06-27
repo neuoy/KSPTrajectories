@@ -123,6 +123,7 @@ namespace Trajectories
                 return;
 
             line.Vertices.Clear();
+            line.Vertices.Add(Trajectories.AttachedVessel.GetWorldPos3D());
 
             lastPatch = Trajectory.Patches[Trajectory.Patches.Count - 1];
             bodyPosition = lastPatch.StartingState.ReferenceBody.position;
