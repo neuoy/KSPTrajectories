@@ -155,7 +155,7 @@ namespace Trajectories
                 if (!Horizon)
                     return AngleRad;
 
-                return Math.Acos(Vector3d.Dot(position, velocity) / (position.magnitude * velocity.magnitude)) - Math.PI * 0.5 + AngleRad;
+                return Math.Acos(Vector3d.Dot(position, velocity) / (position.magnitude * velocity.magnitude)) - Util.HALF_PI + AngleRad;
             }
 
             [Obsolete("use MainGUI")]

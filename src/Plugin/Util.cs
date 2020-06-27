@@ -28,32 +28,35 @@ using UnityEngine;
 
 namespace Trajectories
 {
-    public static class Util
+    internal static class Util
     {
+        // --------------------------------------------------------------------------
+        // --- Logging --------------------------------------------------------------
+
         private static Dictionary<string, ScreenMessage> messages = new Dictionary<string, ScreenMessage>();
 
-        public static void PostSingleScreenMessage(string id, string message)
+        internal static void PostSingleScreenMessage(string id, string message)
         {
             if (messages.ContainsKey(id))
                 ScreenMessages.RemoveMessage(messages[id]);
             messages[id] = ScreenMessages.PostScreenMessage(message);
         }
 
-        ///<summary> writes a message to the log </summary>
-        public static void Log(string message, params object[] param) => UnityEngine.Debug.Log(string.Format("[{0}] {1}",
+        ///<summary> Writes a message to the log with 'Trajectories' appended to the message </summary>
+        internal static void Log(string message, params object[] param) => UnityEngine.Debug.Log(string.Format("[{0}] {1}",
             MainGUI.TrajectoriesTitle, string.Format(message, param)));
 
-        ///<summary> writes a warning message to the log </summary>
-        public static void LogWarning(string message, params object[] param) => UnityEngine.Debug.LogWarning(string.Format("[{0}] Warning: {1}",
+        ///<summary> Writes a warning message to the log with 'Trajectories' appended to the message </summary>
+        internal static void LogWarning(string message, params object[] param) => UnityEngine.Debug.LogWarning(string.Format("[{0}] Warning: {1}",
             MainGUI.TrajectoriesTitle, string.Format(message, param)));
 
-        ///<summary> writes an error message to the log </summary>
-        public static void LogError(string message, params object[] param) => UnityEngine.Debug.LogError(string.Format("[{0}] Error: {1}",
+        ///<summary> Writes an error message to the log with 'Trajectories' appended to the message </summary>
+        internal static void LogError(string message, params object[] param) => UnityEngine.Debug.LogError(string.Format("[{0}] Error: {1}",
             MainGUI.TrajectoriesTitle, string.Format(message, param)));
 
-        ///<summary> writes a debug message to the log with stack trace info added </summary>
+        ///<summary> Writes a debug message to the log with 'Trajectories' and stack trace info appended to the message </summary>
         [Conditional("DEBUG")]
-        public static void DebugLog(string message, params object[] param)
+        internal static void DebugLog(string message, params object[] param)
         {
             StackTrace stackTrace = new StackTrace();
             UnityEngine.Debug.Log(string.Format("[{0}] Debug: {1}.{2} - {3}",
@@ -61,9 +64,9 @@ namespace Trajectories
                 stackTrace.GetFrame(1).GetMethod().Name, string.Format(message, param)));
         }
 
-        ///<summary> writes a debug warning message to the log with stack trace info added </summary>
+        ///<summary> Writes a debug warning message to the log with 'Trajectories' and stack trace info appended to the message </summary>
         [Conditional("DEBUG")]
-        public static void DebugLogWarning(string message, params object[] param)
+        internal static void DebugLogWarning(string message, params object[] param)
         {
             StackTrace stackTrace = new StackTrace();
             UnityEngine.Debug.LogWarning(string.Format("[{0}] Warning: {1}.{2} - {3}",
@@ -71,9 +74,9 @@ namespace Trajectories
                 stackTrace.GetFrame(1).GetMethod().Name, string.Format(message, param)));
         }
 
-        ///<summary> writes a debug error message to the log with stack trace info added </summary>
+        ///<summary> Writes a debug error message to the log with 'Trajectories' and stack trace info appended to the message </summary>
         [Conditional("DEBUG")]
-        public static void DebugLogError(string message, params object[] param)
+        internal static void DebugLogError(string message, params object[] param)
         {
             StackTrace stackTrace = new StackTrace();
             UnityEngine.Debug.LogError(string.Format("[{0}] Error: {1}.{2} - {3}",
@@ -81,7 +84,11 @@ namespace Trajectories
                 stackTrace.GetFrame(1).GetMethod().Name, string.Format(message, param)));
         }
 
-        public static MethodInfo GetMethodEx(this Type type, string methodName, BindingFlags flags)
+
+        // --------------------------------------------------------------------------
+        // --- Reflection -----------------------------------------------------------
+
+        internal static MethodInfo GetMethodEx(this Type type, string methodName, BindingFlags flags)
         {
             try
             {
@@ -96,7 +103,7 @@ namespace Trajectories
             }
         }
 
-        public static MethodInfo GetMethodEx(this Type type, string methodName, Type[] types)
+        internal static MethodInfo GetMethodEx(this Type type, string methodName, Type[] types)
         {
             try
             {
@@ -111,7 +118,7 @@ namespace Trajectories
             }
         }
 
-        public static MethodInfo GetMethodEx(this Type type, string methodName, BindingFlags flags, Type[] types)
+        internal static MethodInfo GetMethodEx(this Type type, string methodName, BindingFlags flags, Type[] types)
         {
             try
             {
@@ -128,12 +135,40 @@ namespace Trajectories
 
 
         // --------------------------------------------------------------------------
-        // --- Math --------------------------------------------------------------
+        // --- Math -----------------------------------------------------------------
+
+        internal const double HALF_PI = Math.PI * 0.5d;
+
+        /// <summary>
+        /// Clamps a double value
+        /// </summary>
+        internal static double Clamp(double value, double min, double max)
+        {
+            if (value < min)
+                return min;
+            else if (value > max)
+                return max;
+            else
+                return value;
+        }
+
+        /// <summary>
+        /// Clamps a double value, optional return values for min and max can be passed
+        /// </summary>
+        internal static double Clamp(double value, double min, double max, double rtn_min = 0d, double rtn_max = 1d)
+        {
+            if (value < min)
+                return rtn_min;
+            else if (value > max)
+                return rtn_max;
+            else
+                return value;
+        }
 
         /// <summary>
         /// Clamps a double value using the absolute value for comparison, optional return values for min and max can be passed
         /// </summary>
-        public static double ClampAbs(double value, double min, double max, double rtn_min = 0d, double rtn_max = 1d)
+        internal static double ClampAbs(double value, double min, double max, double rtn_min = 0d, double rtn_max = 1d)
         {
             if (Math.Abs(value) < min)
                 return rtn_min;
@@ -147,71 +182,86 @@ namespace Trajectories
         // --------------------------------------------------------------------------
         // --- Vectors --------------------------------------------------------------
 
-        public static Vector3d SwapYZ(Vector3d v) => new Vector3d(v.x, v.z, v.y);
+        private static double swap_double;
+        private static float swap_float;
 
-        public static Vector3 SwapYZ(Vector3 v) => new Vector3(v.x, v.z, v.y);
+        internal static Vector3d SwapYZ(this Vector3d v)
+        {
+            swap_double = v.y;
+            v.y = v.z;
+            v.z = swap_double;
+            return v;
+        }
 
-        public static string ToString(this Vector3d v, string format = "0.000") => "[" + v.x.ToString(format) + ", " + v.y.ToString(format) + ", " + v.z.ToString(format) + "]";
+        internal static Vector3 SwapYZ(this Vector3 v)
+        {
+            swap_float = v.y;
+            v.y = v.z;
+            v.z = swap_float;
+            return v;
+        }
 
-        public static string ToString(this Vector3 v, string format = "0.000") => "[" + v.x.ToString(format) + ", " + v.y.ToString(format) + ", " + v.z.ToString(format) + "]";
+        internal static string ToString(this Vector3d v, string format = "0.000") => "[" + v.x.ToString(format) + ", " + v.y.ToString(format) + ", " + v.z.ToString(format) + "]";
+
+        internal static string ToString(this Vector3 v, string format = "0.000") => "[" + v.x.ToString(format) + ", " + v.y.ToString(format) + ", " + v.z.ToString(format) + "]";
 
 
 
         // --------------------------------------------------------------------------
         // --- TIME -----------------------------------------------------------------
 
-        /// <summary> Return hours in a KSP day. </summary>
-        public static double HoursInDay => GameSettings.KERBIN_TIME ? 6.0 : 24.0;
+        /// <returns> Number of hours in a KSP day. </returns>
+        internal static double HoursInDay => GameSettings.KERBIN_TIME ? 6.0d : 24.0d;
 
-        /// <summary> Return days in a KSP year. </summary>
-        public static double DaysInYear
+        /// <returns> Number of days in a KSP year. </returns>
+        internal static double DaysInYear
         {
             get
             {
                 if (!FlightGlobals.ready)
-                    return 426.0;
-                return Math.Floor(FlightGlobals.GetHomeBody().orbit.period / (HoursInDay * 60.0 * 60.0));
+                    return 426.0d;
+                return Math.Floor(FlightGlobals.GetHomeBody().orbit.period / (HoursInDay * 60.0d * 60.0d));
             }
         }
 
-        /// <summary> Get current time in clocks. </summary>
-        public static double Clocks => Stopwatch.GetTimestamp();
+        /// <returns> Current time in clocks. </returns>
+        internal static double Clocks => Stopwatch.GetTimestamp();
 
         /// <summary> Convert from clocks to microseconds. </summary>
-        public static double Microseconds(double clocks) => clocks * 1000000.0 / Stopwatch.Frequency;
+        internal static double Microseconds(double clocks) => clocks * 1000000.0d / Stopwatch.Frequency;
 
         /// <summary> Convert from clocks to milliseconds. </summary>
-        public static double Milliseconds(double clocks) => clocks * 1000.0 / Stopwatch.Frequency;
+        internal static double Milliseconds(double clocks) => clocks * 1000.0d / Stopwatch.Frequency;
 
         /// <summary> Convert from clocks to seconds. </summary>
-        public static double Seconds(double clocks) => clocks / Stopwatch.Frequency;
+        internal static double Seconds(double clocks) => clocks / Stopwatch.Frequency;
 
 
 
         // --------------------------------------------------------------------------
         // --- GAME LOGIC -----------------------------------------------------------
 
-        /// <summary> Returns true if the current scene is flight. </summary>
-        public static bool IsFlight => HighLogic.LoadedSceneIsFlight;
+        /// <returns> True if the current scene is flight. </returns>
+        internal static bool IsFlight => HighLogic.LoadedSceneIsFlight;
 
-        /// <summary> Returns true if the current scene is editor. </summary>
-        public static bool IsEditor => HighLogic.LoadedSceneIsEditor;
+        /// <returns> True if the current scene is editor. </returns>
+        internal static bool IsEditor => HighLogic.LoadedSceneIsEditor;
 
-        /// <summary> Returns true if the current scene is not the main menu. </summary>
-        public static bool IsGame => HighLogic.LoadedSceneIsGame;
+        /// <returns> True if the current scene is not the main menu. </returns>
+        internal static bool IsGame => HighLogic.LoadedSceneIsGame;
 
-        /// <summary> Returns true if the current scene is tracking station. </summary>
-        public static bool IsTrackingStation => (HighLogic.LoadedScene == GameScenes.TRACKSTATION);
+        /// <returns> True if the current scene is tracking station. </returns>
+        internal static bool IsTrackingStation => (HighLogic.LoadedScene == GameScenes.TRACKSTATION);
 
-        /// <summary> Returns true if the current view is map. </summary>
-        public static bool IsMap => MapView.MapIsEnabled;
+        /// <returns> True if the current view is map. </returns>
+        internal static bool IsMap => MapView.MapIsEnabled;
 
-        /// <summary> Returns true if game is paused. </summary>
-        public static bool IsPaused => FlightDriver.Pause || Planetarium.Pause;
+        /// <returns> True if game is paused. </returns>
+        internal static bool IsPaused => FlightDriver.Pause || Planetarium.Pause;
 
         /// <summary> Check if patched conics are available in the current save. </summary>
-        /// <returns>True if patched conics are available</returns>
-        public static bool IsPatchedConicsAvailable
+        /// <returns> True if patched conics are available</returns>
+        internal static bool IsPatchedConicsAvailable
         {
             get
             {
@@ -225,25 +275,24 @@ namespace Trajectories
         }
 
 
-
         // --------------------------------------------------------------------------
         // --- RANDOM ---------------------------------------------------------------
 
         /// <summary> Random number generator. </summary>
         private static System.Random rng = new System.Random();
 
-        /// <summary> Returns random integer in [0..max_value] range. </summary>
-        public static int RandomInt(int max_value) => rng.Next(max_value);
+        /// <returns> A random integer in the [0..max_value] range. </returns>
+        internal static int RandomInt(int max_value) => rng.Next(max_value);
 
-        /// <summary> Returns random float in [0..1] range. </summary>
-        public static float RandomFloat() => (float)rng.NextDouble();
+        /// <returns> A random float in the [0..1] range. </returns>
+        internal static float RandomFloat() => (float)rng.NextDouble();
 
-        /// <summary> Returns random double in [0..1] range. </summary>
-        public static double RandomDouble() => rng.NextDouble();
+        /// <returns> A random double in the [0..1] range. </returns>
+        internal static double RandomDouble() => rng.NextDouble();
 
-        private static int fast_float_seed = 1;
-        /// <summary> Returns random float in [-1,+1] range.
-        /// Note: it is less random than the c# RNG, but is way faster. </summary>
+        internal static int fast_float_seed = 1;
+        /// <returns> A random float in the [-1..+1] range.
+        /// Note: it is less random than the C# RNG, but is way faster. </returns>
         public static float FastRandomFloat()
         {
             fast_float_seed *= 16807;
@@ -251,22 +300,17 @@ namespace Trajectories
         }
 
 
+        // --------------------------------------------------------------------------
         // --- CONFIG ---------------------------------------------------------------
 
-        // get a config node from the config system
-        public static ConfigNode ParseConfig(string path)
-        {
-            return GameDatabase.Instance.GetConfigNode(path) ?? new ConfigNode();
-        }
+        /// <returns> A config node from the config system </returns>
+        internal static ConfigNode ParseConfig(string path) => GameDatabase.Instance.GetConfigNode(path) ?? new ConfigNode();
 
-        // get a set of config nodes from the config system
-        public static ConfigNode[] ParseConfigs(string path)
-        {
-            return GameDatabase.Instance.GetConfigNodes(path);
-        }
+        /// <returns> A set of config nodes from the config system </returns>
+        internal static ConfigNode[] ParseConfigs(string path) => GameDatabase.Instance.GetConfigNodes(path);
 
-        // get a value from config
-        public static T ConfigValue<T>(ConfigNode node, string key, T default_value)
+        /// <returns> A value from a config node </returns>
+        internal static T ConfigValue<T>(ConfigNode node, string key, T default_value)
         {
             try
             {
@@ -279,8 +323,8 @@ namespace Trajectories
             }
         }
 
-        // get an enum from config
-        public static T ConfigEnum<T>(ConfigNode node, string key, T default_value)
+        /// <returns> An enum from a config node </returns>
+        internal static T ConfigEnum<T>(ConfigNode node, string key, T default_value)
         {
             try
             {
@@ -294,10 +338,11 @@ namespace Trajectories
         }
 
 
+        // --------------------------------------------------------------------------
+        // --- MISC -----------------------------------------------------------------
+
         /// <summary>
         /// Calculate the shortest great-circle distance between two points on a sphere which are given by latitude and longitude.
-        ///
-        ///
         /// https://en.wikipedia.org/wiki/Haversine_formula
         /// </summary>
         /// <param name="bodyRadius"></param> Radius of the sphere in meters
@@ -306,17 +351,18 @@ namespace Trajectories
         /// <param name="destinationLatitude"></param>Latitude of the destination of the distance
         /// <param name="destinationLongitude"></param>Longitude of the destination of the distance
         /// <returns>Distance between origin and source in meters</returns>
-        public static double DistanceFromLatitudeAndLongitude(
+        internal static double DistanceFromLatitudeAndLongitude(
             double bodyRadius,
             double originLatidue, double originLongitude,
             double destinationLatitude, double destinationLongitude)
         {
-            double sin1 = Math.Sin(Math.PI / 180.0 * (originLatidue - destinationLatitude) / 2);
-            double sin2 = Math.Sin(Math.PI / 180.0 * (originLongitude - destinationLongitude) / 2);
-            double cos1 = Math.Cos(Math.PI / 180.0 * destinationLatitude);
-            double cos2 = Math.Cos(Math.PI / 180.0 * originLatidue);
 
-            double lateralDist = 2 * bodyRadius *
+            double sin1 = Math.Sin(Mathf.Deg2Rad * (originLatidue - destinationLatitude) / 2d);
+            double sin2 = Math.Sin(Mathf.Deg2Rad * (originLongitude - destinationLongitude) / 2d);
+            double cos1 = Math.Cos(Mathf.Deg2Rad * destinationLatitude);
+            double cos2 = Math.Cos(Mathf.Deg2Rad * originLatidue);
+
+            double lateralDist = 2d * bodyRadius *
                 Math.Asin(Math.Sqrt(sin1 * sin1 + cos1 * cos2 * sin2 * sin2));
 
             return lateralDist;
