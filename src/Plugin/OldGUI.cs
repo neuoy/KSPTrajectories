@@ -114,7 +114,7 @@ namespace Trajectories
 
             Trajectory.Patch lastPatch = Trajectory.Patches.LastOrDefault();
             CelestialBody lastPatchBody = lastPatch?.StartingState.ReferenceBody;
-            CelestialBody targetBody = Trajectory.Target.Body;
+            CelestialBody targetBody = TargetProfile.Body;
 
             guistring_gForce = (Trajectory.MaxAccel / 9.81).ToString("0.00");
 
@@ -136,7 +136,7 @@ namespace Trajectories
             if (Settings.DisplayTargetGUI)
             {
                 if (lastPatchBody != null && targetBody != null && lastPatch.ImpactPosition.HasValue
-                    && lastPatchBody == targetBody && Trajectory.Target.WorldPosition.HasValue)
+                    && lastPatchBody == targetBody && TargetProfile.WorldPosition.HasValue)
                 {
                     // Get Latitude and Longitude from impact position
                     double impactLat;
@@ -151,7 +151,7 @@ namespace Trajectories
                     double targetLat;
                     double targetLon;
                     double targetAlt;
-                    targetPos = Trajectory.Target.WorldPosition.Value + targetBody.position;
+                    targetPos = TargetProfile.WorldPosition.Value + targetBody.position;
                     targetBody.GetLatLonAlt(targetPos, out targetLat, out targetLon, out targetAlt);
 
                     float targetDistance = (float)(Util.DistanceFromLatitudeAndLongitude(targetBody.Radius + impactAlt,
@@ -177,12 +177,12 @@ namespace Trajectories
                 }
             }
 
-            if (FlightGlobals.ActiveVessel != null)
+            if (Trajectories.IsVesselAttached)
             {
-                CelestialBody body = FlightGlobals.ActiveVessel.mainBody;
+                CelestialBody body = Trajectories.AttachedVessel.mainBody;
 
-                guistring_Latitude = body.GetLatitude(FlightGlobals.ActiveVessel.GetWorldPos3D()).ToString("000.000000");
-                guistring_Longitude = body.GetLongitude(FlightGlobals.ActiveVessel.GetWorldPos3D()).ToString("000.000000");
+                guistring_Latitude = body.GetLatitude(Trajectories.AttachedVessel.GetWorldPos3D()).ToString("000.000000");
+                guistring_Longitude = body.GetLongitude(Trajectories.AttachedVessel.GetWorldPos3D()).ToString("000.000000");
             }
         }
 
@@ -225,12 +225,12 @@ namespace Trajectories
 
             if (Settings.DisplayTargetGUI = ToggleGroup(Settings.DisplayTargetGUI, "Target"))
             {
-                GUI.enabled = Trajectory.Target.WorldPosition.HasValue;
+                GUI.enabled = TargetProfile.WorldPosition.HasValue;
 
                 GUILayout.Label(guistring_targetDistance);
 
                 if (GUILayout.Button("Unset target"))
-                    Trajectory.Target.Clear();
+                    TargetProfile.Clear();
                 GUI.enabled = true;
 
                 GUILayout.BeginHorizontal();
@@ -239,7 +239,7 @@ namespace Trajectories
                 if (GUILayout.Button("Set current impact", GUILayout.Width(150)))
                 {
                     if (patch.ImpactPosition.HasValue)
-                        Trajectory.Target.SetFromWorldPos(patch.StartingState.ReferenceBody, patch.ImpactPosition.Value);
+                        TargetProfile.SetFromWorldPos(patch.StartingState.ReferenceBody, patch.ImpactPosition.Value);
                 }
                 GUI.enabled = true;
                 if (GUILayout.Button("Set KSC", GUILayout.Width(70)))
@@ -250,7 +250,7 @@ namespace Trajectories
                     double longitude = SpaceCenter.Instance.Longitude;
 
                     if (homebody != null)
-                        Trajectory.Target.SetFromLatLonAlt(homebody, latitude, longitude);
+                        TargetProfile.SetFromLatLonAlt(homebody, latitude, longitude);
                 }
                 GUILayout.EndHorizontal();
 
@@ -262,15 +262,15 @@ namespace Trajectories
                 );
                 if (GUILayout.Button("Target vessel"))
                 {
-                    Trajectory.Target.SetFromWorldPos(targetVessel.lastBody, targetVessel.GetWorldPos3D() - targetVessel.lastBody.position);
+                    TargetProfile.SetFromWorldPos(targetVessel.lastBody, targetVessel.GetWorldPos3D() - targetVessel.lastBody.position);
                     ScreenMessages.PostScreenMessage("Targeting vessel " + targetVessel.GetName());
                 }
 
-                FinePrint.Waypoint navigationWaypoint = FlightGlobals.ActiveVessel?.navigationWaypoint;
+                FinePrint.Waypoint navigationWaypoint = Trajectories.AttachedVessel?.navigationWaypoint;
                 GUI.enabled = (navigationWaypoint != null);
                 if (GUILayout.Button("Active waypoint"))
                 {
-                    Trajectory.Target.SetFromLatLonAlt(navigationWaypoint.celestialBody,
+                    TargetProfile.SetFromLatLonAlt(navigationWaypoint.celestialBody,
                         navigationWaypoint.latitude, navigationWaypoint.longitude, navigationWaypoint.altitude);
                     ScreenMessages.PostScreenMessage("Targeting waypoint " + navigationWaypoint.name);
                 }
@@ -279,11 +279,11 @@ namespace Trajectories
                 GUI.enabled = true;
 
                 GUILayout.BeginHorizontal();
-                coords = GUILayout.TextField(Trajectory.Target.ManualText, GUILayout.Width(170));
-                if (coords != Trajectory.Target.ManualText)
+                coords = GUILayout.TextField(TargetProfile.ManualText, GUILayout.Width(170));
+                if (coords != TargetProfile.ManualText)
                 {
-                    Trajectory.Target.ManualText = coords;
-                    Trajectory.Target.Save();
+                    TargetProfile.ManualText = coords;
+                    TargetProfile.Save();
                 }
                 if (GUILayout.Button(new GUIContent("Set",
                         "Enter target latitude and longitude, separated by a comma, in decimal format (with a dot for decimal separator)"),
@@ -297,7 +297,7 @@ namespace Trajectories
                         double lng;
                         if (double.TryParse(latLng[0].Trim(), out lat) && double.TryParse(latLng[1].Trim(), out lng))
                         {
-                            Trajectory.Target.SetFromLatLonAlt(body, lat, lng);
+                            TargetProfile.SetFromLatLonAlt(body, lat, lng);
                         }
                     }
                 }
@@ -345,7 +345,7 @@ namespace Trajectories
                     Settings.UseBlizzyToolbar = GUILayout.Toggle(Settings.UseBlizzyToolbar, new GUIContent("Use Blizzy's toolbar", "Will take effect after restart"));
                 }
 
-                if (FlightGlobals.ActiveVessel != null)
+                if (Trajectories.IsVesselAttached)
                 {
                     GUILayout.Label("Position:");
                     GUILayout.BeginHorizontal();

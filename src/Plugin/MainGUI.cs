@@ -346,9 +346,9 @@ namespace Trajectories
             impact_longitude_label = new DialogGUILabel(() => { return impact_longitude_txt; }, 65);
             impact_vertical_label = new DialogGUILabel(() => { return impact_vertical_txt; }, 65);
             impact_horizontal_label = new DialogGUILabel(() => { return impact_horizontal_txt; }, 65);
-            info_distance_label = new DialogGUILabel(() => { return Trajectory.Target.Body == null ? "" : target_distance_txt; }, 60);
-            info_distance_latitude_label = new DialogGUILabel(() => { return Trajectory.Target.Body == null ? "" : target_distance_latitude_txt; }, 80);
-            info_distance_longitude_label = new DialogGUILabel(() => { return Trajectory.Target.Body == null ? "" : target_distance_longitude_txt; }, 80);
+            info_distance_label = new DialogGUILabel(() => { return TargetProfile.Body == null ? "" : target_distance_txt; }, 60);
+            info_distance_latitude_label = new DialogGUILabel(() => { return TargetProfile.Body == null ? "" : target_distance_latitude_txt; }, 80);
+            info_distance_longitude_label = new DialogGUILabel(() => { return TargetProfile.Body == null ? "" : target_distance_longitude_txt; }, 80);
             target_latitude_label = new DialogGUILabel(() => { return target_latitude_txt; }, 65);
             target_longitude_label = new DialogGUILabel(() => { return target_longitude_txt; }, 65);
             target_distance_label = new DialogGUILabel(() => { return target_distance_txt; }, 60);
@@ -391,7 +391,7 @@ namespace Trajectories
                     new DialogGUILabel(Localizer.Format("#autoLOC_Trajectories_Hori"), lat_long_width),
                     impact_horizontal_label),
                 new DialogGUIHorizontalLayout(TextAnchor.MiddleRight,
-                    new DialogGUILabel(() => { return Trajectory.Target.Body == null ? "" :
+                    new DialogGUILabel(() => { return TargetProfile.Body == null ? "" :
                         Localizer.Format("#autoLOC_Trajectories_TargetDistance"); }, true),
                     info_distance_label,
                     new DialogGUISpace(2),
@@ -452,36 +452,36 @@ namespace Trajectories
                     new DialogGUIToggle(() => { return DescentProfile.RetrogradeEntry; },
                         Localizer.Format("#autoLOC_900607"), OnButtonClick_Retrograde)),
                 new DialogGUIHorizontalLayout(TextAnchor.MiddleLeft,
-                    new DialogGUILabel(DescentProfile.atmos_entry.Name, 45f),
-                    new DialogGUIToggle(() => { return DescentProfile.atmos_entry.Horizon; },
-                        () => { return DescentProfile.atmos_entry.Horizon_txt; }, OnButtonClick_EntryHorizon, 60f),
-                    new DialogGUISlider(() => { return DescentProfile.atmos_entry.SliderPos; },
+                    new DialogGUILabel(DescentProfile.AtmosEntry.Name, 45f),
+                    new DialogGUIToggle(() => { return DescentProfile.AtmosEntry.Horizon; },
+                        () => { return DescentProfile.AtmosEntry.HorizonText; }, OnButtonClick_EntryHorizon, 60f),
+                    new DialogGUISlider(() => { return DescentProfile.AtmosEntry.SliderPos; },
                         -1f, 1f, false, descent_slider_width, -1, OnSliderSet_EntryAngle),
-                    new DialogGUILabel(() => { return DescentProfile.atmos_entry.Angle_txt; }, 30f),
+                    new DialogGUILabel(() => { return DescentProfile.AtmosEntry.AngleText; }, 30f),
                     descent_entry_textinput),
                 new DialogGUIHorizontalLayout(TextAnchor.MiddleLeft,
-                    new DialogGUILabel(DescentProfile.high_altitude.Name, 45f),
-                    new DialogGUIToggle(() => { return DescentProfile.high_altitude.Horizon; },
-                        () => { return DescentProfile.high_altitude.Horizon_txt; }, OnButtonClick_HighHorizon, 60f),
-                    new DialogGUISlider(() => { return DescentProfile.high_altitude.SliderPos; },
+                    new DialogGUILabel(DescentProfile.HighAltitude.Name, 45f),
+                    new DialogGUIToggle(() => { return DescentProfile.HighAltitude.Horizon; },
+                        () => { return DescentProfile.HighAltitude.HorizonText; }, OnButtonClick_HighHorizon, 60f),
+                    new DialogGUISlider(() => { return DescentProfile.HighAltitude.SliderPos; },
                         -1f, 1f, false, descent_slider_width, -1, OnSliderSet_HighAngle),
-                    new DialogGUILabel(() => { return DescentProfile.high_altitude.Angle_txt; }, 30f),
+                    new DialogGUILabel(() => { return DescentProfile.HighAltitude.AngleText; }, 30f),
                     descent_high_textinput),
                 new DialogGUIHorizontalLayout(TextAnchor.MiddleLeft,
-                    new DialogGUILabel(DescentProfile.low_altitude.Name, 45f),
-                    new DialogGUIToggle(() => { return DescentProfile.low_altitude.Horizon; },
-                        () => { return DescentProfile.low_altitude.Horizon_txt; }, OnButtonClick_LowHorizon, 60f),
-                    new DialogGUISlider(() => { return DescentProfile.low_altitude.SliderPos; },
+                    new DialogGUILabel(DescentProfile.LowAltitude.Name, 45f),
+                    new DialogGUIToggle(() => { return DescentProfile.LowAltitude.Horizon; },
+                        () => { return DescentProfile.LowAltitude.HorizonText; }, OnButtonClick_LowHorizon, 60f),
+                    new DialogGUISlider(() => { return DescentProfile.LowAltitude.SliderPos; },
                         -1f, 1f, false, descent_slider_width, -1, OnSliderSet_LowAngle),
-                    new DialogGUILabel(() => { return DescentProfile.low_altitude.Angle_txt; }, 30f),
+                    new DialogGUILabel(() => { return DescentProfile.LowAltitude.AngleText; }, 30f),
                     descent_low_textinput),
                 new DialogGUIHorizontalLayout(TextAnchor.MiddleLeft,
-                    new DialogGUILabel(DescentProfile.final_approach.Name, 45f),
-                    new DialogGUIToggle(() => { return DescentProfile.final_approach.Horizon; },
-                        () => { return DescentProfile.final_approach.Horizon_txt; }, OnButtonClick_FinalHorizon, 60f),
-                    new DialogGUISlider(() => { return DescentProfile.final_approach.SliderPos; },
+                    new DialogGUILabel(DescentProfile.FinalApproach.Name, 45f),
+                    new DialogGUIToggle(() => { return DescentProfile.FinalApproach.Horizon; },
+                        () => { return DescentProfile.FinalApproach.HorizonText; }, OnButtonClick_FinalHorizon, 60f),
+                    new DialogGUISlider(() => { return DescentProfile.FinalApproach.SliderPos; },
                         -1f, 1f, false, descent_slider_width, -1, OnSliderSet_GroundAngle),
-                    new DialogGUILabel(() => { return DescentProfile.final_approach.Angle_txt; }, 30f),
+                    new DialogGUILabel(() => { return DescentProfile.FinalApproach.AngleText; }, 30f),
                     descent_final_textinput)
                 );
 
@@ -748,7 +748,7 @@ namespace Trajectories
 
         private static bool ButtonEnabler_TargetWaypoint()
         {
-            if (FlightGlobals.ActiveVessel?.navigationWaypoint != null)
+            if (Trajectories.AttachedVessel?.navigationWaypoint != null)
                 return true;
             return false;
         }
@@ -762,7 +762,7 @@ namespace Trajectories
 
         private static bool ButtonEnabler_TargetClear()
         {
-            if ((Trajectory.Target.Body != null) && Trajectory.Target.WorldPosition.HasValue)
+            if ((TargetProfile.Body != null) && TargetProfile.WorldPosition.HasValue)
                 return true;
             return false;
         }
@@ -839,25 +839,25 @@ namespace Trajectories
 
         private static void OnButtonClick_EntryHorizon(bool inState)
         {
-            DescentProfile.atmos_entry.Horizon = inState;
+            DescentProfile.AtmosEntry.Horizon = inState;
             DescentProfile.Save();
         }
 
         private static void OnButtonClick_HighHorizon(bool inState)
         {
-            DescentProfile.high_altitude.Horizon = inState;
+            DescentProfile.HighAltitude.Horizon = inState;
             DescentProfile.Save();
         }
 
         private static void OnButtonClick_LowHorizon(bool inState)
         {
-            DescentProfile.low_altitude.Horizon = inState;
+            DescentProfile.LowAltitude.Horizon = inState;
             DescentProfile.Save();
         }
 
         private static void OnButtonClick_FinalHorizon(bool inState)
         {
-            DescentProfile.final_approach.Horizon = inState;
+            DescentProfile.FinalApproach.Horizon = inState;
             DescentProfile.Save();
         }
 
@@ -868,7 +868,7 @@ namespace Trajectories
 
             if (lastPatch != null && lastPatch.ImpactPosition.HasValue)
             {
-                Trajectory.Target.SetFromWorldPos(lastPatch.StartingState.ReferenceBody, lastPatch.ImpactPosition.Value);
+                TargetProfile.SetFromWorldPos(lastPatch.StartingState.ReferenceBody, lastPatch.ImpactPosition.Value);
                 ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_Trajectories_TargetingImpact"));
             }
         }
@@ -881,7 +881,7 @@ namespace Trajectories
             double longitude = SpaceCenter.Instance.Longitude;
 
             if (homebody != null)
-                Trajectory.Target.SetFromLatLonAlt(homebody, latitude, longitude);
+                TargetProfile.SetFromLatLonAlt(homebody, latitude, longitude);
         }
 
         private static void OnButtonClick_TargetVessel()
@@ -891,7 +891,7 @@ namespace Trajectories
 
             if (targetVessel != null && targetVessel.Landed)
             {
-                Trajectory.Target.SetFromWorldPos(targetVessel.lastBody, targetVessel.GetWorldPos3D() - targetVessel.lastBody.position);
+                TargetProfile.SetFromWorldPos(targetVessel.lastBody, targetVessel.GetWorldPos3D() - targetVessel.lastBody.position);
                 ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_Trajectories_TargetingVessel", targetVessel.GetName()));
             }
         }
@@ -899,11 +899,11 @@ namespace Trajectories
         private static void OnButtonClick_TargetWaypoint()
         {
             // grab the currently selected waypoint
-            FinePrint.Waypoint navigationWaypoint = FlightGlobals.ActiveVessel?.navigationWaypoint;
+            FinePrint.Waypoint navigationWaypoint = Trajectories.AttachedVessel?.navigationWaypoint;
 
             if (navigationWaypoint != null)
             {
-                Trajectory.Target.SetFromLatLonAlt(navigationWaypoint.celestialBody,
+                TargetProfile.SetFromLatLonAlt(navigationWaypoint.celestialBody,
                     navigationWaypoint.latitude, navigationWaypoint.longitude, navigationWaypoint.altitude);
                 ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_Trajectories_TargetingWaypoint", navigationWaypoint.name));
             }
@@ -913,7 +913,7 @@ namespace Trajectories
         {
             CelestialBody body = FlightGlobals.currentMainBody;
 
-            string[] latLng = Trajectory.Target.ManualText.Split(new char[] { ',', ';' });
+            string[] latLng = TargetProfile.ManualText.Split(new char[] { ',', ';' });
 
             if (latLng.Length == 2 && body != null)
             {
@@ -922,13 +922,13 @@ namespace Trajectories
 
                 if (double.TryParse(latLng[0].Trim(), out lat) && double.TryParse(latLng[1].Trim(), out lng))
                 {
-                    Trajectory.Target.SetFromLatLonAlt(body, lat, lng);
+                    TargetProfile.SetFromLatLonAlt(body, lat, lng);
                     ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_Trajectories_TargetingManual"));
                 }
             }
         }
 
-        private static void OnButtonClick_TargetClear() => Trajectory.Target.Clear();
+        private static void OnButtonClick_TargetClear() => TargetProfile.Clear();
 
         private static string OnTextInput_TargetManual(string inString)
         {
@@ -960,8 +960,8 @@ namespace Trajectories
             }
 
             manual_target_textinput.text = manual_target_txt;
-            Trajectory.Target.ManualText = manual_target_txt;
-            Trajectory.Target.Save();
+            TargetProfile.ManualText = manual_target_txt;
+            TargetProfile.Save();
             return null;
         }
 
@@ -983,7 +983,7 @@ namespace Trajectories
 
             if (Math.Abs(angle) <= 180f)
             {
-                DescentProfile.atmos_entry.AngleDeg = angle;
+                DescentProfile.AtmosEntry.AngleDeg = angle;
                 DescentProfile.RefreshGui();
                 DescentProfile.Save();
             }
@@ -1008,7 +1008,7 @@ namespace Trajectories
 
             if (Math.Abs(angle) <= 180f)
             {
-                DescentProfile.high_altitude.AngleDeg = angle;
+                DescentProfile.HighAltitude.AngleDeg = angle;
                 DescentProfile.RefreshGui();
                 DescentProfile.Save();
             }
@@ -1033,7 +1033,7 @@ namespace Trajectories
 
             if (Math.Abs(angle) <= 180f)
             {
-                DescentProfile.low_altitude.AngleDeg = angle;
+                DescentProfile.LowAltitude.AngleDeg = angle;
                 DescentProfile.RefreshGui();
                 DescentProfile.Save();
             }
@@ -1058,7 +1058,7 @@ namespace Trajectories
 
             if (Math.Abs(angle) <= 180f)
             {
-                DescentProfile.final_approach.AngleDeg = angle;
+                DescentProfile.FinalApproach.AngleDeg = angle;
                 DescentProfile.RefreshGui();
                 DescentProfile.Save();
             }
@@ -1076,28 +1076,28 @@ namespace Trajectories
 
         private static void OnSliderSet_EntryAngle(float invalue)
         {
-            DescentProfile.atmos_entry.SliderPos = invalue;
+            DescentProfile.AtmosEntry.SliderPos = invalue;
             DescentProfile.RefreshGui();
             DescentProfile.Save();
         }
 
         private static void OnSliderSet_HighAngle(float invalue)
         {
-            DescentProfile.high_altitude.SliderPos = invalue;
+            DescentProfile.HighAltitude.SliderPos = invalue;
             DescentProfile.RefreshGui();
             DescentProfile.Save();
         }
 
         private static void OnSliderSet_LowAngle(float invalue)
         {
-            DescentProfile.low_altitude.SliderPos = invalue;
+            DescentProfile.LowAltitude.SliderPos = invalue;
             DescentProfile.RefreshGui();
             DescentProfile.Save();
         }
 
         private static void OnSliderSet_GroundAngle(float invalue)
         {
-            DescentProfile.final_approach.SliderPos = invalue;
+            DescentProfile.FinalApproach.SliderPos = invalue;
             DescentProfile.RefreshGui();
             DescentProfile.Save();
         }
@@ -1224,13 +1224,13 @@ namespace Trajectories
         {
             // grab the last patch that was calculated
             Trajectory.Patch lastPatch = Trajectory.Patches.LastOrDefault();
-            CelestialBody targetBody = Trajectory.Target.Body;
+            CelestialBody targetBody = TargetProfile.Body;
 
             // target position and distance values
-            if (targetBody != null && Trajectory.Target.WorldPosition.HasValue)
+            if (targetBody != null && TargetProfile.WorldPosition.HasValue)
             {
                 // calculate body offset target position
-                Vector3d targetPos = Trajectory.Target.WorldPosition.Value + targetBody.position;
+                Vector3d targetPos = TargetProfile.WorldPosition.Value + targetBody.position;
 
                 // target body
                 target_body_txt = targetBody.bodyName;
@@ -1252,9 +1252,9 @@ namespace Trajectories
                 target_distance_longitude_txt = "-: -.-- " + Localizer.Format("#autoLOC_Trajectories_km");
             }
 
-            if (manual_target_txt != Trajectory.Target.ManualText)
+            if (manual_target_txt != TargetProfile.ManualText)
             {
-                OnTextInput_TargetManual(Trajectory.Target.ManualText);
+                OnTextInput_TargetManual(TargetProfile.ManualText);
                 manual_target_txt_changed = true;
             }
         }
@@ -1279,14 +1279,14 @@ namespace Trajectories
         {
             // grab the last patch that was calculated
             Trajectory.Patch lastPatch = Trajectory.Patches.LastOrDefault();
-            CelestialBody targetBody = Trajectory.Target.Body;
+            CelestialBody targetBody = TargetProfile.Body;
             CelestialBody lastPatchBody = lastPatch?.StartingState.ReferenceBody;
 
             // target position and distance values
-            if (targetBody != null && Trajectory.Target.WorldPosition.HasValue)
+            if (targetBody != null && TargetProfile.WorldPosition.HasValue)
             {
                 // calculate body offset target position
-                Vector3d targetPos = Trajectory.Target.WorldPosition.Value + targetBody.position;
+                Vector3d targetPos = TargetProfile.WorldPosition.Value + targetBody.position;
 
                 // target distance values
                 if (lastPatch != null && lastPatch.ImpactPosition.HasValue && lastPatchBody == targetBody &&

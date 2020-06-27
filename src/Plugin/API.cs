@@ -96,7 +96,7 @@ namespace Trajectories
         /// </summary>
         public static double? GetEndTime()
         {
-            if (FlightGlobals.ActiveVessel != null)
+            if (Trajectories.IsVesselAttached)
             {
                 foreach (Trajectory.Patch patch in Trajectory.Patches)
                 {
@@ -113,7 +113,7 @@ namespace Trajectories
         /// </summary>
         public static double? GetTimeTillImpact()
         {
-            if (FlightGlobals.ActiveVessel != null)
+            if (Trajectories.IsVesselAttached)
             {
                 foreach (Trajectory.Patch patch in Trajectory.Patches)
                 {
@@ -129,7 +129,7 @@ namespace Trajectories
         /// </summary>
         public static Vector3? GetImpactPosition()
         {
-            if (FlightGlobals.ActiveVessel != null)
+            if (Trajectories.IsVesselAttached)
             {
                 foreach (Trajectory.Patch patch in Trajectory.Patches)
                 {
@@ -145,7 +145,7 @@ namespace Trajectories
         /// </summary>
         public static Vector3? GetImpactVelocity()
         {
-            if (FlightGlobals.ActiveVessel != null)
+            if (Trajectories.IsVesselAttached)
             {
                 foreach (Trajectory.Patch patch in Trajectory.Patches)
                 {
@@ -161,7 +161,7 @@ namespace Trajectories
         /// </summary>
         public static Orbit GetSpaceOrbit()
         {
-            if (FlightGlobals.ActiveVessel != null)
+            if (Trajectories.IsVesselAttached)
             {
                 foreach (Trajectory.Patch patch in Trajectory.Patches)
                 {
@@ -181,8 +181,8 @@ namespace Trajectories
         /// </summary>
         public static Vector3? PlannedDirection()
         {
-            if (FlightGlobals.ActiveVessel != null && Trajectory.Target.Body != null)
                 return NavBallOverlay.GetPlannedDirection();
+            if (Trajectories.IsVesselAttached && TargetProfile.Body != null)
             return null;
         }
 
@@ -191,8 +191,8 @@ namespace Trajectories
         /// </summary>
         public static Vector3? CorrectedDirection()
         {
-            if (FlightGlobals.ActiveVessel != null && Trajectory.Target.Body != null)
                 return NavBallOverlay.GetCorrectedDirection();
+            if (Trajectories.IsVesselAttached && TargetProfile.Body != null)
             return null;
         }
 
@@ -201,7 +201,7 @@ namespace Trajectories
         /// </summary>
         public static bool HasTarget()
         {
-            if (FlightGlobals.ActiveVessel != null && Trajectory.Target.Body != null)
+            if (Trajectories.IsVesselAttached && TargetProfile.Body != null)
                 return true;
             return false;
         }
@@ -211,11 +211,11 @@ namespace Trajectories
         /// </summary>
         public static void SetTarget(double lat, double lon, double? alt = null)
         {
-            if (FlightGlobals.ActiveVessel != null)
+            if (Trajectories.IsVesselAttached)
             {
                 CelestialBody body = FlightGlobals.GetHomeBody();
                 if (body != null)
-                    Trajectory.Target.SetFromLatLonAlt(body, lat, lon, alt);
+                    TargetProfile.SetFromLatLonAlt(body, lat, lon, alt);
             }
         }
 
@@ -226,13 +226,13 @@ namespace Trajectories
         {
             get
             {
-                if (FlightGlobals.ActiveVessel != null)
+                if (Trajectories.IsVesselAttached)
                     return !DescentProfile.RetrogradeEntry;
                 return null;
             }
             set
             {
-                if ((FlightGlobals.ActiveVessel != null) && DescentProfile.RetrogradeEntry)
+                if (Trajectories.IsVesselAttached && DescentProfile.RetrogradeEntry)
                 {
                     DescentProfile.RetrogradeEntry = false;
                     DescentProfile.Save();
@@ -247,13 +247,13 @@ namespace Trajectories
         {
             get
             {
-                if (FlightGlobals.ActiveVessel != null)
+                if (Trajectories.IsVesselAttached)
                     return DescentProfile.RetrogradeEntry;
                 return null;
             }
             set
             {
-                if ((FlightGlobals.ActiveVessel != null) && !DescentProfile.RetrogradeEntry)
+                if (Trajectories.IsVesselAttached && !DescentProfile.RetrogradeEntry)
                 {
                     DescentProfile.RetrogradeEntry = true;
                     DescentProfile.Save();
@@ -266,7 +266,7 @@ namespace Trajectories
         /// </summary>
         public static void ResetDescentProfile(double AoA = Math.PI)
         {
-            if (FlightGlobals.ActiveVessel != null)
+            if (Trajectories.IsVesselAttached)
             {
                 DescentProfile.Reset(AoA);
                 DescentProfile.Save();
@@ -283,24 +283,24 @@ namespace Trajectories
         {
             get
             {
-                if (FlightGlobals.ActiveVessel != null)
+                if (Trajectories.IsVesselAttached)
                 {
                     return new Vector4(
-                        (float)DescentProfile.atmos_entry.AngleRad,
-                        (float)DescentProfile.high_altitude.AngleRad,
-                        (float)DescentProfile.low_altitude.AngleRad,
-                        (float)DescentProfile.final_approach.AngleRad);
+                        (float)DescentProfile.AtmosEntry.AngleRad,
+                        (float)DescentProfile.HighAltitude.AngleRad,
+                        (float)DescentProfile.LowAltitude.AngleRad,
+                        (float)DescentProfile.FinalApproach.AngleRad);
                 }
                 return null;
             }
             set
             {
-                if (FlightGlobals.ActiveVessel != null && value.HasValue)
+                if (Trajectories.IsVesselAttached && value.HasValue)
                 {
-                    DescentProfile.atmos_entry.AngleRad = value.Value.x;
-                    DescentProfile.high_altitude.AngleRad = value.Value.y;
-                    DescentProfile.low_altitude.AngleRad = value.Value.z;
-                    DescentProfile.final_approach.AngleRad = value.Value.w;
+                    DescentProfile.AtmosEntry.AngleRad = value.Value.x;
+                    DescentProfile.HighAltitude.AngleRad = value.Value.y;
+                    DescentProfile.LowAltitude.AngleRad = value.Value.z;
+                    DescentProfile.FinalApproach.AngleRad = value.Value.w;
                     DescentProfile.Save();
                 }
             }
@@ -314,24 +314,24 @@ namespace Trajectories
         {
             get
             {
-                if (FlightGlobals.ActiveVessel != null)
+                if (Trajectories.IsVesselAttached)
                 {
                     return new Vector4(
-                        DescentProfile.atmos_entry.Horizon ? 0f : 1f,
-                        DescentProfile.high_altitude.Horizon ? 0f : 1f,
-                        DescentProfile.low_altitude.Horizon ? 0f : 1f,
-                        DescentProfile.final_approach.Horizon ? 0f : 1f);
+                        DescentProfile.AtmosEntry.Horizon ? 0f : 1f,
+                        DescentProfile.HighAltitude.Horizon ? 0f : 1f,
+                        DescentProfile.LowAltitude.Horizon ? 0f : 1f,
+                        DescentProfile.FinalApproach.Horizon ? 0f : 1f);
                 }
                 return null;
             }
             set
             {
-                if (FlightGlobals.ActiveVessel != null && value.HasValue)
+                if (Trajectories.IsVesselAttached && value.HasValue)
                 {
-                    DescentProfile.atmos_entry.Horizon = value.Value.x == 0f ? true : false;
-                    DescentProfile.high_altitude.Horizon = value.Value.y == 0f ? true : false;
-                    DescentProfile.low_altitude.Horizon = value.Value.z == 0f ? true : false;
-                    DescentProfile.final_approach.Horizon = value.Value.w == 0f ? true : false;
+                    DescentProfile.AtmosEntry.Horizon = value.Value.x == 0f ? true : false;
+                    DescentProfile.HighAltitude.Horizon = value.Value.y == 0f ? true : false;
+                    DescentProfile.LowAltitude.Horizon = value.Value.z == 0f ? true : false;
+                    DescentProfile.FinalApproach.Horizon = value.Value.w == 0f ? true : false;
                     DescentProfile.Save();
                 }
             }
@@ -342,8 +342,7 @@ namespace Trajectories
         /// </summary>
         public static void UpdateTrajectory()
         {
-            if (FlightGlobals.ActiveVessel != null)
-                Trajectory.ComputeTrajectory(FlightGlobals.ActiveVessel);
+            Trajectory.ComputeTrajectory();
         }
     }
 }

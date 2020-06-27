@@ -18,6 +18,7 @@
   along with Trajectories.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+using System.Linq;
 using UnityEngine;
 
 namespace Trajectories
@@ -33,6 +34,15 @@ namespace Trajectories
         internal static string Version { get; private set; } = "X.X.X";
 
         internal static Settings Settings { get; private set; }
+
+        /// <summary> The vessel that trajectories is attached to </summary>
+        internal static Vessel AttachedVessel { get; private set; }
+
+        /// <returns> True if trajectories is attached to a vessel </returns>
+        internal static bool IsVesselAttached => AttachedVessel != null;
+
+        /// <returns> True if trajectories is attached to a vessel and that the vessel also has parts </returns>
+        internal static bool VesselHasParts => IsVesselAttached ? AttachedVessel.Parts.Count != 0 : false;
 
         //  constructor
         static Trajectories()
@@ -83,10 +93,12 @@ namespace Trajectories
 
         internal void Update()
         {
-            if (Util.IsPaused || Settings == null)
+            if (Util.IsPaused || Settings == null || !Util.IsFlight)
                 return;
 
-            DescentProfile.Update();
+            if (AttachedVessel != FlightGlobals.ActiveVessel)
+                AttachVessel();
+
             Trajectory.Update();
             MapOverlay.Update();
             FlightOverlay.Update();
@@ -113,6 +125,7 @@ namespace Trajectories
         internal void OnDestroy()
         {
             Util.DebugLog("");
+            AttachedVessel = null;
             AppLauncherButton.DestroyToolbarButton();
             MainGUI.DeSpawn();
             NavBallOverlay.DestroyRenderer();
@@ -125,6 +138,7 @@ namespace Trajectories
         internal void OnApplicationQuit()
         {
             Util.Log("Ending after {0} seconds", Time.time);
+            AttachedVessel = null;
             AppLauncherButton.Destroy();
             MainGUI.Destroy();
             NavBallOverlay.Destroy();
@@ -132,6 +146,70 @@ namespace Trajectories
             MapOverlay.Destroy();
             Trajectory.Destroy();
             DescentProfile.Destroy();
+            if (Settings != null)
+                Settings.Destroy();
+            Settings = null;
+        }
+
+        private void AttachVessel()
+        {
+            Util.DebugLog("Loading profiles for vessel");
+
+            AttachedVessel = FlightGlobals.ActiveVessel;
+
+            if (AttachedVessel == null)
+            {
+                Util.DebugLog("No vessel");
+                DescentProfile.Clear();
+                TargetProfile.Clear();
+                TargetProfile.ManualText = "";
+            }
+            else
+            {
+                TrajectoriesVesselSettings module = AttachedVessel.Parts.SelectMany(p => p.Modules.OfType<TrajectoriesVesselSettings>()).FirstOrDefault();
+                if (module == null)
+                {
+                    Util.DebugLog("No TrajectoriesVesselSettings module");
+                    DescentProfile.Clear();
+                    TargetProfile.Clear();
+                    TargetProfile.ManualText = "";
+                }
+                else if (!module.Initialized)
+                {
+                    Util.DebugLog("Initializing TrajectoriesVesselSettings module");
+                    DescentProfile.Clear();
+                    DescentProfile.Save(module);
+                    TargetProfile.Clear();
+                    TargetProfile.ManualText = "";
+                    TargetProfile.Save(module);
+                    module.Initialized = true;
+                    Util.Log("New vessel, profiles created");
+                }
+                else
+                {
+                    Util.DebugLog("Reading profile settings...");
+                    // descent profile
+                    if (DescentProfile.Ready)
+                    {
+                        DescentProfile.RetrogradeEntry = module.RetrogradeEntry;
+                        DescentProfile.AtmosEntry.AngleRad = module.EntryAngle;
+                        DescentProfile.AtmosEntry.Horizon = module.EntryHorizon;
+                        DescentProfile.HighAltitude.AngleRad = module.HighAngle;
+                        DescentProfile.HighAltitude.Horizon = module.HighHorizon;
+                        DescentProfile.LowAltitude.AngleRad = module.LowAngle;
+                        DescentProfile.LowAltitude.Horizon = module.LowHorizon;
+                        DescentProfile.FinalApproach.AngleRad = module.GroundAngle;
+                        DescentProfile.FinalApproach.Horizon = module.GroundHorizon;
+                        DescentProfile.RefreshGui();
+                    }
+
+                    // target profile
+                    TargetProfile.SetFromLocalPos(FlightGlobals.Bodies.FirstOrDefault(b => b.name == module.TargetBody),
+                        new Vector3d(module.TargetPosition_x, module.TargetPosition_y, module.TargetPosition_z));
+                    TargetProfile.ManualText = module.ManualTargetTxt;
+                    Util.Log("Profiles loaded");
+                }
+            }
         }
     }
 }

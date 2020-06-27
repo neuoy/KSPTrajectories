@@ -31,7 +31,6 @@ namespace Trajectories
     {
         private const double GUI_MAX_ANGLE = Math.PI / 2d;
 
-        private static Vessel attached_vessel;
         private static bool retrograde_entry;
 
         internal class Node
@@ -44,8 +43,8 @@ namespace Trajectories
 
             public string Name { get; private set; }
             public string Description { get; private set; }
-            public string Horizon_txt { get; private set; }
-            public string Angle_txt { get; private set; }
+            public string HorizonText { get; private set; }
+            public string AngleText { get; private set; }
 
             public bool Horizon
             {
@@ -53,7 +52,7 @@ namespace Trajectories
                 set
                 {
                     horizon = value;
-                    Horizon_txt = value ? "Horiz" : "AoA";
+                    HorizonText = value ? "Horiz" : "AoA";
                 }
             }
 
@@ -147,7 +146,7 @@ namespace Trajectories
                     sliderPos = position;
 
                 // update gui descent page angle text
-                Angle_txt = (gui_angle_rad * Mathf.Rad2Deg).ToString("F1") + "°";
+                AngleText = (gui_angle_rad * Mathf.Rad2Deg).ToString("F1") + "°";
             }
 
             public double GetAngleOfAttack(Vector3d position, Vector3d velocity)
@@ -163,22 +162,22 @@ namespace Trajectories
             {
                 GUILayout.BeginHorizontal();
                 GUILayout.Label(new GUIContent(Name, Description), GUILayout.Width(45));
-                Horizon = GUILayout.Toggle(Horizon, new GUIContent(Horizon_txt, "AoA = Angle of Attack = angle relatively to the velocity vector.\nHoriz = angle relatively to the horizon."), GUILayout.Width(45));
+                Horizon = GUILayout.Toggle(Horizon, new GUIContent(HorizonText, "AoA = Angle of Attack = angle relatively to the velocity vector.\nHoriz = angle relatively to the horizon."), GUILayout.Width(45));
                 SliderPos = GUILayout.HorizontalSlider(SliderPos, -1.0f, 1.0f, GUILayout.Width(90));
-                GUILayout.Label(Angle_txt, GUILayout.Width(42));
+                GUILayout.Label(AngleText, GUILayout.Width(42));
                 GUILayout.EndHorizontal();
             }
         }
 
-        internal static Node atmos_entry;
-        internal static Node high_altitude;
-        internal static Node low_altitude;
-        internal static Node final_approach;
+        internal static Node AtmosEntry { get; private set; }
+        internal static Node HighAltitude { get; private set; }
+        internal static Node LowAltitude { get; private set; }
+        internal static Node FinalApproach { get; private set; }
 
         /// <summary>
         /// Returns true if all nodes have been allocated.
         /// </summary>
-        internal static bool Ready => (atmos_entry != null && high_altitude != null && low_altitude != null && final_approach != null);
+        internal static bool Ready => (AtmosEntry != null && HighAltitude != null && LowAltitude != null && FinalApproach != null);
 
         /// <summary>
         /// Sets the profile to Pro/Retrograde or Returns true if a Retrograde entry is selected.
@@ -190,10 +189,10 @@ namespace Trajectories
             {
                 if (Ready)
                 {
-                    atmos_entry.Retrograde = value;
-                    high_altitude.Retrograde = value;
-                    low_altitude.Retrograde = value;
-                    final_approach.Retrograde = value;
+                    AtmosEntry.Retrograde = value;
+                    HighAltitude.Retrograde = value;
+                    LowAltitude.Retrograde = value;
+                    FinalApproach.Retrograde = value;
                 }
                 retrograde_entry = value;
             }
@@ -207,10 +206,10 @@ namespace Trajectories
             Util.DebugLog(Ready ? "Resetting" : "Constructing");
             if (!Ready)
             {
-                atmos_entry ??= new Node(Localizer.Format("#autoLOC_Trajectories_Entry"), Localizer.Format("#autoLOC_Trajectories_EntryDesc"));
-                high_altitude ??= new Node(Localizer.Format("#autoLOC_Trajectories_High"), Localizer.Format("#autoLOC_Trajectories_HighDesc"));
-                low_altitude ??= new Node(Localizer.Format("#autoLOC_Trajectories_Low"), Localizer.Format("#autoLOC_Trajectories_LowDesc"));
-                final_approach ??= new Node(Localizer.Format("#autoLOC_Trajectories_Final"), Localizer.Format("#autoLOC_Trajectories_FinalDesc"));
+                AtmosEntry ??= new Node(Localizer.Format("#autoLOC_Trajectories_Entry"), Localizer.Format("#autoLOC_Trajectories_EntryDesc"));
+                HighAltitude ??= new Node(Localizer.Format("#autoLOC_Trajectories_High"), Localizer.Format("#autoLOC_Trajectories_HighDesc"));
+                LowAltitude ??= new Node(Localizer.Format("#autoLOC_Trajectories_Low"), Localizer.Format("#autoLOC_Trajectories_LowDesc"));
+                FinalApproach ??= new Node(Localizer.Format("#autoLOC_Trajectories_Final"), Localizer.Format("#autoLOC_Trajectories_FinalDesc"));
             }
 
             if (Settings.DefaultDescentIsRetro)
@@ -227,91 +226,13 @@ namespace Trajectories
         internal static void Destroy()
         {
             Util.DebugLog("");
-            atmos_entry = null;
-            high_altitude = null;
-            low_altitude = null;
-            final_approach = null;
-            attached_vessel = null;
+            AtmosEntry = null;
+            HighAltitude = null;
+            LowAltitude = null;
+            FinalApproach = null;
         }
 
-        /// <summary>
-        /// Updates the descent profile on a vessel change with the setting contained in the vessels <see cref="TrajectoriesVesselSettings"/> module.
-        /// Resets the profile to default settings if no vessel or module is found.
-        /// </summary>
-        internal static void Update()
-        {
-            if (!Ready)
-                return;
-
-            if (attached_vessel != FlightGlobals.ActiveVessel)
-            {
-                Util.DebugLog("Loading vessels descent profile");
-                attached_vessel = FlightGlobals.ActiveVessel;
-
-                if (attached_vessel == null)
-                {
-                    Util.DebugLog("No vessel");
-                    if (Settings.DefaultDescentIsRetro)
-                        Reset();
-                    else
-                        Reset(0d);
-                }
-                else
-                {
-                    TrajectoriesVesselSettings module = attached_vessel.Parts.SelectMany(p => p.Modules.OfType<TrajectoriesVesselSettings>()).FirstOrDefault();
-                    if (module == null)
-                    {
-                        Util.DebugLog("No TrajectoriesVesselSettings module");
-                        if (Settings.DefaultDescentIsRetro)
-                            Reset();
-                        else
-                            Reset(0d);
-                    }
-                    else if (!module.Initialized)
-                    {
-                        //Util.DebugLog("Initializing TrajectoriesVesselSettings module");
-                        if (Settings.DefaultDescentIsRetro)
-                            Reset();
-                        else
-                            Reset(0d);
-
-                        module.EntryAngle = atmos_entry.AngleRad;
-                        module.EntryHorizon = atmos_entry.Horizon;
-                        module.HighAngle = high_altitude.AngleRad;
-                        module.HighHorizon = high_altitude.Horizon;
-                        module.LowAngle = low_altitude.AngleRad;
-                        module.LowHorizon = low_altitude.Horizon;
-                        module.GroundAngle = final_approach.AngleRad;
-                        module.GroundHorizon = final_approach.Horizon;
-
-                        module.RetrogradeEntry = RetrogradeEntry;
-
-                        module.Initialized = true;
-                    }
-                    else
-                    {
-                        Util.DebugLog("Reading profile settings...");
-                        RetrogradeEntry = module.RetrogradeEntry;
-
-                        atmos_entry.AngleRad = module.EntryAngle;
-                        atmos_entry.Horizon = module.EntryHorizon;
-                        high_altitude.AngleRad = module.HighAngle;
-                        high_altitude.Horizon = module.HighHorizon;
-                        low_altitude.AngleRad = module.LowAngle;
-                        low_altitude.Horizon = module.LowHorizon;
-                        final_approach.AngleRad = module.GroundAngle;
-                        final_approach.Horizon = module.GroundHorizon;
-
-
-                        RefreshGui();
-
-                        Util.Log("Descent profile loaded");
-                    }
-                }
-            }
-        }
-
-        /// <summary> Resets nodes to defaults and releases attached vessel. </summary>
+        /// <summary> Resets nodes to defaults </summary>
         internal static void Clear()
         {
             Util.DebugLog("");
@@ -319,7 +240,6 @@ namespace Trajectories
                 Reset();
             else
                 Reset(0d);
-            attached_vessel = null;
         }
 
         /// <summary>
@@ -333,14 +253,14 @@ namespace Trajectories
             //Util.DebugLog("Resetting vessel descent profile to {0} degrees", AoA));
             RetrogradeEntry = Math.Abs(AoA) > GUI_MAX_ANGLE;   // sets to prograde entry if AoA is greater than +-PI/2 (+-90 degrees)
 
-            atmos_entry.AngleRad = AoA;
-            atmos_entry.Horizon = false;
-            high_altitude.AngleRad = AoA;
-            high_altitude.Horizon = false;
-            low_altitude.AngleRad = AoA;
-            low_altitude.Horizon = false;
-            final_approach.AngleRad = AoA;
-            final_approach.Horizon = false;
+            AtmosEntry.AngleRad = AoA;
+            AtmosEntry.Horizon = false;
+            HighAltitude.AngleRad = AoA;
+            HighAltitude.Horizon = false;
+            LowAltitude.AngleRad = AoA;
+            LowAltitude.Horizon = false;
+            FinalApproach.AngleRad = AoA;
+            FinalApproach.Horizon = false;
 
             RefreshGui();
         }
@@ -350,34 +270,41 @@ namespace Trajectories
             if (!Ready)
                 return;
 
-            atmos_entry.RefreshGui();
-            high_altitude.RefreshGui();
-            low_altitude.RefreshGui();
-            final_approach.RefreshGui();
+            AtmosEntry.RefreshGui();
+            HighAltitude.RefreshGui();
+            LowAltitude.RefreshGui();
+            FinalApproach.RefreshGui();
 
-            RetrogradeEntry = atmos_entry.Retrograde || high_altitude.Retrograde || low_altitude.Retrograde || final_approach.Retrograde;
+            RetrogradeEntry = AtmosEntry.Retrograde || HighAltitude.Retrograde || LowAltitude.Retrograde || FinalApproach.Retrograde;
         }
 
+        /// <summary> Saves the profile to the passed vessel module </summary>
+        internal static void Save(TrajectoriesVesselSettings module)
+        {
+            module.EntryAngle = AtmosEntry.AngleRad;
+            module.EntryHorizon = AtmosEntry.Horizon;
+            module.HighAngle = HighAltitude.AngleRad;
+            module.HighHorizon = HighAltitude.Horizon;
+            module.LowAngle = LowAltitude.AngleRad;
+            module.LowHorizon = LowAltitude.Horizon;
+            module.GroundAngle = FinalApproach.AngleRad;
+            module.GroundHorizon = FinalApproach.Horizon;
+
+            module.RetrogradeEntry = RetrogradeEntry;
+        }
+
+        /// <summary> Saves the profile to the active vessel module </summary>
         internal static void Save()
         {
-            if (attached_vessel == null || !Ready)
+            if (!Trajectories.IsVesselAttached || !Ready)
                 return;
 
-            //Util.DebugLog("Saving vessels descent profile");
-            foreach (TrajectoriesVesselSettings module in attached_vessel.Parts.SelectMany(p => p.Modules.OfType<TrajectoriesVesselSettings>()))
+            //Util.DebugLog("Saving vessels descent profile...");
+            foreach (TrajectoriesVesselSettings module in Trajectories.AttachedVessel.Parts.SelectMany(p => p.Modules.OfType<TrajectoriesVesselSettings>()))
             {
-                module.EntryAngle = atmos_entry.AngleRad;
-                module.EntryHorizon = atmos_entry.Horizon;
-                module.HighAngle = high_altitude.AngleRad;
-                module.HighHorizon = high_altitude.Horizon;
-                module.LowAngle = low_altitude.AngleRad;
-                module.LowHorizon = low_altitude.Horizon;
-                module.GroundAngle = final_approach.AngleRad;
-                module.GroundHorizon = final_approach.Horizon;
-
-                module.RetrogradeEntry = RetrogradeEntry;
-                module.Initialized = true;
+                Save(module);
             }
+            //Util.DebugLog("Descent profile saved");
         }
 
         [Obsolete("use MainGUI")]
@@ -386,10 +313,10 @@ namespace Trajectories
             if (!Ready)
                 return;
 
-            atmos_entry.DoGUI();
-            high_altitude.DoGUI();
-            low_altitude.DoGUI();
-            final_approach.DoGUI();
+            AtmosEntry.DoGUI();
+            HighAltitude.DoGUI();
+            LowAltitude.DoGUI();
+            FinalApproach.DoGUI();
         }
 
         [Obsolete("use MainGUI")]
@@ -431,20 +358,20 @@ namespace Trajectories
 
             if (altitudeRatio > 0.5)  // Atmospheric entry
             {
-                a = atmos_entry;
-                b = high_altitude;
+                a = AtmosEntry;
+                b = HighAltitude;
                 aCoeff = Math.Min((altitudeRatio - 0.5) * 2.0, 1.0);
             }
             else if (altitudeRatio > 0.25)  // High Altitude
             {
-                a = high_altitude;
-                b = low_altitude;
+                a = HighAltitude;
+                b = LowAltitude;
                 aCoeff = altitudeRatio * 4.0 - 1.0;
             }
             else if (altitudeRatio > 0.05)  // Low Altitude
             {
-                a = low_altitude;
-                b = final_approach;
+                a = LowAltitude;
+                b = FinalApproach;
                 aCoeff = altitudeRatio * 5.0 - 0.25;
 
                 aCoeff = 1.0 - aCoeff;
@@ -452,7 +379,7 @@ namespace Trajectories
             }
             else    // Final Approach or Non-Atmospheric Body
             {
-                return final_approach.GetAngleOfAttack(position, velocity);
+                return FinalApproach.GetAngleOfAttack(position, velocity);
             }
 
             double aAoA = a.GetAngleOfAttack(position, velocity);

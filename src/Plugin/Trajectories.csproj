@@ -241,6 +241,7 @@
     <Compile Include="FlightOverlay.cs" />
     <Compile Include="3rdParty\GLUtils.cs" />
     <Compile Include="OldGUI.cs" />
+    <Compile Include="TargetProfile.cs" />
     <Compile Include="Trajectories.cs" />
     <Compile Include="Utilities\DebugFastStart.cs" />
     <Compile Include="Utilities\Profiler.cs" />

@@ -101,121 +101,12 @@ namespace Trajectories
 
             internal Vector3? ImpactVelocity { get; set; }
         }
-
-        internal static class Target
-        {
-            /// <summary>
-            /// Tests if the target has been set.
-            /// </summary>
-            /// <returns></returns>
-            internal static bool HasTarget() => LocalPosition.HasValue && Body != null;
-
-            /// <summary>
-            /// Targets reference body
-            /// </summary>
-            internal static CelestialBody Body { get; set; } = null;
-
-            /// <summary>
-            /// Targets position in WorldSpace
-            /// </summary>
-            internal static Vector3d? WorldPosition
-            {
-                get => LocalPosition.HasValue ? Body?.transform?.TransformDirection(LocalPosition.Value) : null;
-                set =>
-                    // A transform that has double precision would be nice so we can have target precision in meter's
-                    LocalPosition = value.HasValue ? Body?.transform?.InverseTransformDirection(value.Value) : null;
-            }
-
-            /// <summary>
-            /// Targets position in LocalSpace relative to the target body
-            /// </summary>
-            internal static Vector3d? LocalPosition { get; private set; } = null;
-
-            /// <summary>
-            /// Manual target TextBox string
-            /// </summary>
-            internal static string ManualText { get; set; } = "";
-
-            /// <summary>
-            /// Sets the target to a body and a World position
-            /// Saves the target to the active vessel.
-            /// </summary>
-            internal static void SetFromWorldPos(CelestialBody body, Vector3d position)
-            {
-                Body = body;
-                WorldPosition = position;
-
-                Save();
-            }
-
-            /// <summary>
-            /// Sets the target to a body and a body-relative position
-            /// Saves the target to the active vessel.
-            /// </summary>
-            internal static void SetFromLocalPos(CelestialBody body, Vector3d position)
-            {
-                Body = body;
-                LocalPosition = position;
-
-                Save();
-            }
-
-            /// <summary>
-            /// Sets the target to a body and a World position. If the altitude is not given, it will be calculated as the surface altitude at that latitude/longitude.
-            /// Saves the target to the active vessel.
-            /// </summary>
-            internal static void SetFromLatLonAlt(CelestialBody body, double latitude, double longitude, double? altitude = null)
-            {
-                Body = body;
-
-                if (!altitude.HasValue)
-                {
-                    Vector3d relPos = body.GetWorldSurfacePosition(latitude, longitude, 2.0) - body.position;
-                    altitude = Trajectory.GetGroundAltitude(body, relPos);
-                }
-
-                LocalPosition = body.GetRelSurfacePosition(latitude, longitude, altitude.Value);
-
-                Save();
-            }
-
-            /// <summary>
-            /// Clears the target
-            /// </summary>
-            internal static void Clear()
-            {
-                Body = null;
-                LocalPosition = null;
-            }
-
-
-            /// <summary>
-            /// Saves the target to the active vessel module
-            /// </summary>
-            internal static void Save()
-            {
-                if (attachedVessel == null)
-                    return;
-
-                Util.DebugLog("Saving target profile settings...");
-                foreach (TrajectoriesVesselSettings module in FlightGlobals.ActiveVessel.Parts.SelectMany(p => p.Modules.OfType<TrajectoriesVesselSettings>()))
-                {
-                    module.TargetBody = Body == null ? "" : Body.name;
-                    module.TargetPosition_x = LocalPosition.HasValue ? LocalPosition.Value.x : 0d;
-                    module.TargetPosition_y = LocalPosition.HasValue ? LocalPosition.Value.y : 0d;
-                    module.TargetPosition_z = LocalPosition.HasValue ? LocalPosition.Value.z : 0d;
-                    module.ManualTargetTxt = ManualText;
-                    Util.DebugLog("Target profile saved");
-                }
-            }
         }
 
         internal const double integrator_min = 0.1d;         // RK4 Integrator minimum step size
         internal const double integrator_max = 5.0d;         // RK4 Integrator maximum step size
 
         private static int MaxIncrementTime => 2;
-
-        private static Vessel attachedVessel;
 
         private static VesselAerodynamicModel aerodynamicModel_;
 
@@ -270,10 +161,7 @@ namespace Trajectories
 #endif
         }
 
-        internal static void Destroy()
-        {
-            Util.DebugLog("");
-        }
+        internal static void Destroy() => Util.DebugLog("");
 
         internal static void Update()
         {
@@ -289,48 +177,9 @@ namespace Trajectories
             }
             gameFrameTime_ = Stopwatch.StartNew();
 
-            if (Util.IsFlight)
-            {
-                if (attachedVessel != FlightGlobals.ActiveVessel)
-                {
-                    Util.DebugLog("Loading vessels target profile");
-                    attachedVessel = FlightGlobals.ActiveVessel;
-                    if (attachedVessel == null)
-                    {
-                        Util.DebugLog("No vessel");
-                        Target.Clear();
-                        Target.ManualText = "";
-                    }
-                    else
-                    {
-                        TrajectoriesVesselSettings module = attachedVessel.Parts.SelectMany(p => p.Modules
-                            .OfType<TrajectoriesVesselSettings>()).FirstOrDefault();
-                        if (module == null)
-                        {
-                            Util.DebugLog("No TrajectoriesVesselSettings module");
-                            Target.Clear();
-                            Target.ManualText = "";
-                        }
-                        else
-                        {
-                            Util.DebugLog("Reading profile settings...");
-                            Target.SetFromLocalPos(FlightGlobals.Bodies.FirstOrDefault(b => b.name == module.TargetBody),
-                                new Vector3d(module.TargetPosition_x, module.TargetPosition_y, module.TargetPosition_z));
-                            Target.ManualText = module.ManualTargetTxt;
-                            Util.Log("Target profile loaded");
-                        }
-                    }
-                }
-
-                // should the trajectory be calculated?
-                if (attachedVessel != null &&
-                    (Settings.DisplayTrajectories || Settings.AlwaysUpdate || Target.WorldPosition.HasValue))
-                {
-                    if (attachedVessel.Parts.Count != 0)
-                        ComputeTrajectory(attachedVessel);
-                }
-            }
-
+            // should the trajectory be calculated?
+            if (Trajectories.VesselHasParts && (Settings.DisplayTrajectories || Settings.AlwaysUpdate || TargetProfile.WorldPosition.HasValue))
+                ComputeTrajectory();
         }
 
 #if DEBUG && DEBUG_TELEMETRY
@@ -381,28 +230,28 @@ namespace Trajectories
                 Vector3d bodySpacePosition = new Vector3d();
                 Vector3d bodySpaceVelocity = new Vector3d();
 
-                if (aerodynamicModel_ != null && attachedVessel != null)
+                if (aerodynamicModel_ != null && Trajectories.IsVesselAttached)
                 {
-                    CelestialBody body = attachedVessel.orbit.referenceBody;
+                    CelestialBody body = Trajectories.AttachedVessel.orbit.referenceBody;
 
-                    bodySpacePosition = attachedVessel.GetWorldPos3D() - body.position;
-                    bodySpaceVelocity = attachedVessel.obt_velocity;
+                    bodySpacePosition = Trajectories.AttachedVessel.GetWorldPos3D() - body.position;
+                    bodySpaceVelocity = Trajectories.AttachedVessel.obt_velocity;
 
                     double altitudeAboveSea = bodySpacePosition.magnitude - body.Radius;
 
                     Vector3d airVelocity = bodySpaceVelocity - body.getRFrmVel(body.position + bodySpacePosition);
 
                     double R = PreviousFramePos.magnitude;
-                    Vector3d gravityForce = PreviousFramePos * (-body.gravParameter / (R * R * R) * attachedVessel.totalMass);
+                    Vector3d gravityForce = PreviousFramePos * (-body.gravParameter / (R * R * R) * Trajectories.AttachedVessel.totalMass);
 
                     Quaternion inverseRotationFix = body.inverseRotation ?
                         Quaternion.AngleAxis((float)(body.angularVelocity.magnitude / Math.PI * 180.0 * dt), Vector3.up)
                         : Quaternion.identity;
-                    Vector3d TotalForce = (bodySpaceVelocity - inverseRotationFix * PreviousFrameVelocity) * (attachedVessel.totalMass / dt);
+                    Vector3d TotalForce = (bodySpaceVelocity - inverseRotationFix * PreviousFrameVelocity) * (Trajectories.AttachedVessel.totalMass / dt);
                     TotalForce += bodySpaceVelocity * (dt * 0.000015); // numeric precision fix
                     Vector3d ActualForce = TotalForce - gravityForce;
 
-                    Transform vesselTransform = attachedVessel.ReferenceTransform;
+                    Transform vesselTransform = Trajectories.AttachedVessel.ReferenceTransform;
                     Vector3d vesselBackward = (Vector3d)(-vesselTransform.up.normalized);
                     Vector3d vesselForward = -vesselBackward;
                     Vector3d vesselUp = (Vector3d)(-vesselTransform.forward.normalized);
@@ -438,7 +287,7 @@ namespace Trajectories
                         Vector3d.Dot(predictedForceWithCache, vesselBackward));
 
                     Telemetry.Send("ut", now);
-                    Telemetry.Send("altitude", attachedVessel.altitude);
+                    Telemetry.Send("altitude", Trajectories.AttachedVessel.altitude);
 
                     Telemetry.Send("airspeed", Math.Floor(airVelocity.magnitude));
                     Telemetry.Send("aoa", (AoA * 180.0 / Math.PI));
@@ -478,14 +327,14 @@ namespace Trajectories
                     //Telemetry.Send("velocity_pos.y", velocity_pos.y);
                     //Telemetry.Send("velocity_pos.z", velocity_pos.z);
 
-                    Telemetry.Send("drag", attachedVessel.rootPart.rb.drag);
+                    Telemetry.Send("drag", Trajectories.AttachedVessel.rootPart.rb.drag);
 
-                    Telemetry.Send("density", attachedVessel.atmDensity);
+                    Telemetry.Send("density", Trajectories.AttachedVessel.atmDensity);
                     Telemetry.Send("density_calc", StockAeroUtil.GetDensity(altitudeAboveSea, body));
-                    Telemetry.Send("density_calc_precise", StockAeroUtil.GetDensity(attachedVessel.GetWorldPos3D(), body));
+                    Telemetry.Send("density_calc_precise", StockAeroUtil.GetDensity(Trajectories.AttachedVessel.GetWorldPos3D(), body));
 
-                    Telemetry.Send("temperature", attachedVessel.atmosphericTemperature);
-                    Telemetry.Send("temperature_calc", StockAeroUtil.GetTemperature(attachedVessel.GetWorldPos3D(), body));
+                    Telemetry.Send("temperature", Trajectories.AttachedVessel.atmosphericTemperature);
+                    Telemetry.Send("temperature_calc", StockAeroUtil.GetTemperature(Trajectories.AttachedVessel.GetWorldPos3D(), body));
                 }
 
                 PreviousFrameVelocity = bodySpaceVelocity;
@@ -497,7 +346,7 @@ namespace Trajectories
 
         internal static void InvalidateAerodynamicModel() => aerodynamicModel_.Invalidate();
 
-        internal static void ComputeTrajectory(Vessel vessel)
+        internal static void ComputeTrajectory()
         {
             try
             {
@@ -505,23 +354,21 @@ namespace Trajectories
                 incrementTime_ = Stopwatch.StartNew();
 
                 // if there is no ongoing partial computation, start a new one
-                if (partialComputation_ == null || vessel != attachedVessel)
+                if (partialComputation_ == null)
                 {
                     // restart the public buffers
                     patchesBackBuffer_.Clear();
                     maxAccelBackBuffer_ = 0;
 
-                    attachedVessel = vessel;
-
                     // no vessel, no calculation
-                    if (attachedVessel == null)
+                    if (!Trajectories.IsVesselAttached)
                     {
                         patches_.Clear();
                         return;
                     }
 
                     // Create enumerator for Trajectory increment calculator
-                    partialComputation_ = ComputeTrajectoryIncrement(vessel).GetEnumerator();
+                    partialComputation_ = ComputeTrajectoryIncrement().GetEnumerator();
                 }
 
                 // we are finished when there are no more partial computations to be done
@@ -553,16 +400,16 @@ namespace Trajectories
             }
         }
 
-        private static IEnumerable<bool> ComputeTrajectoryIncrement(Vessel vessel)
+        private static IEnumerable<bool> ComputeTrajectoryIncrement()
         {
             // create or update aerodynamic model
-            if (aerodynamicModel_ == null || !aerodynamicModel_.isValidFor(vessel, vessel.mainBody))
-                aerodynamicModel_ = AerodynamicModelFactory.GetModel(vessel, vessel.mainBody);
+            if (aerodynamicModel_ == null || !aerodynamicModel_.IsValidFor(Trajectories.AttachedVessel, Trajectories.AttachedVessel.mainBody))
+                aerodynamicModel_ = AerodynamicModelFactory.GetModel(Trajectories.AttachedVessel, Trajectories.AttachedVessel.mainBody);
             else
                 aerodynamicModel_.IncrementalUpdate();
 
             // create new VesselState from vessel, or null if it's on the ground
-            VesselState state = vessel.LandedOrSplashed ? null : new VesselState(vessel);
+            VesselState state = Trajectories.AttachedVessel.LandedOrSplashed ? null : new VesselState(Trajectories.AttachedVessel);
 
             // iterate over patches until MaxPatchCount is reached
             for (int patchIdx = 0; patchIdx < Settings.MaxPatchCount; ++patchIdx)
@@ -576,10 +423,10 @@ namespace Trajectories
                     yield return false;
 
                 // if we have a patched conics solver, check for maneuver nodes
-                if (null != attachedVessel.patchedConicSolver)
+                if (null != Trajectories.AttachedVessel.patchedConicSolver)
                 {
                     // search through maneuver nodes of the vessel
-                    List<ManeuverNode> maneuverNodes = attachedVessel.patchedConicSolver.maneuverNodes;
+                    List<ManeuverNode> maneuverNodes = Trajectories.AttachedVessel.patchedConicSolver.maneuverNodes;
                     foreach (ManeuverNode node in maneuverNodes)
                     {
                         // if the maneuver node time corresponds to the end time of the last patch
@@ -738,9 +585,9 @@ namespace Trajectories
 
         private static IEnumerable<bool> AddPatch(VesselState startingState)
         {
-            if (null == attachedVessel.patchedConicSolver)
+            if (null == Trajectories.AttachedVessel.patchedConicSolver)
             {
-                Util.LogWarning("Trajectory.AddPatch attempted when patchedConicsSolver is null, Skipping.");
+                Util.LogWarning("patchedConicsSolver is null, Skipping.");
                 yield break;
             }
 
@@ -757,14 +604,14 @@ namespace Trajectories
             // the flight plan does not always contain the first patches (before the first maneuver node),
             // so we populate it with the current orbit and associated encounters etc.
             List<Orbit> flightPlan = new List<Orbit>();
-            for (Orbit orbit = attachedVessel.orbit; orbit != null && orbit.activePatch; orbit = orbit.nextPatch)
+            for (Orbit orbit = Trajectories.AttachedVessel.orbit; orbit != null && orbit.activePatch; orbit = orbit.nextPatch)
             {
-                if (attachedVessel.patchedConicSolver.flightPlan.Contains(orbit))
+                if (Trajectories.AttachedVessel.patchedConicSolver.flightPlan.Contains(orbit))
                     break;
                 flightPlan.Add(orbit);
             }
 
-            foreach (Orbit orbit in attachedVessel.patchedConicSolver.flightPlan)
+            foreach (Orbit orbit in Trajectories.AttachedVessel.patchedConicSolver.flightPlan)
             {
                 flightPlan.Add(orbit);
             }
@@ -902,7 +749,7 @@ namespace Trajectories
                 }
                 else
                 {
-                    if (patch.StartingState.ReferenceBody != attachedVessel.mainBody)
+                    if (patch.StartingState.ReferenceBody != Trajectories.AttachedVessel.mainBody)
                     {
                         // currently, we can't handle predictions for another body, so we stop
                         AddPatch_outState = null;
