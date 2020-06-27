@@ -28,12 +28,14 @@ using UnityEngine;
 
 namespace Trajectories
 {
-    // this class provides several methods to access stock aero information
+    /// <summary> Provides several methods to access stock aero information </summary>
     public static class StockAeroUtil
     {
         /// <summary>
-        /// This function should return exactly the same value as Vessel.atmDensity, but is more generic because you don't need an actual vessel updated by KSP to get a value at the desired location.
-        /// Computations are performed for the current body position, which means it's theoritically wrong if you want to know the temperature in the future, but since body rotation is not used (position is given in sun frame), you should get accurate results up to a few weeks.
+        /// This function should return exactly the same value as Vessel.atmDensity,
+        ///  but is more generic because you don't need an actual vessel updated by KSP to get a value at the desired location.
+        /// Computations are performed for the current body position, which means it's theoretically wrong if you want to know the temperature in the future,
+        ///  but since body rotation is not used (position is given in sun frame), you should get accurate results up to a few weeks.
         /// </summary>
         /// <param name="position"></param>
         /// <param name="body"></param>

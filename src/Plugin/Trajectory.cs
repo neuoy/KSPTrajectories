@@ -66,9 +66,9 @@ namespace Trajectories
 
         internal struct Point
         {
-            internal Vector3 pos;
-            internal Vector3 aerodynamicForce;
-            internal Vector3 orbitalVelocity;
+            internal Vector3d pos;
+            internal Vector3d aerodynamicForce;
+            internal Vector3d orbitalVelocity;
 
             /// <summary>
             /// Ground altitude above (or under) sea level, in meters.
@@ -95,12 +95,11 @@ namespace Trajectories
             // only used when isAtmospheric is false
             internal Orbit SpaceOrbit { get; set; }
 
-            internal Vector3? ImpactPosition { get; set; }
+            internal Vector3d? ImpactPosition { get; set; }
 
-            internal Vector3? RawImpactPosition { get; set; }
+            internal Vector3d? RawImpactPosition { get; set; }
 
-            internal Vector3? ImpactVelocity { get; set; }
-        }
+            internal Vector3d? ImpactVelocity { get; set; }
         }
 
         internal const double integrator_min = 0.1d;         // RK4 Integrator minimum step size
@@ -451,7 +450,7 @@ namespace Trajectories
         /// relativePosition is in world frame, but relative to the body (i.e. inertial body space)
         /// returns the altitude above sea level (can be negative for bodies without ocean)
         /// </summary>
-        internal static double GetGroundAltitude(CelestialBody body, Vector3 relativePosition)
+        internal static double GetGroundAltitude(CelestialBody body, Vector3d relativePosition)
         {
             if (body.pqsController == null)
                 return 0;
@@ -816,7 +815,7 @@ namespace Trajectories
                         Vector3d force_aero = aerodynamicModel_.GetForces(body, position, vel_air, aoa);
                         Profiler.Stop("GetForces");
 
-                        Vector3d accel = accel_g + force_aero / aerodynamicModel_.mass;
+                        Vector3d accel = accel_g + force_aero / aerodynamicModel_.Mass;
 
                         Profiler.Stop("accelerationFunc inside");
                         return accel;
@@ -924,11 +923,11 @@ namespace Trajectories
 
                         // calculate gravity and aerodynamic force
                         Vector3d gravityAccel = lastState.position * (-body.gravParameter / (R * R * R));
-                        Vector3d aerodynamicForce = (currentAccel - gravityAccel) / aerodynamicModel_.mass;
+                        Vector3d aerodynamicForce = (currentAccel - gravityAccel) / aerodynamicModel_.Mass;
 
                         // acceleration in the vessel reference frame is acceleration - gravityAccel
                         maxAccelBackBuffer_ = Math.Max(
-                            (float)(aerodynamicForce.magnitude / aerodynamicModel_.mass),
+                            (float)(aerodynamicForce.magnitude / aerodynamicModel_.Mass),
                             maxAccelBackBuffer_);
 
                         #region Impact Calculation
@@ -1006,7 +1005,7 @@ namespace Trajectories
             }
         }
 
-        internal static Vector3 CalculateRotatedPosition(CelestialBody body, Vector3 relativePosition, double time)
+        internal static Vector3d CalculateRotatedPosition(CelestialBody body, Vector3d relativePosition, double time)
         {
             float angle = (float)(-(time - Planetarium.GetUniversalTime()) * body.angularVelocity.magnitude / Math.PI * 180.0);
             Quaternion bodyRotation = Quaternion.AngleAxis(angle, body.angularVelocity.normalized);

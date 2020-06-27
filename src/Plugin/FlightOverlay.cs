@@ -89,7 +89,7 @@ namespace Trajectories
         private static Orbit orbit = null;
         private static Trajectory.Patch lastPatch = null;
         private static Vector3d bodyPosition = Vector3d.zero;
-        private static Vector3 vertex = Vector3.zero;
+        private static Vector3d vertex = Vector3.zero;
 
         internal static void Start()
         {

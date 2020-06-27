@@ -27,11 +27,11 @@ using UnityEngine;
 
 namespace Trajectories
 {
-    // this class abstracts the game aerodynamic computations to provide an unified interface whether the stock drag is used, or a supported mod is installed
+    ///<summary> Abstracts the game aerodynamic computations to provide an unified interface whether the stock drag is used, or a supported mod is installed </summary>
     public abstract class VesselAerodynamicModel
     {
         private double mass_;
-        public double mass { get { return mass_; } }
+        public double Mass => mass_;
 
         public abstract string AerodynamicModelName { get; }
 
@@ -42,32 +42,33 @@ namespace Trajectories
         private int referencePartCount = 0;
         private DateTime nextAllowedAutomaticUpdate = DateTime.Now;
 
-        public bool UseCache { get { return Settings.UseCache; } }
+        public bool UseCache => Settings.UseCache;
         protected AeroForceCache cachedForces;
 
         public static bool Verbose { get; set; }
 
         public static bool DebugParts { get; set; }
 
-        public VesselAerodynamicModel(Vessel vessel, CelestialBody body)
+        // constructor
+        protected VesselAerodynamicModel(Vessel vessel, CelestialBody body)
         {
             vessel_ = vessel;
             body_ = body;
 
             referencePartCount = vessel.Parts.Count;
 
-            updateVesselInfo();
+            UpdateVesselInfo();
 
             InitCache();
         }
 
-        private void updateVesselInfo()
+        private void UpdateVesselInfo()
         {
             // // this kills performance on vessel load, so we don't do that anymore
             // mass_ = vessel_.totalMass;
 
             mass_ = 0.0;
-            foreach (var part in vessel_.Parts)
+            foreach (Part part in vessel_.Parts)
             {
                 if (part.physicalSignificance == Part.PhysicalSignificance.NONE)
                     continue;
@@ -95,7 +96,7 @@ namespace Trajectories
             return;
         }
 
-        public bool isValidFor(Vessel vessel, CelestialBody body)
+        public bool IsValidFor(Vessel vessel, CelestialBody body)
         {
             if (vessel != vessel_ || body_ != body)
                 return false;
@@ -121,15 +122,9 @@ namespace Trajectories
             return isValid;
         }
 
-        public void IncrementalUpdate()
-        {
-            updateVesselInfo();
-        }
+        public void IncrementalUpdate() => UpdateVesselInfo();
 
-        public void Invalidate()
-        {
-            isValid = false;
-        }
+        public void Invalidate() => isValid = false;
 
         private double ComputeReferenceDrag()
         {
@@ -195,7 +190,7 @@ namespace Trajectories
 
             Vector3d totalForce = ComputeForces_Model(airVelocityForFixedAoA, altitude);
 
-            if (Double.IsNaN(totalForce.x) || Double.IsNaN(totalForce.y) || Double.IsNaN(totalForce.z))
+            if (double.IsNaN(totalForce.x) || double.IsNaN(totalForce.y) || double.IsNaN(totalForce.z))
             {
                 Util.LogWarning("{0} totalForce is NaN (altitude={1}, airVelocity={2}, angleOfAttack={3}", AerodynamicModelName, altitude, airVelocity.magnitude, angleOfAttack);
                 return Vector3d.zero; // Don't send NaN into the simulation as it would cause bad things (infinite loops, crash, etc.). I think this case only happens at the atmosphere edge, so the total force should be 0 anyway.
@@ -232,7 +227,7 @@ namespace Trajectories
             Vector3d predictedVesselUp = Vector3d.Cross(predictedVesselBackward, predictedVesselRight).normalized;
 
             Vector3d res = predictedVesselRight * localForce.x + predictedVesselUp * localForce.y + predictedVesselBackward * localForce.z;
-            if (Double.IsNaN(res.x) || Double.IsNaN(res.y) || Double.IsNaN(res.z))
+            if (double.IsNaN(res.x) || double.IsNaN(res.y) || double.IsNaN(res.z))
             {
                 Util.LogWarning("{0} res is NaN (altitude={1}, airVelocity={2}, angleOfAttack={3}", AerodynamicModelName, altitude, airVelocity.magnitude, angleOfAttack);
                 return new Vector3d(0, 0, 0); // Don't send NaN into the simulation as it would cause bad things (infinite loops, crash, etc.). I think this case only happens at the atmosphere edge, so the total force should be 0 anyway.
@@ -253,17 +248,11 @@ namespace Trajectories
         /// Aerodynamic forces are roughly proportional to rho and squared air velocity, so we divide by these values to get something that can be linearly interpolated (the reverse operation is then applied after interpolation)
         /// This operation is optional but should slightly increase the cache accuracy
         /// </summary>
-        public virtual Vector2 PackForces(Vector3d forces, double altitudeAboveSea, double velocity)
-        {
-            return new Vector2((float)forces.x, (float)forces.y);
-        }
+        public virtual Vector2 PackForces(Vector3d forces, double altitudeAboveSea, double velocity) => new Vector2((float)forces.x, (float)forces.y);
 
         /// <summary>
         /// See PackForces
         /// </summary>
-        public virtual Vector3d UnpackForces(Vector2 packedForces, double altitudeAboveSea, double velocity)
-        {
-            return new Vector3d((double)packedForces.x, (double)packedForces.y, 0.0);
-        }
+        public virtual Vector3d UnpackForces(Vector2 packedForces, double altitudeAboveSea, double velocity) => new Vector3d((double)packedForces.x, (double)packedForces.y, 0.0);
     }
 }

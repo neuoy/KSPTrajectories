@@ -323,12 +323,12 @@ namespace Trajectories
             Vector2[] uvs = new Vector2[utIdx * 2 + 2];
             int[] triangles = new int[utIdx * 6];
 
-            Vector3 prevMeshPos = Util.SwapYZ(orbit.getRelativePositionAtUT(startTime - duration / steps)) + bodyPosition;
+            Vector3d prevMeshPos = Util.SwapYZ(orbit.getRelativePositionAtUT(startTime - duration / steps)) + bodyPosition;
             for (int i = 0; i < utIdx; ++i)
             {
                 double time = stepUT[i];
 
-                Vector3 curMeshPos = Util.SwapYZ(orbit.getRelativePositionAtUT(time));
+                Vector3d curMeshPos = Util.SwapYZ(orbit.getRelativePositionAtUT(time));
                 if (Settings.BodyFixedMode)
                 {
                     curMeshPos = Trajectory.CalculateRotatedPosition(orbit.referenceBody, curMeshPos, time);
