@@ -128,7 +128,7 @@ namespace Trajectories
             AttachedVessel = null;
             AppLauncherButton.DestroyToolbarButton();
             MainGUI.DeSpawn();
-            NavBallOverlay.DestroyRenderer();
+            NavBallOverlay.DestroyTransforms();
             FlightOverlay.Destroy();
             MapOverlay.DestroyRenderer();
             Trajectory.Destroy();

@@ -21,6 +21,7 @@
 */
 
 using System;
+using System.IO;
 using System.Linq;
 using KSP.UI.Screens.Flight;
 using UnityEngine;
@@ -30,13 +31,18 @@ namespace Trajectories
     // Display indications on the navball. Code inspired from Enhanced NavBall mod.
     internal static class NavBallOverlay
     {
-        private const float SCALE = 10f;
+        private const float SCALE = 0.5f;
+
+        private static Texture2D guide_texture = null;
+        private static Texture2D reference_texture = null;
+
+        private static bool constructed = false;
 
         private static NavBall navball;
-        private static GameObject trajectoryGuide;
-        private static GameObject trajectoryReference;
-        private static Renderer guideRenderer;
-        private static Renderer referenceRenderer;
+        private static Transform guide_transform;
+        private static Transform reference_transform;
+        private static Renderer guide_renderer;
+        private static Renderer reference_renderer;
 
         // updated variables, put here to stop over use of the garbage collector.
         private static Trajectory.Patch patch;
@@ -46,6 +52,12 @@ namespace Trajectories
         private static Vector3d up;
         private static Vector3d vel_right;
         private static Vector3d reference;
+
+        private static bool TexturesAllocated => (guide_texture != null && reference_texture != null);
+        private static bool TransformsAllocated => (guide_transform != null && reference_transform != null);
+        private static bool RenderersAllocated => (guide_renderer != null && reference_renderer != null);
+
+        internal static bool Ready => (TexturesAllocated && TransformsAllocated && RenderersAllocated && navball != null);
 
         internal static Vector3d PlannedDirection => reference;
 
@@ -64,43 +76,69 @@ namespace Trajectories
 
         internal static void Start()
         {
-            Util.DebugLog(trajectoryGuide != null ? "Resetting" : "Constructing");
+            Util.DebugLog(constructed ? "Resetting" : "Constructing");
 
-            //navball = FlightUIModeController.Instance.navBall.gameObject.GetComponentInChildren<NavBall>();
-            navball = Trajectories.FindObjectOfType<NavBall>();
+            guide_texture ??= new Texture2D(36, 36);
+            reference_texture ??= new Texture2D(36, 36);
 
-            if (trajectoryGuide == null)
+            if (TexturesAllocated)
             {
-                trajectoryGuide = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-                trajectoryGuide.layer = navball.progradeVector.gameObject.layer;
-                trajectoryGuide.transform.parent = navball.progradeVector.gameObject.transform.parent;
-                trajectoryGuide.transform.localScale = Vector3.one * SCALE;
-            }
+                if (!constructed)
+                {
+                    string TrajTexturePath = KSPUtil.ApplicationRootPath + "GameData/Trajectories/Textures/";
+                    guide_texture.LoadImage(File.ReadAllBytes(TrajTexturePath + "GuideNavMarker.png"));
+                    reference_texture.LoadImage(File.ReadAllBytes(TrajTexturePath + "RefNavMarker.png"));
+                    constructed = true;
+                }
 
-            if (trajectoryReference == null)
-            {
-                trajectoryReference = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                trajectoryReference.layer = navball.progradeVector.gameObject.layer;
-                trajectoryReference.transform.parent = navball.progradeVector.gameObject.transform.parent;
-                trajectoryReference.transform.localScale = Vector3.one * SCALE;
-            }
+                navball = UnityEngine.Object.FindObjectOfType<NavBall>();
 
-            guideRenderer = trajectoryGuide.GetComponent<Renderer>();
-            referenceRenderer = trajectoryReference.GetComponent<Renderer>();
+                if (navball != null)
+                {
+                    // green circle for target
+                    guide_transform = GameObject.Instantiate(navball.progradeVector, navball.progradeVector.parent);
+                    if (guide_transform != null)
+                    {
+                        guide_transform.gameObject.transform.localScale = guide_transform.gameObject.transform.localScale * SCALE;
+                        guide_renderer = guide_transform.GetComponent<Renderer>();
+                        if (guide_renderer != null)
+                        {
+                            //Util.DebugLog("Scale {0}", guide_renderer.material.GetTextureScale("_MainTexture").ToString());
+                            guide_renderer.material.SetTexture("_MainTexture", guide_texture);
+                            guide_renderer.material.SetTextureOffset("_MainTexture", Vector2.zero);
+                            guide_renderer.material.SetTextureScale("_MainTexture", Vector2.one);
+                        }
+                    }
+
+                    // red square for crash site
+                    reference_transform = GameObject.Instantiate(navball.progradeVector, navball.progradeVector.parent);
+                    if (reference_transform != null)
+                    {
+                        reference_transform.gameObject.transform.localScale = reference_transform.gameObject.transform.localScale * SCALE;
+                        reference_renderer = reference_transform.GetComponent<Renderer>();
+                        if (reference_renderer != null)
+                        {
+                            reference_renderer.material.SetTexture("_MainTexture", reference_texture);
+                            reference_renderer.material.SetTextureOffset("_MainTexture", Vector2.zero);
+                            reference_renderer.material.SetTextureScale("_MainTexture", Vector2.one);
+                        }
+                    }
+                }
+            }
         }
 
         internal static void Destroy()
         {
             Util.DebugLog("");
-            DestroyRenderer();
-            if (trajectoryGuide != null)
-                Trajectories.Destroy(trajectoryGuide);
+            DestroyTransforms();
+            if (guide_texture != null)
+                UnityEngine.Object.Destroy(guide_texture);
 
-            if (trajectoryReference != null)
-                Trajectories.Destroy(trajectoryReference);
+            if (reference_texture != null)
+                UnityEngine.Object.Destroy(reference_texture);
 
-            trajectoryGuide = null;
-            trajectoryReference = null;
+            guide_texture = null;
+            reference_texture = null;
         }
 
         internal static void Update()
@@ -108,7 +146,7 @@ namespace Trajectories
             patch = Trajectory.Patches.LastOrDefault();
 
             if ((!Util.IsFlight && !Util.IsTrackingStation) || !Trajectories.IsVesselAttached || !TargetProfile.WorldPosition.HasValue ||
-                patch == null || !patch.ImpactPosition.HasValue || patch.StartingState.ReferenceBody != TargetProfile.Body)
+                patch == null || !patch.ImpactPosition.HasValue || patch.StartingState.ReferenceBody != TargetProfile.Body || !Ready)
             {
                 SetDisplayEnabled(false);
                 return;
@@ -124,27 +162,41 @@ namespace Trajectories
 
             SetDisplayEnabled(true);
 
-            trajectoryGuide.transform.localPosition = navball.attitudeGymbal * CorrectedDirection * navball.VectorUnitScale;
-            trajectoryGuide.SetActive(trajectoryGuide.transform.localPosition.z > 0f); // hide if behind navball
+            guide_transform.gameObject.transform.localPosition = navball.attitudeGymbal * (CorrectedDirection * navball.VectorUnitScale);
+            reference_transform.gameObject.transform.localPosition = navball.attitudeGymbal * (reference * navball.VectorUnitScale);
 
-            trajectoryReference.transform.localPosition = navball.attitudeGymbal * reference * navball.VectorUnitScale;
-            trajectoryReference.SetActive(trajectoryReference.transform.localPosition.z > 0f); // hide if behind navball
+            // hide if behind navball
+            guide_transform.gameObject.SetActive(guide_transform.gameObject.transform.localPosition.z >= navball.VectorUnitCutoff);
+            reference_transform.gameObject.SetActive(reference_transform.gameObject.transform.localPosition.z >= navball.VectorUnitCutoff);
         }
 
-        internal static void DestroyRenderer()
+        internal static void DestroyTransforms()
         {
             navball = null;
-            guideRenderer = null;
-            referenceRenderer = null;
+
+            if (guide_renderer != null)
+                UnityEngine.Object.Destroy(guide_renderer);
+            if (reference_renderer != null)
+                UnityEngine.Object.Destroy(reference_renderer);
+            guide_renderer = null;
+            reference_renderer = null;
+
+            if (guide_transform != null)
+                guide_transform.gameObject.DestroyGameObject();
+            if (reference_transform != null)
+                reference_transform.gameObject.DestroyGameObject();
+            guide_transform = null;
+            reference_transform = null;
+
         }
 
         private static void SetDisplayEnabled(bool enabled)
         {
-            if (trajectoryGuide == null || trajectoryReference == null)
+            if (!RenderersAllocated)
                 return;
 
-            guideRenderer.enabled = enabled;
-            referenceRenderer.enabled = enabled;
+            guide_renderer.enabled = enabled;
+            reference_renderer.enabled = enabled;
         }
 
         private static Vector3d CalcReference()
