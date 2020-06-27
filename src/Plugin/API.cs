@@ -181,8 +181,8 @@ namespace Trajectories
         /// </summary>
         public static Vector3? PlannedDirection()
         {
-                return NavBallOverlay.GetPlannedDirection();
             if (Trajectories.IsVesselAttached && TargetProfile.Body != null)
+                return NavBallOverlay.PlannedDirection;
             return null;
         }
 
@@ -191,8 +191,8 @@ namespace Trajectories
         /// </summary>
         public static Vector3? CorrectedDirection()
         {
-                return NavBallOverlay.GetCorrectedDirection();
             if (Trajectories.IsVesselAttached && TargetProfile.Body != null)
+                return NavBallOverlay.CorrectedDirection;
             return null;
         }
 
