@@ -1,5 +1,6 @@
 ﻿/*
   Copyright© (c) 2016-2017 Youen Toupin, (aka neuoy).
+  Copyright© (c) 2017-2020 S.Gray, (aka PiezPiedPy).
 
   This file is part of Trajectories.
   Trajectories is available under the terms of GPL-3.0-or-later.
@@ -33,7 +34,7 @@ namespace Trajectories
         public int AoAResolution { get; private set; }
         public int AltitudeResolution { get; private set; }
 
-        private Vector2[,,] InternalArray;
+        private Vector2d[,,] InternalArray;
 
         private VesselAerodynamicModel Model;
 
@@ -48,24 +49,24 @@ namespace Trajectories
             AoAResolution = aoaRes;
             AltitudeResolution = altRes;
 
-            InternalArray = new Vector2[VelocityResolution, AoAResolution, AltitudeResolution];
+            InternalArray = new Vector2d[VelocityResolution, AoAResolution, AltitudeResolution];
             for (int v = 0; v < VelocityResolution; ++v)
                 for (int a = 0; a < AoAResolution; ++a)
                     for (int m = 0; m < AltitudeResolution; ++m)
-                        InternalArray[v, a, m] = new Vector2(float.NaN, float.NaN);
+                        InternalArray[v, a, m] = new Vector2d(double.NaN, double.NaN);
         }
 
         public Vector3d GetForce(double velocity, double angleOfAttack, double altitude)
         {
-            float vFrac = (float)(velocity / MaxVelocity * (double)(InternalArray.GetLength(0) - 1));
+            double vFrac = (velocity / MaxVelocity * (double)(InternalArray.GetLength(0) - 1));
             int vFloor = Math.Max(0, Math.Min(InternalArray.GetLength(0) - 2, (int)vFrac));
             vFrac = Math.Max(0.0f, Math.Min(1.0f, vFrac - (float)vFloor));
 
-            float aFrac = (float)((angleOfAttack / MaxAoA * 0.5 + 0.5) * (double)(InternalArray.GetLength(1) - 1));
+            double aFrac = ((angleOfAttack / MaxAoA * 0.5 + 0.5) * (double)(InternalArray.GetLength(1) - 1));
             int aFloor = Math.Max(0, Math.Min(InternalArray.GetLength(1) - 2, (int)aFrac));
             aFrac = Math.Max(0.0f, Math.Min(1.0f, aFrac - (float)aFloor));
 
-            float mFrac = (float)(altitude / MaxAltitude * (double)(InternalArray.GetLength(2) - 1));
+            double mFrac = (altitude / MaxAltitude * (double)(InternalArray.GetLength(2) - 1));
             int mFloor = Math.Max(0, Math.Min(InternalArray.GetLength(2) - 2, (int)mFrac));
             mFrac = Math.Max(0.0f, Math.Min(1.0f, mFrac - (float)mFloor));
 
@@ -75,50 +76,50 @@ namespace Trajectories
             //    Util.PostSingleScreenMessage("altitude cell", "altitude cell: " + altitude + " / " + MaxAltitude + " * " + (double)(InternalArray.GetLength(2) - 1));
             //}
 
-            Vector2 res = Sample3d(vFloor, vFrac, aFloor, aFrac, mFloor, mFrac);
+            Vector2d res = Sample3d(vFloor, vFrac, aFloor, aFrac, mFloor, mFrac);
             return Model.UnpackForces(res, altitude, velocity);
         }
 
-        private Vector2 Sample2d(int vFloor, float vFrac, int aFloor, float aFrac, int mFloor)
+        private Vector2d Sample2d(int vFloor, double vFrac, int aFloor, double aFrac, int mFloor)
         {
-            Vector2 f00 = GetCachedForce(vFloor, aFloor, mFloor);
-            Vector2 f10 = GetCachedForce(vFloor + 1, aFloor, mFloor);
+            Vector2d f00 = GetCachedForce(vFloor, aFloor, mFloor);
+            Vector2d f10 = GetCachedForce(vFloor + 1, aFloor, mFloor);
 
-            Vector2 f01 = GetCachedForce(vFloor, aFloor + 1, mFloor);
-            Vector2 f11 = GetCachedForce(vFloor + 1, aFloor + 1, mFloor);
+            Vector2d f01 = GetCachedForce(vFloor, aFloor + 1, mFloor);
+            Vector2d f11 = GetCachedForce(vFloor + 1, aFloor + 1, mFloor);
 
-            Vector2 f0 = f01 * aFrac + f00 * (1.0f - aFrac);
-            Vector2 f1 = f11 * aFrac + f10 * (1.0f - aFrac);
+            Vector2d f0 = f01 * aFrac + f00 * (1.0f - aFrac);
+            Vector2d f1 = f11 * aFrac + f10 * (1.0f - aFrac);
 
             return f1 * vFrac + f0 * (1.0f - vFrac);
         }
 
-        private Vector2 Sample3d(int vFloor, float vFrac, int aFloor, float aFrac, int mFloor, float mFrac)
+        private Vector2d Sample3d(int vFloor, double vFrac, int aFloor, double aFrac, int mFloor, double mFrac)
         {
-            Vector2 f0 = Sample2d(vFloor, vFrac, aFloor, aFrac, mFloor);
-            Vector2 f1 = Sample2d(vFloor, vFrac, aFloor, aFrac, mFloor + 1);
+            Vector2d f0 = Sample2d(vFloor, vFrac, aFloor, aFrac, mFloor);
+            Vector2d f1 = Sample2d(vFloor, vFrac, aFloor, aFrac, mFloor + 1);
 
             return f1 * mFrac + f0 * (1.0f - mFrac);
         }
 
-        private Vector2 GetCachedForce(int v, int a, int m)
+        private Vector2d GetCachedForce(int v, int a, int m)
         {
-            Vector2 f = InternalArray[v, a, m];
+            Vector2d f = InternalArray[v, a, m];
 
-            if (float.IsNaN(f.x))
+            if (double.IsNaN(f.x))
                 f = ComputeCacheEntry(v, a, m);
 
             return f;
         }
 
-        private Vector2 ComputeCacheEntry(int v, int a, int m)
+        private Vector2d ComputeCacheEntry(int v, int a, int m)
         {
             double vel = MaxVelocity * (double)v / (double)(InternalArray.GetLength(0) - 1);
             Vector3d velocity = new Vector3d(vel, 0, 0);
             double AoA = MaxAoA * ((double)a / (double)(InternalArray.GetLength(1) - 1) * 2.0 - 1.0);
             double currentAltitude = MaxAltitude * (double)m / (double)(InternalArray.GetLength(2) - 1);
 
-            Vector2 packedForce = Model.PackForces(Model.ComputeForces(currentAltitude, velocity, new Vector3(0, 1, 0), AoA), currentAltitude, vel);
+            Vector2d packedForce = Model.PackForces(Model.ComputeForces(currentAltitude, velocity, new Vector3d(0, 1, 0), AoA), currentAltitude, vel);
 
             return InternalArray[v, a, m] = packedForce;
         }

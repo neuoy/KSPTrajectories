@@ -402,8 +402,8 @@ namespace Trajectories
         private static IEnumerable<bool> ComputeTrajectoryIncrement()
         {
             // create or update aerodynamic model
-            if (aerodynamicModel_ == null || !aerodynamicModel_.IsValidFor(Trajectories.AttachedVessel, Trajectories.AttachedVessel.mainBody))
-                aerodynamicModel_ = AerodynamicModelFactory.GetModel(Trajectories.AttachedVessel, Trajectories.AttachedVessel.mainBody);
+            if (aerodynamicModel_ == null || !aerodynamicModel_.IsValidFor(Trajectories.AttachedVessel.mainBody))
+                aerodynamicModel_ = AerodynamicModelFactory.GetModel(Trajectories.AttachedVessel.mainBody);
             else
                 aerodynamicModel_.IncrementalUpdate();
 

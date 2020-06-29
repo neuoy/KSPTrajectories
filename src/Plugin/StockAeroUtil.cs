@@ -120,21 +120,21 @@ namespace Trajectories
         }
 
         //*******************************************************
-        public static Vector3 SimAeroForce(Vessel _vessel, Vector3 v_wrld_vel, Vector3 position)
+        public static Vector3d SimAeroForce(Vector3d v_wrld_vel, Vector3 position)
         {
-            CelestialBody body = _vessel.mainBody;
+            CelestialBody body = Trajectories.AttachedVessel.mainBody;
             double latitude = body.GetLatitude(position) / 180.0 * Math.PI;
             double altitude = (position - body.position).magnitude - body.Radius;
 
-            return SimAeroForce(_vessel, v_wrld_vel, altitude, latitude);
+            return SimAeroForce(v_wrld_vel, altitude, latitude);
         }
 
         //*******************************************************
-        public static Vector3 SimAeroForce(Vessel _vessel, Vector3 v_wrld_vel, double altitude, double latitude = 0.0)
+        public static Vector3d SimAeroForce(Vector3d v_wrld_vel, double altitude, double latitude = 0.0)
         {
             Profiler.Start("SimAeroForce");
 
-            CelestialBody body = _vessel.mainBody;
+            CelestialBody body = Trajectories.AttachedVessel.mainBody;
             double pressure = body.GetPressure(altitude);
             // Lift and drag for force accumulation.
             Vector3d total_lift = Vector3d.zero;
@@ -154,10 +154,10 @@ namespace Trajectories
             if (mach > 25.0) { mach = 25.0; }
 
             // Loop through all parts, accumulating drag and lift.
-            for (int i = 0; i < _vessel.Parts.Count; ++i)
+            for (int i = 0; i < Trajectories.AttachedVessel.Parts.Count; ++i)
             {
                 // need checks on shielded components
-                Part p = _vessel.Parts[i];
+                Part p = Trajectories.AttachedVessel.Parts[i];
                 #if DEBUG
                 TrajectoriesDebug partDebug = VesselAerodynamicModel.DebugParts ? p.FindModuleImplementing<TrajectoriesDebug>() : null;
                 if (partDebug != null)
@@ -173,10 +173,10 @@ namespace Trajectories
                 }
 
                 // Get Drag
-                Vector3 sim_dragVectorDir = v_wrld_vel.normalized;
-                Vector3 sim_dragVectorDirLocal = -(p.transform.InverseTransformDirection(sim_dragVectorDir));
+                Vector3d sim_dragVectorDir = v_wrld_vel.normalized;
+                Vector3d sim_dragVectorDirLocal = -(p.transform.InverseTransformDirection(sim_dragVectorDir));
 
-                Vector3 liftForce = new Vector3(0, 0, 0);
+                Vector3d liftForce = Vector3d.zero;
                 Vector3d dragForce;
 
 
@@ -189,7 +189,7 @@ namespace Trajectories
 
                         DragCubeList.CubeData p_drag_data = new DragCubeList.CubeData();
 
-                        float drag;
+                        double drag;
                         if (cubes.None) // since 1.0.5, some parts don't have drag cubes (for example fuel lines and struts)
                         {
                             drag = p.maximum_drag;
@@ -208,33 +208,33 @@ namespace Trajectories
                                 Util.DebugLogError("Exception {0} on drag initialization", e);
                             }
 
-                            float pseudoreynolds = (float)(rho * Mathf.Abs(v_wrld_vel.magnitude));
-                            float pseudoredragmult = PhysicsGlobals.DragCurvePseudoReynolds.Evaluate(pseudoreynolds);
+                            double pseudoreynolds = rho * Math.Abs(v_wrld_vel.magnitude);
+                            double pseudoredragmult = PhysicsGlobals.DragCurvePseudoReynolds.Evaluate((float)pseudoreynolds);
                             drag = p_drag_data.areaDrag * PhysicsGlobals.DragCubeMultiplier * pseudoredragmult;
 
                             liftForce = p_drag_data.liftForce;
                         }
 
-                        double sim_dragScalar = dyn_pressure * (double)drag * PhysicsGlobals.DragMultiplier;
-                        dragForce = -(Vector3d)sim_dragVectorDir * sim_dragScalar;
+                        double sim_dragScalar = dyn_pressure * drag * PhysicsGlobals.DragMultiplier;
+                        dragForce = -sim_dragVectorDir * sim_dragScalar;
 
                         break;
 
                     case Part.DragModel.SPHERICAL:
-                        dragForce = -(Vector3d)sim_dragVectorDir * (double)p.maximum_drag;
+                        dragForce = -sim_dragVectorDir * p.maximum_drag;
                         break;
 
                     case Part.DragModel.CYLINDRICAL:
-                        dragForce = -(Vector3d)sim_dragVectorDir * (double)Mathf.Lerp(p.minimum_drag, p.maximum_drag, Mathf.Abs(Vector3.Dot(p.partTransform.TransformDirection(p.dragReferenceVector), sim_dragVectorDir)));
+                        dragForce = -sim_dragVectorDir * Mathf.Lerp(p.minimum_drag, p.maximum_drag, Mathf.Abs(Vector3.Dot(p.partTransform.TransformDirection(p.dragReferenceVector), sim_dragVectorDir)));
                         break;
 
                     case Part.DragModel.CONIC:
-                        dragForce = -(Vector3d)sim_dragVectorDir * (double)Mathf.Lerp(p.minimum_drag, p.maximum_drag, Vector3.Angle(p.partTransform.TransformDirection(p.dragReferenceVector), sim_dragVectorDir) / 180f);
+                        dragForce = -sim_dragVectorDir * Mathf.Lerp(p.minimum_drag, p.maximum_drag, Vector3.Angle(p.partTransform.TransformDirection(p.dragReferenceVector), sim_dragVectorDir) / 180f);
                         break;
 
                     default:
                         // no drag to apply
-                        dragForce = new Vector3d();
+                        dragForce = Vector3d.zero;
                         break;
                 }
 

@@ -35,7 +35,6 @@ namespace Trajectories
 
         public abstract string AerodynamicModelName { get; }
 
-        protected Vessel vessel_;
         protected CelestialBody body_;
         private bool isValid;
         private double referenceDrag = 0;
@@ -50,12 +49,11 @@ namespace Trajectories
         public static bool DebugParts { get; set; }
 
         // constructor
-        protected VesselAerodynamicModel(Vessel vessel, CelestialBody body)
+        protected VesselAerodynamicModel(CelestialBody body)
         {
-            vessel_ = vessel;
             body_ = body;
 
-            referencePartCount = vessel.Parts.Count;
+            referencePartCount = Trajectories.AttachedVessel.Parts.Count;
 
             UpdateVesselInfo();
 
@@ -68,7 +66,7 @@ namespace Trajectories
             // mass_ = vessel_.totalMass;
 
             mass_ = 0.0;
-            foreach (Part part in vessel_.Parts)
+            foreach (Part part in Trajectories.AttachedVessel.Parts)
             {
                 if (part.physicalSignificance == Part.PhysicalSignificance.NONE)
                     continue;
@@ -96,9 +94,9 @@ namespace Trajectories
             return;
         }
 
-        public bool IsValidFor(Vessel vessel, CelestialBody body)
+        public bool IsValidFor(CelestialBody body)
         {
-            if (vessel != vessel_ || body_ != body)
+            if (!Trajectories.IsVesselAttached || body_ != body)
                 return false;
 
             if (Settings.AutoUpdateAerodynamicModel)
@@ -109,7 +107,7 @@ namespace Trajectories
                     referenceDrag = newRefDrag;
                 }
                 double ratio = Math.Max(newRefDrag, referenceDrag) / Math.Max(1, Math.Min(newRefDrag, referenceDrag));
-                if (ratio > 1.2 && DateTime.Now > nextAllowedAutomaticUpdate || referencePartCount != vessel.Parts.Count)
+                if (ratio > 1.2 && DateTime.Now > nextAllowedAutomaticUpdate || referencePartCount != Trajectories.AttachedVessel.Parts.Count)
                 {
                     nextAllowedAutomaticUpdate = DateTime.Now.AddSeconds(10); // limit updates frequency (could make the game almost unresponsive on some computers)
 #if DEBUG
@@ -138,7 +136,7 @@ namespace Trajectories
         /// </summary>
         public Vector3d GetForces(CelestialBody body, Vector3d bodySpacePosition, Vector3d airVelocity, double angleOfAttack)
         {
-            if (body != vessel_.mainBody)
+            if (body != Trajectories.AttachedVessel.mainBody)
                 throw new Exception("Can't predict aerodynamic forces on another body in current implementation");
 
             double altitudeAboveSea = bodySpacePosition.magnitude - body.Radius;
@@ -173,17 +171,17 @@ namespace Trajectories
         public Vector3d ComputeForces(double altitude, Vector3d airVelocity, Vector3d vup, double angleOfAttack)
         {
             Profiler.Start("ComputeForces");
-            if (!vessel_.mainBody.atmosphere)
-                return Vector3d.zero;
-            if (altitude >= body_.atmosphereDepth)
+            if (!Trajectories.IsVesselAttached || !Trajectories.AttachedVessel.mainBody.atmosphere || altitude >= body_.atmosphereDepth)
                 return Vector3d.zero;
 
-            Transform vesselTransform = vessel_.ReferenceTransform;
+            Transform vesselTransform = Trajectories.AttachedVessel.ReferenceTransform;
+            if (vesselTransform == null)
+                return Vector3d.zero;
 
             // this is weird, but the vessel orientation does not match the reference transform (up is forward), this code fixes it but I don't know if it'll work in all cases
-            Vector3d vesselBackward = (Vector3d)(-vesselTransform.up.normalized);
+            Vector3d vesselBackward = -vesselTransform.up.normalized;
             Vector3d vesselForward = -vesselBackward;
-            Vector3d vesselUp = (Vector3d)(-vesselTransform.forward.normalized);
+            Vector3d vesselUp = -vesselTransform.forward.normalized;
             Vector3d vesselRight = Vector3d.Cross(vesselUp, vesselBackward).normalized;
 
             Vector3d airVelocityForFixedAoA = (vesselForward * Math.Cos(-angleOfAttack) + vesselUp * Math.Sin(-angleOfAttack)) * airVelocity.magnitude;
@@ -248,11 +246,11 @@ namespace Trajectories
         /// Aerodynamic forces are roughly proportional to rho and squared air velocity, so we divide by these values to get something that can be linearly interpolated (the reverse operation is then applied after interpolation)
         /// This operation is optional but should slightly increase the cache accuracy
         /// </summary>
-        public virtual Vector2 PackForces(Vector3d forces, double altitudeAboveSea, double velocity) => new Vector2((float)forces.x, (float)forces.y);
+        public virtual Vector2d PackForces(Vector3d forces, double altitudeAboveSea, double velocity) => new Vector2d(forces.x, forces.y);
 
         /// <summary>
         /// See PackForces
         /// </summary>
-        public virtual Vector3d UnpackForces(Vector2 packedForces, double altitudeAboveSea, double velocity) => new Vector3d((double)packedForces.x, (double)packedForces.y, 0.0);
+        public virtual Vector3d UnpackForces(Vector2d packedForces, double altitudeAboveSea, double velocity) => new Vector3d(packedForces.x, packedForces.y, 0.0);
     }
 }
