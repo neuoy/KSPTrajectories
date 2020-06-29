@@ -4,10 +4,11 @@
 
 ### Changes since the last release
  
+ - Added a green target marker to the in flight trajectory. 
  - NavBall target and crash markers have been fixed and updated,
    target is now a green circle and predicted crash site is now a red square.
  - Due to performance issues with larger craft, the Cache is now enabled by default. For higher precision,
-   it can still be turned on manually.
+   it can still be turned off manually.
 
 ### For Developers
 

@@ -138,7 +138,7 @@ namespace Trajectories
         {
             Util.DebugLog("");
             if (map_renderer != null)
-                Trajectories.Destroy(map_renderer);
+                GameObject.Destroy(map_renderer);
             map_renderer = null;
         }
 
