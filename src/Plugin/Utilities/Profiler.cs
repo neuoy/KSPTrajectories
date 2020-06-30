@@ -128,6 +128,7 @@ namespace Trajectories
                 // create popup dialog
                 popup_dialog = PopupDialog.SpawnPopupDialog(multi_dialog, false, HighLogic.UISkin, false, "");
                 popup_dialog.onDestroy.AddListener(new UnityAction(OnPopupDialogDestroy));
+                scroll_list.children.Add(new DialogGUIVerticalLayout());
             }
         }
 
@@ -150,10 +151,7 @@ namespace Trajectories
             if (visible)
             {
                 if (popup_dialog == null)
-                {
                     SpawnDialog();
-                    scroll_list.children.Add(new DialogGUIVerticalLayout());
-                }
                 popup_dialog.gameObject.SetActive(true);
             }
             else if (popup_dialog != null)
@@ -277,7 +275,9 @@ namespace Trajectories
                     ((Screen.height / 2) + (popup_dialog.RTrf.position.y / GameSettings.UI_SCALE)) / Screen.height);
                 //Util.DebugLog("Saving profiler window position as {0}", window_pos.ToString());
                 multi_dialog.dialogRect.Set(window_pos.x, window_pos.y, width, height);
+                dialog_items.children.Clear();
                 scroll_list.children.Clear();
+                entries.Clear();
             }
         }
 

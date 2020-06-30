@@ -12,6 +12,7 @@
 
 ### For Developers
 
+ - Fixed Profiler entries not updating when the Profiler GUI is re-spawned.
  
 ### Known Issues
 
