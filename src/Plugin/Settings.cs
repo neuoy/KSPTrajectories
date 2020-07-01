@@ -23,6 +23,7 @@
 using System;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using KSP.IO;
 using UnityEngine;
 
@@ -119,6 +120,9 @@ namespace Trajectories
 
         internal static void Load()
         {
+            if (Trajectories.Settings == null)
+                return;
+
             Util.Log("Loading settings");
             config ??= PluginConfiguration.CreateForType<Settings>();
 
@@ -164,6 +168,8 @@ namespace Trajectories
 
         internal static void Save()
         {
+            if (Trajectories.Settings == null)
+                return;
             Util.Log("Saving settings");
             Serialize(true);
         }

@@ -23,8 +23,8 @@ using UnityEngine;
 
 namespace Trajectories
 {
-    /// <summary> Trajectories Top class. </summary>
-	[KSPScenario(ScenarioCreationOptions.AddToAllGames, new[] { GameScenes.FLIGHT })]
+    /// <summary> Trajectories KSP Flight scenario class. </summary>
+    [KSPScenario(ScenarioCreationOptions.AddToAllGames, new[] { GameScenes.FLIGHT })]
     internal sealed class Trajectories : ScenarioModule
     {
         //public static string version;                           // savegame version
