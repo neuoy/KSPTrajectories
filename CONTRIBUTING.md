@@ -533,6 +533,7 @@ Here are the steps on how to use the telemetry module:
   - Start your debugging session. As soon as you are in the flight scene, a file called "Trajectories.csv" should appear in the same location where you put the `Telemetry.dll` file.
     This file will contain the values of "yourvalue" over the course of time.
 
+  - The Internal Profiler (see below) can also output to the telemetry module, use by enabling the `PROFILER_TELEMETRY` compilation symbol.
 
 #### Profiling
 
@@ -571,6 +572,9 @@ In-game, start it by pressing Ctrl-P. It shows each code entry belonging to one 
 
 You can reset these counters with the Reset button.
 You can enable/disable the display of any calls not called in the last frame with the Show zero calls button.
+
+The Internal Profiler can also output to the telemetry module, use by enabling the `PROFILER_TELEMETRY` compilation symbol.
+  Note: You will have to run the profiler at least once and then re-load the scene before the Telemetry module receives a list of the entries and creates a valid Telemetry.csv file.
 
 
 ### Development on MacOS

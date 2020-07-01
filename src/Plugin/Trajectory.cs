@@ -218,7 +218,7 @@ namespace Trajectories
 
         internal static void DebugTelemetry()
         {
-            if (HighLogic.LoadedScene != GameScenes.FLIGHT)
+            if (!Util.IsFlight)
                 return;
 
             double now = Planetarium.GetUniversalTime();

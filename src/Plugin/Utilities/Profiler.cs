@@ -48,7 +48,7 @@ namespace Trajectories
 
         // visible flag
         private static bool visible = false;
-        private static bool show_zero = true;
+        private static bool show_zero = false;
 
         // popup window
         private static MultiOptionDialog multi_dialog;
@@ -75,11 +75,13 @@ namespace Trajectories
 
         // store all entries
         private static readonly Dictionary<string, Entry> entries = new Dictionary<string, Entry>();
+        private static readonly List<string> channels = new List<string>();
+
 
         // display update timer
+        private const double UPDATE_FPS = 5.0;      // Frames per second the entry value display will update.
         private static double update_timer = Util.Clocks;
-        private static readonly double timeout = Stopwatch.Frequency / update_fps;
-        private const double update_fps = 5.0;      // Frames per second the entry value display will update.
+        private static readonly double timeout = Stopwatch.Frequency / UPDATE_FPS;
         private static long tot_frames = 0;         // total physics frames used for avg calculation
         private static string tot_frames_txt = "";  // total physics frames display string
 
@@ -114,6 +116,7 @@ namespace Trajectories
                    // create scrollbox for entry data
                    scroll_list
                });
+            ConstructTelemetry();
         }
 
         // Awake is called only once when the script instance is being loaded. Used in place of the constructor for initialization.
@@ -138,11 +141,19 @@ namespace Trajectories
                 return;
 
             // skip calculations for a smoother display
+#if PROFILER_TELEMETRY
+            if (((Util.Clocks - update_timer) > (Stopwatch.Frequency / 25d)) && visible)   // samples at 25 fps
+            {
+                update_timer = Util.Clocks;
+                Calculate();
+            }
+#else
             if (((Util.Clocks - update_timer) > timeout) && visible)
             {
                 update_timer = Util.Clocks;
                 Calculate();
             }
+#endif
 
             // hide or show the dialog box
             if ((Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl)) && Input.GetKeyUp(KeyCode.P))
@@ -165,10 +176,15 @@ namespace Trajectories
             foreach (KeyValuePair<string, Entry> p in entries)
             {
                 Entry e = p.Value;
+                double time = Util.Microseconds(e.prev_time / e.prev_calls);
 
+#if PROFILER_TELEMETRY
+                Telemetry.Send(p.Key + "_time", time);
+                Telemetry.Send(p.Key + "_calls", (double)e.prev_calls);
+#endif
                 if (e.prev_calls > 0L)
                 {
-                    e.last_txt = Util.Microseconds(e.prev_time / e.prev_calls).ToString("F2") + "ms";
+                    e.last_txt = time.ToString("F2") + "ms";
                     e.calls_txt = e.prev_calls.ToString();
                 }
                 else if (show_zero)
@@ -209,6 +225,17 @@ namespace Trajectories
                 popup_dialog = null;
             }
         }
+
+#if PROFILER_TELEMETRY
+        private static void ConstructTelemetry()
+        {
+            foreach (string name in channels)
+            {
+                Telemetry.AddChannel<double>(name + "_time");
+                Telemetry.AddChannel<double>(name + "_calls");
+            }
+        }
+#endif
 
         /// <summary>
         /// Defaults window to center of screen and also ensures it remains within the screen bounds.
@@ -348,6 +375,10 @@ namespace Trajectories
             {
                 entries.Add(e_name, new Entry());
                 AddDialogItem(e_name);
+#if PROFILER_TELEMETRY
+                if (!channels.Contains(e_name))
+                    channels.Add(e_name);
+#endif
             }
 
             entries[e_name].start = Util.Clocks;
