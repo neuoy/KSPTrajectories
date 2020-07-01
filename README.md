@@ -3,7 +3,7 @@ Trajectories
 
 A Kerbal Space Program mod to display trajectory predictions, accounting for atmospheric drag, lift, etc.
 
-This mod will display a new trajectory on the map, which should match the KSP regular trajectory, excepted if your spacecraft encounters an atmosphere. Drag and lift are predicted and the resulting modified trajectory is displayed. It is compatible with the aerodynamic model of the original game, but also with Ferram Aerospace Research (automatic selection at game startup).
+This mod will display a new trajectory on the map and in flight, which should match the KSP regular trajectory, unless your spacecraft encounters an atmosphere. Drag and lift are predicted and the resulting modified trajectory is displayed. It is compatible with the aerodynamic model of the original game, but also with Ferram Aerospace Research (automatic selection at game startup).
 
 This mod is designed to help with aerobraking maneuvers (trajectory after aerobrake is displayed), and to help reach a precise point on the ground (for example to land exactly at the Kerbal Space Center).
 
@@ -38,7 +38,8 @@ Faq
   - **Deadly Reentry** 
   - **Real Solar System** 
   - **Rescaled Kerbin** 
-  - **Outer Planets Mod** 
+  - **Outer Planets Mod**
+  - **kOS** 
 - Compatible with **Blizzy's toolbar**. 
 - If you see weird spirals or other crazy lines everywhere, double-check you didn't enable *"fixed-body"* mode by mistake. 
 - If the predicted trajectory seems inaccurate, check that you set the correct orientation in the Descent profile (or checked Prograde or Retrograde), and that you keep that orientation all the time. 
@@ -50,7 +51,7 @@ Faq
 Requirements
 ------------
 
-- Any KSP version from 1.3.1 to 1.8.x
+- Any KSP version from 1.3.1 to 1.9.x
 - ModuleManager 3.0.0+
 
 ----
