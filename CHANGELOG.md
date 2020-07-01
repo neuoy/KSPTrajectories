@@ -12,6 +12,7 @@
 
 ### For Developers
 
+ - The Profiler can now use the Telemetry module.
  - Fixed Profiler entries not updating when the Profiler GUI is re-spawned.
  
 ### Known Issues
