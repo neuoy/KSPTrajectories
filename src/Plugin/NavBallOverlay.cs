@@ -96,7 +96,7 @@ namespace Trajectories
                 if (navball != null)
                 {
                     // green circle for target
-                    guide_transform = GameObject.Instantiate(navball.progradeVector, navball.progradeVector.parent);
+                    guide_transform = (Transform)GameObject.Instantiate(navball.progradeVector, navball.progradeVector.parent);
                     if (guide_transform != null)
                     {
                         guide_transform.gameObject.transform.localScale = guide_transform.gameObject.transform.localScale * SCALE;
@@ -111,7 +111,7 @@ namespace Trajectories
                     }
 
                     // red square for crash site
-                    reference_transform = GameObject.Instantiate(navball.progradeVector, navball.progradeVector.parent);
+                    reference_transform = (Transform)GameObject.Instantiate(navball.progradeVector, navball.progradeVector.parent);
                     if (reference_transform != null)
                     {
                         reference_transform.gameObject.transform.localScale = reference_transform.gameObject.transform.localScale * SCALE;
