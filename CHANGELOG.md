@@ -1,9 +1,10 @@
 
-## v2.3.3 for all versions of KSP from 1.3.1 to 1.9.x
+## v2.3.3 for all versions of KSP from 1.3.1 to 1.10.x
  - 2020-xx-xx
 
 ### Changes since the last release
  
+ - Support for KSP 1.10.x
  - Added a green target marker to the in flight trajectory. 
  - NavBall target and crash markers have been fixed and updated,
    target is now a green circle and predicted crash site is now a red square.
