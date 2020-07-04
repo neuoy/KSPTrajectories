@@ -19,8 +19,6 @@
   along with Trajectories.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-using System;
-using System.Collections.Generic;
 using UnityEngine;
 
 namespace Trajectories
@@ -29,15 +27,139 @@ namespace Trajectories
     {
         private sealed class TrajectoryLine : MonoBehaviour
         {
-            internal List<Vector3d> Vertices = new List<Vector3d>();
-            internal CelestialBody Body = null;
+            internal const float MIN_WIDTH = 0.025f;
+            internal const float MAX_WIDTH = 250f;
+            internal const float DIST_DIV = 1e3f;
 
-            internal void OnPostRender()
+            private LineRenderer line_renderer;
+            private Material material;
+            private Vector3 cam_pos;
+
+            private bool Ready => (gameObject && line_renderer && material);
+#if !KSP13
+            private int Count => Ready ? line_renderer.positionCount : 0;
+#else
+            private Vector3 start = Vector3.zero;
+            private Vector3 end = Vector3.zero;
+            private int vertex_count = 0;
+            private int Count => Ready ? vertex_count : 0;
+#endif
+            internal void Awake()
             {
-                if (Body == null || Vertices == null || Vertices.Count == 0)
+                if (!gameObject)
                     return;
 
-                GLUtils.DrawPath(Body, Vertices, Color.blue, false, false);
+                line_renderer = gameObject.GetComponent<LineRenderer>();
+                if (!line_renderer)
+                {
+                    gameObject.AddComponent<LineRenderer>();
+                    line_renderer = gameObject.GetComponent<LineRenderer>();
+                }
+                if (!line_renderer)
+                    return;
+
+                material ??= new Material(Shader.Find("KSP/Particles/Additive"));
+                material ??= new Material(Shader.Find("Particles/Additive"));
+                if (!material)
+                    return;
+
+                line_renderer.enabled = false;
+                line_renderer.material = material;
+#if !KSP13
+                line_renderer.positionCount = 0;
+                line_renderer.startColor = Color.blue;
+                line_renderer.endColor = Color.blue;
+                line_renderer.numCapVertices = 5;
+                line_renderer.numCornerVertices = 7;
+                line_renderer.startWidth = MIN_WIDTH;
+                line_renderer.endWidth = MIN_WIDTH;
+
+#else
+                vertex_count = 0;
+                line_renderer.SetVertexCount(0);
+                line_renderer.SetColors(Color.blue, Color.blue);
+                line_renderer.SetWidth(MIN_WIDTH, MIN_WIDTH);
+                start = Vector3.zero;
+                end = Vector3.zero;
+#endif
+            }
+
+            internal void OnPreRender()
+            {
+                if (Util.IsPaused || !Util.IsFlight)
+                    return;
+
+                if (!Ready)
+                    Awake();
+
+                // adjust line width according to its distance from the camera
+                if (Ready && (Count > 0) && line_renderer.enabled)
+                {
+                    cam_pos = FlightCamera.fetch.mainCamera.transform.position;
+#if !KSP13
+                    line_renderer.startWidth = Mathf.Clamp(Vector3.Distance(cam_pos, line_renderer.GetPosition(0)) / DIST_DIV, MIN_WIDTH, MAX_WIDTH);
+                    line_renderer.endWidth = Mathf.Clamp(Vector3.Distance(cam_pos, line_renderer.GetPosition(Count - 1)) / DIST_DIV, MIN_WIDTH, MAX_WIDTH);
+#else
+                    line_renderer.SetWidth(Mathf.Clamp(Vector3.Distance(cam_pos, start) / DIST_DIV, MIN_WIDTH, MAX_WIDTH),
+                                           Mathf.Clamp(Vector3.Distance(cam_pos, end) / DIST_DIV, MIN_WIDTH, MAX_WIDTH));
+#endif
+                }
+            }
+
+            internal void OnEnable()
+            {
+                if (!Ready)
+                    return;
+                line_renderer.enabled = true;
+            }
+
+            internal void OnDisable()
+            {
+                if (!Ready)
+                    return;
+                line_renderer.enabled = false;
+            }
+
+            internal void OnDestroy()
+            {
+                if (line_renderer != null)
+                    UnityEngine.Object.Destroy(line_renderer);
+                if (material != null)
+                    UnityEngine.Object.Destroy(material);
+
+                line_renderer = null;
+                material = null;
+            }
+
+            internal void Clear()
+            {
+                if (!Ready)
+                    return;
+#if !KSP13
+                line_renderer.positionCount = 0;
+#else
+                vertex_count = 0;
+                line_renderer.SetVertexCount(0);
+                start = Vector3.zero;
+                end = Vector3.zero;
+#endif
+            }
+
+            internal void Add(Vector3 point)
+            {
+                if (!Ready)
+                    return;
+#if !KSP13
+                line_renderer.positionCount++;
+                line_renderer.SetPosition(line_renderer.positionCount - 1, point);
+#else
+                vertex_count++;
+                line_renderer.SetVertexCount(vertex_count);
+                line_renderer.SetPosition(vertex_count - 1, point);
+                if (vertex_count == 0)
+                    start = point;
+                end = point;
+#endif
             }
         }
 
@@ -76,7 +198,6 @@ namespace Trajectories
         }
 
         private const int DEFAULT_VERTEX_COUNT = 32;
-        //private const float lineWidth = 2.0f;
 
         private static TrajectoryLine line;
         private static TargetingCross impact_cross;
@@ -128,8 +249,8 @@ namespace Trajectories
                 || Trajectory.Patches.Count == 0)
                 return;
 
-            line.Vertices.Clear();
-            line.Vertices.Add(Trajectories.AttachedVessel.GetWorldPos3D());
+            line.Clear();
+            line.Add(Trajectories.AttachedVessel.GetWorldPos3D());
 
             lastPatch = Trajectory.Patches[Trajectory.Patches.Count - 1];
             bodyPosition = lastPatch.StartingState.ReferenceBody.position;
@@ -138,7 +259,7 @@ namespace Trajectories
                 for (uint i = 0; i < lastPatch.AtmosphericTrajectory.Length; ++i)
                 {
                     vertex = lastPatch.AtmosphericTrajectory[i].pos + bodyPosition;
-                    line.Vertices.Add(vertex);
+                    line.Add(vertex);
                 }
             }
             else
@@ -154,13 +275,12 @@ namespace Trajectories
 
                     vertex += bodyPosition;
 
-                    line.Vertices.Add(vertex);
+                    line.Add(vertex);
 
                     time += time_increment;
                 }
             }
 
-            line.Body = lastPatch.StartingState.ReferenceBody;
             line.enabled = true;
 
             // red impact cross

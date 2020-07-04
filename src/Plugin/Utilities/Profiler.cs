@@ -398,9 +398,9 @@ namespace Trajectories
         /// <summary> Stop a profiler entry. </summary>
         public static void Stop(string e_name)
         {
+#if DEBUG_PROFILER
             if (!Ready)
                 return;
-#if DEBUG_PROFILER
             Entry e = entries[e_name];
 
             ++e.calls;
