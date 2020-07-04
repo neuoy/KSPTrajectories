@@ -43,14 +43,15 @@ namespace Trajectories
 
         private sealed class TargetingCross : MonoBehaviour
         {
-            internal const double MARKER_SIZE = 2.0d; // in meters
+            internal const float MIN_SIZE = 2f;
+            internal const float MAX_SIZE = 2e3f;
+            internal const float DIST_DIV = 50f;
 
             private double latitude = 0d;
             private double longitude = 0d;
             private double altitude = 0d;
             private Vector3 screen_point;
-            private Vector3 cam_pos;
-            private double cross_dist = 0d;
+            private float size = 0f;
 
             internal Vector3? Position { get; set; }
             internal CelestialBody Body { get; set; }
@@ -62,19 +63,15 @@ namespace Trajectories
                     return;
 
                 // get impact position, translate to latitude and longitude
-                Body.GetLatLonAlt(Position.Value + Body.position, out latitude, out longitude, out altitude);
-
+                Body.GetLatLonAlt(Position.Value, out latitude, out longitude, out altitude);
                 // only draw if visible on the camera
-                screen_point = PlanetariumCamera.Camera.WorldToViewportPoint(Position.Value + Body.position);
-                if (!(screen_point.z > 0 && screen_point.x > 0 && screen_point.x < 1 && screen_point.y > 0 && screen_point.y < 1))
+                screen_point = FlightCamera.fetch.mainCamera.WorldToViewportPoint(Position.Value);
+                if (!(screen_point.z >= 0 && screen_point.x >= 0 && screen_point.x <= 1 && screen_point.y >= 0 && screen_point.y <= 1))
                     return;
-
                 // resize marker in respect to distance from camera.
-                cam_pos = ScaledSpace.ScaledToLocalSpace(PlanetariumCamera.Camera.transform.position) - Body.position;
-                cross_dist = System.Math.Max(Vector3.Distance(cam_pos, Position.Value) / 80.0d, 1.0d);
-
+                size = Mathf.Clamp(Vector3.Distance(FlightCamera.fetch.mainCamera.transform.position, Position.Value) / DIST_DIV, MIN_SIZE, MAX_SIZE);
                 // draw ground marker at this position
-                GLUtils.DrawGroundMarker(Body, latitude, longitude, Color, false, 0, Math.Min(MARKER_SIZE * cross_dist, 1500.0d));
+                GLUtils.DrawGroundMarker(Body, latitude, longitude, Color, false, 0, size);
             }
         }
 
@@ -169,7 +166,6 @@ namespace Trajectories
             // red impact cross
             if (lastPatch.ImpactPosition != null)
             {
-                impact_cross.Position = lastPatch.ImpactPosition.Value;
                 impact_cross.Body = lastPatch.StartingState.ReferenceBody;
                 impact_cross.enabled = true;
             }
@@ -182,7 +178,6 @@ namespace Trajectories
             // green target cross
             if (TargetProfile.WorldPosition != null)
             {
-                target_cross.Position = TargetProfile.WorldPosition.Value;
                 target_cross.Body = TargetProfile.Body;
                 target_cross.enabled = true;
             }
