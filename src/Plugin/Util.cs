@@ -139,9 +139,7 @@ namespace Trajectories
 
         internal const double HALF_PI = Math.PI * 0.5d;
 
-        /// <summary>
-        /// Clamps a double value
-        /// </summary>
+        /// <summary> Clamps a double value </summary>
         internal static double Clamp(double value, double min, double max)
         {
             if (value < min)
@@ -152,9 +150,7 @@ namespace Trajectories
                 return value;
         }
 
-        /// <summary>
-        /// Clamps a double value, optional return values for min and max can be passed
-        /// </summary>
+        /// <summary> Clamps a double value, optional return values for min and max can be passed </summary>
         internal static double Clamp(double value, double min, double max, double rtn_min = 0d, double rtn_max = 1d)
         {
             if (value < min)
@@ -165,9 +161,71 @@ namespace Trajectories
                 return value;
         }
 
-        /// <summary>
-        /// Clamps a double value using the absolute value for comparison, optional return values for min and max can be passed
-        /// </summary>
+        /// <summary> Clamps a Vector2 returning a new Vector2 </summary>
+        internal static Vector2 Clamp(this Vector2 value, Vector2 min, Vector2 max)
+        {
+            return new Vector2(Mathf.Clamp(value.x, min.x, max.x),
+                               Mathf.Clamp(value.y, min.y, max.y));
+        }
+
+        /// <summary> Clamps a Vector2, result also appears in the input vector </summary>
+        internal static Vector2 ClampSelf(this Vector2 value, Vector2 min, Vector2 max)
+        {
+            value.x = Mathf.Clamp(value.x, min.x, max.x);
+            value.y = Mathf.Clamp(value.y, min.y, max.y);
+            return value;
+        }
+
+        /// <summary> Clamps a Vector2d returning a new Vector2d </summary>
+        internal static Vector2d Clamp(this Vector2d value, Vector2d min, Vector2d max)
+        {
+            return new Vector2d(Clamp(value.x, min.x, max.x),
+                                Clamp(value.y, min.y, max.y));
+        }
+
+        /// <summary> Clamps a Vector2d, result also appears in the input vector </summary>
+        internal static Vector2d ClampSelf(this Vector2d value, Vector2d min, Vector2d max)
+        {
+            value.x = Clamp(value.x, min.x, max.x);
+            value.y = Clamp(value.y, min.y, max.y);
+            return value;
+        }
+
+        /// <summary> Clamps a Vector3 returning a new Vector3 </summary>
+        internal static Vector3 Clamp(this Vector3 value, Vector3 min, Vector3 max)
+        {
+            return new Vector3(Mathf.Clamp(value.x, min.x, max.x),
+                               Mathf.Clamp(value.y, min.y, max.y),
+                               Mathf.Clamp(value.z, min.z, max.z));
+        }
+
+        /// <summary> Clamps a Vector3, result also appears in the input vector </summary>
+        internal static Vector3 ClampSelf(this Vector3 value, Vector3 min, Vector3 max)
+        {
+            value.x = Mathf.Clamp(value.x, min.x, max.x);
+            value.y = Mathf.Clamp(value.y, min.y, max.y);
+            value.z = Mathf.Clamp(value.z, min.z, max.z);
+            return value;
+        }
+
+        /// <summary> Clamps a Vector3d returning a new Vector3d </summary>
+        internal static Vector3d Clamp(this Vector3d value, Vector3d min, Vector3d max)
+        {
+            return new Vector3d(Clamp(value.x, min.x, max.x),
+                                Clamp(value.y, min.y, max.y),
+                                Clamp(value.z, min.z, max.z));
+        }
+
+        /// <summary> Clamps a Vector3d, result also appears in the input vector </summary>
+        internal static Vector3d ClampSelf(this Vector3d value, Vector3d min, Vector3d max)
+        {
+            value.x = Clamp(value.x, min.x, max.x);
+            value.y = Clamp(value.y, min.y, max.y);
+            value.z = Clamp(value.z, min.z, max.z);
+            return value;
+        }
+
+        /// <summary> Clamps a double value using the absolute value for comparison, optional return values for min and max can be passed </summary>
         internal static double ClampAbs(double value, double min, double max, double rtn_min = 0d, double rtn_max = 1d)
         {
             if (Math.Abs(value) < min)
@@ -177,7 +235,6 @@ namespace Trajectories
             else
                 return value;
         }
-
 
         // --------------------------------------------------------------------------
         // --- Vectors --------------------------------------------------------------
