@@ -1,5 +1,5 @@
 ﻿/*
-  Copyright© (c) 2017-2018 S.Gray, (aka PiezPiedPy).
+  Copyright© (c) 2017-2020 S.Gray, (aka PiezPiedPy).
   Copyright© (c) 2017-2018 A.Korsunsky, (aka fat-lobyte).
 
   This file is part of Trajectories.
@@ -85,8 +85,10 @@ namespace Trajectories
         private static long tot_frames = 0;         // total physics frames used for avg calculation
         private static string tot_frames_txt = "";  // total physics frames display string
 
+        private static bool Ready => (multi_dialog != null && popup_dialog && scroll_list != null && entries != null);
+
         //  constructor
-        public Profiler()
+        static Profiler()
         {
             // create window
             dialog_items = new DialogGUIVerticalLayout();
@@ -116,7 +118,9 @@ namespace Trajectories
                    // create scrollbox for entry data
                    scroll_list
                });
+#if PROFILER_TELEMETRY
             ConstructTelemetry();
+#endif
         }
 
         // Awake is called only once when the script instance is being loaded. Used in place of the constructor for initialization.
@@ -173,6 +177,9 @@ namespace Trajectories
 
         private static void Calculate()
         {
+            if (!Ready)
+                return;
+
             foreach (KeyValuePair<string, Entry> p in entries)
             {
                 Entry e = p.Value;
@@ -370,6 +377,8 @@ namespace Trajectories
         /// <summary> Start a profiler entry. </summary>
         public static void Start(string e_name)
         {
+            if (!Ready)
+                return;
 #if DEBUG_PROFILER
             if (!entries.ContainsKey(e_name))
             {
@@ -389,6 +398,8 @@ namespace Trajectories
         /// <summary> Stop a profiler entry. </summary>
         public static void Stop(string e_name)
         {
+            if (!Ready)
+                return;
 #if DEBUG_PROFILER
             Entry e = entries[e_name];
 
