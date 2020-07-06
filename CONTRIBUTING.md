@@ -339,7 +339,7 @@ This section will guide you through setting up your development environment so t
 
 #### Unity
 For building and/or debugging KSP Kerbalism with Visual Studio or Unity Editor you will need to download and install the exact version of Unity Editor that was used to build the version of KSP you are working with.
-For KSP1.4.x You can find out which Unity version your current KSP install is using by looking at the first line of `C:\Users\YOURUSERNAME\AppData\LocalLow\Squad\Kerbal Space Program/output_log.txt`. It should read something like this:
+For KSP1.4+ You can find out which Unity version your current KSP install is using by looking at the first line of `C:\Users\YOURUSERNAME\AppData\LocalLow\Squad\Kerbal Space Program/output_log.txt`. It should read something like this:
 
     Initialize engine version: 2017.1.3p1 (02d73f71d3bd)
 
@@ -352,7 +352,7 @@ And for KSP1.3.1 you can find out which Unity version your current KSP install i
 In this case, the Unity version for your KSP version is 5.4.0p4.
 
 
-The Unity Editor from **KSP v1.8.0** is **Unity v2019.2.2f1** and can be downloaded here: [UnityDownloadAssistant-2019.2.2f1.exe](https://download.unity3d.com/download_unity/ab112815d860/UnityDownloadAssistant-2019.2.2f1.exe )
+The Unity Editor from **KSP v1.8.0 to latest** is **Unity v2019.2.2f1** and can be downloaded here: [UnityDownloadAssistant-2019.2.2f1.exe](https://download.unity3d.com/download_unity/ab112815d860/UnityDownloadAssistant-2019.2.2f1.exe )
 
 The Unity Editor for **KSP v1.4.2 to 1.7.3** is **Unity v2017.1.3p1** and can be downloaded here: [UnityDownloadAssistant-2017.1.3p1.exe](https://beta.unity3d.com/download/02d73f71d3bd/UnityDownloadAssistant-2017.1.3p1.exe )
 
@@ -360,7 +360,7 @@ The Unity Editor for **KSP v1.3.1** is **Unity v5.4.0.p4** and can be downloaded
 
 #### Visual Studio
 
-It is recommended to use **Visual Studio 2017**. Any version should work (including the free *Community* version).
+It is recommended to use **Visual Studio 2019**. Any version should work (including the free *Community* version).
 To save on disk space and installation time, you should only select the "Game development with Unity" component. In the right hand side, uncheck the "Unity 5.6-Editor" component, since this is the wrong version of the Editor anyway.
  
 
@@ -390,12 +390,12 @@ Under Tools -> Options -> Text Editor -> C# -> Tabs:
 
 You should create a KSP install just for Development that is separate from your install that you use for gaming.
 
-##### For KSP Versions from KSP 1.8.x :
-  - Copy your game install to another location
-  - Remove everything but the `Squad` directory from `GameData`
+##### For KSP Versions from KSP 1.8+ :
+  - Copy your game install to another location, this location will now be your KSP dev directory and the location the following instructions are to be performed on.
+  - Remove everything but the `Squad` directory from the `GameData` directory.
     - NB: Keep `SquadExpansion` if you're using or testing with the official Squad Expansion Packs.
   - Find your Unity install, and go into the subdirectory `Unity\Editor\Data\PlaybackEngines\windowsstandalonesupport\Variations\win64_development_mono`.  
-    Copy the following files into your KSP main directory:  
+    Copy the following files into the root of your KSP dev directory:  
       - `UnityPlayer.dll`
       - `WinPixEventRuntime.dll`
   - Edit `<KSP Directory>\KSP_x64_Data\boot.config` and add the following line:
@@ -408,19 +408,20 @@ To switch between debug and release mode you need to copy or rename the relevant
 ##### For KSP Versions before KSP 1.8.x :
 To do that, you follow these steps:
 
-  - Copy your game install to another location
+  - Copy your game install to another location, this location will now be your KSP dev directory and the location the following instructions are to be performed on.
   - Remove everything but the `Squad` directory from `GameData`
   - Find your Unity install, and go into the subdirectory `Unity\Editor\Data\PlaybackEngines\windowsstandalonesupport\Variations\win64_development_mono`.  
-    Copy the file `player_win.exe` into your KSP main directory
-  - Delete or rename `KSP_x64.exe` in your KSP main directory
-  - Rename the `player_win.exe` to `KSP_x64.exe`
-  - Copy the `PlayerConnectionConfigFile` file from the `buildscripts\UnityDebug` directory and put it into your KSP dev `KSP_x64_Data` folder.
+    Copy the file `player_win.exe` into the root of your KSP dev directory.
+  - Delete or rename `KSP_x64.exe` in the root directory.
+  - Rename the `player_win.exe` file to `KSP_x64.exe`
+  - Copy the `PlayerConnectionConfigFile` file from the `buildscripts\UnityDebug` directory and put it into the `KSP_x64_Data` directory.
 
 This will turn your new KSP install into a Development version only. If you want to use this install as a regular (non-Development) install as well (which is recommmended), then instead of deleting or renaming `KSP_x64.exe`, you can do the following:
 
-  - Rename the copied file `player_win.exe` now in your KSP dev install folder to `KSP_x64_Dbg.exe`.
-  - Create a junction in your KSP dev install folder named `KSP_x64_Dbg_Data` linking to your KSP dev `KSP_x64_Data` folder.
-    This is done by opening a command prompt in your KSP dev install folder and running the following command:
+  - Dont delete or rename `KSP_x64.exe` in the root directory, use this to start the non development version of KSP.
+  - Rename the copied unity file `player_win.exe` to `KSP_x64_Dbg.exe`, use this to start the development version of KSP.
+  - Create a junction named `KSP_x64_Dbg_Data` linking to the `KSP_x64_Data` directory.
+    This is done by opening a command prompt in the root directory and running the following command:
 
         mklink /J KSP_x64_Dbg_Data KSP_x64_Data
 
@@ -483,7 +484,7 @@ To save startup time, seconds of our life and the environment, it is recommended
 
 Before building Trajectories, consider turning on a few conditional compilation symbols, that may or may not aid you in development and debugging:
 
-  - `DEBUG_FASTSTART`: Turn on DebugFastStart module that quickloads you into the first Vessel of a save named "default" right after Game Start.
+  - `DEBUG_FASTSTART`: Turn on DebugFastStart module that quickloads you into the first Vessel of a save named "default" right after Game Start (currently does not work).
   - `DEBUG_TELEMETRY`: Turn on "Telemetry" (see [below](#telemetry))
   - `DEBUG_PROFILER`: Turn on Trajectories internal profiler (see [below](#profiling))
 
@@ -533,7 +534,27 @@ Here are the steps on how to use the telemetry module:
   - Start your debugging session. As soon as you are in the flight scene, a file called "Trajectories.csv" should appear in the same location where you put the `Telemetry.dll` file.
     This file will contain the values of "yourvalue" over the course of time.
 
-  - The Internal Profiler (see below) can also output to the telemetry module, use by enabling the `PROFILER_TELEMETRY` compilation symbol.
+  - The Internal Profiler and Watcher (see below) can also output to the telemetry module, use by enabling the `PROFILER_TELEMETRY` and/or `WATCHER_TELEMETRY` compilation symbols.
+
+
+#### Internal Watcher
+
+There is a simple variables watcher included in the KSPTrajectories code base [here](https://github.com/neuoy/KSPTrajectories/tree/master/Plugin/Utilities/Watcher.cs), that is handy for displaying runtime values in a Gui.
+
+Use by enabling the `DEBUG_WATCHER` compilation symbol.
+
+In the code, place the variable you want to watch in a `Trajectories.Watcher.Watch("MyLabel", MyVariable)` method call, variables may have to be cast to a double, as of yet only doubles can be watched.
+
+In-game, start it by pressing Ctrl-W. It shows each watch entry belonging to one label as one line. The columns show:
+
+  * NAME: The Label for the variable being watched.
+  * LAST: The value held for the variable being watched in the last executed frame.
+
+You can reset these watches to zero with the Reset button.
+
+The Internal Watcher can also output to the telemetry module, use by enabling the `WATCHER_TELEMETRY` compilation symbol.
+  Note: You will have to re-load the scene usually twice before the Telemetry module receives a list of the entries and creates a valid Telemetry.csv file.
+
 
 #### Profiling
 
@@ -560,6 +581,8 @@ For more information see the KSP Forum thread [KSP Plugin debugging and profilin
 
 In addition, there is a simple "frame-based" profiler included in the KSPTrajectories code base [here](https://github.com/neuoy/KSPTrajectories/tree/master/Plugin/Utilities/Profiler.cs), that is appropriate for performance measurements.
 
+Use by enabling the `DEBUG_PROFILER` compilation symbol.
+
 In the code, wrap the code you want in pairs of `Trajectories.Profiler.Start("MyLabel")` and `Trajectories.Profiler.Stop("MyLabel")`.
 
 In-game, start it by pressing Ctrl-P. It shows each code entry belonging to one label as one line. The columns show:
@@ -574,7 +597,7 @@ You can reset these counters with the Reset button.
 You can enable/disable the display of any calls not called in the last frame with the Show zero calls button.
 
 The Internal Profiler can also output to the telemetry module, use by enabling the `PROFILER_TELEMETRY` compilation symbol.
-  Note: You will have to run the profiler at least once and then re-load the scene before the Telemetry module receives a list of the entries and creates a valid Telemetry.csv file.
+  Note: You will have to re-load the scene usually twice before the Telemetry module receives a list of the entries and creates a valid Telemetry.csv file.
 
 
 ### Development on MacOS
@@ -606,7 +629,7 @@ If you want to distribute your own version for testing, please do so by making i
   - Bump the version number in `Trajectories.version` and `Plugin\Properties\AssemblyInfo.cs` according the the versioning rules [below](#versioning).
   - Check with Git that your working directory is clean. No Changes are allowed, everything must be committed.
   - Build the Project in release mode
-  - Clean out the `GameData` folder of your KSP install, only the ´Squad` folder should remain.
+  - Clean out the `GameData` folder of your KSP install, only the ´Squad` and `SquadExpansion` folders should remain.
   - Extract the `Trajectories-<version>.zip` that was created during the Release build into your GameData folder
   - Launch KSP in the non-Developer mode and verify the functionality. Check the `output_log.txt` for errors.
   - Create a Tag with Git, push all commits and the tag to GitHub.

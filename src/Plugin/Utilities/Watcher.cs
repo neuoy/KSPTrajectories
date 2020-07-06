@@ -1,6 +1,5 @@
 ﻿/*
   Copyright© (c) 2017-2020 S.Gray, (aka PiezPiedPy).
-  Copyright© (c) 2017-2018 A.Korsunsky, (aka fat-lobyte).
 
   This file is part of Trajectories.
   Trajectories is available under the terms of GPL-3.0-or-later.
@@ -20,8 +19,7 @@
 */
 
 using System.Diagnostics;
-#if DEBUG_PROFILER
-using System;
+#if DEBUG_WATCHER
 using System.Collections.Generic;
 using KSP.Localization;
 using UnityEngine;
@@ -30,21 +28,21 @@ using UnityEngine.Events;
 
 namespace Trajectories
 {
-#if !DEBUG_PROFILER
-    /// <summary> Simple profiler for measuring the execution time of code placed between the Start and Stop methods. </summary>
-    public sealed class Profiler
+#if !DEBUG_WATCHER
+    /// <summary> Simple gui for watching the state of variables placed in the Watch methods. </summary>
+    public sealed class Watcher
     {
 #endif
-#if DEBUG_PROFILER
-    /// <summary> Simple profiler for measuring the execution time of code placed between the Start and Stop methods. </summary>
+#if DEBUG_WATCHER
+    /// <summary> Simple gui for watching the state of variables placed in the Watch methods. Note. no string support </summary>
     [KSPAddon(KSPAddon.Startup.Flight, false)]
-    public sealed class Profiler : MonoBehaviour
+    public sealed class Watcher : MonoBehaviour
     {
         // constants
-        private const float width = 500.0f;
-        private const float height = 500.0f;
+        private const float WIDTH = 300.0f;
+        private const float HEIGHT = 400.0f;
 
-        private const float value_width = 65.0f;
+        private const float VALUE_WIDTH = 100.0f;
 
         // visible flag
         private static bool visible = false;
@@ -56,21 +54,11 @@ namespace Trajectories
         private static DialogGUIScrollList scroll_list;
         private static DialogGUIVerticalLayout dialog_items;
 
-        // an entry in the profiler
+        // an entry in the watcher
         private class Entry
         {
-            public double start;        // used to measure call time
-            public long calls;          // number of calls in current simulation step
-            public double time;         // time in current simulation step
-            public long prev_calls;     // number of calls in previous simulation step
-            public double prev_time;    // time in previous simulation step
-            public long tot_calls;      // number of calls in total used for avg calculation
-            public double tot_time;     // total time used for avg calculation
-
-            public string last_txt = "";        // last call time display string
-            public string avg_txt = "";         // average call time display string
-            public string calls_txt = "";       // number of calls display string
-            public string avg_calls_txt = "";   // number of average calls display string
+            public double value;            // used to store last value
+            public string value_txt = "";   // last value display string
         }
 
         // store all entries
@@ -85,36 +73,32 @@ namespace Trajectories
         private static long tot_frames = 0;         // total physics frames used for avg calculation
         private static string tot_frames_txt = "";  // total physics frames display string
 
+        //  constructor
         private static bool Ready => (multi_dialog != null && popup_dialog && scroll_list != null);
 
-        //  constructor
-        static Profiler()
+        static Watcher()
         {
             // create window
             dialog_items = new DialogGUIVerticalLayout();
             scroll_list = new DialogGUIScrollList(new Vector2(), false, true, dialog_items);
             multi_dialog = new MultiOptionDialog(
-               "TrajectoriesProfilerWindow",
+               "TrajectoriesWatcherWindow",
                "",
                GetTitle(),
                HighLogic.UISkin,
-               new Rect(0.5f, 0.5f, width, height),
+               new Rect(0.5f, 0.5f, WIDTH, HEIGHT),
                new DialogGUIBase[]
                {
                    new DialogGUIVerticalLayout(false, false, 0, new RectOffset(), TextAnchor.UpperCenter,
-                       // create average reset and show zero calls buttons
+                       // create reset button
                        new DialogGUIHorizontalLayout(false, false,
                            new DialogGUIButton(Localizer.Format("#autoLOC_900305"),
                                OnButtonClick_Reset, () => true, 75, 25, false),
-                           new DialogGUIToggle(() => { return show_zero; },"Show zero calls", OnButtonClick_ShowZero),
-                           new DialogGUILabel(() => { return tot_frames_txt; }, value_width + 50f)),
+                           new DialogGUILabel(() => { return tot_frames_txt; }, VALUE_WIDTH + 50f)),
                        // create header line
                        new DialogGUIHorizontalLayout(
                            new DialogGUILabel("<b>   NAME</b>", true),
-                           new DialogGUILabel("<b>LAST</b>", value_width),
-                           new DialogGUILabel("<b>AVG</b>", value_width),
-                           new DialogGUILabel("<b>CALLS</b>", value_width - 15f),
-                           new DialogGUILabel("<b>AVG</b>", value_width - 10f))),
+                           new DialogGUILabel("<b>LAST</b>", VALUE_WIDTH))),
                    // create scrollbox for entry data
                    scroll_list
                });
@@ -123,7 +107,7 @@ namespace Trajectories
         // Awake is called only once when the script instance is being loaded. Used in place of the constructor for initialization.
         public void Awake() => SpawnDialog();
 
-#if PROFILER_TELEMETRY
+#if WATCHER_TELEMETRY
         public void Start() => ConstructTelemetry();
 #endif
 
@@ -146,7 +130,7 @@ namespace Trajectories
                 return;
 
             // skip calculations for a smoother display
-#if PROFILER_TELEMETRY
+#if WATCHER_TELEMETRY
             if ((Util.Clocks - update_timer) > (Stopwatch.Frequency / 25d))   // samples at 25 fps
             {
                 update_timer = Util.Clocks;
@@ -161,7 +145,7 @@ namespace Trajectories
 #endif
 
             // hide or show the dialog box
-            if ((Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl)) && Input.GetKeyUp(KeyCode.P))
+            if ((Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl)) && Input.GetKeyUp(KeyCode.W))
                 visible = !visible;
 
             if (visible)
@@ -184,47 +168,17 @@ namespace Trajectories
             foreach (KeyValuePair<string, Entry> p in entries)
             {
                 Entry e = p.Value;
-                double time = Util.Microseconds(e.prev_time / e.prev_calls);
 
-#if PROFILER_TELEMETRY
-                Telemetry.Send(p.Key + "_time", time);
-                Telemetry.Send(p.Key + "_calls", (double)e.prev_calls);
+#if WATCHER_TELEMETRY
+                Telemetry.Send(p.Key, e.value);
 #endif
-
-                if (e.prev_calls > 0L)
-                {
-                    e.last_txt = time.ToString("F2") + "ms";
-                    e.calls_txt = e.prev_calls.ToString();
-                }
-                else if (show_zero)
-                {
-                    e.last_txt = "ms";
-                    e.calls_txt = "0";
-                }
-
-                e.avg_txt = (e.tot_calls > 0L ? Util.Microseconds(e.tot_time / e.tot_calls).ToString("F2") : "") + "ms";
-                e.avg_calls_txt = tot_frames > 0L ? ((float)e.tot_calls / (float)tot_frames).ToString("F3") : "0";
+                e.value_txt = e.value.ToString("F8");
             }
 
             tot_frames_txt = tot_frames.ToString() + " Frames";
         }
 
-        public void FixedUpdate()
-        {
-            foreach (KeyValuePair<string, Entry> p in entries)
-            {
-                Entry e = p.Value;
-
-                e.prev_calls = e.calls;
-                e.prev_time = e.time;
-                e.tot_calls += e.calls;
-                e.tot_time += e.time;
-                e.calls = 0L;
-                e.time = 0.0;
-            }
-
-            ++tot_frames;
-        }
+        public void FixedUpdate() => ++tot_frames;
 
         public static void OnDestroy()
         {
@@ -235,13 +189,12 @@ namespace Trajectories
             }
         }
 
-#if PROFILER_TELEMETRY
+#if WATCHER_TELEMETRY
         private static void ConstructTelemetry()
         {
             foreach (string name in channels)
             {
-                Telemetry.AddChannel<double>(name + "_time");
-                Telemetry.AddChannel<double>(name + "_calls");
+                Telemetry.AddChannel<double>(name);
             }
         }
 #endif
@@ -257,7 +210,7 @@ namespace Trajectories
             if (multi_dialog.dialogRect.position.x <= 0.0f || multi_dialog.dialogRect.position.y <= 0.0f)
             {
                 // default window to center of screen
-                multi_dialog.dialogRect.Set(0.5f, 0.5f, width, height);
+                multi_dialog.dialogRect.Set(0.5f, 0.5f, WIDTH, HEIGHT);
                 adjusted = true;
             }
             else
@@ -268,23 +221,23 @@ namespace Trajectories
 
                 if (pos.x > (Screen.width / 2) - border)
                 {
-                    pos.x = (Screen.width / 2) - (border + (width / 2));
+                    pos.x = (Screen.width / 2) - (border + (WIDTH / 2));
                     adjusted = true;
                 }
                 else if (pos.x < ((Screen.width / 2) - border) * -1f)
                 {
-                    pos.x = ((Screen.width / 2) - (border + (width / 2))) * -1f;
+                    pos.x = ((Screen.width / 2) - (border + (WIDTH / 2))) * -1f;
                     adjusted = true;
                 }
 
                 if (pos.y > (Screen.height / 2) - border)
                 {
-                    pos.y = (Screen.height / 2) - (border + (height / 2));
+                    pos.y = (Screen.height / 2) - (border + (HEIGHT / 2));
                     adjusted = true;
                 }
                 else if (pos.y < ((Screen.height / 2) - border) * -1f)
                 {
-                    pos.y = ((Screen.height / 2) - (border + (height / 2))) * -1f;
+                    pos.y = ((Screen.height / 2) - (border + (HEIGHT / 2))) * -1f;
                     adjusted = true;
                 }
 
@@ -293,7 +246,7 @@ namespace Trajectories
                     multi_dialog.dialogRect.Set(
                         ((Screen.width / 2) + (pos.x / GameSettings.UI_SCALE)) / Screen.width,
                         ((Screen.height / 2) + (pos.y / GameSettings.UI_SCALE)) / Screen.height,
-                        width, height);
+                        WIDTH, HEIGHT);
                 }
             }
         }
@@ -310,7 +263,7 @@ namespace Trajectories
                     ((Screen.width / 2) + (popup_dialog.RTrf.position.x / GameSettings.UI_SCALE)) / Screen.width,
                     ((Screen.height / 2) + (popup_dialog.RTrf.position.y / GameSettings.UI_SCALE)) / Screen.height);
                 //Util.DebugLog("Saving profiler window position as {0}", window_pos.ToString());
-                multi_dialog.dialogRect.Set(window_pos.x, window_pos.y, width, height);
+                multi_dialog.dialogRect.Set(window_pos.x, window_pos.y, WIDTH, HEIGHT);
                 dialog_items.children.Clear();
                 scroll_list.children.Clear();
                 entries.Clear();
@@ -322,23 +275,23 @@ namespace Trajectories
             switch (Localizer.CurrentLanguage)
             {
                 case "es-es":
-                    return "Trayectorias Profiler";
+                    return "Trayectorias Observatorio";
                 case "ru":
-                    return "Провайдер Траектория";
+                    return "траекториями Наблюдатель";
                 case "zh-cn":
-                    return "軌跡分析儀";
+                    return "轨迹观察者";
                 case "ja":
-                    return "軌道プロファイラ";
+                    return "軌跡ウォッチャー";
                 case "de-de":
-                    return "Trajektorien Profiler";
+                    return "Trajectories Beobachter";
                 case "fr-fr":
-                    return "Trajectoires Profiler";
+                    return "Trajectoires Observateur";
                 case "it-it":
-                    return "Trailerories Profiler";
+                    return "Traiettorie Osservatore";
                 case "pt-br":
-                    return "Trajectórias perfil";
+                    return "Trajetórias Observador";
                 default:
-                    return "Trajectories Profiler";
+                    return "Trajectories Watcher";
             }
         }
 
@@ -346,8 +299,8 @@ namespace Trajectories
         {
             foreach (KeyValuePair<string, Entry> e in entries)
             {
-                e.Value.tot_calls = 0L;
-                e.Value.tot_time = 0.0;
+                e.Value.value = 0d;
+                e.Value.value_txt = "";
             }
 
             tot_frames = 0L;
@@ -365,10 +318,7 @@ namespace Trajectories
             dialog_items.AddChild(
                 new DialogGUIHorizontalLayout(
                     new DialogGUILabel("  " + e_name, true),
-                    new DialogGUILabel(() => { return entries[e_name].last_txt; }, value_width),
-                    new DialogGUILabel(() => { return entries[e_name].avg_txt; }, value_width),
-                    new DialogGUILabel(() => { return entries[e_name].calls_txt; }, value_width - 15f),
-                    new DialogGUILabel(() => { return entries[e_name].avg_calls_txt; }, value_width - 10f)));
+                    new DialogGUILabel(() => { return entries[e_name].value_txt; }, VALUE_WIDTH)));
 
             // required to force the Gui creation
             Stack<Transform> stack = new Stack<Transform>();
@@ -377,11 +327,11 @@ namespace Trajectories
         }
 #endif
 
-        [Conditional("DEBUG_PROFILER")]
-        /// <summary> Start a profiler entry. </summary>
-        public static void Start(string e_name)
+        [Conditional("DEBUG_WATCHER")]
+        /// <summary> Add a watcher entry. </summary>
+        public static void Watch(string e_name, double value)
         {
-#if DEBUG_PROFILER
+#if DEBUG_WATCHER
             if (entries == null)
                 return;
 
@@ -389,48 +339,15 @@ namespace Trajectories
             {
                 entries.Add(e_name, new Entry());
                 AddDialogItem(e_name);
-#if PROFILER_TELEMETRY
+#if WATCHER_TELEMETRY
                 if (!channels.Contains(e_name))
                     channels.Add(e_name);
 #endif
             }
 
-            entries[e_name].start = Util.Clocks;
+            entries[e_name].value = value;
 #endif
         }
-
-        [Conditional("DEBUG_PROFILER")]
-        /// <summary> Stop a profiler entry. </summary>
-        public static void Stop(string e_name)
-        {
-#if DEBUG_PROFILER
-            if (entries == null)
-                return;
-
-            Entry e = entries[e_name];
-
-            ++e.calls;
-            e.time += Util.Clocks - e.start;
-#endif
-        }
-
-#if DEBUG_PROFILER
-
-        /// <summary> Profile a function scope. </summary>
-        internal sealed class ProfileScope : IDisposable
-        {
-            public ProfileScope(string name)
-            {
-                this.name = name;
-                Start(name);
-            }
-
-            public void Dispose() => Stop(name);
-
-            private readonly string name;
-        }
-
-#endif
     }
 
 } // Trajectories

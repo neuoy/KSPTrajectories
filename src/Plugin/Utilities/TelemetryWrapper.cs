@@ -26,7 +26,7 @@ namespace Trajectories
 {
     public class Telemetry
     {
-#if DEBUG_TELEMETRY || PROFILER_TELEMETRY
+#if DEBUG_TELEMETRY || PROFILER_TELEMETRY || WATCHER_TELEMETRY
         private const int APIVersionMajor = 0;
         private const int APIVersionMinor = 1;
 
@@ -37,11 +37,11 @@ namespace Trajectories
         private static MethodInfo sendMethod = null;
 #endif
 
-        [System.Diagnostics.Conditional("DEBUG_TELEMETRY")]
+        [Conditional("DEBUG_TELEMETRY"), Conditional("PROFILER_TELEMETRY"), Conditional("WATCHER_TELEMETRY")]
         public static void AddChannel<ChannelType>(string id, string format = null)
             where ChannelType : IFormattable
         {
-#if DEBUG_TELEMETRY || PROFILER_TELEMETRY
+#if DEBUG_TELEMETRY || PROFILER_TELEMETRY || WATCHER_TELEMETRY
             if (telemetryServiceInstance == null)
                 return;
 
@@ -54,10 +54,10 @@ namespace Trajectories
 #endif
         }
 
-        [System.Diagnostics.Conditional("DEBUG_TELEMETRY")]
+        [Conditional("DEBUG_TELEMETRY"), Conditional("PROFILER_TELEMETRY"), Conditional("WATCHER_TELEMETRY")]
         public static void Send(string id, object value)
         {
-#if DEBUG_TELEMETRY || PROFILER_TELEMETRY
+#if DEBUG_TELEMETRY || PROFILER_TELEMETRY || WATCHER_TELEMETRY
             if (telemetryServiceInstance == null)
                 return;
 
@@ -69,7 +69,7 @@ namespace Trajectories
 
         static Telemetry()
         {
-#if DEBUG_TELEMETRY || PROFILER_TELEMETRY
+#if DEBUG_TELEMETRY || PROFILER_TELEMETRY || WATCHER_TELEMETRY
             int versionMajor = 0, versionMinor = 0;
 
             // Search for telemetry assembly

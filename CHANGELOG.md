@@ -14,6 +14,7 @@
 
 ### For Developers
 
+ - A variable Watcher window has been added that can also use the Telemetry module, see the CONTRIBUTING.md file for more info.
  - The Profiler can now use the Telemetry module.
  - Fixed Profiler entries not updating when the Profiler GUI is re-spawned.
  

@@ -103,6 +103,8 @@ namespace Trajectories
                     line_renderer.SetWidth(Mathf.Clamp(Vector3.Distance(cam_pos, start) / DIST_DIV, MIN_WIDTH, MAX_WIDTH),
                                            Mathf.Clamp(Vector3.Distance(cam_pos, end) / DIST_DIV, MIN_WIDTH, MAX_WIDTH));
 #endif
+                    //Watcher.Watch("startWidth", line_renderer.startWidth);
+                    //Watcher.Watch("endWidth", line_renderer.endWidth);
                 }
             }
 
