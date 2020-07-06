@@ -5,6 +5,7 @@
 ### Changes since the last release
  
  - Support for KSP 1.10.x
+ - Minor graphical changes to the in-flight trajectory, nicer line and markers are now more stable.
  - Added a green target marker to the in flight trajectory. 
  - NavBall target and crash markers have been fixed and updated,
    target is now a green circle and predicted crash site is now a red square.
