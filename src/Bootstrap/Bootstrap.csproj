@@ -87,7 +87,7 @@
     <Prefer32Bit>false</Prefer32Bit>
     <PlatformTarget>x64</PlatformTarget>
   </PropertyGroup>
-  <ItemGroup Condition="'$(Configuration)'!='Debug'">
+  <ItemGroup>
     <Reference Include="Assembly-CSharp">
       <HintPath Condition="Exists('$(KSPBACKPORTDIR)\KSP_x64_Data\Managed\Assembly-CSharp.dll')">$(KSPBACKPORTDIR)\KSP_x64_Data\Managed\Assembly-CSharp.dll</HintPath>
       <HintPath Condition="Exists('..\DLLs\Assembly-CSharp.dll')">..\DLLs\Assembly-CSharp.dll</HintPath>
@@ -103,30 +103,6 @@
       <HintPath Condition="Exists('..\DLLs\UnityEngine.dll')">..\DLLs\UnityEngine.dll</HintPath>
       <Private>False</Private>
     </Reference>
-  </ItemGroup>
-  <ItemGroup Condition="'$(Configuration)'=='Debug'">
-    <Reference Include="Assembly-CSharp">
-      <HintPath Condition="Exists('$(KSPDEVDIR)\KSP_x64_Data\Managed\Assembly-CSharp.dll')">$(KSPDEVDIR)\KSP_x64_Data\Managed\Assembly-CSharp.dll</HintPath>
-      <HintPath Condition="Exists('..\DLLs\Assembly-CSharp.dll')">..\DLLs\Assembly-CSharp.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="Assembly-CSharp-firstpass">
-      <HintPath Condition="Exists('$(KSPDEVDIR)\KSP_x64_Data\Managed\Assembly-CSharp-firstpass.dll')">$(KSPDEVDIR)\KSP_x64_Data\Managed\Assembly-CSharp-firstpass.dll</HintPath>
-      <HintPath Condition="Exists('..\DLLs\Assembly-CSharp-firstpass.dll')">..\DLLs\Assembly-CSharp-firstpass.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="UnityEngine">
-      <HintPath Condition="Exists('$(KSPDEVDIR)\KSP_x64_Data\Managed\UnityEngine.dll')">$(KSPDEVDIR)\KSP_x64_Data\Managed\UnityEngine.dll</HintPath>
-      <HintPath Condition="Exists('..\DLLs\UnityEngine.dll')">..\DLLs\UnityEngine.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="UnityEngine.CoreModule">
-      <HintPath Condition="Exists('$(KSPDEVDIR)\KSP_x64_Data\Managed\UnityEngine.CoreModule.dll')">$(KSPDEVDIR)\KSP_x64_Data\Managed\UnityEngine.CoreModule.dll</HintPath>
-      <HintPath Condition="Exists('..\DLLs\UnityEngine.CoreModule.dll')">..\DLLs\UnityEngine.CoreModule.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-  </ItemGroup>
-  <ItemGroup>
     <Reference Include="System">
       <Private>False</Private>
     </Reference>
