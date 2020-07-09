@@ -155,7 +155,7 @@ namespace Trajectories
         {
             Util.DebugLog("Constructing");
 
-#if DEBUG && DEBUG_TELEMETRY
+#if DEBUG_TELEMETRY
             ConstructTelemetry();
 #endif
         }
@@ -181,7 +181,7 @@ namespace Trajectories
                 ComputeTrajectory();
         }
 
-#if DEBUG && DEBUG_TELEMETRY
+#if DEBUG_TELEMETRY
 
         internal static void ConstructTelemetry()
         {

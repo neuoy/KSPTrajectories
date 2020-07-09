@@ -516,9 +516,7 @@ namespace Trajectories
                     new DialogGUILabel(() => { return calculation_time_txt; }, true),
                     new DialogGUILabel(() => { return num_errors_txt; }, true)),
                 new DialogGUIHorizontalLayout(true, false, 0, new RectOffset(), TextAnchor.MiddleCenter,
-                    new DialogGUILabel(() => { return aerodynamic_model_txt; }, true),
-                    new DialogGUIToggle(() => { return Settings.NewGui; },
-                        Localizer.Format("#autoLOC_Trajectories_NewGui"), OnButtonClick_NewGui))
+                    new DialogGUILabel(() => { return aerodynamic_model_txt; }, true))
                 );
 
             // create page box with current page inserted into page box
@@ -816,13 +814,6 @@ namespace Trajectories
         {
             if (ToolbarManager.ToolbarAvailable)
                 Settings.UseBlizzyToolbar = inState;
-        }
-
-        private static void OnButtonClick_NewGui(bool inState)
-        {
-            Settings.NewGui = inState;
-            Settings.MainGUIEnabled = inState;
-            Settings.GUIEnabled = !inState;
         }
 
         private static void OnButtonClick_Prograde(bool inState)

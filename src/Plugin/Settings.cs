@@ -23,7 +23,6 @@
 using System;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.CompilerServices;
 using KSP.IO;
 using UnityEngine;
 
@@ -37,15 +36,6 @@ namespace Trajectories
             internal object DefaultValue;
             internal Persistent(object Default) => DefaultValue = Default;
         }
-
-        [Persistent(Default: false)]
-        internal static bool DisplayTargetGUI { get; set; }
-
-        [Persistent(Default: false)]
-        internal static bool DisplayDescentProfileGUI { get; set; }
-
-        [Persistent(Default: false)]
-        internal static bool DisplaySettingsGUI { get; set; }
 
         [Persistent(Default: true)]
         internal static bool UseBlizzyToolbar { get; set; }
@@ -68,9 +58,6 @@ namespace Trajectories
         [Persistent(Default: true)]
         internal static bool AutoUpdateAerodynamicModel { get; set; }
 
-        [Persistent(Default: null)]
-        internal static Rect MapGUIWindowPos { get; set; }
-
         [Persistent(Default: false)]
         internal static bool MainGUIEnabled { get; set; }
 
@@ -79,12 +66,6 @@ namespace Trajectories
 
         [Persistent(Default: null)]
         internal static int MainGUICurrentPage { get; set; }
-
-        [Persistent(Default: false)]
-        internal static bool GUIEnabled { get; set; }
-
-        [Persistent(Default: true)]
-        internal static bool NewGui { get; set; }
 
         [Persistent(Default: 2.0d)]
         internal static double IntegrationStepSize { get; set; }
@@ -163,7 +144,6 @@ namespace Trajectories
             }
 
             Serialize();
-            MapGUIWindowPos = new Rect(MapGUIWindowPos.xMin, MapGUIWindowPos.yMin, 1, MapGUIWindowPos.height); // width will be auto-sized to fit contents
         }
 
         internal static void Save()

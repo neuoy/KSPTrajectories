@@ -30,7 +30,7 @@ namespace Trajectories
     /// </summary>
     internal static class AppLauncherButton
     {
-        private class BlizzyToolbarButtonVisibility: IVisibility
+        private class BlizzyToolbarButtonVisibility : IVisibility
         {
             private static IVisibility flight_visibility;
 
@@ -49,13 +49,7 @@ namespace Trajectories
                 flight_visibility = new GameScenesVisibility(GameScenes.FLIGHT);
             }
 
-            public bool Visible
-            {
-                get
-                {
-                    return flight_visibility.Visible;
-                }
-            }
+            public bool Visible => flight_visibility.Visible;
         }
 
         /// <summary> Toolbar button icon style</summary>
@@ -84,7 +78,7 @@ namespace Trajectories
         /// <summary> Creates the toolbar button for either a KSP stock toolbar or Blizzy toolbar if available. </summary>
         internal static void Start()
         {
-            Util.DebugLog(constructed ? "Resetting" : "Constructing" );
+            Util.DebugLog(constructed ? "Resetting" : "Constructing");
 
             if (Settings.DisplayTrajectories)
                 IconStyle = IconStyleType.ACTIVE;
@@ -171,28 +165,13 @@ namespace Trajectories
             }
             else
             {
-                if (Settings.NewGui)
-                    Settings.MainGUIEnabled = !Settings.MainGUIEnabled;
-                else
-                    Settings.GUIEnabled = !Settings.GUIEnabled;
+                Settings.MainGUIEnabled = !Settings.MainGUIEnabled;
             }
         }
 
-        private static void OnStockTrue()
-        {
-            if (Settings.NewGui)
-                Settings.MainGUIEnabled = true;
-            else
-                Settings.GUIEnabled = true;
-        }
+        private static void OnStockTrue() => Settings.MainGUIEnabled = true;
 
-        private static void OnStockFalse()
-        {
-            if (Settings.NewGui)
-                Settings.MainGUIEnabled = false;
-            else
-                Settings.GUIEnabled = false;
-        }
+        private static void OnStockFalse() => Settings.MainGUIEnabled = false;
 
         private static void DestroyStockToolbarButton()
         {
@@ -230,7 +209,7 @@ namespace Trajectories
                 if (IconStyle == IconStyleType.AUTO)
                     stock_toolbar_button.SetTexture(auto_icon_texture);
 
-                if (Settings.MainGUIEnabled || Settings.GUIEnabled)
+                if (Settings.MainGUIEnabled)
                     stock_toolbar_button.SetTrue(false);
             }
         }
