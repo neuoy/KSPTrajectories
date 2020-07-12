@@ -1,9 +1,10 @@
 
 ## v2.3.4 for all versions of KSP from 1.3.1 to 1.10.x
- - 2020-xx-xx
+ - 2020-07-12
 
 ### Changes since the last release
  
+ - Fixed 'Invalid Cast' bug when using FAR
 
 ### For Developers
 

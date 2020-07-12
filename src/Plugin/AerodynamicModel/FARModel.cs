@@ -42,27 +42,27 @@ namespace Trajectories
         {
             //Util.DebugLog("Getting FAR forces");
             if (!Trajectories.IsVesselAttached || Trajectories.AttachedVessel.packed)
-                return Vector3.zero;
+                return Vector3d.zero;
 
             if (airVelocity.x == 0d || airVelocity.y == 0d || airVelocity.z == 0d)
             {
                 Util.DebugLogWarning("Zero in FAR air velocity: {0} at altitude: {1}", airVelocity, altitude);
-                return Vector3.zero;
+                return Vector3d.zero;
             }
 
             Vector3 worldAirVel = new Vector3((float)airVelocity.x, (float)airVelocity.y, (float)airVelocity.z);
             var parameters = new object[] { Trajectories.AttachedVessel, Vector3.zero, Vector3.zero, worldAirVel, altitude };
             FARAPI_CalculateVesselAeroForces.Invoke(null, parameters);
-            return (Vector3d)parameters[1];
+            return (Vector3)parameters[1];
         }
 
         public override Vector2d PackForces(Vector3d forces, double altitudeAboveSea, double velocity)
         {
             double rho = StockAeroUtil.GetDensity(altitudeAboveSea, body_); // would be even better to use FAR method of computing the air density (which also depends on velocity), but this is already better than nothing
 
-            if (rho < 0.0000000001)
+            if (rho < 0.0000000001d)
                 return Vector2d.zero;
-            double invScale = 1.0 / (rho * Math.Max(1.0d, velocity * velocity));
+            double invScale = 1.0d / (rho * Math.Max(1.0d, velocity * velocity));
             forces *= invScale;
             return new Vector2d(forces.x, forces.y);
         }
