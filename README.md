@@ -51,9 +51,10 @@ Faq
 Requirements
 ------------
 
-- Any KSP version from 1.3.1 to 1.10.x
+- KSP 1.8+
 - ModuleManager 3.0.0+
 
+- For KSP 1.3.1 to 1.7.2, Trajectories can be built from the *backport* branch click [here](CONTRIBUTING.md#backports-for-ksp-1.3.1+) for more information.
 ----
 
 Installation

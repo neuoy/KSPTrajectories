@@ -25,36 +25,26 @@ Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug 1.3|Any CPU = Debug 1.3|Any CPU
 		Debug 1.7|Any CPU = Debug 1.7|Any CPU
-		Debug|Any CPU = Debug|Any CPU
 		Release 1.3|Any CPU = Release 1.3|Any CPU
 		Release 1.7|Any CPU = Release 1.7|Any CPU
-		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{34928415-4627-4BAD-ABC6-CB5677691E95}.Debug 1.3|Any CPU.ActiveCfg = Debug 1.3|Any CPU
 		{34928415-4627-4BAD-ABC6-CB5677691E95}.Debug 1.3|Any CPU.Build.0 = Debug 1.3|Any CPU
 		{34928415-4627-4BAD-ABC6-CB5677691E95}.Debug 1.7|Any CPU.ActiveCfg = Debug 1.7|Any CPU
 		{34928415-4627-4BAD-ABC6-CB5677691E95}.Debug 1.7|Any CPU.Build.0 = Debug 1.7|Any CPU
-		{34928415-4627-4BAD-ABC6-CB5677691E95}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{34928415-4627-4BAD-ABC6-CB5677691E95}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{34928415-4627-4BAD-ABC6-CB5677691E95}.Release 1.3|Any CPU.ActiveCfg = Release 1.3|Any CPU
 		{34928415-4627-4BAD-ABC6-CB5677691E95}.Release 1.3|Any CPU.Build.0 = Release 1.3|Any CPU
 		{34928415-4627-4BAD-ABC6-CB5677691E95}.Release 1.7|Any CPU.ActiveCfg = Release 1.7|Any CPU
 		{34928415-4627-4BAD-ABC6-CB5677691E95}.Release 1.7|Any CPU.Build.0 = Release 1.7|Any CPU
-		{34928415-4627-4BAD-ABC6-CB5677691E95}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{34928415-4627-4BAD-ABC6-CB5677691E95}.Release|Any CPU.Build.0 = Release|Any CPU
 		{EC230A5D-640F-4F8E-BE92-3E29B1CC52DB}.Debug 1.3|Any CPU.ActiveCfg = Debug 1.3|Any CPU
 		{EC230A5D-640F-4F8E-BE92-3E29B1CC52DB}.Debug 1.3|Any CPU.Build.0 = Debug 1.3|Any CPU
 		{EC230A5D-640F-4F8E-BE92-3E29B1CC52DB}.Debug 1.7|Any CPU.ActiveCfg = Debug 1.7|Any CPU
 		{EC230A5D-640F-4F8E-BE92-3E29B1CC52DB}.Debug 1.7|Any CPU.Build.0 = Debug 1.7|Any CPU
-		{EC230A5D-640F-4F8E-BE92-3E29B1CC52DB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{EC230A5D-640F-4F8E-BE92-3E29B1CC52DB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{EC230A5D-640F-4F8E-BE92-3E29B1CC52DB}.Release 1.3|Any CPU.ActiveCfg = Release 1.3|Any CPU
 		{EC230A5D-640F-4F8E-BE92-3E29B1CC52DB}.Release 1.3|Any CPU.Build.0 = Release 1.3|Any CPU
 		{EC230A5D-640F-4F8E-BE92-3E29B1CC52DB}.Release 1.7|Any CPU.ActiveCfg = Release 1.7|Any CPU
 		{EC230A5D-640F-4F8E-BE92-3E29B1CC52DB}.Release 1.7|Any CPU.Build.0 = Release 1.7|Any CPU
-		{EC230A5D-640F-4F8E-BE92-3E29B1CC52DB}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{EC230A5D-640F-4F8E-BE92-3E29B1CC52DB}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

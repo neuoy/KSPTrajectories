@@ -1,5 +1,5 @@
 
-## v2.4.0 for all versions of KSP from 1.3.1 to 1.10.x
+## v2.4.0 for all versions of KSP from 1.3.1 to 1.7.2
  - 2020-xx-xx
 
 ### Changes since the last release

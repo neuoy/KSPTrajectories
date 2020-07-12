@@ -14,7 +14,7 @@ SET scriptPath=%~dp0
 SET rootPath=%scriptPath%..\..\
 SET initialWD=%CD%
 
-echo Generating %TargetName% Bootstrap files...
+echo Generating %TargetName% Backport Bootstrap files...
 cd "%rootPath%"
 rem copy Bootstrap dll from build directory to GameData
 IF EXIST "%initialWD%\%TargetName%Bootstrap.dll" xcopy /y "%initialWD%\%TargetName%Bootstrap.dll" "GameData\%TargetName%\Plugin\*" > nul
@@ -24,7 +24,7 @@ move /y "%initialWD%\%TargetName%.dll" "%initialWD%\%TargetName%%KSPversion%.bin
 
 rem only one bin file for KSP 1.3.1
 IF %KSPversion% EQU 13 GOTO ksp13
-IF %KSPversion% GTR 17 GOTO ksp18
+IF %KSPversion% GTR 17 GOTO ksp13
 
 rem if built version is KSP 1.7.2 then we copy built bin for the other compatible lower versions 
 xcopy /y "%initialWD%\%TargetName%%KSPversion%.bin" "%initialWD%\%TargetName%14.bin*" > nul
@@ -32,18 +32,13 @@ xcopy /y "%initialWD%\%TargetName%%KSPversion%.bin" "%initialWD%\%TargetName%15.
 xcopy /y "%initialWD%\%TargetName%%KSPversion%.bin" "%initialWD%\%TargetName%16.bin*" > nul
 xcopy /y "%initialWD%\%TargetName%%KSPversion%.bin" "%initialWD%\%TargetName%17.bin*" > nul
 
-:ksp18
-rem if built version is greater than KSP 1.7.2 then we assume latest version and copy built bin for the other compatible versions
-xcopy /y "%initialWD%\%TargetName%%KSPversion%.bin" "%initialWD%\%TargetName%18.bin*" > nul
-xcopy /y "%initialWD%\%TargetName%%KSPversion%.bin" "%initialWD%\%TargetName%19.bin*" > nul
-
 :ksp13
 rem delete Trajectories.bin if it exists
 IF EXIST "%initialWD%\%TargetName%.bin" del "%initialWD%\%TargetName%.bin"
 rem copy Bootstrap bins from build directory to GameData
 xcopy /y "%initialWD%\%TargetName%*.bin" "GameData\%TargetName%\Plugin\*" > nul
 
-echo Generating %TargetName% Release Package...
+echo Generating %TargetName% Backport Release Package...
 IF EXIST package\ rd /s /q package
 mkdir package
 cd package
@@ -61,9 +56,9 @@ xcopy /y ..\..\..\CONTRIBUTING.md .
 xcopy /y ..\..\..\README.md .
 
 echo.
-echo Compressing %TargetName% Release Package...
+echo Compressing %TargetName% Backport Release Package...
 IF EXIST "%rootPath%%TargetName%*.zip" del "%rootPath%%TargetName%*.zip"
-"%scriptPath%7za.exe" a "..\..\..\%TargetName%%Dllversion%.zip" ..\..\..\package\GameData
+"%scriptPath%7za.exe" a "..\..\..\%TargetName%-BP%Dllversion%.zip" ..\..\..\package\GameData
 
 rem check all bootstrap files exist
 cd "%rootPath%"

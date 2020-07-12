@@ -429,22 +429,27 @@ Now you can choose between the Development version (launch `KSP_x64_Dbg.exe`) an
 
 #### System Environment Variables
 
-To make your life a little easier, the Trajectories Visual Studio Project respects three environment variables called `KSPBACKPORTDIR`, `KSPBACKPORTDIR17` and `KSPDEVDIR`
+To make your life a little easier, the Trajectories Visual Studio Project respects three environment variables called `KSPDEVDIR`, `KSPBACKPORTDIR` and `KSPBACKPORTDIR17`.
+You only need the `KSPDEVDIR` variable to build the Trajectories master branch used for releases. The variables `KSPBACKPORTDIR` and `KSPBACKPORTDIR17` are used with the backport branch.
 If you set their values to the paths of the relevant versions of your KSP development installs, the reference and debugging paths inside the project should be set automatically. `KSPDEVDIR` should point to an install of the latest KSP version currently released, `KSPBACKPORTDIR17` to your KSP1.7.2 install  and `KSPBACKPORTDIR` to your KSP1.3.1 install. 
 If it is not set, your reference paths and the Debugging paths have to be set manually.
-Please note that you don't need to use more than one install if you plan on making private builds but if you plan on making pull requests then it will be appreciated if you make sure your code works for not only the latest released version but also versions 1.3.1 and 1.7.2. You can also use the compiler directives `KSP13` and `KSP17` in the source to switch relevant code specific to a KSP version.
+Please note that you don't need to use more than one install if you plan on making private builds but if you plan on making pull requests to the master branch then it will be appreciated if you make sure your code works for the latest released version, unless your PR is for the backport branch then also for versions 1.3.1 and 1.7.2.
+You can also use the compiler directives `KSP13` and `KSP17` in the backport branch source to switch relevant code specific to a KSP version.
 
 To set the variable, follow the instructions in this link, before starting a Visual Studio instance:
 
 https://superuser.com/a/949577
 
+#### Backports for KSP 1.3.1+
+Backports of Trajectories for KSP versions 1.3.1 to 1.7.2 are built from the backport branch rather than the master branch, please make sure you set up your required installs and environment variables as outlined above, see the [Kerbal Space Program Install](#kerbal-space-program-install) and [System Environment Variables](#system-environment-variables) sections.
+If you want full compatibility you will have to build both 1.3 and 1.7 releases to create the necessary bin files and release .zip file.
 
 ### Development and Debugging
 
 #### Project Setup
 
 Before you can build Trajectories, your Visual Studio has to know where the Unity and KSP assemblies are that it references.
-If you set your `KSPDEVDIR`, `KSPBACKPORTDIR17` and `KSPBACKPORTDIR` variables as mentioned [above](#system-environment-variables), then this should already be set. If not, then please:
+If you set your `KSPDEVDIR` and/or `KSPBACKPORTDIR17`, `KSPBACKPORTDIR` variables as mentioned [above](#system-environment-variables), then this should already be set. If not, then please:
 
   - Double-Click the "Properties" page in the Solution Explorer in Visual Studio
   - Change to the **Reference Paths** tab and select the `\KSP_x64_Data\Managed` subdirectory of your KSP dev install
