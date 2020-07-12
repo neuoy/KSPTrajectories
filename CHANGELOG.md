@@ -1,4 +1,17 @@
 
+## v2.4.0 for all versions of KSP from 1.3.1 to 1.10.x
+ - 2020-xx-xx
+
+### Changes since the last release
+ 
+
+### For Developers
+
+
+### Known Issues
+
+------------------------------------------------------------------------------------------------------
+
 ## v2.3.4 for all versions of KSP from 1.3.1 to 1.10.x
  - 2020-07-12
 
