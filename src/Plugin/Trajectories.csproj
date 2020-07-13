@@ -7,10 +7,9 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Trajectories</RootNamespace>
     <AssemblyName>Trajectories</AssemblyName>
-    <TargetFrameworkVersions>v3.5;v4.7.1</TargetFrameworkVersions>
     <FileAlignment>512</FileAlignment>
     <RunPostBuildEvent>OnBuildSuccess</RunPostBuildEvent>
-    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.7.1</TargetFrameworkVersion>
     <Deterministic>true</Deterministic>
     <TargetFrameworkProfile />
   </PropertyGroup>
@@ -31,7 +30,6 @@
     <LangVersion>latest</LangVersion>
     <Prefer32Bit>false</Prefer32Bit>
     <PlatformTarget>x64</PlatformTarget>
-    <TargetFrameworkVersion>v4.7.1</TargetFrameworkVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>none</DebugType>
@@ -52,84 +50,8 @@
     <LangVersion>latest</LangVersion>
     <Prefer32Bit>false</Prefer32Bit>
     <PlatformTarget>x64</PlatformTarget>
-    <TargetFrameworkVersion>v4.7.1</TargetFrameworkVersion>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug 1.7|AnyCPU' ">
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>$(KSPBACKPORTDIR17)\GameData\Trajectories\Plugin\</OutputPath>
-    <DefineConstants>TRACE;DEBUG;KSP17;DEVELOPMENT;ENABLE_PROFILER;DEBUG_PROFILER</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <FileAlignment>512</FileAlignment>
-    <RunCodeAnalysis>false</RunCodeAnalysis>
-    <StartAction>Program</StartAction>
-    <StartProgram>$(KSPBACKPORTDIR17)\KSP_x64_Dbg.exe</StartProgram>
-    <StartWorkingDirectory>$(KSPBACKPORTDIR17)</StartWorkingDirectory>
-    <RunPostBuildEvent>OnBuildSuccess</RunPostBuildEvent>
-    <LangVersion>latest</LangVersion>
-    <Prefer32Bit>false</Prefer32Bit>
-    <PlatformTarget>x64</PlatformTarget>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release 1.7|AnyCPU' ">
-    <DebugType>none</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>$(KSPBACKPORTDIR17)\GameData\Trajectories\Plugin\</OutputPath>
-    <DefineConstants>KSP17</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <FileAlignment>512</FileAlignment>
-    <DebugSymbols>false</DebugSymbols>
-    <RunCodeAnalysis>false</RunCodeAnalysis>
-    <StartAction>Program</StartAction>
-    <StartProgram>$(KSPBACKPORTDIR17)\KSP_x64.exe</StartProgram>
-    <StartWorkingDirectory>$(KSPBACKPORTDIR17)</StartWorkingDirectory>
-    <RunPostBuildEvent>OnBuildSuccess</RunPostBuildEvent>
-    <LangVersion>latest</LangVersion>
-    <Prefer32Bit>false</Prefer32Bit>
-    <PlatformTarget>x64</PlatformTarget>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug 1.3|AnyCPU' ">
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>$(KSPBACKPORTDIR)\GameData\Trajectories\Plugin\</OutputPath>
-    <DefineConstants>TRACE;DEBUG;KSP13;DEVELOPMENT;ENABLE_PROFILER;DEBUG_PROFILER</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <FileAlignment>512</FileAlignment>
-    <RunCodeAnalysis>false</RunCodeAnalysis>
-    <StartAction>Program</StartAction>
-    <StartProgram>$(KSPBACKPORTDIR)\KSP_x64_Dbg.exe</StartProgram>
-    <StartWorkingDirectory>$(KSPBACKPORTDIR)</StartWorkingDirectory>
-    <RunPostBuildEvent>OnBuildSuccess</RunPostBuildEvent>
-    <LangVersion>latest</LangVersion>
-    <Prefer32Bit>false</Prefer32Bit>
-    <PlatformTarget>x64</PlatformTarget>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release 1.3|AnyCPU' ">
-    <DebugType>none</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>$(KSPBACKPORTDIR)\GameData\Trajectories\Plugin\</OutputPath>
-    <DefineConstants>KSP13</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <FileAlignment>512</FileAlignment>
-    <DebugSymbols>false</DebugSymbols>
-    <RunCodeAnalysis>false</RunCodeAnalysis>
-    <Prefer32Bit>false</Prefer32Bit>
-    <StartAction>Program</StartAction>
-    <StartProgram>$(KSPBACKPORTDIR)\KSP_x64.exe</StartProgram>
-    <StartWorkingDirectory>$(KSPBACKPORTDIR)</StartWorkingDirectory>
-    <RunPostBuildEvent>OnBuildSuccess</RunPostBuildEvent>
-    <LangVersion>latest</LangVersion>
-    <Prefer32Bit>false</Prefer32Bit>
-    <PlatformTarget>x64</PlatformTarget>
-  </PropertyGroup>
-  <ItemGroup Condition="'$(Configuration)'=='Release' Or '$(Configuration)'=='Debug'">
+  <ItemGroup>
     <Reference Include="Assembly-CSharp">
       <HintPath>$(KSPDEVDIR)\KSP_x64_Data\Managed\Assembly-CSharp.dll</HintPath>
       <Private>False</Private>
@@ -170,44 +92,6 @@
       <HintPath>$(KSPDEVDIR)\KSP_x64_Data\Managed\UnityEngine.UI.dll</HintPath>
       <Private>False</Private>
     </Reference>
-  </ItemGroup>
-  <ItemGroup Condition="'$(Configuration)'=='Release 1.7' Or '$(Configuration)'=='Debug 1.7'">
-    <Reference Include="Assembly-CSharp">
-      <HintPath>$(KSPBACKPORTDIR17)\KSP_x64_Data\Managed\Assembly-CSharp.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="Assembly-CSharp-firstpass">
-      <HintPath>$(KSPBACKPORTDIR17)\KSP_x64_Data\Managed\Assembly-CSharp-firstpass.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="UnityEngine">
-      <HintPath>$(KSPBACKPORTDIR17)\KSP_x64_Data\Managed\UnityEngine.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="UnityEngine.UI">
-      <HintPath>$(KSPBACKPORTDIR17)\KSP_x64_Data\Managed\UnityEngine.UI.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-  </ItemGroup>
-  <ItemGroup Condition="'$(Configuration)'=='Release 1.3' Or '$(Configuration)'=='Debug 1.3'">
-    <Reference Include="Assembly-CSharp">
-      <HintPath>$(KSPBACKPORTDIR)\KSP_x64_Data\Managed\Assembly-CSharp.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="Assembly-CSharp-firstpass">
-      <HintPath>$(KSPBACKPORTDIR)\KSP_x64_Data\Managed\Assembly-CSharp-firstpass.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="UnityEngine">
-      <HintPath>$(KSPBACKPORTDIR)\KSP_x64_Data\Managed\UnityEngine.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="UnityEngine.UI">
-      <HintPath>$(KSPBACKPORTDIR)\KSP_x64_Data\Managed\UnityEngine.UI.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-  </ItemGroup>
-  <ItemGroup>
     <Reference Include="System">
       <Private>False</Private>
     </Reference>
@@ -270,12 +154,7 @@
     $(PostBuildEventDependsOn);
     PostBuildMacros;
   </PostBuildEventDependsOn>
-    <PostBuildEvent>if "$(ConfigurationName)"=="Debug" (call "$(ProjectDir)..\..\buildscripts\UnityDebug\prepare-debug.bat" $(TargetName) 110)
-if "$(ConfigurationName)"=="Release" (call "$(ProjectDir)..\..\buildscripts\ZipPack\build-package.bat" $(TargetName) -v@(VersionNumber) 110)
-if "$(ConfigurationName)"=="Debug 1.7" (call "$(ProjectDir)..\..\buildscripts\UnityDebug\prepare-debug.bat" $(TargetName) 17)
-if "$(ConfigurationName)"=="Release 1.7" (call "$(ProjectDir)..\..\buildscripts\ZipPack\build-package.bat" $(TargetName) -v@(VersionNumber) 17)
-if "$(ConfigurationName)"=="Debug 1.3" (call "$(ProjectDir)..\..\buildscripts\UnityDebug\prepare-debug.bat" $(TargetName) 13)
-if "$(ConfigurationName)"=="Release 1.3" (call "$(ProjectDir)..\..\buildscripts\ZipPack\build-package.bat" $(TargetName) -v@(VersionNumber) 13)
+    <PostBuildEvent>if "$(ConfigurationName)"=="Release" (call "$(ProjectDir)..\..\buildscripts\ZipPack\build-package.bat" $(TargetName) -v@(VersionNumber))
 echo Copying local repository Localization files to $(TargetDir)Localization
 xcopy /E /D /Y "$(ProjectDir)..\..\GameData\Trajectories\Localization" "$(TargetDir)..\Localization\"
 </PostBuildEvent>

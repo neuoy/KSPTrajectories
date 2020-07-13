@@ -36,14 +36,7 @@ namespace Trajectories
             private Vector3 cam_pos;
 
             private bool Ready => (gameObject && line_renderer && material);
-#if !KSP13
-            private int Count => Ready ? line_renderer.positionCount : 0;
-#else
-            private Vector3 start = Vector3.zero;
-            private Vector3 end = Vector3.zero;
-            private int vertex_count = 0;
-            private int Count => Ready ? vertex_count : 0;
-#endif
+
             internal void Awake()
             {
                 if (!gameObject)
@@ -65,7 +58,6 @@ namespace Trajectories
 
                 line_renderer.enabled = false;
                 line_renderer.material = material;
-#if !KSP13
                 line_renderer.positionCount = 0;
                 line_renderer.startColor = Color.blue;
                 line_renderer.endColor = Color.blue;
@@ -73,15 +65,6 @@ namespace Trajectories
                 line_renderer.numCornerVertices = 7;
                 line_renderer.startWidth = MIN_WIDTH;
                 line_renderer.endWidth = MIN_WIDTH;
-
-#else
-                vertex_count = 0;
-                line_renderer.SetVertexCount(0);
-                line_renderer.SetColors(Color.blue, Color.blue);
-                line_renderer.SetWidth(MIN_WIDTH, MIN_WIDTH);
-                start = Vector3.zero;
-                end = Vector3.zero;
-#endif
             }
 
             internal void OnPreRender()
@@ -93,16 +76,13 @@ namespace Trajectories
                     Awake();
 
                 // adjust line width according to its distance from the camera
-                if (Ready && (Count > 0) && line_renderer.enabled)
+                if (Ready && (line_renderer.positionCount > 0) && line_renderer.enabled)
                 {
                     cam_pos = FlightCamera.fetch.mainCamera.transform.position;
-#if !KSP13
+
                     line_renderer.startWidth = Mathf.Clamp(Vector3.Distance(cam_pos, line_renderer.GetPosition(0)) / DIST_DIV, MIN_WIDTH, MAX_WIDTH);
-                    line_renderer.endWidth = Mathf.Clamp(Vector3.Distance(cam_pos, line_renderer.GetPosition(Count - 1)) / DIST_DIV, MIN_WIDTH, MAX_WIDTH);
-#else
-                    line_renderer.SetWidth(Mathf.Clamp(Vector3.Distance(cam_pos, start) / DIST_DIV, MIN_WIDTH, MAX_WIDTH),
-                                           Mathf.Clamp(Vector3.Distance(cam_pos, end) / DIST_DIV, MIN_WIDTH, MAX_WIDTH));
-#endif
+                    line_renderer.endWidth = Mathf.Clamp(Vector3.Distance(cam_pos, line_renderer.GetPosition(line_renderer.positionCount - 1)) / DIST_DIV, MIN_WIDTH, MAX_WIDTH);
+
                     //Watcher.Watch("startWidth", line_renderer.startWidth);
                     //Watcher.Watch("endWidth", line_renderer.endWidth);
                 }
@@ -137,31 +117,17 @@ namespace Trajectories
             {
                 if (!Ready)
                     return;
-#if !KSP13
+
                 line_renderer.positionCount = 0;
-#else
-                vertex_count = 0;
-                line_renderer.SetVertexCount(0);
-                start = Vector3.zero;
-                end = Vector3.zero;
-#endif
             }
 
             internal void Add(Vector3 point)
             {
                 if (!Ready)
                     return;
-#if !KSP13
+
                 line_renderer.positionCount++;
                 line_renderer.SetPosition(line_renderer.positionCount - 1, point);
-#else
-                vertex_count++;
-                line_renderer.SetVertexCount(vertex_count);
-                line_renderer.SetPosition(vertex_count - 1, point);
-                if (vertex_count == 0)
-                    start = point;
-                end = point;
-#endif
             }
         }
 
