@@ -177,34 +177,19 @@ namespace Trajectories
         }
 
         /// <summary>
-        /// Returns the planned direction or Null if no active vessel or set target.
-        /// </summary>
-        public static Vector3? PlannedDirection()
-        {
-            if (Trajectories.IsVesselAttached && TargetProfile.Body != null)
-                return NavBallOverlay.PlannedDirection;
-            return null;
-        }
-
-        /// <summary>
-        /// Returns the corrected direction or Null if no active vessel or set target.
-        /// </summary>
-        public static Vector3? CorrectedDirection()
-        {
-            if (Trajectories.IsVesselAttached && TargetProfile.Body != null)
-                return NavBallOverlay.CorrectedDirection;
-            return null;
-        }
-
-        /// <summary>
         /// Returns true if a target has been set, false if not, or Null if no active vessel.
         /// </summary>
-        public static bool HasTarget()
-        {
-            if (Trajectories.IsVesselAttached && TargetProfile.Body != null)
-                return true;
-            return false;
-        }
+        public static bool HasTarget() => Trajectories.IsVesselAttached && TargetProfile.HasTarget();
+
+        /// <summary>
+        /// Returns the planned direction or Null if no active vessel or no set target.
+        /// </summary>
+        public static Vector3? PlannedDirection() => HasTarget() ? NavBallOverlay.PlannedDirection : null;
+
+        /// <summary>
+        /// Returns the corrected direction or Null if no active vessel or no set target.
+        /// </summary>
+        public static Vector3? CorrectedDirection() => HasTarget() ? NavBallOverlay.CorrectedDirection : null;
 
         /// <summary>
         /// Set the trajectories target to a latitude, longitude and altitude at the HomeWorld.
@@ -217,6 +202,20 @@ namespace Trajectories
                 if (body != null)
                     TargetProfile.SetFromLatLonAlt(body, lat, lon, alt);
             }
+        }
+
+        /// <summary>
+        /// Returns the trajectories target as latitude, longitude and altitude at the HomeWorld or Null if no active vessel or no set target.
+        /// </summary>
+        public static Vector3d? GetTarget() => Trajectories.IsVesselAttached ? TargetProfile.GetLatLonAlt() : null;
+
+        /// <summary>
+        /// Clears the trajectories target.
+        /// </summary>
+        public static void ClearTarget()
+        {
+            if (Trajectories.IsVesselAttached)
+                TargetProfile.Clear();
         }
 
         /// <summary>
@@ -340,9 +339,6 @@ namespace Trajectories
         /// <summary>
         /// Triggers a recalculation of the trajectory.
         /// </summary>
-        public static void UpdateTrajectory()
-        {
-            Trajectory.ComputeTrajectory();
-        }
+        public static void UpdateTrajectory() => Trajectory.ComputeTrajectory();
     }
 }

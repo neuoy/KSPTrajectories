@@ -81,6 +81,25 @@ namespace Trajectories
             Save();
         }
 
+        /// <summary>
+        /// Returns the trajectories target as latitude, longitude and altitude, returns null if no target.
+        /// </summary>
+        public static Vector3d? GetLatLonAlt()
+        {
+            if (Body != null && LocalPosition.HasValue)
+            {
+                double latitude;
+                double longitude;
+                double altitude;
+                Body.GetLatLonAlt(LocalPosition.Value, out latitude, out longitude, out altitude);
+                return new Vector3d(latitude, longitude, altitude);
+            }
+            else
+            {
+                return null;
+            }
+        }
+
         /// <summary> Clears the target </summary>
         internal static void Clear()
         {

@@ -59,9 +59,9 @@ namespace Trajectories
 
         internal static bool Ready => (TexturesAllocated && TransformsAllocated && RenderersAllocated && navball != null);
 
-        internal static Vector3d PlannedDirection => reference;
+        internal static Vector3d? PlannedDirection => reference;
 
-        internal static Vector3d CorrectedDirection
+        internal static Vector3d? CorrectedDirection
         {
             get
             {
@@ -162,7 +162,7 @@ namespace Trajectories
 
             SetDisplayEnabled(true);
 
-            guide_transform.gameObject.transform.localPosition = navball.attitudeGymbal * (CorrectedDirection * navball.VectorUnitScale);
+            guide_transform.gameObject.transform.localPosition = navball.attitudeGymbal * (CorrectedDirection.Value * navball.VectorUnitScale);
             reference_transform.gameObject.transform.localPosition = navball.attitudeGymbal * (reference * navball.VectorUnitScale);
 
             // hide if behind navball

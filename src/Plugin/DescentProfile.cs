@@ -350,8 +350,7 @@ namespace Trajectories
             if (!Ready)
                 return null;
 
-            double altitude = position.magnitude - body.Radius;
-            double altitudeRatio = body.atmosphere ? altitude / body.atmosphereDepth : 0;
+            double altitudeRatio = body.atmosphere ? (position.magnitude - body.Radius) / body.atmosphereDepth : 0;
 
             Node a, b;
             double aCoeff;
