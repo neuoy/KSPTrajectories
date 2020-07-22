@@ -156,17 +156,6 @@ namespace Trajectories
 
                 return Math.Acos(Vector3d.Dot(position, velocity) / (position.magnitude * velocity.magnitude)) - Util.HALF_PI + AngleRad;
             }
-
-            [Obsolete("use MainGUI")]
-            public void DoGUI()
-            {
-                GUILayout.BeginHorizontal();
-                GUILayout.Label(new GUIContent(Name, Description), GUILayout.Width(45));
-                Horizon = GUILayout.Toggle(Horizon, new GUIContent(HorizonText, "AoA = Angle of Attack = angle relatively to the velocity vector.\nHoriz = angle relatively to the horizon."), GUILayout.Width(45));
-                SliderPos = GUILayout.HorizontalSlider(SliderPos, -1.0f, 1.0f, GUILayout.Width(90));
-                GUILayout.Label(AngleText, GUILayout.Width(42));
-                GUILayout.EndHorizontal();
-            }
         }
 
         internal static Node AtmosEntry { get; private set; }
@@ -305,39 +294,6 @@ namespace Trajectories
                 Save(module);
             }
             //Util.DebugLog("Descent profile saved");
-        }
-
-        [Obsolete("use MainGUI")]
-        internal static void DoGUI()
-        {
-            if (!Ready)
-                return;
-
-            AtmosEntry.DoGUI();
-            HighAltitude.DoGUI();
-            LowAltitude.DoGUI();
-            FinalApproach.DoGUI();
-        }
-
-        [Obsolete("use MainGUI")]
-        internal static void DoQuickControlsGUI()
-        {
-            if (!Ready)
-                return;
-
-            bool newPrograde = GUILayout.Toggle(!RetrogradeEntry, "Progr.", GUILayout.Width(50));
-            bool newRetrograde = GUILayout.Toggle(RetrogradeEntry, "Retro.", GUILayout.Width(50));
-
-            if (newPrograde && RetrogradeEntry)
-            {
-                Reset(0d);
-                Save();
-            }
-            else if (newRetrograde && !RetrogradeEntry)
-            {
-                Reset();
-                Save();
-            }
         }
 
         /// <summary>
