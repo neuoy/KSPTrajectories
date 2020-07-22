@@ -36,26 +36,20 @@ namespace Trajectories
         internal class Node
         {
             private bool retrograde;
-            private bool horizon;           // If true, angle is relative to horizon, otherwise it's relative to velocity (i.e. angle of attack)
             private double angle_rad;       // In radians
             private double angle_deg;       // In degrees
             private float sliderPos;
 
             public string Name { get; private set; }
             public string Description { get; private set; }
-            public string HorizonText { get; private set; }
+            public string HorizonText => Horizon ? "Horiz" : "AoA";
             public string AngleText { get; private set; }
 
-            public bool Horizon
-            {
-                get => horizon;
-                set
-                {
-                    horizon = value;
-                    HorizonText = value ? "Horiz" : "AoA";
-                }
-            }
+            /// <summary> If true, angle is relative to horizon, otherwise it's relative to velocity (i.e. angle of attack relative to 0° prograde) </summary>
+            public bool Horizon { get; set; }
 
+
+            /// <summary> Angle in radians </summary>
             public double AngleRad
             {
                 get => angle_rad;
@@ -67,6 +61,7 @@ namespace Trajectories
                 }
             }
 
+            /// <summary> Angle in degrees </summary>
             public double AngleDeg
             {
                 get => angle_deg;
@@ -78,6 +73,7 @@ namespace Trajectories
                 }
             }
 
+            /// <summary> True if angle is retrograde </summary>
             public bool Retrograde
             {
                 get => retrograde;
@@ -94,6 +90,7 @@ namespace Trajectories
                 }
             }
 
+            /// <summary> Slider position for the Gui </summary>
             public float SliderPos
             {
                 get => sliderPos;
@@ -116,7 +113,7 @@ namespace Trajectories
                 }
             }
 
-            //  constructor
+            // constructor
             public Node(string name, string description)
             {
                 Name = name;
@@ -240,7 +237,7 @@ namespace Trajectories
                 return;
 
             //Util.DebugLog("Resetting vessel descent profile to {0} degrees", AoA));
-            RetrogradeEntry = Math.Abs(AoA) > GUI_MAX_ANGLE;   // sets to prograde entry if AoA is greater than +-PI/2 (+-90 degrees)
+            RetrogradeEntry = Math.Abs(AoA) > GUI_MAX_ANGLE;   // sets to retrograde entry if AoA is greater than +-PI/2 (+-90 degrees)
 
             AtmosEntry.AngleRad = AoA;
             AtmosEntry.Horizon = false;
@@ -306,41 +303,36 @@ namespace Trajectories
             if (!Ready)
                 return null;
 
-            double altitudeRatio = body.atmosphere ? (position.magnitude - body.Radius) / body.atmosphereDepth : 0;
+            double altitudeRatio = body.atmosphere ? (position.magnitude - body.Radius) / body.atmosphereDepth : 0d;
 
             Node a, b;
             double aCoeff;
 
-            if (altitudeRatio > 0.5)  // Atmospheric entry
+            if (altitudeRatio > 0.5d)  // Atmospheric entry, 50 to 100% of body atmosphere depth
             {
                 a = AtmosEntry;
                 b = HighAltitude;
-                aCoeff = Math.Min((altitudeRatio - 0.5) * 2.0, 1.0);
+                aCoeff = Math.Min((altitudeRatio - 0.5d) * 2d, 1d);       // 0.5..1+ = 0..1
             }
-            else if (altitudeRatio > 0.25)  // High Altitude
+            else if (altitudeRatio > 0.25d)  // High Altitude, 25 to 50% of body atmosphere depth
             {
                 a = HighAltitude;
                 b = LowAltitude;
-                aCoeff = altitudeRatio * 4.0 - 1.0;
+                aCoeff = (altitudeRatio * 4d) - 1d;                       // 0.25..0.5 = 0..1
             }
-            else if (altitudeRatio > 0.05)  // Low Altitude
+            else if (altitudeRatio > 0.05d)  // Low Altitude, 5 to 25%= of body atmosphere depth
             {
                 a = LowAltitude;
                 b = FinalApproach;
-                aCoeff = altitudeRatio * 5.0 - 0.25;
-
-                aCoeff = 1.0 - aCoeff;
-                aCoeff = 1.0 - aCoeff * aCoeff;
+                aCoeff = 1d - ((altitudeRatio * 5d) - 0.25d);             // 0.05..0.25 = 0..1
+                //aCoeff = 1.0 - aCoeff * aCoeff;                                // 0..1 = 1..0   why invert ?
             }
-            else    // Final Approach or Non-Atmospheric Body
+            else    // Final Approach, under 5% of body atmosphere depth or Non-Atmospheric Body
             {
                 return FinalApproach.GetAngleOfAttack(position, velocity);
             }
 
-            double aAoA = a.GetAngleOfAttack(position, velocity);
-            double bAoA = b.GetAngleOfAttack(position, velocity);
-
-            return aAoA * aCoeff + bAoA * (1.0 - aCoeff);
+            return Util.Lerp(b.GetAngleOfAttack(position, velocity), a.GetAngleOfAttack(position, velocity), aCoeff);
         }
     }
 }
