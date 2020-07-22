@@ -139,6 +139,9 @@ namespace Trajectories
 
         internal const double HALF_PI = Math.PI * 0.5d;
 
+        /// <summary> Linearly interpolates a double value between a and b by t </summary>
+        internal static double Lerp(double a, double b, double t) => (a * (1 - t)) + (b * t);
+
         /// <summary> Clamps a double value </summary>
         internal static double Clamp(double value, double min, double max)
         {
