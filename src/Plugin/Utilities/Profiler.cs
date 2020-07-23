@@ -41,10 +41,10 @@ namespace Trajectories
     public sealed class Profiler : MonoBehaviour
     {
         // constants
-        private const float width = 500.0f;
+        private const float width = 550.0f;
         private const float height = 500.0f;
 
-        private const float value_width = 65.0f;
+        private const float value_width = 75.0f;
 
         // visible flag
         private static bool visible = false;
@@ -193,16 +193,16 @@ namespace Trajectories
 
                 if (e.prev_calls > 0L)
                 {
-                    e.last_txt = time.ToString("F2") + "ms";
+                    e.last_txt = time.ToString("F2") + "µs";
                     e.calls_txt = e.prev_calls.ToString();
                 }
                 else if (show_zero)
                 {
-                    e.last_txt = "ms";
+                    e.last_txt = "µs";
                     e.calls_txt = "0";
                 }
 
-                e.avg_txt = (e.tot_calls > 0L ? Util.Microseconds(e.tot_time / e.tot_calls).ToString("F2") : "") + "ms";
+                e.avg_txt = (e.tot_calls > 0L ? Util.Microseconds(e.tot_time / e.tot_calls).ToString("F2") : "") + "µs";
                 e.avg_calls_txt = tot_frames > 0L ? ((float)e.tot_calls / (float)tot_frames).ToString("F3") : "0";
             }
 
