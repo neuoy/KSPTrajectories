@@ -109,34 +109,20 @@ namespace Trajectories
 
         private static VesselAerodynamicModel aerodynamicModel_;
 
-        internal static string AerodynamicModelName
-        {
-            get
-            {
-                return aerodynamicModel_ == null ? Localizer.Format("#autoLOC_Trajectories_NotLoaded") :
-                    aerodynamicModel_.AerodynamicModelName;
-            }
-        }
-
-        private static List<Patch> patches_ = new List<Patch>();
+        internal static string AerodynamicModelName => aerodynamicModel_ == null ? Localizer.Format("#autoLOC_Trajectories_NotLoaded") :
+                                                                                   aerodynamicModel_.AerodynamicModelName;
 
         private static List<Patch> patchesBackBuffer_ = new List<Patch>();
 
-        internal static List<Patch> Patches => patches_;
-
-        private static Stopwatch incrementTime_;
-
-        private static IEnumerator<bool> partialComputation_;
-
-        private static float maxAccel_;
+        internal static List<Patch> Patches { get; private set; } = new List<Patch>();
 
         private static float maxAccelBackBuffer_;
 
-        internal static float MaxAccel => maxAccel_;
+        internal static float MaxAccel { get; private set; }
 
-        private static int errorCount_;
+        internal static int ErrorCount { get; private set; }
 
-        internal static int ErrorCount => errorCount_;
+        private static IEnumerator<bool> partialComputation_;
 
         ///<summary> Trajectory calculation time of last frame </summary>
         private static float frameTime_;
@@ -144,6 +130,8 @@ namespace Trajectories
         private static float computationTime_;
 
         internal static float ComputationTime => computationTime_ * 0.001f;
+
+        private static Stopwatch incrementTime_;
 
         private static Stopwatch gameFrameTime_;
 
@@ -164,21 +152,25 @@ namespace Trajectories
 
         internal static void Update()
         {
+            Profiler.Start("Trajectory.Update");
             // compute frame time
             computationTime_ = computationTime_ * 0.99f + frameTime_ * 0.01f;
             float offset = frameTime_ - computationTime_;
             frameTime_ = 0;
 
+            gameFrameTime_ ??= new Stopwatch();
+
             if (gameFrameTime_ != null)
             {
                 float t = (float)gameFrameTime_.ElapsedMilliseconds;
                 averageGameFrameTime_ = averageGameFrameTime_ * 0.99f + t * 0.01f;
+                gameFrameTime_.Restart();
             }
-            gameFrameTime_ = Stopwatch.StartNew();
 
             // should the trajectory be calculated?
             if (Trajectories.VesselHasParts && (Settings.DisplayTrajectories || Settings.AlwaysUpdate || TargetProfile.WorldPosition.HasValue))
                 ComputeTrajectory();
+            Profiler.Stop("Trajectory.Update");
         }
 
 #if DEBUG_TELEMETRY
@@ -362,7 +354,7 @@ namespace Trajectories
                     // no vessel, no calculation
                     if (!Trajectories.IsVesselAttached)
                     {
-                        patches_.Clear();
+                        Patches.Clear();
                         return;
                     }
 
@@ -378,11 +370,11 @@ namespace Trajectories
                 {
                     // swap the buffers for the patches and the maximum acceleration,
                     // "publishing" the results
-                    List<Patch> tmp = patches_;
-                    patches_ = patchesBackBuffer_;
+                    List<Patch> tmp = Patches;
+                    Patches = patchesBackBuffer_;
                     patchesBackBuffer_ = tmp;
 
-                    maxAccel_ = maxAccelBackBuffer_;
+                    MaxAccel = maxAccelBackBuffer_;
 
                     // Reset partial computation
                     partialComputation_.Dispose();
@@ -394,7 +386,7 @@ namespace Trajectories
             }
             catch (Exception)
             {
-                ++errorCount_;
+                ++ErrorCount;
                 throw;
             }
         }
@@ -500,7 +492,7 @@ namespace Trajectories
                 if (loopCount > 1000)
                 {
                     Util.LogWarning("Infinite loop? Trajectory.AddPatch or atmosphere limit search");
-                    ++errorCount_;
+                    ++ErrorCount;
                     break;
                 }
                 double middle = (from + to) * 0.5;
