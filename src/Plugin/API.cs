@@ -219,19 +219,19 @@ namespace Trajectories
         }
 
         /// <summary>
-        /// Sets the trajectories descent profile to Prograde or returns its current state, returns null if no active vessel.
+        /// Sets the trajectories descent profile nodes to all Prograde or returns the entry nodes current state, returns null if no active vessel.
         /// </summary>
         public static bool? ProgradeEntry
         {
             get
             {
                 if (Trajectories.IsVesselAttached)
-                    return !DescentProfile.RetrogradeEntry;
+                    return !DescentProfile.AtmosEntry.Retrograde;
                 return null;
             }
             set
             {
-                if (Trajectories.IsVesselAttached && DescentProfile.RetrogradeEntry)
+                if (Trajectories.IsVesselAttached)
                 {
                     DescentProfile.RetrogradeEntry = false;
                     DescentProfile.Save();
@@ -240,19 +240,19 @@ namespace Trajectories
         }
 
         /// <summary>
-        /// Sets the trajectories descent profile to Prograde or returns its current state, returns null if no active vessel.
+        /// Sets the trajectories descent profile nodes to all Retrograde or returns the entry nodes current state, returns null if no active vessel.
         /// </summary>
         public static bool? RetrogradeEntry
         {
             get
             {
                 if (Trajectories.IsVesselAttached)
-                    return DescentProfile.RetrogradeEntry;
+                    return DescentProfile.AtmosEntry.Retrograde;
                 return null;
             }
             set
             {
-                if (Trajectories.IsVesselAttached && !DescentProfile.RetrogradeEntry)
+                if (Trajectories.IsVesselAttached)
                 {
                     DescentProfile.RetrogradeEntry = true;
                     DescentProfile.Save();
@@ -275,7 +275,7 @@ namespace Trajectories
         /// <summary>
         /// Returns or sets the trajectories descent profile to the passed AoA values in radians, also sets Prograde/Retrograde if any values are greater than +-PI/2 (+-90°).
         ///  Note. use with the ProgradeEntry and RetrogradeEntry methods if using angles as displayed in the gui with max +-PI/2 (+-90°).
-        /// Vector4 (x = entry angle, y = high altitude angle, z = low altitude angle, w = final approach angle)
+        /// Vector4 (x = entry node, y = high altitude node, z = low altitude node, w = final approach node)
         /// Returns null if no active vessel.
         /// </summary>
         public static Vector4? DescentProfileAngles
@@ -307,7 +307,7 @@ namespace Trajectories
 
         /// <summary>
         /// Returns or set the trajectories descent profile modes, 1 = AoA, 0 = Horizon, returns null if no active vessel.
-        /// Vector4 (x = entry mode, y = high altitude mode, z = low altitude mode, w = final approach mode)
+        /// Vector4 (x = entry node, y = high altitude node, z = low altitude node, w = final approach node)
         /// </summary>
         public static Vector4? DescentProfileModes
         {
@@ -331,6 +331,37 @@ namespace Trajectories
                     DescentProfile.HighAltitude.Horizon = value.Value.y == 0f ? true : false;
                     DescentProfile.LowAltitude.Horizon = value.Value.z == 0f ? true : false;
                     DescentProfile.FinalApproach.Horizon = value.Value.w == 0f ? true : false;
+                    DescentProfile.Save();
+                }
+            }
+        }
+
+        /// <summary>
+        /// Returns or set the trajectories descent profile grades, 1 = Retrograde, 0 = Prograde, returns null if no active vessel.
+        /// Vector4 (x = entry node, y = high altitude node, z = low altitude node, w = final approach node)
+        /// </summary>
+        public static Vector4? DescentProfileGrades
+        {
+            get
+            {
+                if (Trajectories.IsVesselAttached)
+                {
+                    return new Vector4(
+                        DescentProfile.AtmosEntry.Retrograde ? 1f : 0f,
+                        DescentProfile.HighAltitude.Retrograde ? 1f : 0f,
+                        DescentProfile.LowAltitude.Retrograde ? 1f : 0f,
+                        DescentProfile.FinalApproach.Retrograde ? 1f : 0f);
+                }
+                return null;
+            }
+            set
+            {
+                if (Trajectories.IsVesselAttached && value.HasValue)
+                {
+                    DescentProfile.AtmosEntry.Retrograde = value.Value.x == 0f ? false : true;
+                    DescentProfile.HighAltitude.Retrograde = value.Value.y == 0f ? false : true;
+                    DescentProfile.LowAltitude.Retrograde = value.Value.z == 0f ? false : true;
+                    DescentProfile.FinalApproach.Retrograde = value.Value.w == 0f ? false : true;
                     DescentProfile.Save();
                 }
             }

@@ -8,7 +8,7 @@
 
 ### For Developers
 
- - Added `GetTarget` and `ClearTarget` methods to the API
+ - Added `GetTarget ClearTarget` and `DescentProfileGrades` methods to the API
 
 ### Known Issues
 
