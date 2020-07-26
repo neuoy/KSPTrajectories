@@ -179,7 +179,6 @@ namespace Trajectories
                     // descent profile
                     if (DescentProfile.Ready)
                     {
-                        DescentProfile.RetrogradeEntry = module.RetrogradeEntry;
                         DescentProfile.AtmosEntry.AngleRad = module.EntryAngle;
                         DescentProfile.AtmosEntry.Horizon = module.EntryHorizon;
                         DescentProfile.HighAltitude.AngleRad = module.HighAngle;

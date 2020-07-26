@@ -31,8 +31,6 @@ namespace Trajectories
     {
         private const double GUI_MAX_ANGLE = Math.PI / 2d;
 
-        private static bool retrograde_entry;
-
         internal class Node
         {
             private bool retrograde;
@@ -166,11 +164,10 @@ namespace Trajectories
         internal static bool Ready => (AtmosEntry != null && HighAltitude != null && LowAltitude != null && FinalApproach != null);
 
         /// <summary>
-        /// Sets the profile to Pro/Retrograde or Returns true if a Retrograde entry is selected.
+        /// Sets the profile to all nodes Retrograde if true or Prograde if false.
         /// </summary>
         internal static bool RetrogradeEntry
         {
-            get => retrograde_entry;
             set
             {
                 if (Ready)
@@ -180,7 +177,6 @@ namespace Trajectories
                     LowAltitude.Retrograde = value;
                     FinalApproach.Retrograde = value;
                 }
-                retrograde_entry = value;
             }
         }
 
@@ -198,14 +194,7 @@ namespace Trajectories
                 FinalApproach ??= new Node(Localizer.Format("#autoLOC_Trajectories_Final"), Localizer.Format("#autoLOC_Trajectories_FinalDesc"));
             }
 
-            if (Settings.DefaultDescentIsRetro)
-            {
-                Reset();
-            }
-            else
-            {
-                Reset(0d);
-            }
+            Clear();
         }
 
         /// <summary> Releases held resources. </summary>
@@ -260,8 +249,6 @@ namespace Trajectories
             HighAltitude.RefreshGui();
             LowAltitude.RefreshGui();
             FinalApproach.RefreshGui();
-
-            RetrogradeEntry = AtmosEntry.Retrograde || HighAltitude.Retrograde || LowAltitude.Retrograde || FinalApproach.Retrograde;
         }
 
         /// <summary> Saves the profile to the passed vessel module </summary>
@@ -275,8 +262,6 @@ namespace Trajectories
             module.LowHorizon = LowAltitude.Horizon;
             module.GroundAngle = FinalApproach.AngleRad;
             module.GroundHorizon = FinalApproach.Horizon;
-
-            module.RetrogradeEntry = RetrogradeEntry;
         }
 
         /// <summary> Saves the profile to the active vessel module </summary>
@@ -320,12 +305,11 @@ namespace Trajectories
                 b = LowAltitude;
                 aCoeff = (altitudeRatio * 4d) - 1d;                       // 0.25..0.5 = 0..1
             }
-            else if (altitudeRatio > 0.05d)  // Low Altitude, 5 to 25%= of body atmosphere depth
+            else if (altitudeRatio > 0.05d)  // Low Altitude, 5 to 25% of body atmosphere depth
             {
                 a = LowAltitude;
                 b = FinalApproach;
                 aCoeff = 1d - ((altitudeRatio * 5d) - 0.25d);             // 0.05..0.25 = 0..1
-                //aCoeff = 1.0 - aCoeff * aCoeff;                                // 0..1 = 1..0   why invert ?
             }
             else    // Final Approach, under 5% of body atmosphere depth or Non-Atmospheric Body
             {

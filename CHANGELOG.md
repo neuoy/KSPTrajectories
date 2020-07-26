@@ -5,7 +5,8 @@
 ### Changes since the last release
  
  - Dropped support for KSP 1.3.1 to 1.7.2, private builds can still be made from the backport branch.
-
+ - Added individual Prograde/Retrograde buttons for the descent profile nodes.
+ 
 ### For Developers
 
  - Added `GetTarget ClearTarget` and `DescentProfileGrades` methods to the API
