@@ -218,9 +218,8 @@ namespace Trajectories
                 TargetProfile.Clear();
         }
 
-        /// <summary>
-        /// Sets the trajectories descent profile nodes to all Prograde or returns the entry nodes current state, returns null if no active vessel.
-        /// </summary>
+        /// <summary> Sets all the trajectories descent profile nodes to Prograde if true or Retrograde if false. </summary>
+        /// <returns> Returns the entry node current state, true if Prograde or false if Retrograde, returns null if no active vessel. </returns>
         public static bool? ProgradeEntry
         {
             get
@@ -231,17 +230,16 @@ namespace Trajectories
             }
             set
             {
-                if (Trajectories.IsVesselAttached)
+                if (Trajectories.IsVesselAttached && value.HasValue)
                 {
-                    DescentProfile.RetrogradeEntry = false;
+                    DescentProfile.RetrogradeEntry = !value.Value;
                     DescentProfile.Save();
                 }
             }
         }
 
-        /// <summary>
-        /// Sets the trajectories descent profile nodes to all Retrograde or returns the entry nodes current state, returns null if no active vessel.
-        /// </summary>
+        /// <summary> Sets all the trajectories descent profile nodes to Retrograde if true or Prograde if false. </summary>
+        /// <returns> Returns the entry node current state, true if Retrograde or false if Prograde, returns null if no active vessel. </returns>
         public static bool? RetrogradeEntry
         {
             get
@@ -252,9 +250,9 @@ namespace Trajectories
             }
             set
             {
-                if (Trajectories.IsVesselAttached)
+                if (Trajectories.IsVesselAttached && value.HasValue)
                 {
-                    DescentProfile.RetrogradeEntry = true;
+                    DescentProfile.RetrogradeEntry = value.Value;
                     DescentProfile.Save();
                 }
             }

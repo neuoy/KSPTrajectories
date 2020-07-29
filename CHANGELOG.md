@@ -1,5 +1,5 @@
 
-## v2.4.0 for KSP from 1.8 to 1.10.x
+## v2.4.0 for KSP 1.8 to 1.10.x
  - 2020-xx-xx
 
 ### Changes since the last release
@@ -9,7 +9,7 @@
  
 ### For Developers
 
- - Added `GetTarget ClearTarget` and `DescentProfileGrades` methods to the API
+ - Added `GetTarget, ClearTarget` and `DescentProfileGrades` methods to the API
 
 ### Known Issues
 
