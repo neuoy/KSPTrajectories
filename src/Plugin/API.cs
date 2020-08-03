@@ -218,41 +218,43 @@ namespace Trajectories
                 TargetProfile.Clear();
         }
 
-        /// <summary> Sets all the trajectories descent profile nodes to Prograde if true or Retrograde if false. </summary>
-        /// <returns> Returns the entry node current state, true if Prograde or false if Retrograde, returns null if no active vessel. </returns>
+        /// <summary> Resets all the trajectories descent profile nodes to Prograde at 0° if true or Retrograde at 0° if false. </summary>
+        /// <returns> true if all nodes are Prograde, null if no active vessel. </returns>
         public static bool? ProgradeEntry
         {
             get
             {
                 if (Trajectories.IsVesselAttached)
-                    return !DescentProfile.AtmosEntry.Retrograde;
+                    return !DescentProfile.AtmosEntry.Retrograde && !DescentProfile.HighAltitude.Retrograde &&
+                            !DescentProfile.LowAltitude.Retrograde && !DescentProfile.FinalApproach.Retrograde;
                 return null;
             }
             set
             {
                 if (Trajectories.IsVesselAttached && value.HasValue)
                 {
-                    DescentProfile.RetrogradeEntry = !value.Value;
+                    DescentProfile.Reset(value.Value ? 0d : Math.PI);
                     DescentProfile.Save();
                 }
             }
         }
 
-        /// <summary> Sets all the trajectories descent profile nodes to Retrograde if true or Prograde if false. </summary>
-        /// <returns> Returns the entry node current state, true if Retrograde or false if Prograde, returns null if no active vessel. </returns>
+        /// <summary> Sets all the trajectories descent profile nodes to Retrograde at 0° if true or Prograde at 0° if false. </summary>
+        /// <returns> true if all nodes are Retrograde, null if no active vessel. </returns>
         public static bool? RetrogradeEntry
         {
             get
             {
                 if (Trajectories.IsVesselAttached)
-                    return DescentProfile.AtmosEntry.Retrograde;
+                    return DescentProfile.AtmosEntry.Retrograde && DescentProfile.HighAltitude.Retrograde &&
+                            DescentProfile.LowAltitude.Retrograde && DescentProfile.FinalApproach.Retrograde;
                 return null;
             }
             set
             {
                 if (Trajectories.IsVesselAttached && value.HasValue)
                 {
-                    DescentProfile.RetrogradeEntry = value.Value;
+                    DescentProfile.Reset(value.Value ? Math.PI : 0d);
                     DescentProfile.Save();
                 }
             }
