@@ -21,6 +21,7 @@
 */
 
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Trajectories
@@ -261,7 +262,8 @@ namespace Trajectories
         }
 
         /// <summary>
-        /// Resets the trajectories descent profile to the passed AoA value in radians, default value is Retrograde =(PI = 180°)
+        /// Resets the trajectories descent profile to the passed AoA value in radians, default value is Retrograde =(PI = 180°),
+		///  also sets Retrograde if angle is greater than ±PI/2 (±90°) otherwise sets to Prograde.
         /// </summary>
         public static void ResetDescentProfile(double AoA = Math.PI)
         {
@@ -273,95 +275,98 @@ namespace Trajectories
         }
 
         /// <summary>
-        /// Returns or sets the trajectories descent profile to the passed AoA values in radians, also sets Prograde/Retrograde if any values are greater than +-PI/2 (+-90°).
-        ///  Note. use with the ProgradeEntry and RetrogradeEntry methods if using angles as displayed in the gui with max +-PI/2 (+-90°).
-        /// Vector4 (x = entry node, y = high altitude node, z = low altitude node, w = final approach node)
+        /// Returns or sets the trajectories descent profile to the passed AoA values in radians, also sets Retrograde if AoA is greater than ±PI/2 (±90°).
+        ///  Note. also use with the DescentProfileGrades property if using AoA values as displayed in the gui with max ±PI/2 (±90°).
+        /// List order (0 = entry node, 1 = high altitude node, 2 = low altitude node, 3 = final approach node)
         /// Returns null if no active vessel.
         /// </summary>
-        public static Vector4? DescentProfileAngles
+        public static List<double> DescentProfileAngles
         {
             get
             {
                 if (Trajectories.IsVesselAttached)
                 {
-                    return new Vector4(
-                        (float)DescentProfile.AtmosEntry.AngleRad,
-                        (float)DescentProfile.HighAltitude.AngleRad,
-                        (float)DescentProfile.LowAltitude.AngleRad,
-                        (float)DescentProfile.FinalApproach.AngleRad);
+                    List<double> angles = new List<double>();
+                    angles.Add(DescentProfile.AtmosEntry.AngleRad);
+                    angles.Add(DescentProfile.HighAltitude.AngleRad);
+                    angles.Add(DescentProfile.LowAltitude.AngleRad);
+                    angles.Add(DescentProfile.FinalApproach.AngleRad);
+                    return angles;
                 }
                 return null;
             }
             set
             {
-                if (Trajectories.IsVesselAttached && value.HasValue)
+                if (Trajectories.IsVesselAttached && value.Count == 4)
                 {
-                    DescentProfile.AtmosEntry.AngleRad = value.Value.x;
-                    DescentProfile.HighAltitude.AngleRad = value.Value.y;
-                    DescentProfile.LowAltitude.AngleRad = value.Value.z;
-                    DescentProfile.FinalApproach.AngleRad = value.Value.w;
+                    DescentProfile.AtmosEntry.AngleRad = value[0];
+                    DescentProfile.HighAltitude.AngleRad = value[1];
+                    DescentProfile.LowAltitude.AngleRad = value[2];
+                    DescentProfile.FinalApproach.AngleRad = value[3];
                     DescentProfile.Save();
                 }
             }
         }
 
         /// <summary>
-        /// Returns or set the trajectories descent profile modes, 1 = AoA, 0 = Horizon, returns null if no active vessel.
-        /// Vector4 (x = entry node, y = high altitude node, z = low altitude node, w = final approach node)
+        /// Returns or set the trajectories descent profile modes, true = AoA, false = Horizon, returns null if no active vessel.
+        /// List order (0 = entry node, 1 = high altitude node, 2 = low altitude node, 3 = final approach node)
         /// </summary>
-        public static Vector4? DescentProfileModes
+        public static List<bool> DescentProfileModes
         {
             get
             {
                 if (Trajectories.IsVesselAttached)
                 {
-                    return new Vector4(
-                        DescentProfile.AtmosEntry.Horizon ? 0f : 1f,
-                        DescentProfile.HighAltitude.Horizon ? 0f : 1f,
-                        DescentProfile.LowAltitude.Horizon ? 0f : 1f,
-                        DescentProfile.FinalApproach.Horizon ? 0f : 1f);
+                    List<bool> modes = new List<bool>();
+                    modes.Add(!DescentProfile.AtmosEntry.Horizon);
+                    modes.Add(!DescentProfile.HighAltitude.Horizon);
+                    modes.Add(!DescentProfile.LowAltitude.Horizon);
+                    modes.Add(!DescentProfile.FinalApproach.Horizon);
+                    return modes;
                 }
                 return null;
             }
             set
             {
-                if (Trajectories.IsVesselAttached && value.HasValue)
+                if (Trajectories.IsVesselAttached && value.Count == 4)
                 {
-                    DescentProfile.AtmosEntry.Horizon = value.Value.x == 0f ? true : false;
-                    DescentProfile.HighAltitude.Horizon = value.Value.y == 0f ? true : false;
-                    DescentProfile.LowAltitude.Horizon = value.Value.z == 0f ? true : false;
-                    DescentProfile.FinalApproach.Horizon = value.Value.w == 0f ? true : false;
+                    DescentProfile.AtmosEntry.Horizon = !value[0];
+                    DescentProfile.HighAltitude.Horizon = !value[1];
+                    DescentProfile.LowAltitude.Horizon = !value[2];
+                    DescentProfile.FinalApproach.Horizon = !value[3];
                     DescentProfile.Save();
                 }
             }
         }
 
         /// <summary>
-        /// Returns or set the trajectories descent profile grades, 1 = Retrograde, 0 = Prograde, returns null if no active vessel.
-        /// Vector4 (x = entry node, y = high altitude node, z = low altitude node, w = final approach node)
+        /// Returns or set the trajectories descent profile grades, true = Retrograde, false = Prograde, returns null if no active vessel.
+        /// List order (0 = entry node, 1 = high altitude node, 2 = low altitude node, 3 = final approach node)
         /// </summary>
-        public static Vector4? DescentProfileGrades
+        public static List<bool> DescentProfileGrades
         {
             get
             {
                 if (Trajectories.IsVesselAttached)
                 {
-                    return new Vector4(
-                        DescentProfile.AtmosEntry.Retrograde ? 1f : 0f,
-                        DescentProfile.HighAltitude.Retrograde ? 1f : 0f,
-                        DescentProfile.LowAltitude.Retrograde ? 1f : 0f,
-                        DescentProfile.FinalApproach.Retrograde ? 1f : 0f);
+                    List<bool> grades = new List<bool>();
+                    grades.Add(DescentProfile.AtmosEntry.Retrograde);
+                    grades.Add(DescentProfile.HighAltitude.Retrograde);
+                    grades.Add(DescentProfile.LowAltitude.Retrograde);
+                    grades.Add(DescentProfile.FinalApproach.Retrograde);
+                    return grades;
                 }
                 return null;
             }
             set
             {
-                if (Trajectories.IsVesselAttached && value.HasValue)
+                if (Trajectories.IsVesselAttached && value.Count == 4)
                 {
-                    DescentProfile.AtmosEntry.Retrograde = value.Value.x == 0f ? false : true;
-                    DescentProfile.HighAltitude.Retrograde = value.Value.y == 0f ? false : true;
-                    DescentProfile.LowAltitude.Retrograde = value.Value.z == 0f ? false : true;
-                    DescentProfile.FinalApproach.Retrograde = value.Value.w == 0f ? false : true;
+                    DescentProfile.AtmosEntry.Retrograde = value[0];
+                    DescentProfile.HighAltitude.Retrograde = value[1];
+                    DescentProfile.LowAltitude.Retrograde = value[2];
+                    DescentProfile.FinalApproach.Retrograde = value[3];
                     DescentProfile.Save();
                 }
             }
