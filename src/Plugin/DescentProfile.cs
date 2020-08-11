@@ -158,15 +158,11 @@ namespace Trajectories
         internal static Node LowAltitude { get; private set; }
         internal static Node FinalApproach { get; private set; }
 
-        /// <summary>
-        /// Returns true if all nodes have been allocated.
-        /// </summary>
+        /// <returns> true if all nodes have been allocated. </returns>
         internal static bool Ready => (AtmosEntry != null && HighAltitude != null && LowAltitude != null && FinalApproach != null);
 
-        /// <summary>
-        /// Sets the profile to all nodes Retrograde if true or Prograde if false.
-        /// </summary>
-        internal static bool RetrogradeEntry
+        /// <summary> Sets all the profile nodes to Retrograde if true or Prograde if false. </summary>
+        internal static bool Retrograde
         {
             set
             {
@@ -226,7 +222,7 @@ namespace Trajectories
                 return;
 
             //Util.DebugLog("Resetting vessel descent profile to {0} degrees", AoA));
-            RetrogradeEntry = Math.Abs(AoA) > GUI_MAX_ANGLE;   // sets to retrograde entry if AoA is greater than +-PI/2 (+-90 degrees)
+            Retrograde = Math.Abs(AoA) > GUI_MAX_ANGLE;   // sets to retrograde entry if AoA is greater than +-PI/2 (+-90 degrees)
 
             AtmosEntry.AngleRad = AoA;
             AtmosEntry.Horizon = false;

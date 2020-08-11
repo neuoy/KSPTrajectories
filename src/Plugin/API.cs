@@ -286,12 +286,13 @@ namespace Trajectories
             {
                 if (Trajectories.IsVesselAttached)
                 {
-                    List<double> angles = new List<double>();
-                    angles.Add(DescentProfile.AtmosEntry.AngleRad);
-                    angles.Add(DescentProfile.HighAltitude.AngleRad);
-                    angles.Add(DescentProfile.LowAltitude.AngleRad);
-                    angles.Add(DescentProfile.FinalApproach.AngleRad);
-                    return angles;
+                    return new List<double>
+                    {
+                        DescentProfile.AtmosEntry.AngleRad,
+                        DescentProfile.HighAltitude.AngleRad,
+                        DescentProfile.LowAltitude.AngleRad,
+                        DescentProfile.FinalApproach.AngleRad
+                    };
                 }
                 return null;
             }
@@ -318,12 +319,13 @@ namespace Trajectories
             {
                 if (Trajectories.IsVesselAttached)
                 {
-                    List<bool> modes = new List<bool>();
-                    modes.Add(!DescentProfile.AtmosEntry.Horizon);
-                    modes.Add(!DescentProfile.HighAltitude.Horizon);
-                    modes.Add(!DescentProfile.LowAltitude.Horizon);
-                    modes.Add(!DescentProfile.FinalApproach.Horizon);
-                    return modes;
+                    return new List<bool>
+                    {
+                        !DescentProfile.AtmosEntry.Horizon,
+                        !DescentProfile.HighAltitude.Horizon,
+                        !DescentProfile.LowAltitude.Horizon,
+                        !DescentProfile.FinalApproach.Horizon
+                    };
                 }
                 return null;
             }
@@ -350,12 +352,13 @@ namespace Trajectories
             {
                 if (Trajectories.IsVesselAttached)
                 {
-                    List<bool> grades = new List<bool>();
-                    grades.Add(DescentProfile.AtmosEntry.Retrograde);
-                    grades.Add(DescentProfile.HighAltitude.Retrograde);
-                    grades.Add(DescentProfile.LowAltitude.Retrograde);
-                    grades.Add(DescentProfile.FinalApproach.Retrograde);
-                    return grades;
+                    return new List<bool>
+                    {
+                        DescentProfile.AtmosEntry.Retrograde,
+                        DescentProfile.HighAltitude.Retrograde,
+                        DescentProfile.LowAltitude.Retrograde,
+                        DescentProfile.FinalApproach.Retrograde
+                    };
                 }
                 return null;
             }

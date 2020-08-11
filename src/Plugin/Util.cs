@@ -284,17 +284,32 @@ namespace Trajectories
             }
         }
 
+        internal static double clock_frequency = 1d / Stopwatch.Frequency;
+
         /// <returns> Current time in clocks. </returns>
         internal static double Clocks => Stopwatch.GetTimestamp();
 
         /// <summary> Convert from clocks to microseconds. </summary>
-        internal static double Microseconds(double clocks) => clocks * 1000000.0d / Stopwatch.Frequency;
+        internal static double Microseconds(double clocks) => clocks * 1e6d * clock_frequency;
 
         /// <summary> Convert from clocks to milliseconds. </summary>
-        internal static double Milliseconds(double clocks) => clocks * 1000.0d / Stopwatch.Frequency;
+        internal static double Milliseconds(double clocks) => clocks * 1e3d * clock_frequency;
 
         /// <summary> Convert from clocks to seconds. </summary>
-        internal static double Seconds(double clocks) => clocks / Stopwatch.Frequency;
+        internal static double Seconds(double clocks) => clocks * clock_frequency;
+
+        /// <returns> Elapsed time in clocks. </returns>
+        internal static double Elapsed(double clocks) => Stopwatch.GetTimestamp() - clocks;
+
+        /// <returns> Elapsed time in microseconds from clocks. </returns>
+        internal static double ElapsedMicroseconds(double clocks) => (Stopwatch.GetTimestamp() - clocks) * 1e6d * clock_frequency;
+
+        /// <returns> Elapsed time in milliseconds from clocks. </returns>
+        internal static double ElapsedMilliseconds(double clocks) => (Stopwatch.GetTimestamp() - clocks) * 1e3d * clock_frequency;
+
+        /// <returns> Elapsed time in seconds from clocks. </returns>
+        internal static double ElapsedSeconds(double clocks) => (Stopwatch.GetTimestamp() - clocks) * clock_frequency;
+
 
 
 

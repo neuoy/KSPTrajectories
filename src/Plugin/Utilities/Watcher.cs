@@ -39,10 +39,10 @@ namespace Trajectories
     public sealed class Watcher : MonoBehaviour
     {
         // constants
-        private const float WIDTH = 300.0f;
+        private const float WIDTH = 350.0f;
         private const float HEIGHT = 400.0f;
 
-        private const float VALUE_WIDTH = 100.0f;
+        private const float VALUE_WIDTH = 130.0f;
 
         // visible flag
         private static bool visible = false;
