@@ -144,8 +144,8 @@ namespace Trajectories
             set
             {
                 // logarithmic step from position
-                double a = Math.Log(Trajectory.integrator_max / Trajectory.integrator_min) / (INTEGRATOR_SLIDERMAX - INTEGRATOR_SLIDERMIN);
-                double b = Trajectory.integrator_max / Math.Exp(a * INTEGRATOR_SLIDERMAX);
+                double a = Math.Log(Trajectory.INTEGRATOR_MAX / Trajectory.INTEGRATOR_MIN) / (INTEGRATOR_SLIDERMAX - INTEGRATOR_SLIDERMIN);
+                double b = Trajectory.INTEGRATOR_MAX / Math.Exp(a * INTEGRATOR_SLIDERMAX);
                 double stepsize = b * Math.Exp(a * value);
 
                 // round off step;
@@ -162,7 +162,7 @@ namespace Trajectories
 
                 // set slider pos
                 integrator_sliderPos = (float)(INTEGRATOR_SLIDERMIN + (Math.Log(Settings.IntegrationStepSize) -
-                    Math.Log(Trajectory.integrator_min)) / (Math.Log(Trajectory.integrator_max) - Math.Log(Trajectory.integrator_min)) *
+                    Math.Log(Trajectory.INTEGRATOR_MIN)) / (Math.Log(Trajectory.INTEGRATOR_MAX) - Math.Log(Trajectory.INTEGRATOR_MIN)) *
                     (INTEGRATOR_SLIDERMAX - INTEGRATOR_SLIDERMIN));
             }
         }
@@ -683,7 +683,7 @@ namespace Trajectories
         private static void SetIntegratorSlider()
         {
             IntegratorSliderPos = (float)(INTEGRATOR_SLIDERMIN + (Math.Log(Settings.IntegrationStepSize) -
-                Math.Log(Trajectory.integrator_min)) / (Math.Log(Trajectory.integrator_max) - Math.Log(Trajectory.integrator_min)) *
+                Math.Log(Trajectory.INTEGRATOR_MIN)) / (Math.Log(Trajectory.INTEGRATOR_MAX) - Math.Log(Trajectory.INTEGRATOR_MIN)) *
                 (INTEGRATOR_SLIDERMAX - INTEGRATOR_SLIDERMIN));
         }
 
@@ -1297,7 +1297,7 @@ namespace Trajectories
 
             // performance
             calculation_time_txt = calculation_time_hdrtxt +
-                string.Format("{0:0.0}ms | {1:0.0} %", Trajectory.ComputationTime * 1000.0f,
+                string.Format("{0:0.0}ms | {1:0.0} %", Trajectory.ComputationTime,
                     (Trajectory.ComputationTime / Trajectory.GameFrameTime) * 100.0f);
 
             // num errors

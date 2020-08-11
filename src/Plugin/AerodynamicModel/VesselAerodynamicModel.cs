@@ -55,17 +55,17 @@ namespace Trajectories
 
             referencePartCount = Trajectories.AttachedVessel.Parts.Count;
 
-            UpdateVesselInfo();
+            UpdateVesselMass();
 
             InitCache();
         }
 
-        private void UpdateVesselInfo()
+        internal void UpdateVesselMass()
         {
-            // // this kills performance on vessel load, so we don't do that anymore
-            // mass_ = vessel_.totalMass;
+            Profiler.Start("AeroModel.UpdateVesselMass");
+            // mass_ = vessel_.totalMass;       // this kills performance on vessel load, so we don't do that anymore
 
-            mass_ = 0.0;
+            mass_ = 0d;
             foreach (Part part in Trajectories.AttachedVessel.Parts)
             {
                 if (part.physicalSignificance == Part.PhysicalSignificance.NONE)
@@ -74,6 +74,7 @@ namespace Trajectories
                 float partMass = part.mass + part.GetResourceMass() + part.GetPhysicslessChildMass();
                 mass_ += partMass;
             }
+            Profiler.Stop("AeroModel.UpdateVesselMass");
         }
 
         private void InitCache()
@@ -81,7 +82,7 @@ namespace Trajectories
             Util.DebugLog("Initializing cache");
 
             double maxCacheVelocity = 10000.0;
-            double maxCacheAoA = 180.0 / 180.0 * Math.PI;
+            double maxCacheAoA = Math.PI;     //  180.0 / 180.0 * Math.PI
 
             int velocityResolution = 32;
             int angleOfAttackResolution = 33; // even number to include exactly 0°
@@ -119,8 +120,6 @@ namespace Trajectories
 
             return isValid;
         }
-
-        public void IncrementalUpdate() => UpdateVesselInfo();
 
         public void Invalidate() => isValid = false;
 

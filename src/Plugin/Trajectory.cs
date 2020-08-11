@@ -102,10 +102,10 @@ namespace Trajectories
             internal Vector3d? ImpactVelocity { get; set; }
         }
 
-        internal const double integrator_min = 0.1d;         // RK4 Integrator minimum step size
-        internal const double integrator_max = 5.0d;         // RK4 Integrator maximum step size
+        internal const double INTEGRATOR_MIN = 0.1d;         // RK4 Integrator minimum step size
+        internal const double INTEGRATOR_MAX = 5.0d;         // RK4 Integrator maximum step size
 
-        private static int MaxIncrementTime => 2;
+        private const double MAX_INCREMENT_TIME = 2.0d;      // in ms
 
         private static VesselAerodynamicModel aerodynamicModel_;
 
@@ -124,53 +124,49 @@ namespace Trajectories
 
         private static IEnumerator<bool> partialComputation_;
 
-        ///<summary> Trajectory calculation time of last frame </summary>
-        private static float frameTime_;
+        private static double increment_time;
 
-        private static float computationTime_;
+        //private static double computation_time;
 
-        internal static float ComputationTime => computationTime_ * 0.001f;
+        ///<summary> Trajectory calculation time of last frame in ms </summary>
+        internal static double ComputationTime { get; private set; }
 
-        private static Stopwatch incrementTime_;
+        //private static double total_time;
 
-        private static Stopwatch gameFrameTime_;
+        private static double frame_time;
 
-        private static float averageGameFrameTime_;
+        //private static double game_frame_time;
 
-        internal static float GameFrameTime => averageGameFrameTime_ * 0.001f;
+        ///<summary> Time of game frame in ms </summary>
+        internal static double GameFrameTime { get; private set; }
 
         internal static void Start()
         {
             Util.DebugLog("Constructing");
+        }
 
 #if DEBUG_TELEMETRY
             ConstructTelemetry();
 #endif
-        }
 
         internal static void Destroy() => Util.DebugLog("");
 
         internal static void Update()
         {
-            Profiler.Start("Trajectory.Update");
-            // compute frame time
-            computationTime_ = computationTime_ * 0.99f + frameTime_ * 0.01f;
-            float offset = frameTime_ - computationTime_;
-            frameTime_ = 0;
+            //Profiler.Start("Trajectory.Update");
 
-            gameFrameTime_ ??= new Stopwatch();
-
-            if (gameFrameTime_ != null)
-            {
-                float t = (float)gameFrameTime_.ElapsedMilliseconds;
-                averageGameFrameTime_ = averageGameFrameTime_ * 0.99f + t * 0.01f;
-                gameFrameTime_.Restart();
-            }
+            // compute game frame time
+            GameFrameTime = GameFrameTime * 0.9d + Util.ElapsedMilliseconds(frame_time) * 0.1d;
+            frame_time = Util.Clocks;
 
             // should the trajectory be calculated?
-            if (Trajectories.VesselHasParts && (Settings.DisplayTrajectories || Settings.AlwaysUpdate || TargetProfile.WorldPosition.HasValue))
+            if (Settings.DisplayTrajectories || Settings.AlwaysUpdate || TargetProfile.WorldPosition.HasValue)
                 ComputeTrajectory();
-            Profiler.Stop("Trajectory.Update");
+
+            // compute computation time
+            ComputationTime = ComputationTime * 0.9d + increment_time * 0.1d;
+
+            //Profiler.Stop("Trajectory.Update");
         }
 
 #if DEBUG_TELEMETRY
@@ -339,24 +335,32 @@ namespace Trajectories
 
         internal static void ComputeTrajectory()
         {
+            if (!Trajectories.VesselHasParts || Trajectories.AttachedVessel.LandedOrSplashed)
+            {
+                increment_time = 0d;
+                Patches.Clear();
+                return;
+            }
+
             try
             {
                 // start of trajectory calculation in current frame
-                incrementTime_ = Stopwatch.StartNew();
+                increment_time = Util.Clocks;
+
+                // create or update aerodynamic model
+                if (aerodynamicModel_ == null || !aerodynamicModel_.IsValidFor(Trajectories.AttachedVessel.mainBody))
+                    aerodynamicModel_ = AerodynamicModelFactory.GetModel(Trajectories.AttachedVessel.mainBody);
+                else
+                    aerodynamicModel_.UpdateVesselMass();
 
                 // if there is no ongoing partial computation, start a new one
                 if (partialComputation_ == null)
                 {
+                    //total_time = Util.Clocks;
+
                     // restart the public buffers
                     patchesBackBuffer_.Clear();
                     maxAccelBackBuffer_ = 0;
-
-                    // no vessel, no calculation
-                    if (!Trajectories.IsVesselAttached)
-                    {
-                        Patches.Clear();
-                        return;
-                    }
 
                     // Create enumerator for Trajectory increment calculator
                     partialComputation_ = ComputeTrajectoryIncrement().GetEnumerator();
@@ -379,10 +383,13 @@ namespace Trajectories
                     // Reset partial computation
                     partialComputation_.Dispose();
                     partialComputation_ = null;
+
+                    // how long did the whole calculation take?
+                    //total_time = Util.ElapsedMilliseconds(total_time);
                 }
 
                 // how long did the calculation in this frame take?
-                frameTime_ += (float)incrementTime_.ElapsedMilliseconds;
+                increment_time = Util.ElapsedMilliseconds(increment_time);
             }
             catch (Exception)
             {
@@ -393,14 +400,8 @@ namespace Trajectories
 
         private static IEnumerable<bool> ComputeTrajectoryIncrement()
         {
-            // create or update aerodynamic model
-            if (aerodynamicModel_ == null || !aerodynamicModel_.IsValidFor(Trajectories.AttachedVessel.mainBody))
-                aerodynamicModel_ = AerodynamicModelFactory.GetModel(Trajectories.AttachedVessel.mainBody);
-            else
-                aerodynamicModel_.IncrementalUpdate();
-
-            // create new VesselState from vessel, or null if it's on the ground
-            VesselState state = Trajectories.AttachedVessel.LandedOrSplashed ? null : new VesselState(Trajectories.AttachedVessel);
+            // create new VesselState from vessel
+            VesselState state = new VesselState(Trajectories.AttachedVessel);
 
             // iterate over patches until MaxPatchCount is reached
             for (int patchIdx = 0; patchIdx < Settings.MaxPatchCount; ++patchIdx)
@@ -410,7 +411,7 @@ namespace Trajectories
                     break;
 
                 // If we spent more time in this calculation than allowed, pause until the next frame
-                if (incrementTime_.ElapsedMilliseconds > MaxIncrementTime)
+                if (Util.ElapsedMilliseconds(increment_time) > MAX_INCREMENT_TIME)
                     yield return false;
 
                 // if we have a patched conics solver, check for maneuver nodes
@@ -822,7 +823,7 @@ namespace Trajectories
                         ++iteration;
                         ++incrementIterations;
 
-                        if (incrementIterations > minIterationsPerIncrement && incrementTime_.ElapsedMilliseconds > MaxIncrementTime)
+                        if (incrementIterations > minIterationsPerIncrement && Util.ElapsedMilliseconds(increment_time) > MAX_INCREMENT_TIME)
                         {
                             yield return false;
                             incrementIterations = 0;
