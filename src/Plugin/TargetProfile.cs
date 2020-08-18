@@ -86,12 +86,12 @@ namespace Trajectories
         /// </summary>
         public static Vector3d? GetLatLonAlt()
         {
-            if (Body != null && LocalPosition.HasValue)
+            if (Body != null && WorldPosition.HasValue)
             {
                 double latitude;
                 double longitude;
                 double altitude;
-                Body.GetLatLonAlt(LocalPosition.Value, out latitude, out longitude, out altitude);
+                Body.GetLatLonAlt(WorldPosition.Value + Body.position, out latitude, out longitude, out altitude);
                 return new Vector3d(latitude, longitude, altitude);
             }
             else
