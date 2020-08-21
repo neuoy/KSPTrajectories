@@ -18,7 +18,7 @@
     <DebugType>portable</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>$(KSPDEVDIR)\GameData\Trajectories\Plugin\</OutputPath>
-    <DefineConstants>TRACE;DEBUG;DEVELOPMENT;ENABLE_PROFILER;DEBUG_PROFILER</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;DEVELOPMENT;ENABLE_PROFILER;DEBUG_PROFILER;DEBUG_WATCHER</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <FileAlignment>512</FileAlignment>
@@ -155,8 +155,12 @@
     PostBuildMacros;
   </PostBuildEventDependsOn>
     <PostBuildEvent>if "$(ConfigurationName)"=="Release" (call "$(ProjectDir)..\..\buildscripts\ZipPack\build-package.bat" $(TargetName) -v@(VersionNumber))
+echo Copying local repository files to $(TargetDir)
+xcopy /E /D /Y "$(ProjectDir)..\..\GameData\Trajectories\Trajectories.*" "$(TargetDir)..\"
 echo Copying local repository Localization files to $(TargetDir)Localization
 xcopy /E /D /Y "$(ProjectDir)..\..\GameData\Trajectories\Localization" "$(TargetDir)..\Localization\"
+echo Copying local repository Texture files to $(TargetDir)Textures
+xcopy /E /D /Y "$(ProjectDir)..\..\GameData\Trajectories\Textures" "$(TargetDir)..\Textures\"
 </PostBuildEvent>
   </PropertyGroup>
 </Project>

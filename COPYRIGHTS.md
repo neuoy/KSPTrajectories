@@ -3,7 +3,7 @@ Trajectories mod for KSP (Kerbal Space Program)
 
 Copyright© (c) 2014-2017 Youen Toupin, (aka neuoy).  
 Copyright© (c) 2014-2018 A.Korsunsky, (aka fat-lobyte).  
-Copyright© (c) 2017-2018 S.Gray, (aka PiezPiedPy).
+Copyright© (c) 2017-2020 S.Gray, (aka PiezPiedPy).
 
 Trajectories is available under the terms of GPL-3.0-or-later.  
 See the GNU General Public License contained in the [LICENSE.md](LICENSE.md) file
