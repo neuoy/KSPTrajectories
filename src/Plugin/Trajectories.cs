@@ -18,31 +18,28 @@
   along with Trajectories.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+using System;
 using System.Linq;
 using UnityEngine;
 
 namespace Trajectories
 {
     /// <summary> Trajectories KSP Flight scenario class. </summary>
-    [KSPScenario(ScenarioCreationOptions.AddToAllGames, new[] { GameScenes.FLIGHT })]
+    [KSPScenario(ScenarioCreationOptions.AddToAllGames, GameScenes.FLIGHT)]
     internal sealed class Trajectories : ScenarioModule
     {
-        //public static string version;                           // savegame version
-        //public static int uid;                                  // savegame unique id
-
-        // version string
-        internal static string Version { get; private set; } = "X.X.X";
-
+        internal static string Version { get; }
         internal static Settings Settings { get; private set; }
 
         internal static Trajectory ActiveVesselTrajectory { get; private set; }
 
-        //  constructor
+        //internal static List<Trajectory> LoadedVesselsTrajectories { get; } = new List<Trajectory>();
+
         static Trajectories()
         {
             // set and log version string
             Version = typeof(Trajectories).Assembly.GetName().Version.ToString();
-            Version = Version.Remove(Version.LastIndexOf("."));
+            Version = Version.Remove(Version.LastIndexOf(".", StringComparison.Ordinal));
             Util.Log("v{0} Starting", Version);
         }
 
@@ -50,12 +47,9 @@ namespace Trajectories
         {
             if (node == null)
                 return;
-
             Util.DebugLog("");
 
-            //version = Util.ConfigValue(node, "version", Version);     // get saved version, defaults to current version if none
-
-            Settings ??= new Settings();                          // get trajectories settings from the config.xml file if it exists or create a new one
+            Settings ??= new Settings(); // get trajectories settings from the config.xml file if it exists or create a new one
             if (Settings != null)
             {
                 Settings.Load();
@@ -72,16 +66,6 @@ namespace Trajectories
                 Util.LogError("There was a problem with the config.xml settings file");
             }
         }
-
-        /*public override void OnSave(ConfigNode node)
-        {
-            if (node == null)
-                return;
-
-            Util.DebugLog("Node: {0}", node.name);
-
-            //node.AddValue("version", Version);                       // save version
-        }*/
 
         internal void Update()
         {
