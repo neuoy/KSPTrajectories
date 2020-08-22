@@ -23,6 +23,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Events;
 
 namespace Trajectories
 {
@@ -31,6 +32,8 @@ namespace Trajectories
     /// </summary>
     public static class API
     {
+        private static readonly List<CustomAccelerationHandler> _customAccelerationHandlers = new List<CustomAccelerationHandler>();
+
         /// <summary>
         /// Returns the version number of trajectories in a string formated as Major.Minor.Patch i.e. 2.1.0
         /// </summary>
@@ -565,6 +568,31 @@ namespace Trajectories
         {
             Trajectory trajectory = Trajectories.GetTrajectoryForVessel(vessel);
             trajectory?.ComputeTrajectory();
+        }
+
+        public abstract class CustomAccelerationHandler
+        {
+            public abstract Vector3d HandleAcceleration(Vessel attachedVessel, CelestialBody body, Vector3d position, Vector3d velocity, double aoa);
+        }
+
+        public static void RegisterCustomAccelerationHandler(CustomAccelerationHandler handler)
+        {
+            if (!_customAccelerationHandlers.Contains(handler))
+                _customAccelerationHandlers.Add(handler);
+        }
+
+        public static void UnregisterCustomAccelerationHandler(CustomAccelerationHandler handler)
+        {
+            if (_customAccelerationHandlers.Contains(handler))
+                _customAccelerationHandlers.Remove(handler);
+        }
+
+        internal static Vector3d HandleAccel(Vessel attachedVessel, CelestialBody body, Vector3d position, Vector3d velocity, double aoa)
+        {
+            Vector3d totalAcceleration = Vector3d.zero;
+            foreach (var accelerationHandler in _customAccelerationHandlers)
+                totalAcceleration += accelerationHandler.HandleAcceleration(attachedVessel, body, position, velocity, aoa);
+            return totalAcceleration;
         }
     }
 }
