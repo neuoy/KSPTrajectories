@@ -30,7 +30,7 @@ namespace Trajectories
     /// <summary>
     /// Trajectory map view overlay handler
     /// </summary>
-    internal static class MapOverlay
+    internal class MapOverlay
     {
         /// <summary>
         /// Trajectory map view renderer
@@ -39,10 +39,12 @@ namespace Trajectories
         {
             internal readonly List<GameObject> meshes = new List<GameObject>();
 
+            internal MapOverlay overlay;
+
             internal void OnPreRender()
             {
                 if (meshes != null)
-                    RenderMesh();
+                    overlay.RenderMesh();
             }
 
             /// <summary>
@@ -84,33 +86,37 @@ namespace Trajectories
         private const int layer3D = 24;
 
         // Map trajectory material
-        private static Material material;
+        private Material material;
 
         // Map trajectory renderer
-        private static MapTrajectoryRenderer map_renderer;
+        private MapTrajectoryRenderer map_renderer;
 
         // visible flag
         private static bool visible;
 
+        private readonly Trajectory _trajectory;
+
         /// <summary>
         /// Allocates new nodes or resets existing nodes
         /// </summary>
-        internal static void Start()
+        internal MapOverlay(Trajectory trajectory)
         {
             Util.DebugLog(material != null ? "Resetting" : "Constructing");
+            _trajectory = trajectory;
             material ??= MapView.fetch.orbitLinesMaterial;
             map_renderer = PlanetariumCamera.Camera.gameObject.AddComponent<MapTrajectoryRenderer>();
+            map_renderer.overlay = this;
             map_renderer.Visible = false;
         }
 
-        internal static void Destroy()
+        internal void Destroy()
         {
             Util.DebugLog("");
             DestroyRenderer();
             material = null;
         }
 
-        internal static void Update()
+        internal void Update()
         {
             // return if no renderer or camera
             if ((map_renderer == null) || (PlanetariumCamera.Camera == null))
@@ -134,7 +140,7 @@ namespace Trajectories
             }
         }
 
-        internal static void DestroyRenderer()
+        internal void DestroyRenderer()
         {
             Util.DebugLog("");
             if (map_renderer != null)
@@ -145,7 +151,7 @@ namespace Trajectories
         /// <summary>
         /// Returns first found Non-Active mesh, if none are found then adds a new mesh to the end of the list.
         /// </summary>
-        private static GameObject GetMesh()
+        private GameObject GetMesh()
         {
             // find a Non-Active mesh in the list
             GameObject mesh_found = null;
@@ -180,7 +186,7 @@ namespace Trajectories
             return mesh_found;
         }
 
-        private static void RenderMesh()
+        private void RenderMesh()
         {
             // set all meshes to Non-Active to init mesh list search.
             foreach (GameObject mesh in map_renderer.meshes)
@@ -189,7 +195,7 @@ namespace Trajectories
             }
 
             // create/update meshes from Trajectory patches.
-            foreach (Trajectory.Patch patch in Trajectories.ActiveVesselTrajectory.Patches)
+            foreach (Trajectory.Patch patch in _trajectory.Patches)
             {
                 if (patch.StartingState.StockPatch != null && !Settings.BodyFixedMode &&
                     !Settings.DisplayCompleteTrajectory)
@@ -224,13 +230,13 @@ namespace Trajectories
             }
 
             // create/update green crosshair mesh from TargetPosition.
-            Vector3? target_position = Trajectories.ActiveVesselTrajectory.TargetProfile.WorldPosition;
+            Vector3? target_position = _trajectory.TargetProfile.WorldPosition;
             if (target_position.HasValue)
             {
                 GameObject mesh_found = GetMesh();
                 mesh_found.layer = MapView.Draw3DLines ? layer3D : layer2D;
                 Mesh mesh = mesh_found.GetComponent<MeshFilter>().mesh;
-                InitMeshCrosshair(Trajectories.ActiveVesselTrajectory.TargetProfile.Body, mesh, target_position.Value, Color.green);
+                InitMeshCrosshair(_trajectory.TargetProfile.Body, mesh, target_position.Value, Color.green);
             }
         }
 

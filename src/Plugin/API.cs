@@ -185,12 +185,12 @@ namespace Trajectories
         /// <summary>
         /// Returns the planned direction or Null if no active vessel or no set target.
         /// </summary>
-        public static Vector3? PlannedDirection() => HasTarget() ? NavBallOverlay.PlannedDirection : null;
+        public static Vector3? PlannedDirection() => HasTarget() ? Trajectories.ActiveVesselTrajectory.NavBallOverlay.PlannedDirection : null;
 
         /// <summary>
         /// Returns the corrected direction or Null if no active vessel or no set target.
         /// </summary>
-        public static Vector3? CorrectedDirection() => HasTarget() ? NavBallOverlay.CorrectedDirection : null;
+        public static Vector3? CorrectedDirection() => HasTarget() ? Trajectories.ActiveVesselTrajectory.NavBallOverlay.CorrectedDirection : null;
 
         /// <summary>
         /// Set the trajectories target to a latitude, longitude and altitude at the HomeWorld.

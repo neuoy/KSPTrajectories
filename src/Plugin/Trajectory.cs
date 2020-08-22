@@ -147,6 +147,12 @@ namespace Trajectories
 
         internal DescentProfile DescentProfile { get; }
 
+        internal FlightOverlay FlightOverlay { get; }
+
+        internal MapOverlay MapOverlay { get; }
+
+        internal NavBallOverlay NavBallOverlay { get; }
+
         /// <returns> True if trajectories is attached to a vessel </returns>
         internal bool IsVesselAttached => AttachedVessel != null;
 
@@ -158,6 +164,9 @@ namespace Trajectories
             AttachedVessel = vessel;
             TargetProfile = new TargetProfile(this);
             DescentProfile = new DescentProfile(this);
+            FlightOverlay = new FlightOverlay(this);
+            MapOverlay = new MapOverlay(this);
+            NavBallOverlay = new NavBallOverlay(this);
             Util.DebugLog("Constructing");
         }
 
@@ -168,8 +177,10 @@ namespace Trajectories
         internal void Destroy()
         {
             Util.DebugLog("");
-            DescentProfile.Clear();
             DescentProfile.Destroy();
+            FlightOverlay.Destroy();
+            NavBallOverlay.Destroy();
+            MapOverlay.Destroy();
         }
 
         internal void Update()
@@ -188,6 +199,10 @@ namespace Trajectories
             ComputationTime = ComputationTime * 0.9d + increment_time * 0.1d;
 
             //Profiler.Stop("Trajectory.Update");
+
+            FlightOverlay.Update();
+            MapOverlay.Update();
+            NavBallOverlay.Update();
         }
 
 #if DEBUG_TELEMETRY

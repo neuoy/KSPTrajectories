@@ -23,7 +23,7 @@ using UnityEngine;
 
 namespace Trajectories
 {
-    internal static class FlightOverlay
+    internal class FlightOverlay
     {
         private sealed class TrajectoryLine : MonoBehaviour
         {
@@ -168,28 +168,30 @@ namespace Trajectories
 
         private const int DEFAULT_VERTEX_COUNT = 32;
 
-        private static TrajectoryLine line;
-        private static TargetingCross impact_cross;
-        private static TargetingCross target_cross;
+        private TrajectoryLine line;
+        private TargetingCross impact_cross;
+        private TargetingCross target_cross;
 
         // update method variables, put here to stop over use of the garbage collector.
-        private static double time;
-        private static double time_increment;
-        private static Orbit orbit;
-        private static Trajectory.Patch lastPatch;
-        private static Vector3d bodyPosition = Vector3d.zero;
-        private static Vector3d vertex = Vector3.zero;
+        private double time;
+        private double time_increment;
+        private Orbit orbit;
+        private Trajectory.Patch lastPatch;
+        private Vector3d bodyPosition = Vector3d.zero;
+        private Vector3d vertex = Vector3.zero;
+        private Trajectory _trajectory;
 
-        internal static void Start()
+        internal FlightOverlay(Trajectory trajectory)
         {
             Util.DebugLog("Constructing");
+            _trajectory = trajectory;
             line = FlightCamera.fetch.mainCamera.gameObject.AddComponent<TrajectoryLine>();
             impact_cross = FlightCamera.fetch.mainCamera.gameObject.AddComponent<TargetingCross>();
             target_cross = FlightCamera.fetch.mainCamera.gameObject.AddComponent<TargetingCross>();
             target_cross.Color = Color.green;
         }
 
-        internal static void Destroy()
+        internal void Destroy()
         {
             Util.DebugLog("");
             if (line != null)
@@ -206,7 +208,7 @@ namespace Trajectories
             target_cross = null;
         }
 
-        internal static void Update()
+        internal void Update()
         {
             line.enabled = false;
             impact_cross.enabled = false;
@@ -215,13 +217,13 @@ namespace Trajectories
             if (!Settings.DisplayTrajectories
                 || Util.IsMap
                 || !Settings.DisplayTrajectoriesInFlight
-                || Trajectories.ActiveVesselTrajectory.Patches.Count == 0)
+                || _trajectory.Patches.Count == 0)
                 return;
 
             line.Clear();
-            line.Add(Trajectories.ActiveVesselTrajectory.AttachedVessel.GetWorldPos3D());
+            line.Add(_trajectory.AttachedVessel.GetWorldPos3D());
 
-            lastPatch = Trajectories.ActiveVesselTrajectory.Patches[Trajectories.ActiveVesselTrajectory.Patches.Count - 1];
+            lastPatch = _trajectory.Patches[_trajectory.Patches.Count - 1];
             bodyPosition = lastPatch.StartingState.ReferenceBody.position;
             if (lastPatch.IsAtmospheric)
             {
@@ -266,10 +268,10 @@ namespace Trajectories
             }
 
             // green target cross
-            if (Trajectories.ActiveVesselTrajectory.TargetProfile.WorldPosition != null)
+            if (_trajectory.TargetProfile.WorldPosition != null)
             {
-                target_cross.Position = Trajectories.ActiveVesselTrajectory.TargetProfile.WorldPosition.Value + Trajectories.ActiveVesselTrajectory.TargetProfile.Body.position;
-                target_cross.Body = Trajectories.ActiveVesselTrajectory.TargetProfile.Body;
+                target_cross.Position = _trajectory.TargetProfile.WorldPosition.Value + _trajectory.TargetProfile.Body.position;
+                target_cross.Body = _trajectory.TargetProfile.Body;
                 target_cross.enabled = true;
             }
             else

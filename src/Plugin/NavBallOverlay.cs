@@ -30,44 +30,44 @@ using Object = UnityEngine.Object;
 namespace Trajectories
 {
     // Display indications on the navball. Code inspired from Enhanced NavBall mod.
-    internal static class NavBallOverlay
+    internal class NavBallOverlay
     {
         private const float SCALE = 0.5f;
 
-        private static Texture2D guide_texture;
-        private static Texture2D reference_texture;
+        private Texture2D guide_texture;
+        private Texture2D reference_texture;
 
-        private static bool constructed;
+        private bool constructed;
 
-        private static NavBall navball;
-        private static Transform guide_transform;
-        private static Transform reference_transform;
-        private static Renderer guide_renderer;
-        private static Renderer reference_renderer;
+        private NavBall navball;
+        private Transform guide_transform;
+        private Transform reference_transform;
+        private Renderer guide_renderer;
+        private Renderer reference_renderer;
 
         // updated variables, put here to stop over use of the garbage collector.
-        private static Trajectory.Patch patch;
-        private static CelestialBody body;
-        private static Vector3d position;
-        private static Vector3d velocity;
-        private static Vector3d up;
-        private static Vector3d vel_right;
-        private static Vector3d reference;
-        private static readonly int MainTexture = Shader.PropertyToID("_MainTexture");
+        private Trajectory.Patch patch;
+        private CelestialBody body;
+        private Vector3d position;
+        private Vector3d velocity;
+        private Vector3d up;
+        private Vector3d vel_right;
+        private Vector3d reference;
+        private readonly int MainTexture = Shader.PropertyToID("_MainTexture");
 
-        private static bool TexturesAllocated => guide_texture != null && reference_texture != null;
-        private static bool TransformsAllocated => guide_transform != null && reference_transform != null;
-        private static bool RenderersAllocated => guide_renderer != null && reference_renderer != null;
+        private bool TexturesAllocated => guide_texture != null && reference_texture != null;
+        private bool TransformsAllocated => guide_transform != null && reference_transform != null;
+        private bool RenderersAllocated => guide_renderer != null && reference_renderer != null;
 
-        internal static bool Ready => (TexturesAllocated && TransformsAllocated && RenderersAllocated && navball != null);
+        internal bool Ready => (TexturesAllocated && TransformsAllocated && RenderersAllocated && navball != null);
 
-        internal static Vector3d? PlannedDirection => reference;
+        internal Vector3d? PlannedDirection => reference;
 
-        internal static Vector3d? CorrectedDirection
+        internal Vector3d? CorrectedDirection
         {
             get
             {
-                if (!Trajectories.ActiveVesselTrajectory.IsVesselAttached)
+                if (!_trajectory.IsVesselAttached)
                     return Vector3d.zero;
 
                 Vector2d offsetDir = GetCorrection();
@@ -76,9 +76,13 @@ namespace Trajectories
             }
         }
 
-        internal static void Start()
+        private readonly Trajectory _trajectory;
+
+        internal NavBallOverlay(Trajectory trajectory)
         {
             Util.DebugLog(constructed ? "Resetting" : "Constructing");
+
+            _trajectory = trajectory;
 
             guide_texture ??= new Texture2D(36, 36);
             reference_texture ??= new Texture2D(36, 36);
@@ -129,7 +133,7 @@ namespace Trajectories
             }
         }
 
-        internal static void Destroy()
+        internal void Destroy()
         {
             Util.DebugLog("");
             DestroyTransforms();
@@ -143,21 +147,21 @@ namespace Trajectories
             reference_texture = null;
         }
 
-        internal static void Update()
+        internal void Update()
         {
-            patch = Trajectories.ActiveVesselTrajectory.Patches.LastOrDefault();
+            patch = _trajectory.Patches.LastOrDefault();
 
-            if ((!Util.IsFlight && !Util.IsTrackingStation) || !Trajectories.ActiveVesselTrajectory.IsVesselAttached || !Trajectories.ActiveVesselTrajectory.TargetProfile.WorldPosition.HasValue ||
-                patch == null || !patch.ImpactPosition.HasValue || patch.StartingState.ReferenceBody != Trajectories.ActiveVesselTrajectory.TargetProfile.Body || !Ready)
+            if ((!Util.IsFlight && !Util.IsTrackingStation) || !_trajectory.IsVesselAttached || !_trajectory.TargetProfile.WorldPosition.HasValue ||
+                patch == null || !patch.ImpactPosition.HasValue || patch.StartingState.ReferenceBody != _trajectory.TargetProfile.Body || !Ready)
             {
                 SetDisplayEnabled(false);
                 return;
             }
 
-            body = Trajectories.ActiveVesselTrajectory.AttachedVessel.mainBody;
+            body = _trajectory.AttachedVessel.mainBody;
 
-            position = Trajectories.ActiveVesselTrajectory.AttachedVessel.GetWorldPos3D() - body.position;
-            velocity = Trajectories.ActiveVesselTrajectory.AttachedVessel.obt_velocity - body.getRFrmVel(body.position + position); // air velocity
+            position = _trajectory.AttachedVessel.GetWorldPos3D() - body.position;
+            velocity = _trajectory.AttachedVessel.obt_velocity - body.getRFrmVel(body.position + position); // air velocity
             up = position.normalized;
             vel_right = Vector3d.Cross(velocity, up).normalized;
             reference = CalcReference();
@@ -172,7 +176,7 @@ namespace Trajectories
             reference_transform.gameObject.SetActive(reference_transform.gameObject.transform.localPosition.z >= navball.VectorUnitCutoff);
         }
 
-        internal static void DestroyTransforms()
+        internal void DestroyTransforms()
         {
             navball = null;
 
@@ -191,7 +195,7 @@ namespace Trajectories
             reference_transform = null;
         }
 
-        private static void SetDisplayEnabled(bool enabled)
+        private void SetDisplayEnabled(bool enabled)
         {
             if (!RenderersAllocated)
                 return;
@@ -200,23 +204,23 @@ namespace Trajectories
             reference_renderer.enabled = enabled;
         }
 
-        private static Vector3d CalcReference()
+        private Vector3d CalcReference()
         {
-            if (!Trajectories.ActiveVesselTrajectory.IsVesselAttached || Trajectories.ActiveVesselTrajectory.TargetProfile.Body == null)
+            if (!_trajectory.IsVesselAttached || _trajectory.TargetProfile.Body == null)
                 return Vector3d.zero;
 
-            double plannedAngleOfAttack = (double) Trajectories.ActiveVesselTrajectory.DescentProfile.GetAngleOfAttack(Trajectories.ActiveVesselTrajectory.TargetProfile.Body, position, velocity);
+            double plannedAngleOfAttack = (double) _trajectory.DescentProfile.GetAngleOfAttack(_trajectory.TargetProfile.Body, position, velocity);
 
             return velocity.normalized * Math.Cos(plannedAngleOfAttack) + Vector3d.Cross(vel_right, velocity).normalized * Math.Sin(plannedAngleOfAttack);
         }
 
-        private static Vector2d GetCorrection()
+        private Vector2d GetCorrection()
         {
-            if (!Trajectories.ActiveVesselTrajectory.IsVesselAttached)
+            if (!_trajectory.IsVesselAttached)
                 return Vector2d.zero;
 
-            Vector3d? targetPosition = Trajectories.ActiveVesselTrajectory.TargetProfile.WorldPosition;
-            CelestialBody body = Trajectories.ActiveVesselTrajectory.TargetProfile.Body;
+            Vector3d? targetPosition = _trajectory.TargetProfile.WorldPosition;
+            CelestialBody body = _trajectory.TargetProfile.Body;
             if (!targetPosition.HasValue || patch == null || !patch.ImpactPosition.HasValue || patch.StartingState.ReferenceBody != body || !patch.IsAtmospheric)
                 return Vector2d.zero;
 
@@ -251,10 +255,10 @@ namespace Trajectories
             Vector2d offsetDir = new Vector2d(Vector3d.Dot(right, offset), Vector3d.Dot(behind, offset));
             offsetDir *= 0.00005d; // 20km <-> 1 <-> 45° (this is purely indicative, no physical meaning, it would be very complicated to compute an actual correction angle as it depends on the spacecraft behavior in the atmosphere ; a small angle will suffice for a plane, but even a big angle might do almost nothing for a rocket)
 
-            Vector3d pos = Trajectories.ActiveVesselTrajectory.AttachedVessel.GetWorldPos3D() - body.position;
-            Vector3d vel = Trajectories.ActiveVesselTrajectory.AttachedVessel.obt_velocity - body.getRFrmVel(body.position + pos); // air velocity
+            Vector3d pos = _trajectory.AttachedVessel.GetWorldPos3D() - body.position;
+            Vector3d vel = _trajectory.AttachedVessel.obt_velocity - body.getRFrmVel(body.position + pos); // air velocity
 
-            double plannedAngleOfAttack = (double) Trajectories.ActiveVesselTrajectory.DescentProfile.GetAngleOfAttack(body, pos, vel);
+            double plannedAngleOfAttack = (double) _trajectory.DescentProfile.GetAngleOfAttack(body, pos, vel);
             if (plannedAngleOfAttack < Util.HALF_PI)
                 offsetDir.y = -offsetDir.y; // behavior is different for prograde or retrograde entry
 

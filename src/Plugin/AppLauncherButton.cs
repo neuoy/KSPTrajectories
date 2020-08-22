@@ -1,5 +1,5 @@
 /*
-  Copyright© (c) 2017-2020 S.Gray, (aka PiezPiedPy).
+  Copyright? (c) 2017-2020 S.Gray, (aka PiezPiedPy).
 
   This file is part of Trajectories.
   Trajectories is available under the terms of GPL-3.0-or-later.
@@ -35,7 +35,10 @@ namespace Trajectories
             private static IVisibility flight_visibility;
 
             // permit global access
-            public static BlizzyToolbarButtonVisibility fetch { get; private set; }
+            public static BlizzyToolbarButtonVisibility fetch
+            {
+                get; private set;
+            } = null;
 
             //  constructor
             public BlizzyToolbarButtonVisibility()
@@ -58,18 +61,17 @@ namespace Trajectories
         }
 
         // Textures for icons (held here for better performance when switching icons on the stock toolbar)
-        private static Texture2D normal_icon_texture;
-        private static Texture2D active_icon_texture;
-        private static Texture2D auto_icon_texture;
+        private static Texture2D normal_icon_texture = null;
+        private static Texture2D active_icon_texture = null;
+        private static Texture2D auto_icon_texture = null;
 
         // Toolbar buttons
-        private static ApplicationLauncherButton stock_toolbar_button;
-        private static IButton blizzy_toolbar_button;
+        private static ApplicationLauncherButton stock_toolbar_button = null;
+        private static IButton blizzy_toolbar_button = null;
 
-        private static bool constructed;
+        private static bool constructed = false;
 
         private static bool StockTexturesAllocated => (normal_icon_texture != null && active_icon_texture != null && auto_icon_texture != null);
-
         /// <summary> Current style of the toolbar button icon </summary>
         internal static IconStyleType IconStyle { get; private set; } = IconStyleType.NORMAL;
 
@@ -108,7 +110,7 @@ namespace Trajectories
                     auto_icon_texture.LoadImage(File.ReadAllBytes(TrajTexturePath + "iconAuto.png"));
                 }
 
-                GameEvents.onGUIApplicationLauncherReady.Add(CreateStockToolbarButton);
+                GameEvents.onGUIApplicationLauncherReady.Add(delegate { CreateStockToolbarButton(); });
                 GameEvents.onGUIApplicationLauncherUnreadifying.Add(delegate { DestroyStockToolbarButton(); });
             }
             else
@@ -141,7 +143,9 @@ namespace Trajectories
         /// <summary> Destroys the blizzy toolbar button if it exists. </summary>
         private static void DestroyBlizzyToolbarButton()
         {
-            blizzy_toolbar_button?.Destroy();
+            if (blizzy_toolbar_button != null)
+                blizzy_toolbar_button.Destroy();
+
             blizzy_toolbar_button = null;
         }
 
@@ -195,7 +199,7 @@ namespace Trajectories
                 null,
                 ApplicationLauncher.AppScenes.MAPVIEW | ApplicationLauncher.AppScenes.FLIGHT,
                 normal_icon_texture
-            );
+                );
 
             if (stock_toolbar_button != null && StockTexturesAllocated)
             {

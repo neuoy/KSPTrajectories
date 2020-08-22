@@ -30,7 +30,6 @@ namespace Trajectories
     {
         internal static string Version { get; }
         internal static Settings Settings { get; private set; }
-
         internal static Trajectory ActiveVesselTrajectory { get; private set; }
 
         //internal static List<Trajectory> LoadedVesselsTrajectories { get; } = new List<Trajectory>();
@@ -55,9 +54,6 @@ namespace Trajectories
                 Settings.Load();
 
                 ActiveVesselTrajectory = new Trajectory(FlightGlobals.ActiveVessel);
-                MapOverlay.Start();
-                FlightOverlay.Start();
-                NavBallOverlay.Start();
                 MainGUI.Start();
                 AppLauncherButton.Start();
             }
@@ -76,9 +72,6 @@ namespace Trajectories
                 AttachVessel(FlightGlobals.ActiveVessel);
 
             ActiveVesselTrajectory.Update();
-            MapOverlay.Update();
-            FlightOverlay.Update();
-            NavBallOverlay.Update();
             MainGUI.Update();
         }
 
@@ -91,9 +84,6 @@ namespace Trajectories
             Util.DebugLog("");
             AppLauncherButton.DestroyToolbarButton();
             MainGUI.DeSpawn();
-            NavBallOverlay.DestroyTransforms();
-            FlightOverlay.Destroy();
-            MapOverlay.DestroyRenderer();
             ActiveVesselTrajectory.Destroy();
             ActiveVesselTrajectory = null;
         }
@@ -103,11 +93,7 @@ namespace Trajectories
             Util.Log("Ending after {0} seconds", Time.time);
             AppLauncherButton.Destroy();
             MainGUI.Destroy();
-            NavBallOverlay.Destroy();
-            FlightOverlay.Destroy();
-            MapOverlay.Destroy();
             ActiveVesselTrajectory.Destroy();
-            ActiveVesselTrajectory = null;
             if (Settings != null)
                 Settings.Destroy();
             Settings = null;
