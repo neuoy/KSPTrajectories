@@ -145,8 +145,8 @@ namespace Trajectories
         {
             patch = Trajectories.ActiveVesselTrajectory.Patches.LastOrDefault();
 
-            if ((!Util.IsFlight && !Util.IsTrackingStation) || !Trajectories.ActiveVesselTrajectory.IsVesselAttached || !TargetProfile.WorldPosition.HasValue ||
-                patch == null || !patch.ImpactPosition.HasValue || patch.StartingState.ReferenceBody != TargetProfile.Body || !Ready)
+            if ((!Util.IsFlight && !Util.IsTrackingStation) || !Trajectories.ActiveVesselTrajectory.IsVesselAttached || !Trajectories.ActiveVesselTrajectory.TargetProfile.WorldPosition.HasValue ||
+                patch == null || !patch.ImpactPosition.HasValue || patch.StartingState.ReferenceBody != Trajectories.ActiveVesselTrajectory.TargetProfile.Body || !Ready)
             {
                 SetDisplayEnabled(false);
                 return;
@@ -201,10 +201,10 @@ namespace Trajectories
 
         private static Vector3d CalcReference()
         {
-            if (!Trajectories.ActiveVesselTrajectory.IsVesselAttached || TargetProfile.Body == null)
+            if (!Trajectories.ActiveVesselTrajectory.IsVesselAttached || Trajectories.ActiveVesselTrajectory.TargetProfile.Body == null)
                 return Vector3d.zero;
 
-            double plannedAngleOfAttack = (double)DescentProfile.GetAngleOfAttack(TargetProfile.Body, position, velocity);
+            double plannedAngleOfAttack = (double)DescentProfile.GetAngleOfAttack(Trajectories.ActiveVesselTrajectory.TargetProfile.Body, position, velocity);
 
             return velocity.normalized * Math.Cos(plannedAngleOfAttack) + Vector3d.Cross(vel_right, velocity).normalized * Math.Sin(plannedAngleOfAttack);
         }
@@ -214,8 +214,8 @@ namespace Trajectories
             if (!Trajectories.ActiveVesselTrajectory.IsVesselAttached)
                 return Vector2d.zero;
 
-            Vector3d? targetPosition = TargetProfile.WorldPosition;
-            CelestialBody body = TargetProfile.Body;
+            Vector3d? targetPosition = Trajectories.ActiveVesselTrajectory.TargetProfile.WorldPosition;
+            CelestialBody body = Trajectories.ActiveVesselTrajectory.TargetProfile.Body;
             if (!targetPosition.HasValue || patch == null || !patch.ImpactPosition.HasValue || patch.StartingState.ReferenceBody != body || !patch.IsAtmospheric)
                 return Vector2d.zero;
 

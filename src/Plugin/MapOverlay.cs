@@ -224,13 +224,13 @@ namespace Trajectories
             }
 
             // create/update green crosshair mesh from TargetPosition.
-            Vector3? target_position = TargetProfile.WorldPosition;
+            Vector3? target_position = Trajectories.ActiveVesselTrajectory.TargetProfile.WorldPosition;
             if (target_position.HasValue)
             {
                 GameObject mesh_found = GetMesh();
                 mesh_found.layer = MapView.Draw3DLines ? layer3D : layer2D;
                 Mesh mesh = mesh_found.GetComponent<MeshFilter>().mesh;
-                InitMeshCrosshair(TargetProfile.Body, mesh, target_position.Value, Color.green);
+                InitMeshCrosshair(Trajectories.ActiveVesselTrajectory.TargetProfile.Body, mesh, target_position.Value, Color.green);
             }
         }
 

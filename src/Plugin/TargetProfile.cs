@@ -27,13 +27,13 @@ namespace Trajectories
     internal class TargetProfile
     {
         /// <returns> True if the target is set. </returns>
-        internal static bool HasTarget() => LocalPosition.HasValue && Body != null;
+        internal bool HasTarget() => LocalPosition.HasValue && Body != null;
 
         /// <summary> The targets reference body </summary>
-        internal static CelestialBody Body { get; set; } = null;
+        internal CelestialBody Body { get; set; } = null;
 
         /// <summary> The targets position in WorldSpace </summary>
-        internal static Vector3d? WorldPosition
+        internal Vector3d? WorldPosition
         {
             // A transform that has double precision would be nice so we can have target precision in meter's
             get => LocalPosition.HasValue ? Body?.transform?.TransformDirection(LocalPosition.Value) : null;
@@ -41,13 +41,20 @@ namespace Trajectories
         }
 
         /// <summary> The targets position in LocalSpace relative to the target body </summary>
-        internal static Vector3d? LocalPosition { get; private set; } = null;
+        internal Vector3d? LocalPosition { get; private set; } = null;
 
         /// <summary> Manual target TextBox string </summary>
-        internal static string ManualText { get; set; } = "";
+        internal string ManualText { get; set; } = "";
+
+        private Trajectory trajectory { get; }
+
+        internal TargetProfile(Trajectory trajectory)
+        {
+            this.trajectory = trajectory;
+        }
 
         /// <summary> Sets the target to a body and a World position. Saves the target to the active vessel. </summary>
-        internal static void SetFromWorldPos(CelestialBody body, Vector3d position)
+        internal void SetFromWorldPos(CelestialBody body, Vector3d position)
         {
             Body = body;
             WorldPosition = position;
@@ -56,7 +63,7 @@ namespace Trajectories
         }
 
         /// <summary> Sets the target to a body and a body-relative position. </summary>
-        internal static void SetFromLocalPos(CelestialBody body, Vector3d position)
+        internal void SetFromLocalPos(CelestialBody body, Vector3d position)
         {
             Body = body;
             LocalPosition = position;
@@ -66,7 +73,7 @@ namespace Trajectories
         /// Sets the target to a body and a World position. If the altitude is not given, it will be calculated as the surface altitude at that latitude/longitude.
         /// Saves the target to the active vessel.
         /// </summary>
-        internal static void SetFromLatLonAlt(CelestialBody body, double latitude, double longitude, double? altitude = null)
+        internal void SetFromLatLonAlt(CelestialBody body, double latitude, double longitude, double? altitude = null)
         {
             Body = body;
 
@@ -84,7 +91,7 @@ namespace Trajectories
         /// <summary>
         /// Returns the trajectories target as latitude, longitude and altitude, returns null if no target.
         /// </summary>
-        public static Vector3d? GetLatLonAlt()
+        public Vector3d? GetLatLonAlt()
         {
             if (Body != null && WorldPosition.HasValue)
             {
@@ -101,7 +108,7 @@ namespace Trajectories
         }
 
         /// <summary> Clears the target </summary>
-        internal static void Clear()
+        internal void Clear()
         {
             Util.DebugLog("");
             Body = null;
@@ -109,7 +116,7 @@ namespace Trajectories
         }
 
         /// <summary> Saves the profile to the passed vessel module </summary>
-        internal static void Save(TrajectoriesVesselSettings module)
+        internal void Save(TrajectoriesVesselSettings module)
         {
             module.TargetBody = Body == null ? "" : Body.name;
             module.TargetPosition_x = LocalPosition.HasValue ? LocalPosition.Value.x : 0d;
@@ -119,13 +126,13 @@ namespace Trajectories
         }
 
         /// <summary> Saves the profile to the active vessel module </summary>
-        internal static void Save()
+        internal void Save()
         {
-            if (!Trajectories.ActiveVesselTrajectory.IsVesselAttached)
+            if (!trajectory.IsVesselAttached)
                 return;
 
             //Util.DebugLog("Saving vessels target profile...");
-            foreach (TrajectoriesVesselSettings module in Trajectories.ActiveVesselTrajectory.AttachedVessel.Parts.SelectMany(p => p.Modules.OfType<TrajectoriesVesselSettings>()))
+            foreach (TrajectoriesVesselSettings module in trajectory.AttachedVessel.Parts.SelectMany(p => p.Modules.OfType<TrajectoriesVesselSettings>()))
             {
                 Save(module);
             }

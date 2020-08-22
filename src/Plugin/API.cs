@@ -180,7 +180,7 @@ namespace Trajectories
         /// <summary>
         /// Returns true if a target has been set, false if not, or Null if no active vessel.
         /// </summary>
-        public static bool HasTarget() => Trajectories.ActiveVesselTrajectory.IsVesselAttached && TargetProfile.HasTarget();
+        public static bool HasTarget() => Trajectories.ActiveVesselTrajectory.IsVesselAttached && Trajectories.ActiveVesselTrajectory.TargetProfile.HasTarget();
 
         /// <summary>
         /// Returns the planned direction or Null if no active vessel or no set target.
@@ -201,14 +201,14 @@ namespace Trajectories
             {
                 CelestialBody body = FlightGlobals.GetHomeBody();
                 if (body != null)
-                    TargetProfile.SetFromLatLonAlt(body, lat, lon, alt);
+                    Trajectories.ActiveVesselTrajectory.TargetProfile.SetFromLatLonAlt(body, lat, lon, alt);
             }
         }
 
         /// <summary>
         /// Returns the trajectories target as latitude, longitude and altitude at the HomeWorld or Null if no active vessel or no set target.
         /// </summary>
-        public static Vector3d? GetTarget() => Trajectories.ActiveVesselTrajectory.IsVesselAttached ? TargetProfile.GetLatLonAlt() : null;
+        public static Vector3d? GetTarget() => Trajectories.ActiveVesselTrajectory.IsVesselAttached ? Trajectories.ActiveVesselTrajectory.TargetProfile.GetLatLonAlt() : null;
 
         /// <summary>
         /// Clears the trajectories target.
@@ -216,7 +216,7 @@ namespace Trajectories
         public static void ClearTarget()
         {
             if (Trajectories.ActiveVesselTrajectory.IsVesselAttached)
-                TargetProfile.Clear();
+                Trajectories.ActiveVesselTrajectory.TargetProfile.Clear();
         }
 
         /// <summary> Resets all the trajectories descent profile nodes to Prograde at 0° if true or Retrograde at 0° if false. </summary>

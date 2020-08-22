@@ -349,9 +349,9 @@ namespace Trajectories
             impact_longitude_label = new DialogGUILabel(() => { return impact_longitude_txt; }, 65);
             impact_vertical_label = new DialogGUILabel(() => { return impact_vertical_txt; }, 65);
             impact_horizontal_label = new DialogGUILabel(() => { return impact_horizontal_txt; }, 65);
-            info_distance_label = new DialogGUILabel(() => { return TargetProfile.Body == null ? "" : target_distance_txt; }, 60);
-            info_distance_latitude_label = new DialogGUILabel(() => { return TargetProfile.Body == null ? "" : target_distance_latitude_txt; }, 80);
-            info_distance_longitude_label = new DialogGUILabel(() => { return TargetProfile.Body == null ? "" : target_distance_longitude_txt; }, 80);
+            info_distance_label = new DialogGUILabel(() => { return Trajectories.ActiveVesselTrajectory.TargetProfile.Body == null ? "" : target_distance_txt; }, 60);
+            info_distance_latitude_label = new DialogGUILabel(() => { return Trajectories.ActiveVesselTrajectory.TargetProfile.Body == null ? "" : target_distance_latitude_txt; }, 80);
+            info_distance_longitude_label = new DialogGUILabel(() => { return Trajectories.ActiveVesselTrajectory.TargetProfile.Body == null ? "" : target_distance_longitude_txt; }, 80);
             target_latitude_label = new DialogGUILabel(() => { return target_latitude_txt; }, 65);
             target_longitude_label = new DialogGUILabel(() => { return target_longitude_txt; }, 65);
             target_distance_label = new DialogGUILabel(() => { return target_distance_txt; }, 60);
@@ -394,7 +394,7 @@ namespace Trajectories
                     new DialogGUILabel(Localizer.Format("#autoLOC_Trajectories_Hori"), LAT_LONG_WIDTH),
                     impact_horizontal_label),
                 new DialogGUIHorizontalLayout(TextAnchor.MiddleRight,
-                    new DialogGUILabel(() => { return TargetProfile.Body == null ? "" :
+                    new DialogGUILabel(() => { return Trajectories.ActiveVesselTrajectory.TargetProfile.Body == null ? "" :
                         Localizer.Format("#autoLOC_Trajectories_TargetDistance"); }, true),
                     info_distance_label,
                     new DialogGUISpace(2),
@@ -775,7 +775,7 @@ namespace Trajectories
 
         private static bool ButtonEnabler_TargetClear()
         {
-            if ((TargetProfile.Body != null) && TargetProfile.WorldPosition.HasValue)
+            if ((Trajectories.ActiveVesselTrajectory.TargetProfile.Body != null) && Trajectories.ActiveVesselTrajectory.TargetProfile.WorldPosition.HasValue)
                 return true;
             return false;
         }
@@ -898,7 +898,7 @@ namespace Trajectories
 
             if (lastPatch != null && lastPatch.ImpactPosition.HasValue)
             {
-                TargetProfile.SetFromWorldPos(lastPatch.StartingState.ReferenceBody, lastPatch.ImpactPosition.Value);
+                Trajectories.ActiveVesselTrajectory.TargetProfile.SetFromWorldPos(lastPatch.StartingState.ReferenceBody, lastPatch.ImpactPosition.Value);
                 ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_Trajectories_TargetingImpact"));
             }
         }
@@ -911,7 +911,7 @@ namespace Trajectories
             double longitude = SpaceCenter.Instance.Longitude;
 
             if (homebody != null)
-                TargetProfile.SetFromLatLonAlt(homebody, latitude, longitude);
+                Trajectories.ActiveVesselTrajectory.TargetProfile.SetFromLatLonAlt(homebody, latitude, longitude);
         }
 
         private static void OnButtonClick_TargetVessel()
@@ -921,7 +921,7 @@ namespace Trajectories
 
             if (targetVessel != null && targetVessel.Landed)
             {
-                TargetProfile.SetFromWorldPos(targetVessel.lastBody, targetVessel.GetWorldPos3D() - targetVessel.lastBody.position);
+                Trajectories.ActiveVesselTrajectory.TargetProfile.SetFromWorldPos(targetVessel.lastBody, targetVessel.GetWorldPos3D() - targetVessel.lastBody.position);
                 ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_Trajectories_TargetingVessel", targetVessel.GetName()));
             }
         }
@@ -933,7 +933,7 @@ namespace Trajectories
 
             if (navigationWaypoint != null)
             {
-                TargetProfile.SetFromLatLonAlt(navigationWaypoint.celestialBody,
+                Trajectories.ActiveVesselTrajectory.TargetProfile.SetFromLatLonAlt(navigationWaypoint.celestialBody,
                     navigationWaypoint.latitude, navigationWaypoint.longitude, navigationWaypoint.altitude);
                 ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_Trajectories_TargetingWaypoint", navigationWaypoint.name));
             }
@@ -943,7 +943,7 @@ namespace Trajectories
         {
             CelestialBody body = FlightGlobals.currentMainBody;
 
-            string[] latLng = TargetProfile.ManualText.Split(new char[] { ',', ';' });
+            string[] latLng = Trajectories.ActiveVesselTrajectory.TargetProfile.ManualText.Split(new char[] { ',', ';' });
 
             if (latLng.Length == 2 && body != null)
             {
@@ -952,13 +952,13 @@ namespace Trajectories
 
                 if (double.TryParse(latLng[0].Trim(), out lat) && double.TryParse(latLng[1].Trim(), out lng))
                 {
-                    TargetProfile.SetFromLatLonAlt(body, lat, lng);
+                    Trajectories.ActiveVesselTrajectory.TargetProfile.SetFromLatLonAlt(body, lat, lng);
                     ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_Trajectories_TargetingManual"));
                 }
             }
         }
 
-        private static void OnButtonClick_TargetClear() => TargetProfile.Clear();
+        private static void OnButtonClick_TargetClear() => Trajectories.ActiveVesselTrajectory.TargetProfile.Clear();
 
         private static string OnTextInput_TargetManual(string inString)
         {
@@ -990,8 +990,8 @@ namespace Trajectories
             }
 
             manual_target_textinput.text = manual_target_txt;
-            TargetProfile.ManualText = manual_target_txt;
-            TargetProfile.Save();
+            Trajectories.ActiveVesselTrajectory.TargetProfile.ManualText = manual_target_txt;
+            Trajectories.ActiveVesselTrajectory.TargetProfile.Save();
             return null;
         }
 
@@ -1254,13 +1254,13 @@ namespace Trajectories
         {
             // grab the last patch that was calculated
             Trajectory.Patch lastPatch = Trajectories.ActiveVesselTrajectory.Patches.LastOrDefault();
-            CelestialBody targetBody = TargetProfile.Body;
+            CelestialBody targetBody = Trajectories.ActiveVesselTrajectory.TargetProfile.Body;
 
             // target position and distance values
-            if (targetBody != null && TargetProfile.WorldPosition.HasValue)
+            if (targetBody != null && Trajectories.ActiveVesselTrajectory.TargetProfile.WorldPosition.HasValue)
             {
                 // calculate body offset target position
-                Vector3d targetPos = TargetProfile.WorldPosition.Value + targetBody.position;
+                Vector3d targetPos = Trajectories.ActiveVesselTrajectory.TargetProfile.WorldPosition.Value + targetBody.position;
 
                 // target body
                 target_body_txt = targetBody.bodyName;
@@ -1282,9 +1282,9 @@ namespace Trajectories
                 target_distance_longitude_txt = "-: -.-- " + Localizer.Format("#autoLOC_Trajectories_km");
             }
 
-            if (manual_target_txt != TargetProfile.ManualText)
+            if (manual_target_txt != Trajectories.ActiveVesselTrajectory.TargetProfile.ManualText)
             {
-                OnTextInput_TargetManual(TargetProfile.ManualText);
+                OnTextInput_TargetManual(Trajectories.ActiveVesselTrajectory.TargetProfile.ManualText);
                 manual_target_txt_changed = true;
             }
         }
@@ -1309,14 +1309,14 @@ namespace Trajectories
         {
             // grab the last patch that was calculated
             Trajectory.Patch lastPatch = Trajectories.ActiveVesselTrajectory.Patches.LastOrDefault();
-            CelestialBody targetBody = TargetProfile.Body;
+            CelestialBody targetBody = Trajectories.ActiveVesselTrajectory.TargetProfile.Body;
             CelestialBody lastPatchBody = lastPatch?.StartingState.ReferenceBody;
 
             // target position and distance values
-            if (targetBody != null && TargetProfile.WorldPosition.HasValue)
+            if (targetBody != null && Trajectories.ActiveVesselTrajectory.TargetProfile.WorldPosition.HasValue)
             {
                 // calculate body offset target position
-                Vector3d targetPos = TargetProfile.WorldPosition.Value + targetBody.position;
+                Vector3d targetPos = Trajectories.ActiveVesselTrajectory.TargetProfile.WorldPosition.Value + targetBody.position;
 
                 // target distance values
                 if (lastPatch != null && lastPatch.ImpactPosition.HasValue && lastPatchBody == targetBody &&

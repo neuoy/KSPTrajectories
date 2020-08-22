@@ -265,10 +265,10 @@ namespace Trajectories
             }
 
             // green target cross
-            if (TargetProfile.WorldPosition != null)
+            if (Trajectories.ActiveVesselTrajectory.TargetProfile.WorldPosition != null)
             {
-                target_cross.Position = TargetProfile.WorldPosition.Value + TargetProfile.Body.position;
-                target_cross.Body = TargetProfile.Body;
+                target_cross.Position = Trajectories.ActiveVesselTrajectory.TargetProfile.WorldPosition.Value + Trajectories.ActiveVesselTrajectory.TargetProfile.Body.position;
+                target_cross.Body = Trajectories.ActiveVesselTrajectory.TargetProfile.Body;
                 target_cross.enabled = true;
             }
             else

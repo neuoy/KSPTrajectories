@@ -142,8 +142,8 @@ namespace Trajectories
             {
                 Util.DebugLog("No vessel");
                 DescentProfile.Clear();
-                TargetProfile.Clear();
-                TargetProfile.ManualText = "";
+                ActiveVesselTrajectory.TargetProfile.Clear();
+                ActiveVesselTrajectory.TargetProfile.ManualText = "";
             }
             else
             {
@@ -152,17 +152,17 @@ namespace Trajectories
                 {
                     Util.DebugLog("No TrajectoriesVesselSettings module");
                     DescentProfile.Clear();
-                    TargetProfile.Clear();
-                    TargetProfile.ManualText = "";
+                    ActiveVesselTrajectory.TargetProfile.Clear();
+                    ActiveVesselTrajectory.TargetProfile.ManualText = "";
                 }
                 else if (!module.Initialized)
                 {
                     Util.DebugLog("Initializing TrajectoriesVesselSettings module");
                     DescentProfile.Clear();
                     DescentProfile.Save(module);
-                    TargetProfile.Clear();
-                    TargetProfile.ManualText = "";
-                    TargetProfile.Save(module);
+                    ActiveVesselTrajectory.TargetProfile.Clear();
+                    ActiveVesselTrajectory.TargetProfile.ManualText = "";
+                    ActiveVesselTrajectory.TargetProfile.Save(module);
                     module.Initialized = true;
                     Util.Log("New vessel, profiles created");
                 }
@@ -184,9 +184,9 @@ namespace Trajectories
                     }
 
                     // target profile
-                    TargetProfile.SetFromLocalPos(FlightGlobals.Bodies.FirstOrDefault(b => b.name == module.TargetBody),
+                    ActiveVesselTrajectory.TargetProfile.SetFromLocalPos(FlightGlobals.Bodies.FirstOrDefault(b => b.name == module.TargetBody),
                         new Vector3d(module.TargetPosition_x, module.TargetPosition_y, module.TargetPosition_z));
-                    TargetProfile.ManualText = module.ManualTargetTxt;
+                    ActiveVesselTrajectory.TargetProfile.ManualText = module.ManualTargetTxt;
                     Util.Log("Profiles loaded");
                 }
             }

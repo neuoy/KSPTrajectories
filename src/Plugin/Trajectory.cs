@@ -143,6 +143,8 @@ namespace Trajectories
         /// <summary> The vessel that trajectories is attached to </summary>
         internal Vessel AttachedVessel { get; }
 
+        internal TargetProfile TargetProfile { get; }
+
         /// <returns> True if trajectories is attached to a vessel </returns>
         internal bool IsVesselAttached => AttachedVessel != null;
 
@@ -152,6 +154,7 @@ namespace Trajectories
         internal Trajectory(Vessel vessel)
         {
             AttachedVessel = vessel;
+            TargetProfile = new TargetProfile(this);
             Util.DebugLog("Constructing");
         }
 
