@@ -60,7 +60,6 @@ namespace Trajectories
             {
                 Settings.Load();
 
-                DescentProfile.Start();
                 ActiveVesselTrajectory = new Trajectory(FlightGlobals.ActiveVessel);
                 MapOverlay.Start();
                 FlightOverlay.Start();
@@ -113,7 +112,6 @@ namespace Trajectories
             MapOverlay.DestroyRenderer();
             ActiveVesselTrajectory.Destroy();
             ActiveVesselTrajectory = null;
-            DescentProfile.Clear();
         }
 
         internal void OnApplicationQuit()
@@ -126,7 +124,6 @@ namespace Trajectories
             MapOverlay.Destroy();
             ActiveVesselTrajectory.Destroy();
             ActiveVesselTrajectory = null;
-            DescentProfile.Destroy();
             if (Settings != null)
                 Settings.Destroy();
             Settings = null;
@@ -141,7 +138,7 @@ namespace Trajectories
             if (ActiveVesselTrajectory.AttachedVessel == null)
             {
                 Util.DebugLog("No vessel");
-                DescentProfile.Clear();
+                ActiveVesselTrajectory.DescentProfile.Clear();
                 ActiveVesselTrajectory.TargetProfile.Clear();
                 ActiveVesselTrajectory.TargetProfile.ManualText = "";
             }
@@ -151,15 +148,15 @@ namespace Trajectories
                 if (module == null)
                 {
                     Util.DebugLog("No TrajectoriesVesselSettings module");
-                    DescentProfile.Clear();
+                    ActiveVesselTrajectory.DescentProfile.Clear();
                     ActiveVesselTrajectory.TargetProfile.Clear();
                     ActiveVesselTrajectory.TargetProfile.ManualText = "";
                 }
                 else if (!module.Initialized)
                 {
                     Util.DebugLog("Initializing TrajectoriesVesselSettings module");
-                    DescentProfile.Clear();
-                    DescentProfile.Save(module);
+                    ActiveVesselTrajectory.DescentProfile.Clear();
+                    ActiveVesselTrajectory.DescentProfile.Save(module);
                     ActiveVesselTrajectory.TargetProfile.Clear();
                     ActiveVesselTrajectory.TargetProfile.ManualText = "";
                     ActiveVesselTrajectory.TargetProfile.Save(module);
@@ -170,17 +167,17 @@ namespace Trajectories
                 {
                     Util.DebugLog("Reading profile settings...");
                     // descent profile
-                    if (DescentProfile.Ready)
+                    if (ActiveVesselTrajectory.DescentProfile.Ready)
                     {
-                        DescentProfile.AtmosEntry.AngleRad = module.EntryAngle;
-                        DescentProfile.AtmosEntry.Horizon = module.EntryHorizon;
-                        DescentProfile.HighAltitude.AngleRad = module.HighAngle;
-                        DescentProfile.HighAltitude.Horizon = module.HighHorizon;
-                        DescentProfile.LowAltitude.AngleRad = module.LowAngle;
-                        DescentProfile.LowAltitude.Horizon = module.LowHorizon;
-                        DescentProfile.FinalApproach.AngleRad = module.GroundAngle;
-                        DescentProfile.FinalApproach.Horizon = module.GroundHorizon;
-                        DescentProfile.RefreshGui();
+                        ActiveVesselTrajectory.DescentProfile.AtmosEntry.AngleRad = module.EntryAngle;
+                        ActiveVesselTrajectory.DescentProfile.AtmosEntry.Horizon = module.EntryHorizon;
+                        ActiveVesselTrajectory.DescentProfile.HighAltitude.AngleRad = module.HighAngle;
+                        ActiveVesselTrajectory.DescentProfile.HighAltitude.Horizon = module.HighHorizon;
+                        ActiveVesselTrajectory.DescentProfile.LowAltitude.AngleRad = module.LowAngle;
+                        ActiveVesselTrajectory.DescentProfile.LowAltitude.Horizon = module.LowHorizon;
+                        ActiveVesselTrajectory.DescentProfile.FinalApproach.AngleRad = module.GroundAngle;
+                        ActiveVesselTrajectory.DescentProfile.FinalApproach.Horizon = module.GroundHorizon;
+                        ActiveVesselTrajectory.DescentProfile.RefreshGui();
                     }
 
                     // target profile

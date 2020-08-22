@@ -226,16 +226,16 @@ namespace Trajectories
             get
             {
                 if (Trajectories.ActiveVesselTrajectory.IsVesselAttached)
-                    return !DescentProfile.AtmosEntry.Retrograde && !DescentProfile.HighAltitude.Retrograde &&
-                            !DescentProfile.LowAltitude.Retrograde && !DescentProfile.FinalApproach.Retrograde;
+                    return !Trajectories.ActiveVesselTrajectory.DescentProfile.AtmosEntry.Retrograde && !Trajectories.ActiveVesselTrajectory.DescentProfile.HighAltitude.Retrograde &&
+                            !Trajectories.ActiveVesselTrajectory.DescentProfile.LowAltitude.Retrograde && !Trajectories.ActiveVesselTrajectory.DescentProfile.FinalApproach.Retrograde;
                 return null;
             }
             set
             {
                 if (Trajectories.ActiveVesselTrajectory.IsVesselAttached && value.HasValue)
                 {
-                    DescentProfile.Reset(value.Value ? 0d : Math.PI);
-                    DescentProfile.Save();
+                    Trajectories.ActiveVesselTrajectory.DescentProfile.Reset(value.Value ? 0d : Math.PI);
+                    Trajectories.ActiveVesselTrajectory.DescentProfile.Save();
                 }
             }
         }
@@ -247,16 +247,16 @@ namespace Trajectories
             get
             {
                 if (Trajectories.ActiveVesselTrajectory.IsVesselAttached)
-                    return DescentProfile.AtmosEntry.Retrograde && DescentProfile.HighAltitude.Retrograde &&
-                            DescentProfile.LowAltitude.Retrograde && DescentProfile.FinalApproach.Retrograde;
+                    return Trajectories.ActiveVesselTrajectory.DescentProfile.AtmosEntry.Retrograde && Trajectories.ActiveVesselTrajectory.DescentProfile.HighAltitude.Retrograde &&
+                           Trajectories.ActiveVesselTrajectory.DescentProfile.LowAltitude.Retrograde && Trajectories.ActiveVesselTrajectory.DescentProfile.FinalApproach.Retrograde;
                 return null;
             }
             set
             {
                 if (Trajectories.ActiveVesselTrajectory.IsVesselAttached && value.HasValue)
                 {
-                    DescentProfile.Reset(value.Value ? Math.PI : 0d);
-                    DescentProfile.Save();
+                    Trajectories.ActiveVesselTrajectory.DescentProfile.Reset(value.Value ? Math.PI : 0d);
+                    Trajectories.ActiveVesselTrajectory.DescentProfile.Save();
                 }
             }
         }
@@ -269,8 +269,8 @@ namespace Trajectories
         {
             if (Trajectories.ActiveVesselTrajectory.IsVesselAttached)
             {
-                DescentProfile.Reset(AoA);
-                DescentProfile.Save();
+                Trajectories.ActiveVesselTrajectory.DescentProfile.Reset(AoA);
+                Trajectories.ActiveVesselTrajectory.DescentProfile.Save();
             }
         }
 
@@ -288,10 +288,10 @@ namespace Trajectories
                 {
                     return new List<double>
                     {
-                        DescentProfile.AtmosEntry.AngleRad,
-                        DescentProfile.HighAltitude.AngleRad,
-                        DescentProfile.LowAltitude.AngleRad,
-                        DescentProfile.FinalApproach.AngleRad
+                        Trajectories.ActiveVesselTrajectory.DescentProfile.AtmosEntry.AngleRad,
+                        Trajectories.ActiveVesselTrajectory.DescentProfile.HighAltitude.AngleRad,
+                        Trajectories.ActiveVesselTrajectory.DescentProfile.LowAltitude.AngleRad,
+                        Trajectories.ActiveVesselTrajectory.DescentProfile.FinalApproach.AngleRad
                     };
                 }
                 return null;
@@ -300,11 +300,11 @@ namespace Trajectories
             {
                 if (Trajectories.ActiveVesselTrajectory.IsVesselAttached && value.Count == 4)
                 {
-                    DescentProfile.AtmosEntry.AngleRad = value[0];
-                    DescentProfile.HighAltitude.AngleRad = value[1];
-                    DescentProfile.LowAltitude.AngleRad = value[2];
-                    DescentProfile.FinalApproach.AngleRad = value[3];
-                    DescentProfile.Save();
+                    Trajectories.ActiveVesselTrajectory.DescentProfile.AtmosEntry.AngleRad = value[0];
+                    Trajectories.ActiveVesselTrajectory.DescentProfile.HighAltitude.AngleRad = value[1];
+                    Trajectories.ActiveVesselTrajectory.DescentProfile.LowAltitude.AngleRad = value[2];
+                    Trajectories.ActiveVesselTrajectory.DescentProfile.FinalApproach.AngleRad = value[3];
+                    Trajectories.ActiveVesselTrajectory.DescentProfile.Save();
                 }
             }
         }
@@ -321,10 +321,10 @@ namespace Trajectories
                 {
                     return new List<bool>
                     {
-                        !DescentProfile.AtmosEntry.Horizon,
-                        !DescentProfile.HighAltitude.Horizon,
-                        !DescentProfile.LowAltitude.Horizon,
-                        !DescentProfile.FinalApproach.Horizon
+                        !Trajectories.ActiveVesselTrajectory.DescentProfile.AtmosEntry.Horizon,
+                        !Trajectories.ActiveVesselTrajectory.DescentProfile.HighAltitude.Horizon,
+                        !Trajectories.ActiveVesselTrajectory.DescentProfile.LowAltitude.Horizon,
+                        !Trajectories.ActiveVesselTrajectory.DescentProfile.FinalApproach.Horizon
                     };
                 }
                 return null;
@@ -333,11 +333,11 @@ namespace Trajectories
             {
                 if (Trajectories.ActiveVesselTrajectory.IsVesselAttached && value.Count == 4)
                 {
-                    DescentProfile.AtmosEntry.Horizon = !value[0];
-                    DescentProfile.HighAltitude.Horizon = !value[1];
-                    DescentProfile.LowAltitude.Horizon = !value[2];
-                    DescentProfile.FinalApproach.Horizon = !value[3];
-                    DescentProfile.Save();
+                    Trajectories.ActiveVesselTrajectory.DescentProfile.AtmosEntry.Horizon = !value[0];
+                    Trajectories.ActiveVesselTrajectory.DescentProfile.HighAltitude.Horizon = !value[1];
+                    Trajectories.ActiveVesselTrajectory.DescentProfile.LowAltitude.Horizon = !value[2];
+                    Trajectories.ActiveVesselTrajectory.DescentProfile.FinalApproach.Horizon = !value[3];
+                    Trajectories.ActiveVesselTrajectory.DescentProfile.Save();
                 }
             }
         }
@@ -354,10 +354,10 @@ namespace Trajectories
                 {
                     return new List<bool>
                     {
-                        DescentProfile.AtmosEntry.Retrograde,
-                        DescentProfile.HighAltitude.Retrograde,
-                        DescentProfile.LowAltitude.Retrograde,
-                        DescentProfile.FinalApproach.Retrograde
+                        Trajectories.ActiveVesselTrajectory.DescentProfile.AtmosEntry.Retrograde,
+                        Trajectories.ActiveVesselTrajectory.DescentProfile.HighAltitude.Retrograde,
+                        Trajectories.ActiveVesselTrajectory.DescentProfile.LowAltitude.Retrograde,
+                        Trajectories.ActiveVesselTrajectory.DescentProfile.FinalApproach.Retrograde
                     };
                 }
                 return null;
@@ -366,11 +366,11 @@ namespace Trajectories
             {
                 if (Trajectories.ActiveVesselTrajectory.IsVesselAttached && value.Count == 4)
                 {
-                    DescentProfile.AtmosEntry.Retrograde = value[0];
-                    DescentProfile.HighAltitude.Retrograde = value[1];
-                    DescentProfile.LowAltitude.Retrograde = value[2];
-                    DescentProfile.FinalApproach.Retrograde = value[3];
-                    DescentProfile.Save();
+                    Trajectories.ActiveVesselTrajectory.DescentProfile.AtmosEntry.Retrograde = value[0];
+                    Trajectories.ActiveVesselTrajectory.DescentProfile.HighAltitude.Retrograde = value[1];
+                    Trajectories.ActiveVesselTrajectory.DescentProfile.LowAltitude.Retrograde = value[2];
+                    Trajectories.ActiveVesselTrajectory.DescentProfile.FinalApproach.Retrograde = value[3];
+                    Trajectories.ActiveVesselTrajectory.DescentProfile.Save();
                 }
             }
         }

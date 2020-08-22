@@ -204,7 +204,7 @@ namespace Trajectories
             if (!Trajectories.ActiveVesselTrajectory.IsVesselAttached || Trajectories.ActiveVesselTrajectory.TargetProfile.Body == null)
                 return Vector3d.zero;
 
-            double plannedAngleOfAttack = (double)DescentProfile.GetAngleOfAttack(Trajectories.ActiveVesselTrajectory.TargetProfile.Body, position, velocity);
+            double plannedAngleOfAttack = (double)Trajectories.ActiveVesselTrajectory.DescentProfile.GetAngleOfAttack(Trajectories.ActiveVesselTrajectory.TargetProfile.Body, position, velocity);
 
             return velocity.normalized * Math.Cos(plannedAngleOfAttack) + Vector3d.Cross(vel_right, velocity).normalized * Math.Sin(plannedAngleOfAttack);
         }
@@ -251,7 +251,7 @@ namespace Trajectories
             Vector3d pos = Trajectories.ActiveVesselTrajectory.AttachedVessel.GetWorldPos3D() - body.position;
             Vector3d vel = Trajectories.ActiveVesselTrajectory.AttachedVessel.obt_velocity - body.getRFrmVel(body.position + pos); // air velocity
 
-            double plannedAngleOfAttack = (double)DescentProfile.GetAngleOfAttack(body, pos, vel);
+            double plannedAngleOfAttack = (double)Trajectories.ActiveVesselTrajectory.DescentProfile.GetAngleOfAttack(body, pos, vel);
             if (plannedAngleOfAttack < Util.HALF_PI)
                 offsetDir.y = -offsetDir.y; // behavior is different for prograde or retrograde entry
 

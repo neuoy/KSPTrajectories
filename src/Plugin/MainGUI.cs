@@ -455,48 +455,48 @@ namespace Trajectories
                     new DialogGUIButton(Localizer.Format("#autoLOC_900607"),
                         OnButtonClick_Retrograde, TARGET_BUTTON_WIDTH, BUTTON_HEIGHT, false)),
                 new DialogGUIHorizontalLayout(TextAnchor.MiddleLeft,
-                    new DialogGUILabel(DescentProfile.AtmosEntry.Name, DESCENT_NAME_WIDTH),
-                    new DialogGUIButton(() => { return DescentProfile.AtmosEntry.HorizonText; },
+                    new DialogGUILabel(Trajectories.ActiveVesselTrajectory.DescentProfile.AtmosEntry.Name, DESCENT_NAME_WIDTH),
+                    new DialogGUIButton(() => { return Trajectories.ActiveVesselTrajectory.DescentProfile.AtmosEntry.HorizonText; },
                         OnButtonClick_EntryHorizon, AOA_BUTTON_WIDTH, BUTTON_HEIGHT, false),
-                    new DialogGUIButton(() => { return DescentProfile.AtmosEntry.Retrograde ? "R" : "P"; },
+                    new DialogGUIButton(() => { return Trajectories.ActiveVesselTrajectory.DescentProfile.AtmosEntry.Retrograde ? "R" : "P"; },
                         OnButtonClick_EntryRetrograde, GRADE_BUTTON_WIDTH, BUTTON_HEIGHT, false),
                     new DialogGUISpace(2),
-                    new DialogGUISlider(() => { return DescentProfile.AtmosEntry.SliderPos; },
+                    new DialogGUISlider(() => { return Trajectories.ActiveVesselTrajectory.DescentProfile.AtmosEntry.SliderPos; },
                         -1f, 1f, false, DESCENT_SLIDER_WIDTH, -1, OnSliderSet_EntryAngle),
-                    new DialogGUILabel(() => { return DescentProfile.AtmosEntry.AngleText; }, 30f),
+                    new DialogGUILabel(() => { return Trajectories.ActiveVesselTrajectory.DescentProfile.AtmosEntry.AngleText; }, 30f),
                     descent_entry_textinput),
                 new DialogGUIHorizontalLayout(TextAnchor.MiddleLeft,
-                    new DialogGUILabel(DescentProfile.HighAltitude.Name, DESCENT_NAME_WIDTH),
-                    new DialogGUIButton(() => { return DescentProfile.HighAltitude.HorizonText; },
+                    new DialogGUILabel(Trajectories.ActiveVesselTrajectory.DescentProfile.HighAltitude.Name, DESCENT_NAME_WIDTH),
+                    new DialogGUIButton(() => { return Trajectories.ActiveVesselTrajectory.DescentProfile.HighAltitude.HorizonText; },
                         OnButtonClick_HighHorizon, AOA_BUTTON_WIDTH, BUTTON_HEIGHT, false),
-                    new DialogGUIButton(() => { return DescentProfile.HighAltitude.Retrograde ? "R" : "P"; },
+                    new DialogGUIButton(() => { return Trajectories.ActiveVesselTrajectory.DescentProfile.HighAltitude.Retrograde ? "R" : "P"; },
                         OnButtonClick_HighRetrograde, GRADE_BUTTON_WIDTH, BUTTON_HEIGHT, false),
                     new DialogGUISpace(2),
-                    new DialogGUISlider(() => { return DescentProfile.HighAltitude.SliderPos; },
+                    new DialogGUISlider(() => { return Trajectories.ActiveVesselTrajectory.DescentProfile.HighAltitude.SliderPos; },
                         -1f, 1f, false, DESCENT_SLIDER_WIDTH, -1, OnSliderSet_HighAngle),
-                    new DialogGUILabel(() => { return DescentProfile.HighAltitude.AngleText; }, 30f),
+                    new DialogGUILabel(() => { return Trajectories.ActiveVesselTrajectory.DescentProfile.HighAltitude.AngleText; }, 30f),
                     descent_high_textinput),
                 new DialogGUIHorizontalLayout(TextAnchor.MiddleLeft,
-                    new DialogGUILabel(DescentProfile.LowAltitude.Name, DESCENT_NAME_WIDTH),
-                    new DialogGUIButton(() => { return DescentProfile.LowAltitude.HorizonText; },
+                    new DialogGUILabel(Trajectories.ActiveVesselTrajectory.DescentProfile.LowAltitude.Name, DESCENT_NAME_WIDTH),
+                    new DialogGUIButton(() => { return Trajectories.ActiveVesselTrajectory.DescentProfile.LowAltitude.HorizonText; },
                         OnButtonClick_LowHorizon, AOA_BUTTON_WIDTH, BUTTON_HEIGHT, false),
-                    new DialogGUIButton(() => { return DescentProfile.LowAltitude.Retrograde ? "R" : "P"; },
+                    new DialogGUIButton(() => { return Trajectories.ActiveVesselTrajectory.DescentProfile.LowAltitude.Retrograde ? "R" : "P"; },
                         OnButtonClick_LowRetrograde, GRADE_BUTTON_WIDTH, BUTTON_HEIGHT, false),
                     new DialogGUISpace(2),
-                    new DialogGUISlider(() => { return DescentProfile.LowAltitude.SliderPos; },
+                    new DialogGUISlider(() => { return Trajectories.ActiveVesselTrajectory.DescentProfile.LowAltitude.SliderPos; },
                         -1f, 1f, false, DESCENT_SLIDER_WIDTH, -1, OnSliderSet_LowAngle),
-                    new DialogGUILabel(() => { return DescentProfile.LowAltitude.AngleText; }, 30f),
+                    new DialogGUILabel(() => { return Trajectories.ActiveVesselTrajectory.DescentProfile.LowAltitude.AngleText; }, 30f),
                     descent_low_textinput),
                 new DialogGUIHorizontalLayout(TextAnchor.MiddleLeft,
-                    new DialogGUILabel(DescentProfile.FinalApproach.Name, DESCENT_NAME_WIDTH),
-                    new DialogGUIButton(() => { return DescentProfile.FinalApproach.HorizonText; },
+                    new DialogGUILabel(Trajectories.ActiveVesselTrajectory.DescentProfile.FinalApproach.Name, DESCENT_NAME_WIDTH),
+                    new DialogGUIButton(() => { return Trajectories.ActiveVesselTrajectory.DescentProfile.FinalApproach.HorizonText; },
                         OnButtonClick_FinalHorizon, AOA_BUTTON_WIDTH, BUTTON_HEIGHT, false),
-                    new DialogGUIButton(() => { return DescentProfile.FinalApproach.Retrograde ? "R" : "P"; },
+                    new DialogGUIButton(() => { return Trajectories.ActiveVesselTrajectory.DescentProfile.FinalApproach.Retrograde ? "R" : "P"; },
                         OnButtonClick_FinalRetrograde, GRADE_BUTTON_WIDTH, BUTTON_HEIGHT, false),
                     new DialogGUISpace(2),
-                    new DialogGUISlider(() => { return DescentProfile.FinalApproach.SliderPos; },
+                    new DialogGUISlider(() => { return Trajectories.ActiveVesselTrajectory.DescentProfile.FinalApproach.SliderPos; },
                         -1f, 1f, false, DESCENT_SLIDER_WIDTH, -1, OnSliderSet_GroundAngle),
-                    new DialogGUILabel(() => { return DescentProfile.FinalApproach.AngleText; }, 30f),
+                    new DialogGUILabel(() => { return Trajectories.ActiveVesselTrajectory.DescentProfile.FinalApproach.AngleText; }, 30f),
                     descent_final_textinput)
                 );
 
@@ -833,62 +833,62 @@ namespace Trajectories
 
         private static void OnButtonClick_Prograde()
         {
-            DescentProfile.Reset(0d);
-            DescentProfile.Save();
+            Trajectories.ActiveVesselTrajectory.DescentProfile.Reset(0d);
+            Trajectories.ActiveVesselTrajectory.DescentProfile.Save();
         }
 
         private static void OnButtonClick_Retrograde()
         {
-            DescentProfile.Reset();
-            DescentProfile.Save();
+            Trajectories.ActiveVesselTrajectory.DescentProfile.Reset();
+            Trajectories.ActiveVesselTrajectory.DescentProfile.Save();
         }
 
         private static void OnButtonClick_EntryHorizon()
         {
-            DescentProfile.AtmosEntry.Horizon = !DescentProfile.AtmosEntry.Horizon;
-            DescentProfile.Save();
+            Trajectories.ActiveVesselTrajectory.DescentProfile.AtmosEntry.Horizon = !Trajectories.ActiveVesselTrajectory.DescentProfile.AtmosEntry.Horizon;
+            Trajectories.ActiveVesselTrajectory.DescentProfile.Save();
         }
 
         private static void OnButtonClick_EntryRetrograde()
         {
-            DescentProfile.AtmosEntry.Retrograde = !DescentProfile.AtmosEntry.Retrograde;
-            DescentProfile.Save();
+            Trajectories.ActiveVesselTrajectory.DescentProfile.AtmosEntry.Retrograde = !Trajectories.ActiveVesselTrajectory.DescentProfile.AtmosEntry.Retrograde;
+            Trajectories.ActiveVesselTrajectory.DescentProfile.Save();
         }
 
         private static void OnButtonClick_HighHorizon()
         {
-            DescentProfile.HighAltitude.Horizon = !DescentProfile.HighAltitude.Horizon;
-            DescentProfile.Save();
+            Trajectories.ActiveVesselTrajectory.DescentProfile.HighAltitude.Horizon = !Trajectories.ActiveVesselTrajectory.DescentProfile.HighAltitude.Horizon;
+            Trajectories.ActiveVesselTrajectory.DescentProfile.Save();
         }
 
         private static void OnButtonClick_HighRetrograde()
         {
-            DescentProfile.HighAltitude.Retrograde = !DescentProfile.HighAltitude.Retrograde;
-            DescentProfile.Save();
+            Trajectories.ActiveVesselTrajectory.DescentProfile.HighAltitude.Retrograde = !Trajectories.ActiveVesselTrajectory.DescentProfile.HighAltitude.Retrograde;
+            Trajectories.ActiveVesselTrajectory.DescentProfile.Save();
         }
 
         private static void OnButtonClick_LowHorizon()
         {
-            DescentProfile.LowAltitude.Horizon = !DescentProfile.LowAltitude.Horizon;
-            DescentProfile.Save();
+            Trajectories.ActiveVesselTrajectory.DescentProfile.LowAltitude.Horizon = !Trajectories.ActiveVesselTrajectory.DescentProfile.LowAltitude.Horizon;
+            Trajectories.ActiveVesselTrajectory.DescentProfile.Save();
         }
 
         private static void OnButtonClick_LowRetrograde()
         {
-            DescentProfile.LowAltitude.Retrograde = !DescentProfile.LowAltitude.Retrograde;
-            DescentProfile.Save();
+            Trajectories.ActiveVesselTrajectory.DescentProfile.LowAltitude.Retrograde = !Trajectories.ActiveVesselTrajectory.DescentProfile.LowAltitude.Retrograde;
+            Trajectories.ActiveVesselTrajectory.DescentProfile.Save();
         }
 
         private static void OnButtonClick_FinalHorizon()
         {
-            DescentProfile.FinalApproach.Horizon = !DescentProfile.FinalApproach.Horizon;
-            DescentProfile.Save();
+            Trajectories.ActiveVesselTrajectory.DescentProfile.FinalApproach.Horizon = !Trajectories.ActiveVesselTrajectory.DescentProfile.FinalApproach.Horizon;
+            Trajectories.ActiveVesselTrajectory.DescentProfile.Save();
         }
 
         private static void OnButtonClick_FinalRetrograde()
         {
-            DescentProfile.FinalApproach.Retrograde = !DescentProfile.FinalApproach.Retrograde;
-            DescentProfile.Save();
+            Trajectories.ActiveVesselTrajectory.DescentProfile.FinalApproach.Retrograde = !Trajectories.ActiveVesselTrajectory.DescentProfile.FinalApproach.Retrograde;
+            Trajectories.ActiveVesselTrajectory.DescentProfile.Save();
         }
 
         private static void OnButtonClick_TargetImpact()
@@ -1013,9 +1013,9 @@ namespace Trajectories
 
             if (Math.Abs(angle) <= 180f)
             {
-                DescentProfile.AtmosEntry.AngleDeg = angle;
-                DescentProfile.RefreshGui();
-                DescentProfile.Save();
+                Trajectories.ActiveVesselTrajectory.DescentProfile.AtmosEntry.AngleDeg = angle;
+                Trajectories.ActiveVesselTrajectory.DescentProfile.RefreshGui();
+                Trajectories.ActiveVesselTrajectory.DescentProfile.Save();
             }
             return null;
         }
@@ -1038,9 +1038,9 @@ namespace Trajectories
 
             if (Math.Abs(angle) <= 180f)
             {
-                DescentProfile.HighAltitude.AngleDeg = angle;
-                DescentProfile.RefreshGui();
-                DescentProfile.Save();
+                Trajectories.ActiveVesselTrajectory.DescentProfile.HighAltitude.AngleDeg = angle;
+                Trajectories.ActiveVesselTrajectory.DescentProfile.RefreshGui();
+                Trajectories.ActiveVesselTrajectory.DescentProfile.Save();
             }
             return null;
         }
@@ -1063,9 +1063,9 @@ namespace Trajectories
 
             if (Math.Abs(angle) <= 180f)
             {
-                DescentProfile.LowAltitude.AngleDeg = angle;
-                DescentProfile.RefreshGui();
-                DescentProfile.Save();
+                Trajectories.ActiveVesselTrajectory.DescentProfile.LowAltitude.AngleDeg = angle;
+                Trajectories.ActiveVesselTrajectory.DescentProfile.RefreshGui();
+                Trajectories.ActiveVesselTrajectory.DescentProfile.Save();
             }
             return null;
         }
@@ -1088,9 +1088,9 @@ namespace Trajectories
 
             if (Math.Abs(angle) <= 180f)
             {
-                DescentProfile.FinalApproach.AngleDeg = angle;
-                DescentProfile.RefreshGui();
-                DescentProfile.Save();
+                Trajectories.ActiveVesselTrajectory.DescentProfile.FinalApproach.AngleDeg = angle;
+                Trajectories.ActiveVesselTrajectory.DescentProfile.RefreshGui();
+                Trajectories.ActiveVesselTrajectory.DescentProfile.Save();
             }
             return null;
         }
@@ -1106,30 +1106,30 @@ namespace Trajectories
 
         private static void OnSliderSet_EntryAngle(float invalue)
         {
-            DescentProfile.AtmosEntry.SliderPos = invalue;
-            DescentProfile.RefreshGui();
-            DescentProfile.Save();
+            Trajectories.ActiveVesselTrajectory.DescentProfile.AtmosEntry.SliderPos = invalue;
+            Trajectories.ActiveVesselTrajectory.DescentProfile.RefreshGui();
+            Trajectories.ActiveVesselTrajectory.DescentProfile.Save();
         }
 
         private static void OnSliderSet_HighAngle(float invalue)
         {
-            DescentProfile.HighAltitude.SliderPos = invalue;
-            DescentProfile.RefreshGui();
-            DescentProfile.Save();
+            Trajectories.ActiveVesselTrajectory.DescentProfile.HighAltitude.SliderPos = invalue;
+            Trajectories.ActiveVesselTrajectory.DescentProfile.RefreshGui();
+            Trajectories.ActiveVesselTrajectory.DescentProfile.Save();
         }
 
         private static void OnSliderSet_LowAngle(float invalue)
         {
-            DescentProfile.LowAltitude.SliderPos = invalue;
-            DescentProfile.RefreshGui();
-            DescentProfile.Save();
+            Trajectories.ActiveVesselTrajectory.DescentProfile.LowAltitude.SliderPos = invalue;
+            Trajectories.ActiveVesselTrajectory.DescentProfile.RefreshGui();
+            Trajectories.ActiveVesselTrajectory.DescentProfile.Save();
         }
 
         private static void OnSliderSet_GroundAngle(float invalue)
         {
-            DescentProfile.FinalApproach.SliderPos = invalue;
-            DescentProfile.RefreshGui();
-            DescentProfile.Save();
+            Trajectories.ActiveVesselTrajectory.DescentProfile.FinalApproach.SliderPos = invalue;
+            Trajectories.ActiveVesselTrajectory.DescentProfile.RefreshGui();
+            Trajectories.ActiveVesselTrajectory.DescentProfile.Save();
         }
         #endregion
 

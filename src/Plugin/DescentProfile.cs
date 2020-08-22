@@ -27,7 +27,7 @@ using UnityEngine;
 
 namespace Trajectories
 {
-    internal static class DescentProfile
+    internal class DescentProfile
     {
         private const double GUI_MAX_ANGLE = Math.PI / 2d;
 
@@ -153,16 +153,17 @@ namespace Trajectories
             }
         }
 
-        internal static Node AtmosEntry { get; private set; }
-        internal static Node HighAltitude { get; private set; }
-        internal static Node LowAltitude { get; private set; }
-        internal static Node FinalApproach { get; private set; }
+        internal Node AtmosEntry { get; private set; }
+        internal Node HighAltitude { get; private set; }
+        internal Node LowAltitude { get; private set; }
+        internal Node FinalApproach { get; private set; }
+        private Trajectory trajectory { get; }
 
         /// <returns> true if all nodes have been allocated. </returns>
-        internal static bool Ready => (AtmosEntry != null && HighAltitude != null && LowAltitude != null && FinalApproach != null);
+        internal bool Ready => (AtmosEntry != null && HighAltitude != null && LowAltitude != null && FinalApproach != null);
 
         /// <summary> Sets all the profile nodes to Retrograde if true or Prograde if false. </summary>
-        internal static bool Retrograde
+        internal bool Retrograde
         {
             set
             {
@@ -179,9 +180,10 @@ namespace Trajectories
         /// <summary>
         /// Allocates new nodes or resets existing nodes
         /// </summary>
-        internal static void Start()
+        internal DescentProfile(Trajectory trajectory)
         {
             Util.DebugLog(Ready ? "Resetting" : "Constructing");
+            this.trajectory = trajectory;
             if (!Ready)
             {
                 AtmosEntry ??= new Node(Localizer.Format("#autoLOC_Trajectories_Entry"), Localizer.Format("#autoLOC_Trajectories_EntryDesc"));
@@ -194,7 +196,7 @@ namespace Trajectories
         }
 
         /// <summary> Releases held resources. </summary>
-        internal static void Destroy()
+        internal void Destroy()
         {
             Util.DebugLog("");
             AtmosEntry = null;
@@ -204,7 +206,7 @@ namespace Trajectories
         }
 
         /// <summary> Resets nodes to defaults </summary>
-        internal static void Clear()
+        internal void Clear()
         {
             Util.DebugLog("");
             if (Settings.DefaultDescentIsRetro)
@@ -216,7 +218,7 @@ namespace Trajectories
         /// <summary>
         /// Resets the descent profile to the given AoA value in radians, default value is Retrograde =(PI = 180 degrees)
         /// </summary>
-        internal static void Reset(double AoA = Math.PI)
+        internal void Reset(double AoA = Math.PI)
         {
             if (!Ready)
                 return;
@@ -236,7 +238,7 @@ namespace Trajectories
             RefreshGui();
         }
 
-        internal static void RefreshGui()
+        internal void RefreshGui()
         {
             if (!Ready)
                 return;
@@ -248,7 +250,7 @@ namespace Trajectories
         }
 
         /// <summary> Saves the profile to the passed vessel module </summary>
-        internal static void Save(TrajectoriesVesselSettings module)
+        internal void Save(TrajectoriesVesselSettings module)
         {
             module.EntryAngle = AtmosEntry.AngleRad;
             module.EntryHorizon = AtmosEntry.Horizon;
@@ -261,13 +263,13 @@ namespace Trajectories
         }
 
         /// <summary> Saves the profile to the active vessel module </summary>
-        internal static void Save()
+        internal void Save()
         {
-            if (!Trajectories.ActiveVesselTrajectory.IsVesselAttached || !Ready)
+            if (!trajectory.IsVesselAttached || !Ready)
                 return;
 
             //Util.DebugLog("Saving vessels descent profile...");
-            foreach (TrajectoriesVesselSettings module in Trajectories.ActiveVesselTrajectory.AttachedVessel.Parts.SelectMany(p => p.Modules.OfType<TrajectoriesVesselSettings>()))
+            foreach (TrajectoriesVesselSettings module in trajectory.AttachedVessel.Parts.SelectMany(p => p.Modules.OfType<TrajectoriesVesselSettings>()))
             {
                 Save(module);
             }
@@ -279,7 +281,7 @@ namespace Trajectories
         /// (in world frame, but relative to the body) with the specified velocity
         /// (relative to the air, so it takes the body rotation into account)
         /// </summary>
-        internal static double? GetAngleOfAttack(CelestialBody body, Vector3d position, Vector3d velocity)
+        internal double? GetAngleOfAttack(CelestialBody body, Vector3d position, Vector3d velocity)
         {
             if (!Ready)
                 return null;

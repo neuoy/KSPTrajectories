@@ -145,6 +145,8 @@ namespace Trajectories
 
         internal TargetProfile TargetProfile { get; }
 
+        internal DescentProfile DescentProfile { get; }
+
         /// <returns> True if trajectories is attached to a vessel </returns>
         internal bool IsVesselAttached => AttachedVessel != null;
 
@@ -155,6 +157,7 @@ namespace Trajectories
         {
             AttachedVessel = vessel;
             TargetProfile = new TargetProfile(this);
+            DescentProfile = new DescentProfile(this);
             Util.DebugLog("Constructing");
         }
 
@@ -162,7 +165,12 @@ namespace Trajectories
             ConstructTelemetry();
 #endif
 
-        internal void Destroy() => Util.DebugLog("");
+        internal void Destroy()
+        {
+            Util.DebugLog("");
+            DescentProfile.Clear();
+            DescentProfile.Destroy();
+        }
 
         internal void Update()
         {
