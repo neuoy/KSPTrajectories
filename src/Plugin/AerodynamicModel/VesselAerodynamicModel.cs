@@ -41,7 +41,7 @@ namespace Trajectories
         private readonly int referencePartCount;
         private DateTime nextAllowedAutomaticUpdate = DateTime.Now;
 
-        public bool UseCache => Settings.UseCache;
+        public static bool UseCache => Settings.UseCache;
         protected AeroForceCache cachedForces;
 
         public static bool Verbose { get; set; }

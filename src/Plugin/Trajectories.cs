@@ -71,7 +71,8 @@ namespace Trajectories
 
             foreach (var vessel in FlightGlobals.VesselsLoaded)
             {
-                if (LoadedVesselsTrajectories.All(t => t.AttachedVessel != vessel))
+                if (vessel.FindPartModuleImplementing<ModuleCommand>() != null &&
+                    LoadedVesselsTrajectories.All(t => t.AttachedVessel != vessel))
                 {
                     AttachVessel(vessel);
                 }
@@ -80,7 +81,8 @@ namespace Trajectories
             for (var i = LoadedVesselsTrajectories.Count - 1; i >= 0; i--)
             {
                 Trajectory trajectory = LoadedVesselsTrajectories[i];
-                if (FlightGlobals.VesselsLoaded.All(v => v != trajectory.AttachedVessel))
+                if (trajectory.AttachedVessel.FindPartModuleImplementing<ModuleCommand>() == null ||
+                    FlightGlobals.VesselsLoaded.All(v => v != trajectory.AttachedVessel))
                 {
                     trajectory.Destroy();
                     LoadedVesselsTrajectories.RemoveAt(i);
@@ -91,6 +93,11 @@ namespace Trajectories
                 trajectory.Update();
 
             MainGUI.Update();
+        }
+
+        private void OnGUI()
+        {
+            GUI.Label(new Rect(5, 35, 400, 50), "LoadedVesselsTrajectories: " + LoadedVesselsTrajectories.Count);
         }
 
 #if DEBUG_TELEMETRY

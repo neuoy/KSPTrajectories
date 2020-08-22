@@ -92,7 +92,7 @@ namespace Trajectories
         private MapTrajectoryRenderer map_renderer;
 
         // visible flag
-        private static bool visible;
+        private bool visible;
 
         private readonly Trajectory _trajectory;
 

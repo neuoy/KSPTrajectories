@@ -42,12 +42,7 @@ namespace Trajectories
                 if (!gameObject)
                     return;
 
-                line_renderer = gameObject.GetComponent<LineRenderer>();
-                if (!line_renderer)
-                {
-                    gameObject.AddComponent<LineRenderer>();
-                    line_renderer = gameObject.GetComponent<LineRenderer>();
-                }
+                line_renderer = new GameObject().AddComponent<LineRenderer>();
 
                 if (!line_renderer)
                     return;
@@ -106,7 +101,7 @@ namespace Trajectories
             internal void OnDestroy()
             {
                 if (line_renderer != null)
-                    Destroy(line_renderer);
+                    Destroy(line_renderer.gameObject);
                 if (material != null)
                     Destroy(material);
 
@@ -179,7 +174,7 @@ namespace Trajectories
         private Trajectory.Patch lastPatch;
         private Vector3d bodyPosition = Vector3d.zero;
         private Vector3d vertex = Vector3.zero;
-        private Trajectory _trajectory;
+        private readonly Trajectory _trajectory;
 
         internal FlightOverlay(Trajectory trajectory)
         {

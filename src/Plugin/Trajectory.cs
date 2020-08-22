@@ -126,16 +126,10 @@ namespace Trajectories
 
         private double increment_time;
 
-        //private static double computation_time;
-
         ///<summary> Trajectory calculation time of last frame in ms </summary>
         internal double ComputationTime { get; private set; }
 
-        //private static double total_time;
-
         private double frame_time;
-
-        //private static double game_frame_time;
 
         ///<summary> Time of game frame in ms </summary>
         internal double GameFrameTime { get; private set; }
@@ -199,7 +193,6 @@ namespace Trajectories
             ComputationTime = ComputationTime * 0.9d + increment_time * 0.1d;
 
             //Profiler.Stop("Trajectory.Update");
-
             FlightOverlay.Update();
             MapOverlay.Update();
             NavBallOverlay.Update();
@@ -370,7 +363,7 @@ namespace Trajectories
 
         internal void ComputeTrajectory()
         {
-            if (!VesselHasParts || AttachedVessel.LandedOrSplashed)
+            if (!VesselHasParts)// || AttachedVessel.LandedOrSplashed)
             {
                 increment_time = 0d;
                 Patches.Clear();
@@ -464,11 +457,11 @@ namespace Trajectories
                             break;
                         }
                     }
-
-                    // Add one patch, then pause execution after every patch
-                    foreach (bool unused in AddPatch(state))
-                        yield return false;
                 }
+
+                // Add one patch, then pause execution after every patch
+                foreach (bool unused in AddPatch(state))
+                    yield return false;
 
                 state = AddPatch_outState;
             }
@@ -613,10 +606,7 @@ namespace Trajectories
         private IEnumerable<bool> AddPatch(VesselState startingState)
         {
             if (null == AttachedVessel.patchedConicSolver)
-            {
-                Util.LogWarning("patchedConicsSolver is null, Skipping.");
-                yield break;
-            }
+                AttachedVessel.AttachPatchedConicsSolver();
 
             CelestialBody body = startingState.ReferenceBody;
 
