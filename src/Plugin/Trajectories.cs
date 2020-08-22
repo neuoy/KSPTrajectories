@@ -127,6 +127,11 @@ namespace Trajectories
             Settings = null;
         }
 
+        internal static Trajectory GetTrajectoryForVessel(Vessel vessel)
+        {
+            return LoadedVesselsTrajectories.FirstOrDefault(v => v.AttachedVessel == vessel);
+        }
+
         private static void AttachVessel(Vessel vessel)
         {
             Util.DebugLog("Loading profiles for vessel: " + vessel);

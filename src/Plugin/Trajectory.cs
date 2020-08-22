@@ -832,6 +832,8 @@ namespace Trajectories
 
                         Vector3d accel = accel_g + force_aero / aerodynamicModel_.Mass;
 
+                        accel += API.HandleAccel(AttachedVessel, body, position, velocity, aoa);
+
                         Profiler.Stop("accelerationFunc inside");
                         return accel;
                     }
