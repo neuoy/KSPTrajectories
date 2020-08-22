@@ -39,7 +39,7 @@ namespace Trajectories
             get
             {
                 string version_txt = typeof(API).Assembly.GetName().Version.ToString();
-                version_txt = version_txt.Remove(version_txt.LastIndexOf("."));
+                version_txt = version_txt.Remove(version_txt.LastIndexOf(".", StringComparison.Ordinal));
                 return version_txt;
             }
         }
@@ -52,7 +52,7 @@ namespace Trajectories
             get
             {
                 string[] version = GetVersion.Split('.');
-                return System.Convert.ToInt32(version[0]);
+                return Convert.ToInt32(version[0]);
             }
         }
 
@@ -65,7 +65,7 @@ namespace Trajectories
             get
             {
                 string[] version = GetVersion.Split('.');
-                return System.Convert.ToInt32(version[1]);
+                return Convert.ToInt32(version[1]);
             }
         }
 
@@ -78,7 +78,7 @@ namespace Trajectories
             get
             {
                 string[] version = GetVersion.Split('.');
-                return System.Convert.ToInt32(version[2]);
+                return Convert.ToInt32(version[2]);
             }
         }
 
@@ -105,6 +105,26 @@ namespace Trajectories
                         return patch.EndTime;
                 }
             }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Returns trajectory patch EndTime or Null if no active vessel or calculated trajectory.
+        /// See GetTimeTillImpact for remaining time until impact.
+        /// </summary>
+        public static double? GetEndTime(Vessel vessel)
+        {
+            Trajectory trajectory = Trajectories.GetTrajectoryForVessel(vessel);
+            if (trajectory != null && trajectory.IsVesselAttached)
+            {
+                foreach (Trajectory.Patch patch in trajectory.Patches)
+                {
+                    if (patch.ImpactPosition.HasValue)
+                        return patch.EndTime;
+                }
+            }
+
             return null;
         }
 
@@ -122,6 +142,25 @@ namespace Trajectories
                         return patch.EndTime - Planetarium.GetUniversalTime();
                 }
             }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Returns the remaining time until Impact in seconds or Null if no active vessel or calculated trajectory.
+        /// </summary>
+        public static double? GetTimeTillImpact(Vessel vessel)
+        {
+            Trajectory trajectory = Trajectories.GetTrajectoryForVessel(vessel);
+            if (trajectory != null && trajectory.IsVesselAttached)
+            {
+                foreach (Trajectory.Patch patch in trajectory.Patches)
+                {
+                    if (patch.ImpactPosition.HasValue)
+                        return patch.EndTime - Planetarium.GetUniversalTime();
+                }
+            }
+
             return null;
         }
 
@@ -138,6 +177,25 @@ namespace Trajectories
                         return patch.ImpactPosition;
                 }
             }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Returns the calculated impact position of the trajectory or Null if no active vessel or calculated trajectory.
+        /// </summary>
+        public static Vector3? GetImpactPosition(Vessel vessel)
+        {
+            Trajectory trajectory = Trajectories.GetTrajectoryForVessel(vessel);
+            if (trajectory != null && trajectory.IsVesselAttached)
+            {
+                foreach (Trajectory.Patch patch in trajectory.Patches)
+                {
+                    if (patch.ImpactPosition != null)
+                        return patch.ImpactPosition;
+                }
+            }
+
             return null;
         }
 
@@ -154,6 +212,25 @@ namespace Trajectories
                         return patch.ImpactVelocity;
                 }
             }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Returns the calculated impact velocity of the trajectory or Null if no active vessel or calculated trajectory.
+        /// </summary>
+        public static Vector3? GetImpactVelocity(Vessel vessel)
+        {
+            Trajectory trajectory = Trajectories.GetTrajectoryForVessel(vessel);
+            if (trajectory != null && trajectory.IsVesselAttached)
+            {
+                foreach (Trajectory.Patch patch in trajectory.Patches)
+                {
+                    if (patch.ImpactVelocity != null)
+                        return patch.ImpactVelocity;
+                }
+            }
+
             return null;
         }
 
@@ -166,7 +243,6 @@ namespace Trajectories
             {
                 foreach (Trajectory.Patch patch in Trajectories.ActiveVesselTrajectory.Patches)
                 {
-
                     if ((patch.StartingState.StockPatch != null) || patch.IsAtmospheric)
                         continue;
 
@@ -174,6 +250,28 @@ namespace Trajectories
                         return patch.SpaceOrbit;
                 }
             }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Returns the space orbit of the calculated trajectory or Null if orbit is atmospheric or there is no active vessel or calculated trajectory.
+        /// </summary>
+        public static Orbit GetSpaceOrbit(Vessel vessel)
+        {
+            Trajectory trajectory = Trajectories.GetTrajectoryForVessel(vessel);
+            if (trajectory != null && trajectory.IsVesselAttached)
+            {
+                foreach (Trajectory.Patch patch in trajectory.Patches)
+                {
+                    if ((patch.StartingState.StockPatch != null) || patch.IsAtmospheric)
+                        continue;
+
+                    if (patch.SpaceOrbit != null)
+                        return patch.SpaceOrbit;
+                }
+            }
+
             return null;
         }
 
@@ -183,14 +281,42 @@ namespace Trajectories
         public static bool HasTarget() => Trajectories.ActiveVesselTrajectory.IsVesselAttached && Trajectories.ActiveVesselTrajectory.TargetProfile.HasTarget();
 
         /// <summary>
+        /// Returns true if a target has been set, false if not, or Null if no active vessel.
+        /// </summary>
+        public static bool HasTarget(Vessel vessel)
+        {
+            Trajectory trajectory = Trajectories.GetTrajectoryForVessel(vessel);
+            if (trajectory == null) return false;
+            return trajectory.IsVesselAttached && trajectory.TargetProfile.HasTarget();
+        }
+
+        /// <summary>
         /// Returns the planned direction or Null if no active vessel or no set target.
         /// </summary>
         public static Vector3? PlannedDirection() => HasTarget() ? Trajectories.ActiveVesselTrajectory.NavBallOverlay.PlannedDirection : null;
 
         /// <summary>
+        /// Returns the planned direction or Null if no active vessel or no set target.
+        /// </summary>
+        public static Vector3? PlannedDirection(Vessel vessel)
+        {
+            Trajectory trajectory = Trajectories.GetTrajectoryForVessel(vessel);
+            return HasTarget(vessel) ? trajectory?.NavBallOverlay.PlannedDirection : null;
+        }
+
+        /// <summary>
         /// Returns the corrected direction or Null if no active vessel or no set target.
         /// </summary>
         public static Vector3? CorrectedDirection() => HasTarget() ? Trajectories.ActiveVesselTrajectory.NavBallOverlay.CorrectedDirection : null;
+
+        /// <summary>
+        /// Returns the corrected direction or Null if no active vessel or no set target.
+        /// </summary>
+        public static Vector3? CorrectedDirection(Vessel vessel)
+        {
+            Trajectory trajectory = Trajectories.GetTrajectoryForVessel(vessel);
+            return HasTarget(vessel) ? trajectory?.NavBallOverlay.CorrectedDirection : null;
+        }
 
         /// <summary>
         /// Set the trajectories target to a latitude, longitude and altitude at the HomeWorld.
@@ -206,9 +332,33 @@ namespace Trajectories
         }
 
         /// <summary>
+        /// Set the trajectories target to a latitude, longitude and altitude at the HomeWorld.
+        /// </summary>
+        public static void SetTarget(Vessel vessel, double lat, double lon, double? alt = null)
+        {
+            Trajectory trajectory = Trajectories.GetTrajectoryForVessel(vessel);
+            if (trajectory != null && trajectory.IsVesselAttached)
+            {
+                CelestialBody body = FlightGlobals.GetHomeBody();
+                if (body != null)
+                    trajectory.TargetProfile.SetFromLatLonAlt(body, lat, lon, alt);
+            }
+        }
+
+        /// <summary>
         /// Returns the trajectories target as latitude, longitude and altitude at the HomeWorld or Null if no active vessel or no set target.
         /// </summary>
         public static Vector3d? GetTarget() => Trajectories.ActiveVesselTrajectory.IsVesselAttached ? Trajectories.ActiveVesselTrajectory.TargetProfile.GetLatLonAlt() : null;
+
+        /// <summary>
+        /// Returns the trajectories target as latitude, longitude and altitude at the HomeWorld or Null if no active vessel or no set target.
+        /// </summary>
+        public static Vector3d? GetTarget(Vessel vessel)
+        {
+            Trajectory trajectory = Trajectories.GetTrajectoryForVessel(vessel);
+            if (trajectory == null) return null;
+            return trajectory.IsVesselAttached ? trajectory.TargetProfile.GetLatLonAlt() : null;
+        }
 
         /// <summary>
         /// Clears the trajectories target.
@@ -219,6 +369,16 @@ namespace Trajectories
                 Trajectories.ActiveVesselTrajectory.TargetProfile.Clear();
         }
 
+        /// <summary>
+        /// Clears the trajectories target.
+        /// </summary>
+        public static void ClearTarget(Vessel vessel)
+        {
+            Trajectory trajectory = Trajectories.GetTrajectoryForVessel(vessel);
+            if (trajectory != null && trajectory.IsVesselAttached)
+                trajectory.TargetProfile.Clear();
+        }
+
         /// <summary> Resets all the trajectories descent profile nodes to Prograde at 0° if true or Retrograde at 0° if false. </summary>
         /// <returns> true if all nodes are Prograde, null if no active vessel. </returns>
         public static bool? ProgradeEntry
@@ -227,7 +387,7 @@ namespace Trajectories
             {
                 if (Trajectories.ActiveVesselTrajectory.IsVesselAttached)
                     return !Trajectories.ActiveVesselTrajectory.DescentProfile.AtmosEntry.Retrograde && !Trajectories.ActiveVesselTrajectory.DescentProfile.HighAltitude.Retrograde &&
-                            !Trajectories.ActiveVesselTrajectory.DescentProfile.LowAltitude.Retrograde && !Trajectories.ActiveVesselTrajectory.DescentProfile.FinalApproach.Retrograde;
+                           !Trajectories.ActiveVesselTrajectory.DescentProfile.LowAltitude.Retrograde && !Trajectories.ActiveVesselTrajectory.DescentProfile.FinalApproach.Retrograde;
                 return null;
             }
             set
@@ -263,7 +423,7 @@ namespace Trajectories
 
         /// <summary>
         /// Resets the trajectories descent profile to the passed AoA value in radians, default value is Retrograde =(PI = 180°),
-		///  also sets Retrograde if angle is greater than ±PI/2 (±90°) otherwise sets to Prograde.
+        ///  also sets Retrograde if angle is greater than ±PI/2 (±90°) otherwise sets to Prograde.
         /// </summary>
         public static void ResetDescentProfile(double AoA = Math.PI)
         {
@@ -271,6 +431,21 @@ namespace Trajectories
             {
                 Trajectories.ActiveVesselTrajectory.DescentProfile.Reset(AoA);
                 Trajectories.ActiveVesselTrajectory.DescentProfile.Save();
+            }
+        }
+
+
+        /// <summary>
+        /// Resets the trajectories descent profile to the passed AoA value in radians, default value is Retrograde =(PI = 180°),
+        ///  also sets Retrograde if angle is greater than ±PI/2 (±90°) otherwise sets to Prograde.
+        /// </summary>
+        public static void ResetDescentProfile(Vessel vessel, double AoA = Math.PI)
+        {
+            Trajectory trajectory = Trajectories.GetTrajectoryForVessel(vessel);
+            if (trajectory != null && trajectory.IsVesselAttached)
+            {
+                trajectory.DescentProfile.Reset(AoA);
+                trajectory.DescentProfile.Save();
             }
         }
 
@@ -294,6 +469,7 @@ namespace Trajectories
                         Trajectories.ActiveVesselTrajectory.DescentProfile.FinalApproach.AngleRad
                     };
                 }
+
                 return null;
             }
             set
@@ -327,6 +503,7 @@ namespace Trajectories
                         !Trajectories.ActiveVesselTrajectory.DescentProfile.FinalApproach.Horizon
                     };
                 }
+
                 return null;
             }
             set
@@ -360,6 +537,7 @@ namespace Trajectories
                         Trajectories.ActiveVesselTrajectory.DescentProfile.FinalApproach.Retrograde
                     };
                 }
+
                 return null;
             }
             set
@@ -379,5 +557,14 @@ namespace Trajectories
         /// Triggers a recalculation of the trajectory.
         /// </summary>
         public static void UpdateTrajectory() => Trajectories.ActiveVesselTrajectory.ComputeTrajectory();
+
+        /// <summary>
+        /// Triggers a recalculation of the trajectory.
+        /// </summary>
+        public static void UpdateTrajectory(Vessel vessel)
+        {
+            Trajectory trajectory = Trajectories.GetTrajectoryForVessel(vessel);
+            trajectory?.ComputeTrajectory();
+        }
     }
 }
