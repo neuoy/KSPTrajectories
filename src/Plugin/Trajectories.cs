@@ -19,6 +19,7 @@
 */
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
@@ -30,9 +31,8 @@ namespace Trajectories
     {
         internal static string Version { get; }
         internal static Settings Settings { get; private set; }
-        internal static Trajectory ActiveVesselTrajectory { get; private set; }
-
-        //internal static List<Trajectory> LoadedVesselsTrajectories { get; } = new List<Trajectory>();
+        internal static Trajectory ActiveVesselTrajectory => LoadedVesselsTrajectories.FirstOrDefault(t => t.AttachedVessel == FlightGlobals.ActiveVessel);
+        internal static List<Trajectory> LoadedVesselsTrajectories { get; private set; }
 
         static Trajectories()
         {
@@ -48,12 +48,13 @@ namespace Trajectories
                 return;
             Util.DebugLog("");
 
+            LoadedVesselsTrajectories ??= new List<Trajectory>();
             Settings ??= new Settings(); // get trajectories settings from the config.xml file if it exists or create a new one
             if (Settings != null)
             {
                 Settings.Load();
 
-                ActiveVesselTrajectory = new Trajectory(FlightGlobals.ActiveVessel);
+                AttachVessel(FlightGlobals.ActiveVessel);
                 MainGUI.Start();
                 AppLauncherButton.Start();
             }
@@ -68,10 +69,27 @@ namespace Trajectories
             if (Util.IsPaused || Settings == null || !Util.IsFlight)
                 return;
 
-            if (ActiveVesselTrajectory.AttachedVessel != FlightGlobals.ActiveVessel)
-                AttachVessel(FlightGlobals.ActiveVessel);
+            foreach (var vessel in FlightGlobals.VesselsLoaded)
+            {
+                if (LoadedVesselsTrajectories.All(t => t.AttachedVessel != vessel))
+                {
+                    AttachVessel(vessel);
+                }
+            }
 
-            ActiveVesselTrajectory.Update();
+            for (var i = LoadedVesselsTrajectories.Count - 1; i >= 0; i--)
+            {
+                Trajectory trajectory = LoadedVesselsTrajectories[i];
+                if (FlightGlobals.VesselsLoaded.All(v => v != trajectory.AttachedVessel))
+                {
+                    trajectory.Destroy();
+                    LoadedVesselsTrajectories.RemoveAt(i);
+                }
+            }
+
+            foreach (var trajectory in LoadedVesselsTrajectories)
+                trajectory.Update();
+
             MainGUI.Update();
         }
 
@@ -84,8 +102,8 @@ namespace Trajectories
             Util.DebugLog("");
             AppLauncherButton.DestroyToolbarButton();
             MainGUI.DeSpawn();
-            ActiveVesselTrajectory.Destroy();
-            ActiveVesselTrajectory = null;
+            foreach (var trajectory in LoadedVesselsTrajectories)
+                trajectory.Destroy();
         }
 
         internal void OnApplicationQuit()
@@ -93,7 +111,8 @@ namespace Trajectories
             Util.Log("Ending after {0} seconds", Time.time);
             AppLauncherButton.Destroy();
             MainGUI.Destroy();
-            ActiveVesselTrajectory.Destroy();
+            foreach (var trajectory in LoadedVesselsTrajectories)
+                trajectory.Destroy();
             if (Settings != null)
                 Settings.Destroy();
             Settings = null;
@@ -101,35 +120,36 @@ namespace Trajectories
 
         private static void AttachVessel(Vessel vessel)
         {
-            Util.DebugLog("Loading profiles for vessel");
+            Util.DebugLog("Loading profiles for vessel: " + vessel);
 
-            ActiveVesselTrajectory = new Trajectory(vessel);
+            Trajectory trajectory = new Trajectory(vessel);
 
-            if (ActiveVesselTrajectory.AttachedVessel == null)
+            if (trajectory.AttachedVessel == null)
             {
                 Util.DebugLog("No vessel");
-                ActiveVesselTrajectory.DescentProfile.Clear();
-                ActiveVesselTrajectory.TargetProfile.Clear();
-                ActiveVesselTrajectory.TargetProfile.ManualText = "";
+                trajectory.DescentProfile.Clear();
+                trajectory.TargetProfile.Clear();
+                trajectory.TargetProfile.ManualText = "";
             }
             else
             {
-                TrajectoriesVesselSettings module = ActiveVesselTrajectory.AttachedVessel.Parts.SelectMany(p => p.Modules.OfType<TrajectoriesVesselSettings>()).FirstOrDefault();
+                LoadedVesselsTrajectories.Add(trajectory);
+                TrajectoriesVesselSettings module = trajectory.AttachedVessel.Parts.SelectMany(p => p.Modules.OfType<TrajectoriesVesselSettings>()).FirstOrDefault();
                 if (module == null)
                 {
                     Util.DebugLog("No TrajectoriesVesselSettings module");
-                    ActiveVesselTrajectory.DescentProfile.Clear();
-                    ActiveVesselTrajectory.TargetProfile.Clear();
-                    ActiveVesselTrajectory.TargetProfile.ManualText = "";
+                    trajectory.DescentProfile.Clear();
+                    trajectory.TargetProfile.Clear();
+                    trajectory.TargetProfile.ManualText = "";
                 }
                 else if (!module.Initialized)
                 {
                     Util.DebugLog("Initializing TrajectoriesVesselSettings module");
-                    ActiveVesselTrajectory.DescentProfile.Clear();
-                    ActiveVesselTrajectory.DescentProfile.Save(module);
-                    ActiveVesselTrajectory.TargetProfile.Clear();
-                    ActiveVesselTrajectory.TargetProfile.ManualText = "";
-                    ActiveVesselTrajectory.TargetProfile.Save(module);
+                    trajectory.DescentProfile.Clear();
+                    trajectory.DescentProfile.Save(module);
+                    trajectory.TargetProfile.Clear();
+                    trajectory.TargetProfile.ManualText = "";
+                    trajectory.TargetProfile.Save(module);
                     module.Initialized = true;
                     Util.Log("New vessel, profiles created");
                 }
@@ -137,23 +157,24 @@ namespace Trajectories
                 {
                     Util.DebugLog("Reading profile settings...");
                     // descent profile
-                    if (ActiveVesselTrajectory.DescentProfile.Ready)
+                    if (trajectory.DescentProfile.Ready)
                     {
-                        ActiveVesselTrajectory.DescentProfile.AtmosEntry.AngleRad = module.EntryAngle;
-                        ActiveVesselTrajectory.DescentProfile.AtmosEntry.Horizon = module.EntryHorizon;
-                        ActiveVesselTrajectory.DescentProfile.HighAltitude.AngleRad = module.HighAngle;
-                        ActiveVesselTrajectory.DescentProfile.HighAltitude.Horizon = module.HighHorizon;
-                        ActiveVesselTrajectory.DescentProfile.LowAltitude.AngleRad = module.LowAngle;
-                        ActiveVesselTrajectory.DescentProfile.LowAltitude.Horizon = module.LowHorizon;
-                        ActiveVesselTrajectory.DescentProfile.FinalApproach.AngleRad = module.GroundAngle;
-                        ActiveVesselTrajectory.DescentProfile.FinalApproach.Horizon = module.GroundHorizon;
-                        ActiveVesselTrajectory.DescentProfile.RefreshGui();
+                        trajectory.DescentProfile.AtmosEntry.AngleRad = module.EntryAngle;
+                        trajectory.DescentProfile.AtmosEntry.Horizon = module.EntryHorizon;
+                        trajectory.DescentProfile.HighAltitude.AngleRad = module.HighAngle;
+                        trajectory.DescentProfile.HighAltitude.Horizon = module.HighHorizon;
+                        trajectory.DescentProfile.LowAltitude.AngleRad = module.LowAngle;
+                        trajectory.DescentProfile.LowAltitude.Horizon = module.LowHorizon;
+                        trajectory.DescentProfile.FinalApproach.AngleRad = module.GroundAngle;
+                        trajectory.DescentProfile.FinalApproach.Horizon = module.GroundHorizon;
+                        trajectory.DescentProfile.RefreshGui();
                     }
 
                     // target profile
-                    ActiveVesselTrajectory.TargetProfile.SetFromLocalPos(FlightGlobals.Bodies.FirstOrDefault(b => b.name == module.TargetBody),
+                    trajectory.TargetProfile.SetFromLocalPos(FlightGlobals.Bodies.FirstOrDefault(b => b.name == module.TargetBody),
                         new Vector3d(module.TargetPosition_x, module.TargetPosition_y, module.TargetPosition_z));
-                    ActiveVesselTrajectory.TargetProfile.ManualText = module.ManualTargetTxt;
+                    trajectory.TargetProfile.ManualText = module.ManualTargetTxt;
+
                     Util.Log("Profiles loaded");
                 }
             }
