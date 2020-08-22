@@ -23,7 +23,7 @@ using System.Diagnostics;
 using System.Collections.Generic;
 using KSP.Localization;
 using UnityEngine;
-using UnityEngine.Events;
+
 #endif
 
 namespace Trajectories
@@ -45,8 +45,8 @@ namespace Trajectories
         private const float VALUE_WIDTH = 130.0f;
 
         // visible flag
-        private static bool visible = false;
-        private static bool show_zero = false;
+        private static bool visible;
+        private static bool show_zero;
 
         // popup window
         private static MultiOptionDialog multi_dialog;
@@ -57,8 +57,8 @@ namespace Trajectories
         // an entry in the watcher
         private class Entry
         {
-            public double value;            // used to store last value
-            public string value_txt = "";   // last value display string
+            public double value; // used to store last value
+            public string value_txt = ""; // last value display string
         }
 
         // store all entries
@@ -67,14 +67,14 @@ namespace Trajectories
 
 
         // display update timer
-        private const double UPDATE_FPS = 5.0;      // Frames per second the entry value display will update.
+        private const double UPDATE_FPS = 5.0; // Frames per second the entry value display will update.
         private static double update_timer = Util.Clocks;
         private static readonly double timeout = Stopwatch.Frequency / UPDATE_FPS;
-        private static long tot_frames = 0;         // total physics frames used for avg calculation
-        private static string tot_frames_txt = "";  // total physics frames display string
+        private static long tot_frames; // total physics frames used for avg calculation
+        private static string tot_frames_txt = ""; // total physics frames display string
 
         //  constructor
-        private static bool Ready => (multi_dialog != null && popup_dialog && scroll_list != null);
+        private static bool Ready => multi_dialog != null && popup_dialog && scroll_list != null;
 
         static Watcher()
         {
@@ -82,26 +82,20 @@ namespace Trajectories
             dialog_items = new DialogGUIVerticalLayout();
             scroll_list = new DialogGUIScrollList(new Vector2(), false, true, dialog_items);
             multi_dialog = new MultiOptionDialog(
-               "TrajectoriesWatcherWindow",
-               "",
-               GetTitle(),
-               HighLogic.UISkin,
-               new Rect(0.5f, 0.5f, WIDTH, HEIGHT),
-               new DialogGUIBase[]
-               {
-                   new DialogGUIVerticalLayout(false, false, 0, new RectOffset(), TextAnchor.UpperCenter,
-                       // create reset button
-                       new DialogGUIHorizontalLayout(false, false,
-                           new DialogGUIButton(Localizer.Format("#autoLOC_900305"),
-                               OnButtonClick_Reset, () => true, 75, 25, false),
-                           new DialogGUILabel(() => { return tot_frames_txt; }, VALUE_WIDTH + 50f)),
-                       // create header line
-                       new DialogGUIHorizontalLayout(
-                           new DialogGUILabel("<b>   NAME</b>", true),
-                           new DialogGUILabel("<b>LAST</b>", VALUE_WIDTH))),
-                   // create scrollbox for entry data
-                   scroll_list
-               });
+                "TrajectoriesWatcherWindow",
+                "",
+                GetTitle(),
+                HighLogic.UISkin,
+                new Rect(0.5f, 0.5f, WIDTH, HEIGHT), new DialogGUIVerticalLayout(false, false, 0, new RectOffset(), TextAnchor.UpperCenter,
+                    // create reset button
+                    new DialogGUIHorizontalLayout(false, false,
+                        new DialogGUIButton(Localizer.Format("#autoLOC_900305"),
+                            OnButtonClick_Reset, () => true, 75, 25, false),
+                        new DialogGUILabel(() => tot_frames_txt, VALUE_WIDTH + 50f)),
+                    // create header line
+                    new DialogGUIHorizontalLayout(
+                        new DialogGUILabel("<b>   NAME</b>", true),
+                        new DialogGUILabel("<b>LAST</b>", VALUE_WIDTH))), scroll_list);
         }
 
         // Awake is called only once when the script instance is being loaded. Used in place of the constructor for initialization.
@@ -118,8 +112,8 @@ namespace Trajectories
                 ClampToScreen();
 
                 // create popup dialog
-                popup_dialog = PopupDialog.SpawnPopupDialog(multi_dialog, false, HighLogic.UISkin, false, "");
-                popup_dialog.onDestroy.AddListener(new UnityAction(OnPopupDialogDestroy));
+                popup_dialog = PopupDialog.SpawnPopupDialog(multi_dialog, false, HighLogic.UISkin, false);
+                popup_dialog.onDestroy.AddListener(OnPopupDialogDestroy);
                 scroll_list.children.Add(new DialogGUIVerticalLayout());
             }
         }
@@ -175,12 +169,12 @@ namespace Trajectories
                 e.value_txt = e.value.ToString("F8");
             }
 
-            tot_frames_txt = tot_frames.ToString() + " Frames";
+            tot_frames_txt = tot_frames + " Frames";
         }
 
         public void FixedUpdate() => ++tot_frames;
 
-        public static void OnDestroy()
+        public void OnDestroy()
         {
             if (popup_dialog != null)
             {
@@ -216,36 +210,36 @@ namespace Trajectories
             else
             {
                 // ensure window remains within the screen bounds
-                Vector2 pos = new Vector2(((multi_dialog.dialogRect.position.x * Screen.width) - (Screen.width / 2)) * GameSettings.UI_SCALE,
-                                          ((multi_dialog.dialogRect.position.y * Screen.height) - (Screen.height / 2)) * GameSettings.UI_SCALE);
+                Vector2 pos = new Vector2(((multi_dialog.dialogRect.position.x * Screen.width) - (Screen.width / 2f)) * GameSettings.UI_SCALE,
+                    ((multi_dialog.dialogRect.position.y * Screen.height) - (Screen.height / 2f)) * GameSettings.UI_SCALE);
 
-                if (pos.x > (Screen.width / 2) - border)
+                if (pos.x > (Screen.width / 2f) - border)
                 {
-                    pos.x = (Screen.width / 2) - (border + (WIDTH / 2));
+                    pos.x = (Screen.width / 2f) - (border + (WIDTH / 2));
                     adjusted = true;
                 }
-                else if (pos.x < ((Screen.width / 2) - border) * -1f)
+                else if (pos.x < ((Screen.width / 2f) - border) * -1f)
                 {
-                    pos.x = ((Screen.width / 2) - (border + (WIDTH / 2))) * -1f;
+                    pos.x = ((Screen.width / 2f) - (border + (WIDTH / 2))) * -1f;
                     adjusted = true;
                 }
 
-                if (pos.y > (Screen.height / 2) - border)
+                if (pos.y > (Screen.height / 2f) - border)
                 {
-                    pos.y = (Screen.height / 2) - (border + (HEIGHT / 2));
+                    pos.y = (Screen.height / 2f) - (border + (HEIGHT / 2));
                     adjusted = true;
                 }
-                else if (pos.y < ((Screen.height / 2) - border) * -1f)
+                else if (pos.y < ((Screen.height / 2f) - border) * -1f)
                 {
-                    pos.y = ((Screen.height / 2) - (border + (HEIGHT / 2))) * -1f;
+                    pos.y = ((Screen.height / 2f) - (border + (HEIGHT / 2))) * -1f;
                     adjusted = true;
                 }
 
                 if (adjusted)
                 {
                     multi_dialog.dialogRect.Set(
-                        ((Screen.width / 2) + (pos.x / GameSettings.UI_SCALE)) / Screen.width,
-                        ((Screen.height / 2) + (pos.y / GameSettings.UI_SCALE)) / Screen.height,
+                        ((Screen.width / 2f) + (pos.x / GameSettings.UI_SCALE)) / Screen.width,
+                        ((Screen.height / 2f) + (pos.y / GameSettings.UI_SCALE)) / Screen.height,
                         WIDTH, HEIGHT);
                 }
             }
@@ -260,8 +254,8 @@ namespace Trajectories
             if (popup_dialog != null)
             {
                 Vector2 window_pos = new Vector2(
-                    ((Screen.width / 2) + (popup_dialog.RTrf.position.x / GameSettings.UI_SCALE)) / Screen.width,
-                    ((Screen.height / 2) + (popup_dialog.RTrf.position.y / GameSettings.UI_SCALE)) / Screen.height);
+                    ((Screen.width / 2f) + (popup_dialog.RTrf.position.x / GameSettings.UI_SCALE)) / Screen.width,
+                    ((Screen.height / 2f) + (popup_dialog.RTrf.position.y / GameSettings.UI_SCALE)) / Screen.height);
                 //Util.DebugLog("Saving profiler window position as {0}", window_pos.ToString());
                 multi_dialog.dialogRect.Set(window_pos.x, window_pos.y, WIDTH, HEIGHT);
                 dialog_items.children.Clear();
@@ -318,7 +312,7 @@ namespace Trajectories
             dialog_items.AddChild(
                 new DialogGUIHorizontalLayout(
                     new DialogGUILabel("  " + e_name, true),
-                    new DialogGUILabel(() => { return entries[e_name].value_txt; }, VALUE_WIDTH)));
+                    new DialogGUILabel(() => entries[e_name].value_txt, VALUE_WIDTH)));
 
             // required to force the Gui creation
             Stack<Transform> stack = new Stack<Transform>();
@@ -349,5 +343,4 @@ namespace Trajectories
 #endif
         }
     }
-
 } // Trajectories

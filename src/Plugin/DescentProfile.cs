@@ -34,12 +34,12 @@ namespace Trajectories
         internal class Node
         {
             private bool retrograde;
-            private double angle_rad;       // In radians
-            private double angle_deg;       // In degrees
+            private double angle_rad; // In radians
+            private double angle_deg; // In degrees
             private float sliderPos;
 
-            public string Name { get; private set; }
-            public string Description { get; private set; }
+            public string Name { get; }
+            public string Description { get; }
             public string HorizonText => Horizon ? "Horiz" : "AoA";
             public string AngleText { get; private set; }
 
@@ -134,7 +134,7 @@ namespace Trajectories
                 }
 
                 // update gui descent page slider position
-                float position = (float)(Math.Abs(gui_angle_rad) / GUI_MAX_ANGLE);
+                float position = (float) (Math.Abs(gui_angle_rad) / GUI_MAX_ANGLE);
                 if (gui_angle_rad < 0d)
                     sliderPos = -position;
                 else
@@ -224,7 +224,7 @@ namespace Trajectories
                 return;
 
             //Util.DebugLog("Resetting vessel descent profile to {0} degrees", AoA));
-            Retrograde = Math.Abs(AoA) > GUI_MAX_ANGLE;   // sets to retrograde entry if AoA is greater than +-PI/2 (+-90 degrees)
+            Retrograde = Math.Abs(AoA) > GUI_MAX_ANGLE; // sets to retrograde entry if AoA is greater than +-PI/2 (+-90 degrees)
 
             AtmosEntry.AngleRad = AoA;
             AtmosEntry.Horizon = false;
@@ -273,6 +273,7 @@ namespace Trajectories
             {
                 Save(module);
             }
+
             //Util.DebugLog("Descent profile saved");
         }
 
@@ -291,25 +292,25 @@ namespace Trajectories
             Node a, b;
             double aCoeff;
 
-            if (altitudeRatio > 0.5d)  // Atmospheric entry, 50 to 100% of body atmosphere depth
+            if (altitudeRatio > 0.5d) // Atmospheric entry, 50 to 100% of body atmosphere depth
             {
                 a = AtmosEntry;
                 b = HighAltitude;
-                aCoeff = Math.Min((altitudeRatio - 0.5d) * 2d, 1d);       // 0.5..1+ = 0..1
+                aCoeff = Math.Min((altitudeRatio - 0.5d) * 2d, 1d); // 0.5..1+ = 0..1
             }
-            else if (altitudeRatio > 0.25d)  // High Altitude, 25 to 50% of body atmosphere depth
+            else if (altitudeRatio > 0.25d) // High Altitude, 25 to 50% of body atmosphere depth
             {
                 a = HighAltitude;
                 b = LowAltitude;
-                aCoeff = (altitudeRatio * 4d) - 1d;                       // 0.25..0.5 = 0..1
+                aCoeff = (altitudeRatio * 4d) - 1d; // 0.25..0.5 = 0..1
             }
-            else if (altitudeRatio > 0.05d)  // Low Altitude, 5 to 25% of body atmosphere depth
+            else if (altitudeRatio > 0.05d) // Low Altitude, 5 to 25% of body atmosphere depth
             {
                 a = LowAltitude;
                 b = FinalApproach;
-                aCoeff = 1d - ((altitudeRatio * 5d) - 0.25d);             // 0.05..0.25 = 0..1
+                aCoeff = 1d - ((altitudeRatio * 5d) - 0.25d); // 0.05..0.25 = 0..1
             }
-            else    // Final Approach, under 5% of body atmosphere depth or Non-Atmospheric Body
+            else // Final Approach, under 5% of body atmosphere depth or Non-Atmospheric Body
             {
                 return FinalApproach.GetAngleOfAttack(position, velocity);
             }

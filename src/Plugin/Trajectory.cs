@@ -22,7 +22,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using KSP.Localization;
 using UnityEngine;
@@ -52,7 +51,9 @@ namespace Trajectories
             // something makes it diverge (atmospheric entry for example)
             internal Orbit StockPatch { get; set; }
 
-            internal VesselState() { }
+            internal VesselState()
+            {
+            }
 
             internal VesselState(Vessel vessel)
             {
@@ -102,15 +103,14 @@ namespace Trajectories
             internal Vector3d? ImpactVelocity { get; set; }
         }
 
-        internal const double INTEGRATOR_MIN = 0.1d;         // RK4 Integrator minimum step size
-        internal const double INTEGRATOR_MAX = 5.0d;         // RK4 Integrator maximum step size
+        internal const double INTEGRATOR_MIN = 0.1d; // RK4 Integrator minimum step size
+        internal const double INTEGRATOR_MAX = 5.0d; // RK4 Integrator maximum step size
 
-        private const double MAX_INCREMENT_TIME = 2.0d;      // in ms
+        private const double MAX_INCREMENT_TIME = 2.0d; // in ms
 
         private VesselAerodynamicModel aerodynamicModel_;
 
-        internal string AerodynamicModelName => aerodynamicModel_ == null ? Localizer.Format("#autoLOC_Trajectories_NotLoaded") :
-                                                                                   aerodynamicModel_.AerodynamicModelName;
+        internal string AerodynamicModelName => aerodynamicModel_ == null ? Localizer.Format("#autoLOC_Trajectories_NotLoaded") : aerodynamicModel_.AerodynamicModelName;
 
         private List<Patch> patchesBackBuffer_ = new List<Patch>();
 
@@ -151,7 +151,7 @@ namespace Trajectories
         internal bool IsVesselAttached => AttachedVessel != null;
 
         /// <returns> True if trajectories is attached to a vessel and that the vessel also has parts </returns>
-        internal bool VesselHasParts => IsVesselAttached ? AttachedVessel.Parts.Count != 0 : false;
+        internal bool VesselHasParts => IsVesselAttached && AttachedVessel.Parts.Count != 0;
 
         internal Trajectory(Vessel vessel)
         {
@@ -191,8 +191,7 @@ namespace Trajectories
         }
 
 #if DEBUG_TELEMETRY
-
-        internal static void ConstructTelemetry()
+        internal void ConstructTelemetry()
         {
             // Add telemetry channels for real and predicted variable values
             Telemetry.AddChannel<double>("ut");
@@ -452,7 +451,7 @@ namespace Trajectories
                     }
 
                     // Add one patch, then pause execution after every patch
-                    foreach (bool result in AddPatch(state))
+                    foreach (bool unused in AddPatch(state))
                         yield return false;
                 }
 
@@ -490,7 +489,7 @@ namespace Trajectories
         private static Orbit CreateOrbitFromState(VesselState state)
         {
             Orbit orbit = new Orbit();
-            orbit.UpdateFromStateVectors(Util.SwapYZ(state.Position), Util.SwapYZ(state.Velocity), state.ReferenceBody, state.Time);
+            orbit.UpdateFromStateVectors(state.Position.SwapYZ(), state.Velocity.SwapYZ(), state.ReferenceBody, state.Time);
             PatchedConics.SolverParameters pars = new PatchedConics.SolverParameters
             {
                 FollowManeuvers = false
@@ -517,6 +516,7 @@ namespace Trajectories
                     ++ErrorCount;
                     break;
                 }
+
                 double middle = (from + to) * 0.5;
                 if (orbit.getRelativePositionAtUT(middle).magnitude < bodyAltitude)
                 {
@@ -549,7 +549,6 @@ namespace Trajectories
         /// <returns></returns>
         private static SimulationState VerletStep(SimulationState state, Func<Vector3d, Vector3d, Vector3d> accelerationFunc, double dt, out Vector3d accel)
         {
-
             Profiler.Start("accelerationFunc outside");
             accel = accelerationFunc(state.position, state.velocity);
             Profiler.Stop("accelerationFunc outside");
@@ -661,8 +660,9 @@ namespace Trajectories
                 minAltitude = Math.Min(
                     patch.SpaceOrbit.getRelativePositionAtUT(patch.EndTime).magnitude,
                     patch.SpaceOrbit.getRelativePositionAtUT(patch.StartingState.Time + 1.0).magnitude
-                    ) - body.Radius;
+                ) - body.Radius;
             }
+
             if (minAltitude < maxAtmosphereAltitude)
             {
                 double entryTime;
@@ -689,12 +689,11 @@ namespace Trajectories
                         patchesBackBuffer_.Add(patch);
                         AddPatch_outState = new VesselState
                         {
-                            Position = Util.SwapYZ(patch.SpaceOrbit.getRelativePositionAtUT(entryTime)),
+                            Position = patch.SpaceOrbit.getRelativePositionAtUT(entryTime).SwapYZ(),
                             ReferenceBody = body,
                             Time = entryTime,
-                            Velocity = Util.SwapYZ(patch.SpaceOrbit.getOrbitalVelocityAtUT(entryTime))
+                            Velocity = patch.SpaceOrbit.getOrbitalVelocityAtUT(entryTime).SwapYZ()
                         };
-                        yield break;
                     }
                     else
                     {
@@ -716,8 +715,8 @@ namespace Trajectories
                         for (t = entryTime; t < groundRangeExit; t += iterationSize)
                         {
                             Vector3d pos = patch.SpaceOrbit.getRelativePositionAtUT(t);
-                            double groundAltitude = GetGroundAltitude(body, CalculateRotatedPosition(body, Util.SwapYZ(pos), t))
-                                + body.Radius;
+                            double groundAltitude = GetGroundAltitude(body, CalculateRotatedPosition(body, pos.SwapYZ(), t))
+                                                    + body.Radius;
                             if (pos.magnitude < groundAltitude)
                             {
                                 t -= iterationSize;
@@ -729,12 +728,11 @@ namespace Trajectories
                         if (groundImpact)
                         {
                             patch.EndTime = t;
-                            patch.RawImpactPosition = Util.SwapYZ(patch.SpaceOrbit.getRelativePositionAtUT(t));
+                            patch.RawImpactPosition = patch.SpaceOrbit.getRelativePositionAtUT(t).SwapYZ();
                             patch.ImpactPosition = CalculateRotatedPosition(body, patch.RawImpactPosition.Value, t);
-                            patch.ImpactVelocity = Util.SwapYZ(patch.SpaceOrbit.getOrbitalVelocityAtUT(t));
+                            patch.ImpactVelocity = patch.SpaceOrbit.getOrbitalVelocityAtUT(t).SwapYZ();
                             patchesBackBuffer_.Add(patch);
                             AddPatch_outState = null;
-                            yield break;
                         }
                         else
                         {
@@ -744,18 +742,16 @@ namespace Trajectories
                             {
                                 AddPatch_outState = new VesselState
                                 {
-                                    Position = Util.SwapYZ(patch.SpaceOrbit.getRelativePositionAtUT(patch.EndTime)),
-                                    Velocity = Util.SwapYZ(patch.SpaceOrbit.getOrbitalVelocityAtUT(patch.EndTime)),
-                                    ReferenceBody = nextPatch == null ? body : nextPatch.referenceBody,
+                                    Position = patch.SpaceOrbit.getRelativePositionAtUT(patch.EndTime).SwapYZ(),
+                                    Velocity = patch.SpaceOrbit.getOrbitalVelocityAtUT(patch.EndTime).SwapYZ(),
+                                    ReferenceBody = nextPatch.referenceBody,
                                     Time = patch.EndTime,
                                     StockPatch = nextPatch
                                 };
-                                yield break;
                             }
                             else
                             {
                                 AddPatch_outState = null;
-                                yield break;
                             }
                         }
                     }
@@ -779,7 +775,7 @@ namespace Trajectories
 
                     // some shallow entries can result in very long flight. For performances reasons,
                     // we limit the prediction duration
-                    int maxIterations = (int)(60.0 * 60.0 / dt);
+                    int maxIterations = (int) (60.0 * 60.0 / dt);
 
                     int chunkSize = 128;
 
@@ -794,8 +790,8 @@ namespace Trajectories
                     int nextPosIdx = 0;
 
                     SimulationState state;
-                    state.position = Util.SwapYZ(patch.SpaceOrbit.getRelativePositionAtUT(entryTime));
-                    state.velocity = Util.SwapYZ(patch.SpaceOrbit.getOrbitalVelocityAtUT(entryTime));
+                    state.position = patch.SpaceOrbit.getRelativePositionAtUT(entryTime).SwapYZ();
+                    state.velocity = patch.SpaceOrbit.getOrbitalVelocityAtUT(entryTime).SwapYZ();
 
                     // Initialize a patch with zero acceleration
                     Vector3d currentAccel = new Vector3d(0.0, 0.0, 0.0);
@@ -812,7 +808,7 @@ namespace Trajectories
                     #region Acceleration Functor
 
                     // function that calculates the acceleration under current parameters
-                    Func<Vector3d, Vector3d, Vector3d> accelerationFunc = (position, velocity) =>
+                    Vector3d AccelerationFunc(Vector3d position, Vector3d velocity)
                     {
                         Profiler.Start("accelerationFunc inside");
 
@@ -833,7 +829,8 @@ namespace Trajectories
 
                         Profiler.Stop("accelerationFunc inside");
                         return accel;
-                    };
+                    }
+
                     #endregion
 
 
@@ -889,24 +886,23 @@ namespace Trajectories
                                 AddPatch_outState = null;
                                 yield break;
                             }
-                            else if (atmosphereCoeff <= 0.0 || hitGround)
+
+                            if (atmosphereCoeff <= 0.0 || hitGround)
                             {
                                 patchesBackBuffer_.Add(patch);
                                 AddPatch_outState = null;
                                 yield break;
                             }
-                            else
+
+                            patchesBackBuffer_.Add(patch);
+                            AddPatch_outState = new VesselState
                             {
-                                patchesBackBuffer_.Add(patch);
-                                AddPatch_outState = new VesselState
-                                {
-                                    Position = state.position,
-                                    Velocity = state.velocity,
-                                    ReferenceBody = body,
-                                    Time = patch.EndTime
-                                };
-                                yield break;
-                            }
+                                Position = state.position,
+                                Velocity = state.velocity,
+                                ReferenceBody = body,
+                                Time = patch.EndTime
+                            };
+                            yield break;
                         }
 
                         Vector3d lastAccel = currentAccel;
@@ -916,7 +912,7 @@ namespace Trajectories
 
                         // Verlet integration (more precise than using the velocity)
                         // state = VerletStep(state, accelerationFunc, dt);
-                        state = RK4Step(state, accelerationFunc, dt, out currentAccel);
+                        state = RK4Step(state, AccelerationFunc, dt, out currentAccel);
 
                         currentTime += dt;
 
@@ -941,7 +937,7 @@ namespace Trajectories
 
                         // acceleration in the vessel reference frame is acceleration - gravityAccel
                         maxAccelBackBuffer_ = Math.Max(
-                            (float)(aerodynamicForce.magnitude / aerodynamicModel_.Mass),
+                            (float) (aerodynamicForce.magnitude / aerodynamicModel_.Mass),
                             maxAccelBackBuffer_);
 
                         #region Impact Calculation
@@ -961,8 +957,8 @@ namespace Trajectories
                                 if (absGroundAltitude > rayEnd.magnitude)
                                 {
                                     hitGround = true;
-                                    float coeff = Math.Max(0.01f, (float)((absGroundAltitude - rayOrigin.magnitude)
-                                        / (rayEnd.magnitude - rayOrigin.magnitude)));
+                                    float coeff = Math.Max(0.01f, (float) ((absGroundAltitude - rayOrigin.magnitude)
+                                                                           / (rayEnd.magnitude - rayOrigin.magnitude)));
                                     state.position = rayEnd * coeff + rayOrigin * (1.0f - coeff);
                                     currentTime = currentTime * coeff + lastPositionStoredUT * (1.0f - coeff);
                                 }
@@ -974,14 +970,16 @@ namespace Trajectories
                                 buffer.Add(new Point[chunkSize]);
                                 nextPosIdx = 0;
                             }
+
                             Vector3d nextPos = state.position;
                             if (Settings.BodyFixedMode)
                             {
                                 nextPos = CalculateRotatedPosition(body, nextPos, currentTime);
                             }
+
                             buffer.Last()[nextPosIdx].aerodynamicForce = aerodynamicForce;
                             buffer.Last()[nextPosIdx].orbitalVelocity = state.velocity;
-                            buffer.Last()[nextPosIdx].groundAltitude = (float)groundAltitude;
+                            buffer.Last()[nextPosIdx].groundAltitude = (float) groundAltitude;
                             buffer.Last()[nextPosIdx].time = currentTime;
                             buffer.Last()[nextPosIdx++].pos = nextPos;
                             lastPositionStored = state.position;
@@ -1003,32 +1001,30 @@ namespace Trajectories
                 {
                     AddPatch_outState = new VesselState
                     {
-                        Position = Util.SwapYZ(patch.SpaceOrbit.getRelativePositionAtUT(patch.EndTime)),
-                        Velocity = Util.SwapYZ(patch.SpaceOrbit.getOrbitalVelocityAtUT(patch.EndTime)),
-                        ReferenceBody = nextPatch == null ? body : nextPatch.referenceBody,
+                        Position = patch.SpaceOrbit.getRelativePositionAtUT(patch.EndTime).SwapYZ(),
+                        Velocity = patch.SpaceOrbit.getOrbitalVelocityAtUT(patch.EndTime).SwapYZ(),
+                        ReferenceBody = nextPatch.referenceBody,
                         Time = patch.EndTime,
                         StockPatch = nextPatch
                     };
-                    yield break;
                 }
                 else
                 {
                     AddPatch_outState = null;
-                    yield break;
                 }
             }
         }
 
         internal static Vector3d CalculateRotatedPosition(CelestialBody body, Vector3d relativePosition, double time)
         {
-            float angle = (float)(-(time - Planetarium.GetUniversalTime()) * body.angularVelocity.magnitude / Math.PI * 180.0);
+            float angle = (float) (-(time - Planetarium.GetUniversalTime()) * body.angularVelocity.magnitude / Math.PI * 180.0);
             Quaternion bodyRotation = Quaternion.AngleAxis(angle, body.angularVelocity.normalized);
             return bodyRotation * relativePosition;
         }
 
         internal static Vector3d GetWorldPositionAtUT(Orbit orbit, double ut)
         {
-            Vector3d worldPos = Util.SwapYZ(orbit.getRelativePositionAtUT(ut));
+            Vector3d worldPos = orbit.getRelativePositionAtUT(ut).SwapYZ();
             if (orbit.referenceBody != FlightGlobals.Bodies[0])
                 worldPos += GetWorldPositionAtUT(orbit.referenceBody.orbit, ut);
             return worldPos;

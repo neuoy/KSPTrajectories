@@ -26,49 +26,48 @@ namespace Trajectories
 {
     public class AeroForceCache
     {
-        public double MaxVelocity { get; private set; }
-        public double MaxAoA { get; private set; }
-        public double MaxAltitude { get; private set; }
+        public double MaxVelocity { get; }
+        public double MaxAoA { get; }
+        public double MaxAltitude { get; }
 
-        public int VelocityResolution { get; private set; }
-        public int AoAResolution { get; private set; }
-        public int AltitudeResolution { get; private set; }
+        public int VelocityResolution { get; }
+        public int AoAResolution { get; }
+        public int AltitudeResolution { get; }
 
-        private Vector2d[,,] InternalArray;
+        private readonly Vector2d[,,] InternalArray;
 
-        private VesselAerodynamicModel Model;
+        private readonly VesselAerodynamicModel Model;
 
         public AeroForceCache(double maxCacheVelocity, double maxCacheAoA, double atmosphereDepth, int vRes, int aoaRes, int altRes, VesselAerodynamicModel model)
         {
             Model = model;
-
-            this.MaxVelocity = maxCacheVelocity;
-            this.MaxAoA = maxCacheAoA;
-            this.MaxAltitude = atmosphereDepth;
+            MaxVelocity = maxCacheVelocity;
+            MaxAoA = maxCacheAoA;
+            MaxAltitude = atmosphereDepth;
             VelocityResolution = vRes;
             AoAResolution = aoaRes;
             AltitudeResolution = altRes;
 
             InternalArray = new Vector2d[VelocityResolution, AoAResolution, AltitudeResolution];
             for (int v = 0; v < VelocityResolution; ++v)
-                for (int a = 0; a < AoAResolution; ++a)
-                    for (int m = 0; m < AltitudeResolution; ++m)
-                        InternalArray[v, a, m] = new Vector2d(double.NaN, double.NaN);
+            for (int a = 0; a < AoAResolution; ++a)
+            for (int m = 0; m < AltitudeResolution; ++m)
+                InternalArray[v, a, m] = new Vector2d(double.NaN, double.NaN);
         }
 
         public Vector3d GetForce(double velocity, double angleOfAttack, double altitude)
         {
-            double vFrac = (velocity / MaxVelocity * (double)(InternalArray.GetLength(0) - 1));
-            int vFloor = Math.Max(0, Math.Min(InternalArray.GetLength(0) - 2, (int)vFrac));
-            vFrac = Math.Max(0.0f, Math.Min(1.0f, vFrac - (float)vFloor));
+            double vFrac = (velocity / MaxVelocity * (InternalArray.GetLength(0) - 1));
+            int vFloor = Math.Max(0, Math.Min(InternalArray.GetLength(0) - 2, (int) vFrac));
+            vFrac = Math.Max(0.0f, Math.Min(1.0f, vFrac - vFloor));
 
-            double aFrac = ((angleOfAttack / MaxAoA * 0.5 + 0.5) * (double)(InternalArray.GetLength(1) - 1));
-            int aFloor = Math.Max(0, Math.Min(InternalArray.GetLength(1) - 2, (int)aFrac));
-            aFrac = Math.Max(0.0f, Math.Min(1.0f, aFrac - (float)aFloor));
+            double aFrac = ((angleOfAttack / MaxAoA * 0.5 + 0.5) * (InternalArray.GetLength(1) - 1));
+            int aFloor = Math.Max(0, Math.Min(InternalArray.GetLength(1) - 2, (int) aFrac));
+            aFrac = Math.Max(0.0f, Math.Min(1.0f, aFrac - aFloor));
 
-            double mFrac = (altitude / MaxAltitude * (double)(InternalArray.GetLength(2) - 1));
-            int mFloor = Math.Max(0, Math.Min(InternalArray.GetLength(2) - 2, (int)mFrac));
-            mFrac = Math.Max(0.0f, Math.Min(1.0f, mFrac - (float)mFloor));
+            double mFrac = (altitude / MaxAltitude * (InternalArray.GetLength(2) - 1));
+            int mFloor = Math.Max(0, Math.Min(InternalArray.GetLength(2) - 2, (int) mFrac));
+            mFrac = Math.Max(0.0f, Math.Min(1.0f, mFrac - mFloor));
 
             //if (Verbose)
             //{
@@ -114,10 +113,10 @@ namespace Trajectories
 
         private Vector2d ComputeCacheEntry(int v, int a, int m)
         {
-            double vel = MaxVelocity * (double)v / (double)(InternalArray.GetLength(0) - 1);
+            double vel = MaxVelocity * v / (InternalArray.GetLength(0) - 1);
             Vector3d velocity = new Vector3d(vel, 0, 0);
-            double AoA = MaxAoA * ((double)a / (double)(InternalArray.GetLength(1) - 1) * 2.0 - 1.0);
-            double currentAltitude = MaxAltitude * (double)m / (double)(InternalArray.GetLength(2) - 1);
+            double AoA = MaxAoA * (a / (double) (InternalArray.GetLength(1) - 1) * 2.0 - 1.0);
+            double currentAltitude = MaxAltitude * m / (InternalArray.GetLength(2) - 1);
 
             Vector2d packedForce = Model.PackForces(Model.ComputeForces(currentAltitude, velocity, new Vector3d(0, 1, 0), AoA), currentAltitude, vel);
 

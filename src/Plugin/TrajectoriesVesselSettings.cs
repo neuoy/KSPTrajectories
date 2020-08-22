@@ -27,7 +27,7 @@ namespace Trajectories
     internal class TrajectoriesVesselSettings : PartModule
     {
         [KSPField(isPersistant = true, guiActive = false)]
-        public bool Initialized = false;
+        public bool Initialized;
 
         [KSPField(isPersistant = true, guiActive = false)]
         public double EntryAngle = Math.PI;
@@ -60,13 +60,13 @@ namespace Trajectories
         public string TargetBody = "";
 
         [KSPField(isPersistant = true, guiActive = false)]
-        public double TargetPosition_x = 0;
+        public double TargetPosition_x;
 
         [KSPField(isPersistant = true, guiActive = false)]
-        public double TargetPosition_y = 0;
+        public double TargetPosition_y;
 
         [KSPField(isPersistant = true, guiActive = false)]
-        public double TargetPosition_z = 0;
+        public double TargetPosition_z;
 
         [KSPField(isPersistant = true, guiActive = false)]
         public string ManualTargetTxt = "";

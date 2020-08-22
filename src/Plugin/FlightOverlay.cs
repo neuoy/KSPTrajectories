@@ -27,9 +27,9 @@ namespace Trajectories
     {
         private sealed class TrajectoryLine : MonoBehaviour
         {
-            internal const float MIN_WIDTH = 0.025f;
-            internal const float MAX_WIDTH = 250f;
-            internal const float DIST_DIV = 1e3f;
+            private const float MIN_WIDTH = 0.025f;
+            private const float MAX_WIDTH = 250f;
+            private const float DIST_DIV = 1e3f;
 
             private LineRenderer line_renderer;
             private Material material;
@@ -48,6 +48,7 @@ namespace Trajectories
                     gameObject.AddComponent<LineRenderer>();
                     line_renderer = gameObject.GetComponent<LineRenderer>();
                 }
+
                 if (!line_renderer)
                     return;
 
@@ -105,9 +106,9 @@ namespace Trajectories
             internal void OnDestroy()
             {
                 if (line_renderer != null)
-                    UnityEngine.Object.Destroy(line_renderer);
+                    Destroy(line_renderer);
                 if (material != null)
-                    UnityEngine.Object.Destroy(material);
+                    Destroy(material);
 
                 line_renderer = null;
                 material = null;
@@ -133,15 +134,15 @@ namespace Trajectories
 
         private sealed class TargetingCross : MonoBehaviour
         {
-            internal const float MIN_SIZE = 2f;
-            internal const float MAX_SIZE = 2e3f;
-            internal const float DIST_DIV = 50f;
+            private const float MIN_SIZE = 2f;
+            private const float MAX_SIZE = 2e3f;
+            private const float DIST_DIV = 50f;
 
-            private double latitude = 0d;
-            private double longitude = 0d;
-            private double altitude = 0d;
+            private double latitude;
+            private double longitude;
+            private double altitude;
             private Vector3 screen_point;
-            private float size = 0f;
+            private float size;
 
             internal Vector3? Position { get; set; }
             internal CelestialBody Body { get; set; }
@@ -172,10 +173,10 @@ namespace Trajectories
         private static TargetingCross target_cross;
 
         // update method variables, put here to stop over use of the garbage collector.
-        private static double time = 0d;
-        private static double time_increment = 0d;
-        private static Orbit orbit = null;
-        private static Trajectory.Patch lastPatch = null;
+        private static double time;
+        private static double time_increment;
+        private static Orbit orbit;
+        private static Trajectory.Patch lastPatch;
         private static Vector3d bodyPosition = Vector3d.zero;
         private static Vector3d vertex = Vector3.zero;
 
@@ -192,13 +193,13 @@ namespace Trajectories
         {
             Util.DebugLog("");
             if (line != null)
-                UnityEngine.Object.Destroy(line);
+                Object.Destroy(line);
 
             if (impact_cross != null)
-                UnityEngine.Object.Destroy(impact_cross);
+                Object.Destroy(impact_cross);
 
             if (target_cross != null)
-                UnityEngine.Object.Destroy(target_cross);
+                Object.Destroy(target_cross);
 
             line = null;
             impact_cross = null;
@@ -237,7 +238,7 @@ namespace Trajectories
                 orbit = lastPatch.SpaceOrbit;
                 for (uint i = 0; i < DEFAULT_VERTEX_COUNT; ++i)
                 {
-                    vertex = Util.SwapYZ(orbit.getRelativePositionAtUT(time));
+                    vertex = orbit.getRelativePositionAtUT(time).SwapYZ();
                     if (Settings.BodyFixedMode)
                         vertex = Trajectory.CalculateRotatedPosition(orbit.referenceBody, vertex, time);
 

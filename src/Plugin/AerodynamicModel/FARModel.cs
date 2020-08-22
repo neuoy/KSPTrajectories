@@ -26,11 +26,11 @@ using UnityEngine;
 
 namespace Trajectories
 {
-    class FARModel: VesselAerodynamicModel
+    internal class FARModel: VesselAerodynamicModel
     {
-        private MethodInfo FARAPI_CalculateVesselAeroForces;
+        private readonly MethodInfo FARAPI_CalculateVesselAeroForces;
 
-        public override string AerodynamicModelName { get { return "FAR"; } }
+        public override string AerodynamicModelName => "FAR";
 
         public FARModel(Trajectory trajectory, CelestialBody body, MethodInfo CalculateVesselAeroForces)
             : base(trajectory, body)

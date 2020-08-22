@@ -21,70 +21,60 @@
 */
 
 using System;
+using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Xml;
 using KSP.IO;
 using UnityEngine;
+using File = System.IO.File;
 
 namespace Trajectories
 {
     internal sealed class Settings
     {
         #region User settings
+
         private sealed class Persistent : Attribute
         {
-            internal object DefaultValue;
+            internal readonly object DefaultValue;
             internal Persistent(object Default) => DefaultValue = Default;
         }
 
-        [Persistent(Default: true)]
-        internal static bool UseBlizzyToolbar { get; set; }
+        [Persistent(true)] internal static bool UseBlizzyToolbar { get; set; }
 
-        [Persistent(Default: true)]
-        internal static bool DisplayTrajectories { get; set; }
+        [Persistent(true)] internal static bool DisplayTrajectories { get; set; }
 
-        [Persistent(Default: false)]
-        internal static bool DisplayTrajectoriesInFlight { get; set; }
+        [Persistent(false)] internal static bool DisplayTrajectoriesInFlight { get; set; }
 
-        [Persistent(Default: false)]
-        internal static bool AlwaysUpdate { get; set; } //Compute trajectory even if DisplayTrajectories && MapView.MapIsEnabled == false.
+        [Persistent(false)] internal static bool AlwaysUpdate { get; set; } //Compute trajectory even if DisplayTrajectories && MapView.MapIsEnabled == false.
 
-        [Persistent(Default: false)]
-        internal static bool DisplayCompleteTrajectory { get; set; }
+        [Persistent(false)] internal static bool DisplayCompleteTrajectory { get; set; }
 
-        [Persistent(Default: false)]
-        internal static bool BodyFixedMode { get; set; }
+        [Persistent(false)] internal static bool BodyFixedMode { get; set; }
 
-        [Persistent(Default: true)]
-        internal static bool AutoUpdateAerodynamicModel { get; set; }
+        [Persistent(true)] internal static bool AutoUpdateAerodynamicModel { get; set; }
 
-        [Persistent(Default: false)]
-        internal static bool MainGUIEnabled { get; set; }
+        [Persistent(false)] internal static bool MainGUIEnabled { get; set; }
 
-        [Persistent(Default: null)]
-        internal static Vector2 MainGUIWindowPos { get; set; }
+        [Persistent(null)] internal static Vector2 MainGUIWindowPos { get; set; }
 
-        [Persistent(Default: null)]
-        internal static int MainGUICurrentPage { get; set; }
+        [Persistent(null)] internal static int MainGUICurrentPage { get; set; }
 
-        [Persistent(Default: 2.0d)]
-        internal static double IntegrationStepSize { get; set; }
+        [Persistent(2.0d)] internal static double IntegrationStepSize { get; set; }
 
-        [Persistent(Default: 4)]
-        internal static int MaxPatchCount { get; set; }
+        [Persistent(4)] internal static int MaxPatchCount { get; set; }
 
-        [Persistent(Default: 15)]
-        internal static int MaxFramesPerPatch { get; set; }
+        [Persistent(15)] internal static int MaxFramesPerPatch { get; set; }
 
-        [Persistent(Default: true)]
-        internal static bool UseCache { get; set; }
+        [Persistent(true)] internal static bool UseCache { get; set; }
 
-        [Persistent(Default: true)]
-        internal static bool DefaultDescentIsRetro { get; set; }
+        [Persistent(true)] internal static bool DefaultDescentIsRetro { get; set; }
+
         #endregion
 
         private static PluginConfiguration config;
-        private static bool ConfigError = false;
+        private static bool ConfigError;
 
         //  constructor
         static Settings()
@@ -111,7 +101,7 @@ namespace Trajectories
             {
                 config.load();
             }
-            catch (System.Xml.XmlException e)
+            catch (XmlException e)
             {
                 if (ConfigError)
                     throw; // if previous error handling failed, we give up
@@ -120,16 +110,16 @@ namespace Trajectories
 
                 Util.LogError("Loading config: {0}", e.ToString());
 
-                string TrajPluginPath = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
+                string TrajPluginPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
                 Util.Log("Installed at: {0}", TrajPluginPath);
-                TrajPluginPath += "/PluginData/" + System.Reflection.Assembly.GetExecutingAssembly().FullName + "/config.xml";
-                if (System.IO.File.Exists(TrajPluginPath))
+                TrajPluginPath += "/PluginData/" + Assembly.GetExecutingAssembly().FullName + "/config.xml";
+                if (File.Exists(TrajPluginPath))
                 {
                     Util.Log("Clearing config file...");
                     int idx = 1;
-                    while (System.IO.File.Exists(TrajPluginPath + ".bak." + idx))
+                    while (File.Exists(TrajPluginPath + ".bak." + idx))
                         ++idx;
-                    System.IO.File.Move(TrajPluginPath, TrajPluginPath + ".bak." + idx);
+                    File.Move(TrajPluginPath, TrajPluginPath + ".bak." + idx);
 
                     Util.Log("Creating new config...");
                     config.load();
@@ -158,9 +148,9 @@ namespace Trajectories
         {
             Util.DebugLog("");
             var props = from p in typeof(Settings).GetProperties(BindingFlags.NonPublic | BindingFlags.Static)
-                        let attr = p.GetCustomAttributes(typeof(Persistent), true)
-                        where attr.Length == 1
-                        select new { Property = p, Attribute = attr.First() as Persistent };
+                let attr = p.GetCustomAttributes(typeof(Persistent), true)
+                where attr.Length == 1
+                select new {Property = p, Attribute = attr.First() as Persistent};
 
             foreach (var prop in props)
             {

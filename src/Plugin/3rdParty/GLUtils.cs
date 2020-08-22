@@ -15,8 +15,9 @@ namespace Trajectories
 {
     public static class GLUtils
     {
-        static Material _material;
-        static Material material
+        private static Material _material;
+
+        private static Material material
         {
             get
             {
@@ -27,7 +28,7 @@ namespace Trajectories
             }
         }
 
-        public static void DrawMapViewGroundMarker(CelestialBody body, double latitude, double longitude, Color c,  double rotation = 0, double radius = 0)
+        public static void DrawMapViewGroundMarker(CelestialBody body, double latitude, double longitude, Color c, double rotation = 0, double radius = 0)
         {
             DrawGroundMarker(body, latitude, longitude, c, true, rotation, radius);
         }
@@ -36,16 +37,23 @@ namespace Trajectories
         {
             Vector3d up = body.GetSurfaceNVector(latitude, longitude);
             var height = body.pqsController.GetSurfaceHeight(QuaternionD.AngleAxis(longitude, Vector3d.down) * QuaternionD.AngleAxis(latitude, Vector3d.forward) * Vector3d.right);
-            if (height < body.Radius) { height = body.Radius; }
+            if (height < body.Radius)
+            {
+                height = body.Radius;
+            }
+
             Vector3d center = body.position + height * up;
 
-            Vector3d camPos = map ? ScaledSpace.ScaledToLocalSpace(PlanetariumCamera.Camera.transform.position) : (Vector3d)FlightCamera.fetch.mainCamera.transform.position;
+            Vector3d camPos = map ? ScaledSpace.ScaledToLocalSpace(PlanetariumCamera.Camera.transform.position) : (Vector3d) FlightCamera.fetch.mainCamera.transform.position;
 
             if (IsOccluded(center, body, camPos)) return;
 
             Vector3d north = Vector3d.Exclude(up, body.transform.up).normalized;
 
-            if (radius <= 0) { radius = map ? body.Radius / 15 : 5; }
+            if (radius <= 0)
+            {
+                radius = map ? body.Radius / 15 : 5;
+            }
 
             if (!map)
             {
@@ -55,11 +63,11 @@ namespace Trajectories
             }
 
             GLTriangle(center, center + radius * (QuaternionD.AngleAxis(rotation - 10, up) * north),
-                        center + radius * (QuaternionD.AngleAxis(rotation + 10, up) * north), c, map);
+                center + radius * (QuaternionD.AngleAxis(rotation + 10, up) * north), c, map);
             GLTriangle(center, center + radius * (QuaternionD.AngleAxis(rotation + 110, up) * north),
-                        center + radius * (QuaternionD.AngleAxis(rotation + 130, up) * north), c, map);
+                center + radius * (QuaternionD.AngleAxis(rotation + 130, up) * north), c, map);
             GLTriangle(center, center + radius * (QuaternionD.AngleAxis(rotation - 110, up) * north),
-                        center + radius * (QuaternionD.AngleAxis(rotation - 130, up) * north), c, map);
+                center + radius * (QuaternionD.AngleAxis(rotation - 130, up) * north), c, map);
         }
 
         public static void GLTriangle(Vector3d worldVertices1, Vector3d worldVertices2, Vector3d worldVertices3, Color c, bool map)
@@ -67,7 +75,7 @@ namespace Trajectories
             try
             {
                 GL.PushMatrix();
-                material?.SetPass(0);
+                material.SetPass(0);
                 GL.LoadOrtho();
                 GL.Begin(GL.TRIANGLES);
                 GL.Color(c);
@@ -77,7 +85,10 @@ namespace Trajectories
                 GL.End();
                 GL.PopMatrix();
             }
-            catch{}
+            catch
+            {
+                // ignored
+            }
         }
 
         public static void GLVertex(Vector3d worldPosition, bool map = false)
@@ -110,7 +121,7 @@ namespace Trajectories
 
         //Tests if byBody occludes worldPosition, from the perspective of the planetarium camera
         // https://cesiumjs.org/2013/04/25/Horizon-culling/
-        public static bool IsOccluded(Vector3d worldPosition,  CelestialBody byBody, Vector3d camPos)
+        public static bool IsOccluded(Vector3d worldPosition, CelestialBody byBody, Vector3d camPos)
         {
             Vector3d VC = (byBody.position - camPos) / (byBody.Radius - 100);
             Vector3d VT = (worldPosition - camPos) / (byBody.Radius - 100);
@@ -130,14 +141,14 @@ namespace Trajectories
             try
             {
                 GL.PushMatrix();
-                material?.SetPass(0);
+                material.SetPass(0);
                 GL.LoadPixelMatrix();
                 GL.Begin(GL.LINES);
                 GL.Color(c);
 
                 Vector3d camPos = map
-                                      ? ScaledSpace.ScaledToLocalSpace(PlanetariumCamera.Camera.transform.position)
-                                      : (Vector3d) FlightCamera.fetch.mainCamera.transform.position;
+                    ? ScaledSpace.ScaledToLocalSpace(PlanetariumCamera.Camera.transform.position)
+                    : (Vector3d) FlightCamera.fetch.mainCamera.transform.position;
 
                 int step = (dashed ? 2 : 1);
                 for (int i = 0; i < points.Count - 1; i += step)
@@ -149,7 +160,10 @@ namespace Trajectories
                 GL.End();
                 GL.PopMatrix();
             }
-            catch { }
+            catch
+            {
+                // ignored
+            }
         }
 
 #if false
@@ -177,5 +191,5 @@ namespace Trajectories
             DrawPath(o.referenceBody, points, c, true, false);
         }
 #endif
-        }
+    }
 }

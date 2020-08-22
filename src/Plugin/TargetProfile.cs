@@ -30,18 +30,18 @@ namespace Trajectories
         internal bool HasTarget() => LocalPosition.HasValue && Body != null;
 
         /// <summary> The targets reference body </summary>
-        internal CelestialBody Body { get; set; } = null;
+        internal CelestialBody Body { get; set; }
 
         /// <summary> The targets position in WorldSpace </summary>
         internal Vector3d? WorldPosition
         {
             // A transform that has double precision would be nice so we can have target precision in meter's
-            get => LocalPosition.HasValue ? Body?.transform?.TransformDirection(LocalPosition.Value) : null;
-            set => LocalPosition = value.HasValue ? Body?.transform?.InverseTransformDirection(value.Value) : null;
+            get => LocalPosition.HasValue ? Body?.transform.TransformDirection(LocalPosition.Value) : null;
+            set => LocalPosition = value.HasValue ? Body?.transform.InverseTransformDirection(value.Value) : null;
         }
 
         /// <summary> The targets position in LocalSpace relative to the target body </summary>
-        internal Vector3d? LocalPosition { get; private set; } = null;
+        internal Vector3d? LocalPosition { get; private set; }
 
         /// <summary> Manual target TextBox string </summary>
         internal string ManualText { get; set; } = "";
@@ -95,16 +95,11 @@ namespace Trajectories
         {
             if (Body != null && WorldPosition.HasValue)
             {
-                double latitude;
-                double longitude;
-                double altitude;
-                Body.GetLatLonAlt(WorldPosition.Value + Body.position, out latitude, out longitude, out altitude);
+                Body.GetLatLonAlt(WorldPosition.Value + Body.position, out var latitude, out var longitude, out var altitude);
                 return new Vector3d(latitude, longitude, altitude);
             }
-            else
-            {
-                return null;
-            }
+
+            return null;
         }
 
         /// <summary> Clears the target </summary>
@@ -119,9 +114,9 @@ namespace Trajectories
         internal void Save(TrajectoriesVesselSettings module)
         {
             module.TargetBody = Body == null ? "" : Body.name;
-            module.TargetPosition_x = LocalPosition.HasValue ? LocalPosition.Value.x : 0d;
-            module.TargetPosition_y = LocalPosition.HasValue ? LocalPosition.Value.y : 0d;
-            module.TargetPosition_z = LocalPosition.HasValue ? LocalPosition.Value.z : 0d;
+            module.TargetPosition_x = LocalPosition?.x ?? 0d;
+            module.TargetPosition_y = LocalPosition?.y ?? 0d;
+            module.TargetPosition_z = LocalPosition?.z ?? 0d;
             module.ManualTargetTxt = ManualText;
         }
 
@@ -136,6 +131,7 @@ namespace Trajectories
             {
                 Save(module);
             }
+
             //Util.DebugLog("Target profile saved");
         }
     }

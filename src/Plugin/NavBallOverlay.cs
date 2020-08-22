@@ -25,6 +25,7 @@ using System.IO;
 using System.Linq;
 using KSP.UI.Screens.Flight;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace Trajectories
 {
@@ -33,10 +34,10 @@ namespace Trajectories
     {
         private const float SCALE = 0.5f;
 
-        private static Texture2D guide_texture = null;
-        private static Texture2D reference_texture = null;
+        private static Texture2D guide_texture;
+        private static Texture2D reference_texture;
 
-        private static bool constructed = false;
+        private static bool constructed;
 
         private static NavBall navball;
         private static Transform guide_transform;
@@ -52,10 +53,11 @@ namespace Trajectories
         private static Vector3d up;
         private static Vector3d vel_right;
         private static Vector3d reference;
+        private static readonly int MainTexture = Shader.PropertyToID("_MainTexture");
 
-        private static bool TexturesAllocated => (guide_texture != null && reference_texture != null);
-        private static bool TransformsAllocated => (guide_transform != null && reference_transform != null);
-        private static bool RenderersAllocated => (guide_renderer != null && reference_renderer != null);
+        private static bool TexturesAllocated => guide_texture != null && reference_texture != null;
+        private static bool TransformsAllocated => guide_transform != null && reference_transform != null;
+        private static bool RenderersAllocated => guide_renderer != null && reference_renderer != null;
 
         internal static bool Ready => (TexturesAllocated && TransformsAllocated && RenderersAllocated && navball != null);
 
@@ -91,12 +93,12 @@ namespace Trajectories
                     constructed = true;
                 }
 
-                navball = UnityEngine.Object.FindObjectOfType<NavBall>();
+                navball = Object.FindObjectOfType<NavBall>();
 
                 if (navball != null)
                 {
                     // green circle for target
-                    guide_transform = (Transform)GameObject.Instantiate(navball.progradeVector, navball.progradeVector.parent);
+                    guide_transform = Object.Instantiate(navball.progradeVector, navball.progradeVector.parent);
                     if (guide_transform != null)
                     {
                         guide_transform.gameObject.transform.localScale = guide_transform.gameObject.transform.localScale * SCALE;
@@ -104,23 +106,23 @@ namespace Trajectories
                         if (guide_renderer != null)
                         {
                             //Util.DebugLog("Scale {0}", guide_renderer.material.GetTextureScale("_MainTexture").ToString());
-                            guide_renderer.material.SetTexture("_MainTexture", guide_texture);
-                            guide_renderer.material.SetTextureOffset("_MainTexture", Vector2.zero);
-                            guide_renderer.material.SetTextureScale("_MainTexture", Vector2.one);
+                            guide_renderer.material.SetTexture(MainTexture, guide_texture);
+                            guide_renderer.material.SetTextureOffset(MainTexture, Vector2.zero);
+                            guide_renderer.material.SetTextureScale(MainTexture, Vector2.one);
                         }
                     }
 
                     // red square for crash site
-                    reference_transform = (Transform)GameObject.Instantiate(navball.progradeVector, navball.progradeVector.parent);
+                    reference_transform = Object.Instantiate(navball.progradeVector, navball.progradeVector.parent);
                     if (reference_transform != null)
                     {
                         reference_transform.gameObject.transform.localScale = reference_transform.gameObject.transform.localScale * SCALE;
                         reference_renderer = reference_transform.GetComponent<Renderer>();
                         if (reference_renderer != null)
                         {
-                            reference_renderer.material.SetTexture("_MainTexture", reference_texture);
-                            reference_renderer.material.SetTextureOffset("_MainTexture", Vector2.zero);
-                            reference_renderer.material.SetTextureScale("_MainTexture", Vector2.one);
+                            reference_renderer.material.SetTexture(MainTexture, reference_texture);
+                            reference_renderer.material.SetTextureOffset(MainTexture, Vector2.zero);
+                            reference_renderer.material.SetTextureScale(MainTexture, Vector2.one);
                         }
                     }
                 }
@@ -132,10 +134,10 @@ namespace Trajectories
             Util.DebugLog("");
             DestroyTransforms();
             if (guide_texture != null)
-                UnityEngine.Object.Destroy(guide_texture);
+                Object.Destroy(guide_texture);
 
             if (reference_texture != null)
-                UnityEngine.Object.Destroy(reference_texture);
+                Object.Destroy(reference_texture);
 
             guide_texture = null;
             reference_texture = null;
@@ -175,9 +177,9 @@ namespace Trajectories
             navball = null;
 
             if (guide_renderer != null)
-                UnityEngine.Object.Destroy(guide_renderer);
+                Object.Destroy(guide_renderer);
             if (reference_renderer != null)
-                UnityEngine.Object.Destroy(reference_renderer);
+                Object.Destroy(reference_renderer);
             guide_renderer = null;
             reference_renderer = null;
 
@@ -187,7 +189,6 @@ namespace Trajectories
                 reference_transform.gameObject.DestroyGameObject();
             guide_transform = null;
             reference_transform = null;
-
         }
 
         private static void SetDisplayEnabled(bool enabled)
@@ -204,7 +205,7 @@ namespace Trajectories
             if (!Trajectories.ActiveVesselTrajectory.IsVesselAttached || Trajectories.ActiveVesselTrajectory.TargetProfile.Body == null)
                 return Vector3d.zero;
 
-            double plannedAngleOfAttack = (double)Trajectories.ActiveVesselTrajectory.DescentProfile.GetAngleOfAttack(Trajectories.ActiveVesselTrajectory.TargetProfile.Body, position, velocity);
+            double plannedAngleOfAttack = (double) Trajectories.ActiveVesselTrajectory.DescentProfile.GetAngleOfAttack(Trajectories.ActiveVesselTrajectory.TargetProfile.Body, position, velocity);
 
             return velocity.normalized * Math.Cos(plannedAngleOfAttack) + Vector3d.Cross(vel_right, velocity).normalized * Math.Sin(plannedAngleOfAttack);
         }
@@ -235,8 +236,10 @@ namespace Trajectories
                         {
                             rotatedPos = Trajectory.CalculateRotatedPosition(body, p.pos, p.time);
                         }
+
                         impactPosition = impactPosition * (1.0d - coeff) + rotatedPos * coeff;
                     }
+
                     break;
                 }
             }
@@ -251,7 +254,7 @@ namespace Trajectories
             Vector3d pos = Trajectories.ActiveVesselTrajectory.AttachedVessel.GetWorldPos3D() - body.position;
             Vector3d vel = Trajectories.ActiveVesselTrajectory.AttachedVessel.obt_velocity - body.getRFrmVel(body.position + pos); // air velocity
 
-            double plannedAngleOfAttack = (double)Trajectories.ActiveVesselTrajectory.DescentProfile.GetAngleOfAttack(body, pos, vel);
+            double plannedAngleOfAttack = (double) Trajectories.ActiveVesselTrajectory.DescentProfile.GetAngleOfAttack(body, pos, vel);
             if (plannedAngleOfAttack < Util.HALF_PI)
                 offsetDir.y = -offsetDir.y; // behavior is different for prograde or retrograde entry
 

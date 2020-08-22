@@ -21,7 +21,9 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
+using FinePrint;
 using KSP.Localization;
 using TMPro;
 using UnityEngine;
@@ -58,8 +60,8 @@ namespace Trajectories
         }
 
         // spawned and visible flags
-        private static int spawned = 0;
-        private static bool visible = false;
+        private static int spawned;
+        private static bool visible;
 
         // popup window, page box and pages
         private static MultiOptionDialog multi_dialog;
@@ -76,8 +78,8 @@ namespace Trajectories
 
         // manual target text input
         private static string manual_target_txt = "";
-        private static bool manual_target_txt_ok = false;
-        private static bool manual_target_txt_changed = false;
+        private static bool manual_target_txt_ok;
+        private static bool manual_target_txt_changed;
         private static DialogGUITextInput manual_target_textinput;
         private static TMP_InputField tmpro_manual_target_textinput;
 
@@ -85,15 +87,21 @@ namespace Trajectories
         // entry text input
         private static string descent_entry_txt = "";
         private static DialogGUITextInput descent_entry_textinput;
+
         private static TMP_InputField tmpro_descent_entry_textinput;
+
         // high text input
         private static string descent_high_txt = "";
         private static DialogGUITextInput descent_high_textinput;
+
         private static TMP_InputField tmpro_descent_high_textinput;
+
         // low text input
         private static string descent_low_txt = "";
         private static DialogGUITextInput descent_low_textinput;
+
         private static TMP_InputField tmpro_descent_low_textinput;
+
         // ground text input
         private static string descent_final_txt = "";
         private static DialogGUITextInput descent_final_textinput;
@@ -150,26 +158,26 @@ namespace Trajectories
 
                 // round off step;
                 if (stepsize < 0.25)
-                    Settings.IntegrationStepSize = Math.Round(stepsize * 100, MidpointRounding.AwayFromZero) / 100;    // 0.01
+                    Settings.IntegrationStepSize = Math.Round(stepsize * 100, MidpointRounding.AwayFromZero) / 100; // 0.01
                 else if (stepsize < 0.5)
-                    Settings.IntegrationStepSize = Math.Round(stepsize * 20, MidpointRounding.AwayFromZero) / 20;     // 0.05
+                    Settings.IntegrationStepSize = Math.Round(stepsize * 20, MidpointRounding.AwayFromZero) / 20; // 0.05
                 else if (stepsize < 1)
-                    Settings.IntegrationStepSize = Math.Round(stepsize * 10, MidpointRounding.AwayFromZero) / 10;     // 0.1
+                    Settings.IntegrationStepSize = Math.Round(stepsize * 10, MidpointRounding.AwayFromZero) / 10; // 0.1
                 else if (stepsize < 2)
-                    Settings.IntegrationStepSize = Math.Round(stepsize * 4, MidpointRounding.AwayFromZero) / 4;       // 0.25
+                    Settings.IntegrationStepSize = Math.Round(stepsize * 4, MidpointRounding.AwayFromZero) / 4; // 0.25
                 else
-                    Settings.IntegrationStepSize = Math.Round(stepsize * 2, MidpointRounding.AwayFromZero) / 2;       // 0.5
+                    Settings.IntegrationStepSize = Math.Round(stepsize * 2, MidpointRounding.AwayFromZero) / 2; // 0.5
 
                 // set slider pos
-                integrator_sliderPos = (float)(INTEGRATOR_SLIDERMIN + (Math.Log(Settings.IntegrationStepSize) -
-                    Math.Log(Trajectory.INTEGRATOR_MIN)) / (Math.Log(Trajectory.INTEGRATOR_MAX) - Math.Log(Trajectory.INTEGRATOR_MIN)) *
+                integrator_sliderPos = (float) (INTEGRATOR_SLIDERMIN + (Math.Log(Settings.IntegrationStepSize) -
+                                                                        Math.Log(Trajectory.INTEGRATOR_MIN)) / (Math.Log(Trajectory.INTEGRATOR_MAX) - Math.Log(Trajectory.INTEGRATOR_MIN)) *
                     (INTEGRATOR_SLIDERMAX - INTEGRATOR_SLIDERMIN));
             }
         }
 
         // display update timer
         private static double update_timer = Util.Clocks;
-        private const double update_fps = 10;  // Frames per second the data values displayed in the Gui will update.
+        private const double update_fps = 10; // Frames per second the data values displayed in the Gui will update.
 
         internal static string TrajectoriesTitle => trajectories_title;
 
@@ -225,6 +233,7 @@ namespace Trajectories
                     Hide();
                     spawned = 2;
                 }
+
                 return;
             }
 
@@ -239,7 +248,8 @@ namespace Trajectories
                 Hide();
                 return;
             }
-            else if (Settings.MainGUIEnabled && (!visible || popup_dialog == null))
+
+            if (Settings.MainGUIEnabled && (!visible || popup_dialog == null))
             {
                 Show();
             }
@@ -266,8 +276,8 @@ namespace Trajectories
                 if (ClampToScreen())
                     multi_dialog.dialogRect.Set(Settings.MainGUIWindowPos.x, Settings.MainGUIWindowPos.y, WIDTH, HEIGHT);
 
-                popup_dialog = PopupDialog.SpawnPopupDialog(multi_dialog, false, HighLogic.UISkin, false, "");
-                popup_dialog.onDestroy.AddListener(new UnityAction(OnPopupDialogDestroy));
+                popup_dialog = PopupDialog.SpawnPopupDialog(multi_dialog, false, HighLogic.UISkin, false);
+                popup_dialog.onDestroy.AddListener(OnPopupDialogDestroy);
 
                 // create text input box event listeners
                 SetTextInputBoxEvents();
@@ -293,7 +303,7 @@ namespace Trajectories
             {
                 // ensure window remains within the screen bounds
                 Vector2 pos = new Vector2(((Settings.MainGUIWindowPos.x * Screen.width) - (Screen.width / 2)) * GameSettings.UI_SCALE,
-                                          ((Settings.MainGUIWindowPos.y * Screen.height) - (Screen.height / 2)) * GameSettings.UI_SCALE);
+                    ((Settings.MainGUIWindowPos.y * Screen.height) - (Screen.height / 2)) * GameSettings.UI_SCALE);
 
                 if (pos.x > (Screen.width / 2) - border)
                 {
@@ -324,6 +334,7 @@ namespace Trajectories
                         ((Screen.height / 2) + (pos.y / GameSettings.UI_SCALE)) / Screen.height);
                 }
             }
+
             return adjusted;
         }
 
@@ -394,14 +405,13 @@ namespace Trajectories
                     new DialogGUILabel(Localizer.Format("#autoLOC_Trajectories_Hori"), LAT_LONG_WIDTH),
                     impact_horizontal_label),
                 new DialogGUIHorizontalLayout(TextAnchor.MiddleRight,
-                    new DialogGUILabel(() => { return Trajectories.ActiveVesselTrajectory.TargetProfile.Body == null ? "" :
-                        Localizer.Format("#autoLOC_Trajectories_TargetDistance"); }, true),
+                    new DialogGUILabel(() => { return Trajectories.ActiveVesselTrajectory.TargetProfile.Body == null ? "" : Localizer.Format("#autoLOC_Trajectories_TargetDistance"); }, true),
                     info_distance_label,
                     new DialogGUISpace(2),
                     info_distance_latitude_label,
                     new DialogGUISpace(2),
                     info_distance_longitude_label)
-                );
+            );
 
             target_page = new DialogGUIVerticalLayout(false, true, 0, new RectOffset(), TextAnchor.UpperCenter,
                 new DialogGUIHorizontalLayout(TextAnchor.MiddleRight,
@@ -445,7 +455,7 @@ namespace Trajectories
                     new DialogGUIButton(Localizer.Format("#autoLOC_Trajectories_TargetClear"),
                         OnButtonClick_TargetClear, ButtonEnabler_TargetClear, TARGET_BUTTON_WIDTH, BUTTON_HEIGHT, false)),
                 new DialogGUISpace(2)
-                );
+            );
 
 
             descent_page = new DialogGUIVerticalLayout(false, true, 0, new RectOffset(), TextAnchor.UpperCenter,
@@ -498,7 +508,7 @@ namespace Trajectories
                         -1f, 1f, false, DESCENT_SLIDER_WIDTH, -1, OnSliderSet_GroundAngle),
                     new DialogGUILabel(() => { return Trajectories.ActiveVesselTrajectory.DescentProfile.FinalApproach.AngleText; }, 30f),
                     descent_final_textinput)
-                );
+            );
 
             settings_page = new DialogGUIVerticalLayout(false, true, 0, new RectOffset(), TextAnchor.UpperCenter,
                 new DialogGUIToggle(() => { return ToolbarManager.ToolbarAvailable ? Settings.UseBlizzyToolbar : false; },
@@ -532,10 +542,10 @@ namespace Trajectories
                     new DialogGUILabel(() => { return num_errors_txt; }, true)),
                 new DialogGUIHorizontalLayout(true, false, 0, new RectOffset(), TextAnchor.MiddleCenter,
                     new DialogGUILabel(() => { return aerodynamic_model_txt; }, true))
-                );
+            );
 
             // create page box with current page inserted into page box
-            switch ((PageType)Settings.MainGUICurrentPage)
+            switch ((PageType) Settings.MainGUICurrentPage)
             {
                 case PageType.TARGET:
                     page_box = new DialogGUIBox(null, -1, -1, () => true, target_page);
@@ -553,28 +563,21 @@ namespace Trajectories
 
             // create base window for popup dialog
             multi_dialog = new MultiOptionDialog(
-               "TrajectoriesMainGUI",
-               "",
-               Localizer.Format("#autoLOC_Trajectories_Title") + " - v" + Trajectories.Version,
-               HighLogic.UISkin,
-               // window origin is center of rect, position is offset from lower left corner of screen and normalized
-               // i.e (0.5, 0.5 is screen center)
-               new Rect(Settings.MainGUIWindowPos.x, Settings.MainGUIWindowPos.y, WIDTH, HEIGHT),
-               new DialogGUIBase[]
-               {
-                   // create page select buttons
-                   new DialogGUIHorizontalLayout(true, false, 4, new RectOffset(), TextAnchor.MiddleCenter,
-                       new DialogGUIButton(Localizer.Format("#autoLOC_900629"),
-                           OnButtonClick_Info, ButtonEnabler_Info, BUTTON_WIDTH, BUTTON_HEIGHT, false),
-                       new DialogGUIButton(Localizer.Format("#autoLOC_Trajectories_Target"),
-                           OnButtonClick_Target, ButtonEnabler_Target, BUTTON_WIDTH, BUTTON_HEIGHT, false),
-                       new DialogGUIButton(Localizer.Format("#autoLOC_Trajectories_Descent"),
-                           OnButtonClick_Descent, ButtonEnabler_Descent, BUTTON_WIDTH, BUTTON_HEIGHT, false),
-                       new DialogGUIButton(Localizer.Format("#autoLOC_900734"),
-                           OnButtonClick_Settings, ButtonEnabler_Settings, BUTTON_WIDTH, BUTTON_HEIGHT, false)),
-                   // insert page box
-                   page_box
-               });
+                "TrajectoriesMainGUI",
+                "",
+                Localizer.Format("#autoLOC_Trajectories_Title") + " - v" + Trajectories.Version,
+                HighLogic.UISkin,
+                // window origin is center of rect, position is offset from lower left corner of screen and normalized
+                // i.e (0.5, 0.5 is screen center)
+                new Rect(Settings.MainGUIWindowPos.x, Settings.MainGUIWindowPos.y, WIDTH, HEIGHT), new DialogGUIHorizontalLayout(true, false, 4, new RectOffset(), TextAnchor.MiddleCenter,
+                    new DialogGUIButton(Localizer.Format("#autoLOC_900629"),
+                        OnButtonClick_Info, ButtonEnabler_Info, BUTTON_WIDTH, BUTTON_HEIGHT, false),
+                    new DialogGUIButton(Localizer.Format("#autoLOC_Trajectories_Target"),
+                        OnButtonClick_Target, ButtonEnabler_Target, BUTTON_WIDTH, BUTTON_HEIGHT, false),
+                    new DialogGUIButton(Localizer.Format("#autoLOC_Trajectories_Descent"),
+                        OnButtonClick_Descent, ButtonEnabler_Descent, BUTTON_WIDTH, BUTTON_HEIGHT, false),
+                    new DialogGUIButton(Localizer.Format("#autoLOC_900734"),
+                        OnButtonClick_Settings, ButtonEnabler_Settings, BUTTON_WIDTH, BUTTON_HEIGHT, false)), page_box);
         }
 
         /// <summary>
@@ -591,6 +594,7 @@ namespace Trajectories
                 //Util.DebugLog("Saving MainGUI window position as {0}", Settings.MainGUIWindowPos.ToString("F4"));
                 multi_dialog.dialogRect.Set(Settings.MainGUIWindowPos.x, Settings.MainGUIWindowPos.y, WIDTH, HEIGHT);
             }
+
             visible = false;
             Settings.Save();
         }
@@ -600,7 +604,7 @@ namespace Trajectories
         /// </summary>
         private static void SetDataFieldJustification()
         {
-            if (Settings.MainGUICurrentPage == (int)PageType.INFO && impact_latitude_label.text != null)
+            if (Settings.MainGUICurrentPage == (int) PageType.INFO && impact_latitude_label.text != null)
             {
                 impact_latitude_label.text.alignment = TextAlignmentOptions.MidlineRight;
                 impact_longitude_label.text.alignment = TextAlignmentOptions.MidlineRight;
@@ -610,7 +614,7 @@ namespace Trajectories
                 info_distance_latitude_label.text.alignment = TextAlignmentOptions.MidlineRight;
                 info_distance_longitude_label.text.alignment = TextAlignmentOptions.MidlineRight;
             }
-            else if (Settings.MainGUICurrentPage == (int)PageType.TARGET && target_latitude_label.text != null)
+            else if (Settings.MainGUICurrentPage == (int) PageType.TARGET && target_latitude_label.text != null)
             {
                 target_latitude_label.text.alignment = TextAlignmentOptions.MidlineRight;
                 target_longitude_label.text.alignment = TextAlignmentOptions.MidlineRight;
@@ -625,8 +629,8 @@ namespace Trajectories
         /// </summary>
         private static void SetTextInputBoxEvents()
         {
-            keyboard_lockout_action = new UnityAction<string>(KeyboardLockout);
-            keyboard_unlock_action = new UnityAction<string>(KeyboardUnlock);
+            keyboard_lockout_action = KeyboardLockout;
+            keyboard_unlock_action = KeyboardUnlock;
 
             // manual target text input
             if (manual_target_textinput?.uiItem != null)
@@ -636,6 +640,7 @@ namespace Trajectories
                 tmpro_manual_target_textinput.onDeselect.AddListener(keyboard_unlock_action);
                 tmpro_manual_target_textinput.onEndEdit.AddListener(keyboard_unlock_action);
             }
+
             // descent profile text inputs
             if (descent_entry_textinput?.uiItem != null)
             {
@@ -644,6 +649,7 @@ namespace Trajectories
                 tmpro_descent_entry_textinput.onDeselect.AddListener(keyboard_unlock_action);
                 tmpro_descent_entry_textinput.onEndEdit.AddListener(keyboard_unlock_action);
             }
+
             if (descent_high_textinput?.uiItem != null)
             {
                 tmpro_descent_high_textinput = descent_high_textinput.uiItem.GetComponent<TMP_InputField>();
@@ -651,6 +657,7 @@ namespace Trajectories
                 tmpro_descent_high_textinput.onDeselect.AddListener(keyboard_unlock_action);
                 tmpro_descent_high_textinput.onEndEdit.AddListener(keyboard_unlock_action);
             }
+
             if (descent_low_textinput?.uiItem != null)
             {
                 tmpro_descent_low_textinput = descent_low_textinput.uiItem.GetComponent<TMP_InputField>();
@@ -658,6 +665,7 @@ namespace Trajectories
                 tmpro_descent_low_textinput.onDeselect.AddListener(keyboard_unlock_action);
                 tmpro_descent_low_textinput.onEndEdit.AddListener(keyboard_unlock_action);
             }
+
             if (descent_final_textinput?.uiItem != null)
             {
                 tmpro_descent_ground_textinput = descent_final_textinput.uiItem.GetComponent<TMP_InputField>();
@@ -682,8 +690,8 @@ namespace Trajectories
         /// </summary>
         private static void SetIntegratorSlider()
         {
-            IntegratorSliderPos = (float)(INTEGRATOR_SLIDERMIN + (Math.Log(Settings.IntegrationStepSize) -
-                Math.Log(Trajectory.INTEGRATOR_MIN)) / (Math.Log(Trajectory.INTEGRATOR_MAX) - Math.Log(Trajectory.INTEGRATOR_MIN)) *
+            IntegratorSliderPos = (float) (INTEGRATOR_SLIDERMIN + (Math.Log(Settings.IntegrationStepSize) -
+                                                                   Math.Log(Trajectory.INTEGRATOR_MIN)) / (Math.Log(Trajectory.INTEGRATOR_MAX) - Math.Log(Trajectory.INTEGRATOR_MIN)) *
                 (INTEGRATOR_SLIDERMAX - INTEGRATOR_SLIDERMIN));
         }
 
@@ -694,6 +702,7 @@ namespace Trajectories
             {
                 SpawnDialog();
             }
+
             visible = true;
             popup_dialog.gameObject.SetActive(true);
         }
@@ -709,32 +718,33 @@ namespace Trajectories
         }
 
         #region ButtonEnabler methods called by the GuiButtons
+
         // ButtonEnabler methods are Callbacks used by the GuiButtons to decide if they should enable or disable themselves.
         //  A page select button will call its ButtonEnabler method which returns false if the currently viewed page matches the button
         private static bool ButtonEnabler_Info()
         {
-            if ((PageType)Settings.MainGUICurrentPage == PageType.INFO)
+            if ((PageType) Settings.MainGUICurrentPage == PageType.INFO)
                 return false;
             return true;
         }
 
         private static bool ButtonEnabler_Target()
         {
-            if ((PageType)Settings.MainGUICurrentPage == PageType.TARGET)
+            if ((PageType) Settings.MainGUICurrentPage == PageType.TARGET)
                 return false;
             return true;
         }
 
         private static bool ButtonEnabler_Descent()
         {
-            if ((PageType)Settings.MainGUICurrentPage == PageType.DESCENT)
+            if ((PageType) Settings.MainGUICurrentPage == PageType.DESCENT)
                 return false;
             return true;
         }
 
         private static bool ButtonEnabler_Settings()
         {
-            if ((PageType)Settings.MainGUICurrentPage == PageType.SETTINGS)
+            if ((PageType) Settings.MainGUICurrentPage == PageType.SETTINGS)
                 return false;
             return true;
         }
@@ -779,9 +789,11 @@ namespace Trajectories
                 return true;
             return false;
         }
+
         #endregion
 
-        #region  OnButtonClick methods called by the GuiButtons and Toggles
+        #region OnButtonClick methods called by the GuiButtons and Toggles
+
         private static void OnButtonClick_Info() => ChangePage(PageType.INFO);
 
         private static void OnButtonClick_Target() => ChangePage(PageType.TARGET);
@@ -808,7 +820,6 @@ namespace Trajectories
                 AppLauncherButton.ChangeIcon(AppLauncherButton.IconStyleType.ACTIVE);
             else if (!inState && (AppLauncherButton.IconStyle != AppLauncherButton.IconStyleType.NORMAL))
                 AppLauncherButton.ChangeIcon(AppLauncherButton.IconStyleType.NORMAL);
-
         }
 
         private static void OnButtonClick_DisplayTrajectoriesInFlight(bool inState) => Settings.DisplayTrajectoriesInFlight = inState;
@@ -929,7 +940,7 @@ namespace Trajectories
         private static void OnButtonClick_TargetWaypoint()
         {
             // grab the currently selected waypoint
-            FinePrint.Waypoint navigationWaypoint = Trajectories.ActiveVesselTrajectory.AttachedVessel?.navigationWaypoint;
+            Waypoint navigationWaypoint = Trajectories.ActiveVesselTrajectory.AttachedVessel?.navigationWaypoint;
 
             if (navigationWaypoint != null)
             {
@@ -943,7 +954,7 @@ namespace Trajectories
         {
             CelestialBody body = FlightGlobals.currentMainBody;
 
-            string[] latLng = Trajectories.ActiveVesselTrajectory.TargetProfile.ManualText.Split(new char[] { ',', ';' });
+            string[] latLng = Trajectories.ActiveVesselTrajectory.TargetProfile.ManualText.Split(',', ';');
 
             if (latLng.Length == 2 && body != null)
             {
@@ -962,7 +973,7 @@ namespace Trajectories
 
         private static string OnTextInput_TargetManual(string inString)
         {
-            string[] latLng = inString.Split(new char[] { ',', ';' });
+            string[] latLng = inString.Split(',', ';');
             if (latLng.Length == 2)
             {
                 latLng[0].Trim();
@@ -1017,6 +1028,7 @@ namespace Trajectories
                 Trajectories.ActiveVesselTrajectory.DescentProfile.RefreshGui();
                 Trajectories.ActiveVesselTrajectory.DescentProfile.Save();
             }
+
             return null;
         }
 
@@ -1042,6 +1054,7 @@ namespace Trajectories
                 Trajectories.ActiveVesselTrajectory.DescentProfile.RefreshGui();
                 Trajectories.ActiveVesselTrajectory.DescentProfile.Save();
             }
+
             return null;
         }
 
@@ -1067,6 +1080,7 @@ namespace Trajectories
                 Trajectories.ActiveVesselTrajectory.DescentProfile.RefreshGui();
                 Trajectories.ActiveVesselTrajectory.DescentProfile.Save();
             }
+
             return null;
         }
 
@@ -1092,15 +1106,18 @@ namespace Trajectories
                 Trajectories.ActiveVesselTrajectory.DescentProfile.RefreshGui();
                 Trajectories.ActiveVesselTrajectory.DescentProfile.Save();
             }
+
             return null;
         }
+
         #endregion
 
         #region Callback methods for the Gui components
-        // Callback methods are used by the Gui to retrieve information it needs either for displaying or setting values.
-        private static void OnSliderSet_MaxPatches(float invalue) => Settings.MaxPatchCount = (int)invalue;
 
-        private static void OnSliderSet_MaxFramesPatch(float invalue) => Settings.MaxFramesPerPatch = (int)invalue;
+        // Callback methods are used by the Gui to retrieve information it needs either for displaying or setting values.
+        private static void OnSliderSet_MaxPatches(float invalue) => Settings.MaxPatchCount = (int) invalue;
+
+        private static void OnSliderSet_MaxFramesPatch(float invalue) => Settings.MaxFramesPerPatch = (int) invalue;
 
         private static void OnSliderSet_IntegrationStep(float invalue) => IntegratorSliderPos = invalue;
 
@@ -1131,13 +1148,15 @@ namespace Trajectories
             Trajectories.ActiveVesselTrajectory.DescentProfile.RefreshGui();
             Trajectories.ActiveVesselTrajectory.DescentProfile.Save();
         }
+
         #endregion
 
         #region Page methods for changing/updating the pages in the Gui page box
+
         /// <summary> Changes the page inside the page box. </summary>
         private static void ChangePage(PageType inpage)
         {
-            Settings.MainGUICurrentPage = (int)inpage;
+            Settings.MainGUICurrentPage = (int) inpage;
 
             // remove current page from page box
             page_box.children[0].uiItem.gameObject.DestroyGameObjectImmediate();
@@ -1177,11 +1196,11 @@ namespace Trajectories
         private static void UpdatePages()
         {
             // skip updates for a smoother display and increased performance
-            if (Util.Clocks - update_timer <= System.Diagnostics.Stopwatch.Frequency / update_fps)
+            if (Util.Clocks - update_timer <= Stopwatch.Frequency / update_fps)
                 return;
             update_timer = Util.Clocks;
 
-            switch ((PageType)Settings.MainGUICurrentPage)
+            switch ((PageType) Settings.MainGUICurrentPage)
             {
                 case PageType.INFO:
                     UpdateInfoPage();
@@ -1193,6 +1212,7 @@ namespace Trajectories
                         ChangePage(PageType.TARGET);
                         manual_target_txt_changed = false;
                     }
+
                     return;
                 case PageType.SETTINGS:
                     UpdateSettingsPage();
@@ -1230,7 +1250,7 @@ namespace Trajectories
                 impact_horizontal_txt = string.Format("{0:F1} {1}", hVelMag, Localizer.Format("#autoLOC_Trajectories_ms"));
 
                 // time to impact
-                double duration = (lastPatch.EndTime - Planetarium.GetUniversalTime()) / 3600.0;   // duration in hrs
+                double duration = (lastPatch.EndTime - Planetarium.GetUniversalTime()) / 3600.0; // duration in hrs
                 double hours = Math.Truncate(duration);
                 double mins = Math.Truncate((duration - hours) * 60.0);
                 double secs = (((duration - hours) * 60.0) - mins) * 60.0;
@@ -1297,8 +1317,8 @@ namespace Trajectories
 
             // performance
             calculation_time_txt = calculation_time_hdrtxt +
-                string.Format("{0:0.0}ms | {1:0.0} %", Trajectories.ActiveVesselTrajectory.ComputationTime,
-                    (Trajectories.ActiveVesselTrajectory.ComputationTime / Trajectories.ActiveVesselTrajectory.GameFrameTime) * 100.0f);
+                                   string.Format("{0:0.0}ms | {1:0.0} %", Trajectories.ActiveVesselTrajectory.ComputationTime,
+                                       (Trajectories.ActiveVesselTrajectory.ComputationTime / Trajectories.ActiveVesselTrajectory.GameFrameTime) * 100.0f);
 
             // num errors
             num_errors_txt = errors_hdrtxt + string.Format("{0:0}", Trajectories.ActiveVesselTrajectory.ErrorCount);
@@ -1367,8 +1387,8 @@ namespace Trajectories
                 target_distance_latitude_txt = "-: -.-- " + Localizer.Format("#autoLOC_Trajectories_km");
                 target_distance_longitude_txt = "-: -.-- " + Localizer.Format("#autoLOC_Trajectories_km");
             }
-
         }
+
         #endregion
     }
 }

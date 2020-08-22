@@ -30,16 +30,15 @@ namespace Trajectories
     ///<summary> Abstracts the game aerodynamic computations to provide an unified interface whether the stock drag is used, or a supported mod is installed </summary>
     public abstract class VesselAerodynamicModel
     {
-        private double mass_;
-        public double Mass => mass_;
+        public double Mass { get; private set; }
 
         public abstract string AerodynamicModelName { get; }
 
-        protected Trajectory trajectory_;
-        protected CelestialBody body_;
+        protected readonly Trajectory trajectory_;
+        protected readonly CelestialBody body_;
         private bool isValid;
-        private double referenceDrag = 0;
-        private int referencePartCount = 0;
+        private double referenceDrag;
+        private readonly int referencePartCount;
         private DateTime nextAllowedAutomaticUpdate = DateTime.Now;
 
         public bool UseCache => Settings.UseCache;
@@ -67,14 +66,14 @@ namespace Trajectories
             Profiler.Start("AeroModel.UpdateVesselMass");
             // mass_ = vessel_.totalMass;       // this kills performance on vessel load, so we don't do that anymore
 
-            mass_ = 0d;
+            Mass = 0d;
             foreach (Part part in Trajectories.ActiveVesselTrajectory.AttachedVessel.Parts)
             {
                 if (part.physicalSignificance == Part.PhysicalSignificance.NONE)
                     continue;
 
                 float partMass = part.mass + part.GetResourceMass() + part.GetPhysicslessChildMass();
-                mass_ += partMass;
+                Mass += partMass;
             }
             Profiler.Stop("AeroModel.UpdateVesselMass");
         }
@@ -83,18 +82,13 @@ namespace Trajectories
         {
             Util.DebugLog("Initializing cache");
 
-            double maxCacheVelocity = 10000.0;
-            double maxCacheAoA = Math.PI;     //  180.0 / 180.0 * Math.PI
-
-            int velocityResolution = 32;
-            int angleOfAttackResolution = 33; // even number to include exactly 0°
-            int altitudeResolution = 32;
-
+            const double maxCacheVelocity = 10000.0;
+            const double maxCacheAoA = Math.PI; //  180.0 / 180.0 * Math.PI
+            const int velocityResolution = 32;
+            const int angleOfAttackResolution = 33; // even number to include exactly 0°
+            const int altitudeResolution = 32;
             cachedForces = new AeroForceCache(maxCacheVelocity, maxCacheAoA, body_.atmosphereDepth, velocityResolution, angleOfAttackResolution, altitudeResolution, this);
-
             isValid = true;
-
-            return;
         }
 
         public bool IsValidFor(CelestialBody body)
@@ -207,14 +201,7 @@ namespace Trajectories
             if (velRight.sqrMagnitude < 0.001)
             {
                 velRight = Vector3d.Cross(vesselUp, velBackward);
-                if (velRight.sqrMagnitude < 0.001)
-                {
-                    velRight = Vector3d.Cross(vesselBackward, velBackward).normalized;
-                }
-                else
-                {
-                    velRight = velRight.normalized;
-                }
+                velRight = velRight.sqrMagnitude < 0.001 ? Vector3d.Cross(vesselBackward, velBackward).normalized : velRight.normalized;
             }
             else
                 velRight = velRight.normalized;

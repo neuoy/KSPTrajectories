@@ -25,6 +25,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reflection;
 using UnityEngine;
+using Debug = UnityEngine.Debug;
+using Random = System.Random;
 
 namespace Trajectories
 {
@@ -33,7 +35,7 @@ namespace Trajectories
         // --------------------------------------------------------------------------
         // --- Logging --------------------------------------------------------------
 
-        private static Dictionary<string, ScreenMessage> messages = new Dictionary<string, ScreenMessage>();
+        private static readonly Dictionary<string, ScreenMessage> messages = new Dictionary<string, ScreenMessage>();
 
         internal static void PostSingleScreenMessage(string id, string message)
         {
@@ -43,15 +45,15 @@ namespace Trajectories
         }
 
         ///<summary> Writes a message to the log with 'Trajectories' appended to the message </summary>
-        internal static void Log(string message, params object[] param) => UnityEngine.Debug.Log(string.Format("[{0}] {1}",
+        internal static void Log(string message, params object[] param) => Debug.Log(string.Format("[{0}] {1}",
             MainGUI.TrajectoriesTitle, string.Format(message, param)));
 
         ///<summary> Writes a warning message to the log with 'Trajectories' appended to the message </summary>
-        internal static void LogWarning(string message, params object[] param) => UnityEngine.Debug.LogWarning(string.Format("[{0}] Warning: {1}",
+        internal static void LogWarning(string message, params object[] param) => Debug.LogWarning(string.Format("[{0}] Warning: {1}",
             MainGUI.TrajectoriesTitle, string.Format(message, param)));
 
         ///<summary> Writes an error message to the log with 'Trajectories' appended to the message </summary>
-        internal static void LogError(string message, params object[] param) => UnityEngine.Debug.LogError(string.Format("[{0}] Error: {1}",
+        internal static void LogError(string message, params object[] param) => Debug.LogError(string.Format("[{0}] Error: {1}",
             MainGUI.TrajectoriesTitle, string.Format(message, param)));
 
         ///<summary> Writes a debug message to the log with 'Trajectories' and stack trace info appended to the message </summary>
@@ -59,9 +61,11 @@ namespace Trajectories
         internal static void DebugLog(string message, params object[] param)
         {
             StackTrace stackTrace = new StackTrace();
-            UnityEngine.Debug.Log(string.Format("[{0}] Debug: {1}.{2} - {3}",
-                MainGUI.TrajectoriesTitle, stackTrace.GetFrame(1).GetMethod().ReflectedType.Name,
-                stackTrace.GetFrame(1).GetMethod().Name, string.Format(message, param)));
+            var reflectedType = stackTrace.GetFrame(1).GetMethod().ReflectedType;
+            if (reflectedType is { })
+                Debug.Log(string.Format("[{0}] Debug: {1}.{2} - {3}",
+                    MainGUI.TrajectoriesTitle, reflectedType.Name,
+                    stackTrace.GetFrame(1).GetMethod().Name, string.Format(message, param)));
         }
 
         ///<summary> Writes a debug warning message to the log with 'Trajectories' and stack trace info appended to the message </summary>
@@ -69,9 +73,11 @@ namespace Trajectories
         internal static void DebugLogWarning(string message, params object[] param)
         {
             StackTrace stackTrace = new StackTrace();
-            UnityEngine.Debug.LogWarning(string.Format("[{0}] Warning: {1}.{2} - {3}",
-                MainGUI.TrajectoriesTitle, stackTrace.GetFrame(1).GetMethod().ReflectedType.Name,
-                stackTrace.GetFrame(1).GetMethod().Name, string.Format(message, param)));
+            var reflectedType = stackTrace.GetFrame(1).GetMethod().ReflectedType;
+            if (reflectedType is { })
+                Debug.LogWarning(string.Format("[{0}] Warning: {1}.{2} - {3}",
+                    MainGUI.TrajectoriesTitle, reflectedType.Name,
+                    stackTrace.GetFrame(1).GetMethod().Name, string.Format(message, param)));
         }
 
         ///<summary> Writes a debug error message to the log with 'Trajectories' and stack trace info appended to the message </summary>
@@ -79,9 +85,11 @@ namespace Trajectories
         internal static void DebugLogError(string message, params object[] param)
         {
             StackTrace stackTrace = new StackTrace();
-            UnityEngine.Debug.LogError(string.Format("[{0}] Error: {1}.{2} - {3}",
-                MainGUI.TrajectoriesTitle, stackTrace.GetFrame(1).GetMethod().ReflectedType.Name,
-                stackTrace.GetFrame(1).GetMethod().Name, string.Format(message, param)));
+            var reflectedType = stackTrace.GetFrame(1).GetMethod().ReflectedType;
+            if (reflectedType is { })
+                Debug.LogError(string.Format("[{0}] Error: {1}.{2} - {3}",
+                    MainGUI.TrajectoriesTitle, reflectedType.Name,
+                    stackTrace.GetFrame(1).GetMethod().Name, string.Format(message, param)));
         }
 
 
@@ -114,7 +122,7 @@ namespace Trajectories
             }
             catch (Exception e)
             {
-                throw new Exception("Failed to GetMethod " + methodName + " on type " + type.FullName + " with types " + types.ToString() + ":\n" + e.Message + "\n" + e.StackTrace);
+                throw new Exception("Failed to GetMethod " + methodName + " on type " + type.FullName + " with types " + types + ":\n" + e.Message + "\n" + e.StackTrace);
             }
         }
 
@@ -129,7 +137,7 @@ namespace Trajectories
             }
             catch (Exception e)
             {
-                throw new Exception("Failed to GetMethod " + methodName + " on type " + type.FullName + " with types " + types.ToString() + ":\n" + e.Message + "\n" + e.StackTrace);
+                throw new Exception("Failed to GetMethod " + methodName + " on type " + type.FullName + " with types " + types + ":\n" + e.Message + "\n" + e.StackTrace);
             }
         }
 
@@ -147,10 +155,9 @@ namespace Trajectories
         {
             if (value < min)
                 return min;
-            else if (value > max)
+            if (value > max)
                 return max;
-            else
-                return value;
+            return value;
         }
 
         /// <summary> Clamps a double value, optional return values for min and max can be passed </summary>
@@ -158,10 +165,9 @@ namespace Trajectories
         {
             if (value < min)
                 return rtn_min;
-            else if (value > max)
+            if (value > max)
                 return rtn_max;
-            else
-                return value;
+            return value;
         }
 
         /// <summary> Clamps a Vector2 returning a new Vector2 </summary>
@@ -233,10 +239,9 @@ namespace Trajectories
         {
             if (Math.Abs(value) < min)
                 return rtn_min;
-            else if (Math.Abs(value) > max)
+            if (Math.Abs(value) > max)
                 return rtn_max;
-            else
-                return value;
+            return value;
         }
 
         // --------------------------------------------------------------------------
@@ -284,7 +289,7 @@ namespace Trajectories
             }
         }
 
-        internal static double clock_frequency = 1d / Stopwatch.Frequency;
+        internal static readonly double clock_frequency = 1d / Stopwatch.Frequency;
 
         /// <returns> Current time in clocks. </returns>
         internal static double Clocks => Stopwatch.GetTimestamp();
@@ -354,7 +359,7 @@ namespace Trajectories
         // --- RANDOM ---------------------------------------------------------------
 
         /// <summary> Random number generator. </summary>
-        private static System.Random rng = new System.Random();
+        private static readonly Random rng = new Random();
 
         /// <returns> A random integer in the [0..max_value] range. </returns>
         internal static int RandomInt(int max_value) => rng.Next(max_value);
@@ -371,7 +376,7 @@ namespace Trajectories
         public static float FastRandomFloat()
         {
             fast_float_seed *= 16807;
-            return (float)fast_float_seed * 4.6566129e-010f;
+            return fast_float_seed * 4.6566129e-010f;
         }
 
 

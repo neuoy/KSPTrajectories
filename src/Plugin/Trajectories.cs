@@ -89,7 +89,7 @@ namespace Trajectories
                 return;
 
             if (ActiveVesselTrajectory.AttachedVessel != FlightGlobals.ActiveVessel)
-                AttachVessel();
+                AttachVessel(FlightGlobals.ActiveVessel);
 
             ActiveVesselTrajectory.Update();
             MapOverlay.Update();
@@ -129,11 +129,11 @@ namespace Trajectories
             Settings = null;
         }
 
-        private static void AttachVessel()
+        private static void AttachVessel(Vessel vessel)
         {
             Util.DebugLog("Loading profiles for vessel");
 
-            ActiveVesselTrajectory = new Trajectory(FlightGlobals.ActiveVessel);
+            ActiveVesselTrajectory = new Trajectory(vessel);
 
             if (ActiveVesselTrajectory.AttachedVessel == null)
             {

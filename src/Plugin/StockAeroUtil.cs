@@ -23,6 +23,7 @@
 // StockAeroUtil by atomicfury.
 
 //#define PRECOMPUTE_CACHE
+
 using System;
 using UnityEngine;
 
@@ -55,6 +56,7 @@ namespace Trajectories
             {
                 polarAngle = Mathf.PI - polarAngle;
             }
+
             float time = (Mathf.PI / 2.0f - polarAngle) * 57.29578f;
 
             Vector3 sunVector = (FlightGlobals.Bodies[0].position - position).normalized;
@@ -63,10 +65,10 @@ namespace Trajectories
             float sunPolarAngle = Mathf.Acos(sunAxialDot);
             float sunBodyMaxDot = (1.0f + Mathf.Cos(sunPolarAngle - bodyPolarAngle)) * 0.5f;
             float sunBodyMinDot = (1.0f + Mathf.Cos(sunPolarAngle + bodyPolarAngle)) * 0.5f;
-            float sunDotCorrected = (1.0f + Vector3.Dot(sunVector, Quaternion.AngleAxis(45f * Mathf.Sign((float)body.rotationPeriod), body.bodyTransform.up) * up)) * 0.5f;
+            float sunDotCorrected = (1.0f + Vector3.Dot(sunVector, Quaternion.AngleAxis(45f * Mathf.Sign((float) body.rotationPeriod), body.bodyTransform.up) * up)) * 0.5f;
             float sunDotNormalized = (sunDotCorrected - sunBodyMinDot) / (sunBodyMaxDot - sunBodyMinDot);
-            double atmosphereTemperatureOffset = (double)body.latitudeTemperatureBiasCurve.Evaluate(time) + (double)body.latitudeTemperatureSunMultCurve.Evaluate(time) * sunDotNormalized + (double)body.axialTemperatureSunMultCurve.Evaluate(sunAxialDot);
-            double temperature = body.GetTemperature(altitude) + (double)body.atmosphereTemperatureSunMultCurve.Evaluate((float)altitude) * atmosphereTemperatureOffset;
+            double atmosphereTemperatureOffset = body.latitudeTemperatureBiasCurve.Evaluate(time) + (double) body.latitudeTemperatureSunMultCurve.Evaluate(time) * sunDotNormalized + body.axialTemperatureSunMultCurve.Evaluate(sunAxialDot);
+            double temperature = body.GetTemperature(altitude) + body.atmosphereTemperatureSunMultCurve.Evaluate((float) altitude) * atmosphereTemperatureOffset;
 
             return temperature;
         }
@@ -92,12 +94,12 @@ namespace Trajectories
             // get an average day/night temperature at the equator
             double sunDot = 0.5;
             float sunAxialDot = 0;
-            double atmosphereTemperatureOffset = (double)body.latitudeTemperatureBiasCurve.Evaluate(0)
-                + (double)body.latitudeTemperatureSunMultCurve.Evaluate(0) * sunDot
-                + (double)body.axialTemperatureSunMultCurve.Evaluate(sunAxialDot);
+            double atmosphereTemperatureOffset = body.latitudeTemperatureBiasCurve.Evaluate(0)
+                                                 + body.latitudeTemperatureSunMultCurve.Evaluate(0) * sunDot
+                                                 + body.axialTemperatureSunMultCurve.Evaluate(sunAxialDot);
             double temperature = // body.GetFullTemperature(altitude, atmosphereTemperatureOffset);
                 body.GetTemperature(altitude)
-                + (double)body.atmosphereTemperatureSunMultCurve.Evaluate((float)altitude) * atmosphereTemperatureOffset;
+                + body.atmosphereTemperatureSunMultCurve.Evaluate((float) altitude) * atmosphereTemperatureOffset;
 
 
             return body.GetDensity(pressure, temperature);
@@ -151,21 +153,24 @@ namespace Trajectories
 
             double soundSpeed = body.GetSpeedOfSound(pressure, rho);
             double mach = v_wrld_vel.magnitude / soundSpeed;
-            if (mach > 25.0) { mach = 25.0; }
+            if (mach > 25.0)
+            {
+                mach = 25.0;
+            }
 
             // Loop through all parts, accumulating drag and lift.
             for (int i = 0; i < vessel.Parts.Count; ++i)
             {
                 // need checks on shielded components
                 Part p = vessel.Parts[i];
-                #if DEBUG
+#if DEBUG
                 TrajectoriesDebug partDebug = VesselAerodynamicModel.DebugParts ? p.FindModuleImplementing<TrajectoriesDebug>() : null;
                 if (partDebug != null)
                 {
                     partDebug.Drag = 0;
                     partDebug.Lift = 0;
                 }
-                #endif
+#endif
 
                 if (p.ShieldedFromAirstream || p.Rigidbody == null)
                 {
@@ -198,18 +203,18 @@ namespace Trajectories
                         {
                             try
                             {
-                                cubes.AddSurfaceDragDirection(-sim_dragVectorDirLocal, (float)mach, ref p_drag_data);
+                                cubes.AddSurfaceDragDirection(-sim_dragVectorDirLocal, (float) mach, ref p_drag_data);
                             }
                             catch (Exception e)
                             {
-                                cubes.SetDrag(sim_dragVectorDirLocal, (float)mach);
+                                cubes.SetDrag(sim_dragVectorDirLocal, (float) mach);
                                 cubes.ForceUpdate(true, true);
-                                cubes.AddSurfaceDragDirection(-sim_dragVectorDirLocal, (float)mach, ref p_drag_data);
+                                cubes.AddSurfaceDragDirection(-sim_dragVectorDirLocal, (float) mach, ref p_drag_data);
                                 Util.DebugLogError("Exception {0} on drag initialization", e);
                             }
 
                             double pseudoreynolds = rho * Math.Abs(v_wrld_vel.magnitude);
-                            double pseudoredragmult = PhysicsGlobals.DragCurvePseudoReynolds.Evaluate((float)pseudoreynolds);
+                            double pseudoredragmult = PhysicsGlobals.DragCurvePseudoReynolds.Evaluate((float) pseudoreynolds);
                             drag = p_drag_data.areaDrag * PhysicsGlobals.DragCubeMultiplier * pseudoredragmult;
 
                             liftForce = p_drag_data.liftForce;
@@ -243,9 +248,9 @@ namespace Trajectories
 #if DEBUG
                 if (partDebug != null)
                 {
-                    partDebug.Drag += (float)dragForce.magnitude;
+                    partDebug.Drag += (float) dragForce.magnitude;
                 }
-                #endif
+#endif
                 total_drag += dragForce;
 
                 // If it isn't a wing or lifter, get body lift.
@@ -253,8 +258,8 @@ namespace Trajectories
                 {
                     Profiler.Start("SimAeroForce#BodyLift");
 
-                    float simbodyLiftScalar = p.bodyLiftMultiplier * PhysicsGlobals.BodyLiftMultiplier * (float)dyn_pressure;
-                    simbodyLiftScalar *= PhysicsGlobals.GetLiftingSurfaceCurve("BodyLift").liftMachCurve.Evaluate((float)mach);
+                    float simbodyLiftScalar = p.bodyLiftMultiplier * PhysicsGlobals.BodyLiftMultiplier * (float) dyn_pressure;
+                    simbodyLiftScalar *= PhysicsGlobals.GetLiftingSurfaceCurve("BodyLift").liftMachCurve.Evaluate((float) mach);
                     Vector3 bodyLift = p.transform.rotation * (simbodyLiftScalar * liftForce);
                     bodyLift = Vector3.ProjectOnPlane(bodyLift, sim_dragVectorDir);
                     // Only accumulate forces for non-LiftModules
@@ -272,40 +277,34 @@ namespace Trajectories
                 for (int j = 0; j < p.Modules.Count; ++j)
                 {
                     var m = p.Modules[j];
-                    float mcs_mod;
-                    if (m is ModuleLiftingSurface)
+                    if (m is ModuleLiftingSurface wing)
                     {
-                        mcs_mod = 1.0f;
+                        const float mcs_mod = 1.0f;
                         double liftQ = dyn_pressure * 1000;
-                        ModuleLiftingSurface wing = (ModuleLiftingSurface)m;
-                        Vector3 nVel = Vector3.zero;
-                        Vector3 liftVector = Vector3.zero;
-                        float liftdot;
-                        float absdot;
-                        wing.SetupCoefficients(v_wrld_vel, out nVel, out liftVector, out liftdot, out absdot);
+                        wing.SetupCoefficients(v_wrld_vel, out var nVel, out var liftVector, out var liftdot, out var absdot);
 
                         double prevMach = p.machNumber;
                         p.machNumber = mach;
-                        Vector3 local_lift = mcs_mod * wing.GetLiftVector(liftVector, liftdot, absdot, liftQ, (float)mach);
+                        Vector3 local_lift = mcs_mod * wing.GetLiftVector(liftVector, liftdot, absdot, liftQ, (float) mach);
                         Vector3 local_drag = mcs_mod * wing.GetDragVector(nVel, absdot, liftQ);
                         p.machNumber = prevMach;
 
                         total_lift += local_lift;
                         total_drag += local_drag;
 
-                        #if DEBUG
+#if DEBUG
                         if (partDebug != null)
                         {
-                            partDebug.Lift += (float)local_lift.magnitude;
-                            partDebug.Drag += (float)local_drag.magnitude;
+                            partDebug.Lift += local_lift.magnitude;
+                            partDebug.Drag += local_drag.magnitude;
                         }
-                        #endif
+#endif
                     }
                 }
 
                 Profiler.Stop("SimAeroForce#LiftingSurface");
-
             }
+
             // RETURN STUFF
             Vector3 force = total_lift + total_drag;
 
@@ -314,4 +313,3 @@ namespace Trajectories
         }
     } //StockAeroUtil
 }
-

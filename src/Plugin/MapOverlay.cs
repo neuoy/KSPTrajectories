@@ -23,6 +23,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace Trajectories
 {
@@ -36,12 +37,12 @@ namespace Trajectories
         /// </summary>
         private sealed class MapTrajectoryRenderer : MonoBehaviour
         {
-            internal List<GameObject> meshes = new List<GameObject>();
+            internal readonly List<GameObject> meshes = new List<GameObject>();
 
             internal void OnPreRender()
             {
                 if (meshes != null)
-                    MapOverlay.RenderMesh();
+                    RenderMesh();
             }
 
             /// <summary>
@@ -89,7 +90,7 @@ namespace Trajectories
         private static MapTrajectoryRenderer map_renderer;
 
         // visible flag
-        private static bool visible = false;
+        private static bool visible;
 
         /// <summary>
         /// Allocates new nodes or resets existing nodes
@@ -124,7 +125,6 @@ namespace Trajectories
                 //Util.DebugLog("Hide map trajectory");
                 visible = false;
                 map_renderer.Visible = false;
-                return;
             }
             else if (Util.IsMap && Settings.DisplayTrajectories && !visible)
             {
@@ -138,7 +138,7 @@ namespace Trajectories
         {
             Util.DebugLog("");
             if (map_renderer != null)
-                GameObject.Destroy(map_renderer);
+                Object.Destroy(map_renderer);
             map_renderer = null;
         }
 
@@ -247,7 +247,7 @@ namespace Trajectories
 
             if (!MapView.Draw3DLines)
             {
-                float dist = Screen.height / 2 + 0.01f;
+                float dist = Screen.height / 2f + 0.01f;
                 start.z = start.z >= 0.15f ? dist : -dist;
                 end.z = end.z >= 0.15f ? dist : -dist;
             }
@@ -323,12 +323,12 @@ namespace Trajectories
             Vector2[] uvs = new Vector2[utIdx * 2 + 2];
             int[] triangles = new int[utIdx * 6];
 
-            Vector3d prevMeshPos = Util.SwapYZ(orbit.getRelativePositionAtUT(startTime - duration / steps)) + bodyPosition;
+            Vector3d prevMeshPos = orbit.getRelativePositionAtUT(startTime - duration / steps).SwapYZ() + bodyPosition;
             for (int i = 0; i < utIdx; ++i)
             {
                 double time = stepUT[i];
 
-                Vector3d curMeshPos = Util.SwapYZ(orbit.getRelativePositionAtUT(time));
+                Vector3d curMeshPos = orbit.getRelativePositionAtUT(time).SwapYZ();
                 if (Settings.BodyFixedMode)
                 {
                     curMeshPos = Trajectory.CalculateRotatedPosition(orbit.referenceBody, curMeshPos, time);
