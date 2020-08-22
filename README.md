@@ -1,5 +1,3 @@
-This fork of Trajectories aims to make the mod more extendable. Still in development
-
 Trajectories
 ============
 
