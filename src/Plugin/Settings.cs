@@ -69,6 +69,8 @@ namespace Trajectories
 
         [Persistent(true)] internal static bool UseCache { get; set; }
 
+        [Persistent(true)] internal static bool MultiTrajectories { get; set; }
+
         [Persistent(true)] internal static bool DefaultDescentIsRetro { get; set; }
 
         #endregion

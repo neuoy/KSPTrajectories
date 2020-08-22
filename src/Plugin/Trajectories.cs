@@ -72,6 +72,7 @@ namespace Trajectories
             foreach (var vessel in FlightGlobals.VesselsLoaded)
             {
                 if (vessel.FindPartModuleImplementing<ModuleCommand>() != null &&
+                    (Settings.MultiTrajectories || vessel == FlightGlobals.ActiveVessel) &&
                     LoadedVesselsTrajectories.All(t => t.AttachedVessel != vessel))
                 {
                     AttachVessel(vessel);
@@ -82,6 +83,7 @@ namespace Trajectories
             {
                 Trajectory trajectory = LoadedVesselsTrajectories[i];
                 if (trajectory.AttachedVessel.FindPartModuleImplementing<ModuleCommand>() == null ||
+                    (!Settings.MultiTrajectories && trajectory.AttachedVessel != FlightGlobals.ActiveVessel) ||
                     FlightGlobals.VesselsLoaded.All(v => v != trajectory.AttachedVessel))
                 {
                     trajectory.Destroy();
