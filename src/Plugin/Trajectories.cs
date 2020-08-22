@@ -35,14 +35,7 @@ namespace Trajectories
 
         internal static Settings Settings { get; private set; }
 
-        /// <summary> The vessel that trajectories is attached to </summary>
-        internal static Vessel AttachedVessel { get; private set; }
-
-        /// <returns> True if trajectories is attached to a vessel </returns>
-        internal static bool IsVesselAttached => AttachedVessel != null;
-
-        /// <returns> True if trajectories is attached to a vessel and that the vessel also has parts </returns>
-        internal static bool VesselHasParts => IsVesselAttached ? AttachedVessel.Parts.Count != 0 : false;
+        internal static Trajectory ActiveVesselTrajectory { get; private set; }
 
         //  constructor
         static Trajectories()
@@ -68,7 +61,7 @@ namespace Trajectories
                 Settings.Load();
 
                 DescentProfile.Start();
-                Trajectory.Start();
+                ActiveVesselTrajectory = new Trajectory(FlightGlobals.ActiveVessel);
                 MapOverlay.Start();
                 FlightOverlay.Start();
                 NavBallOverlay.Start();
@@ -96,10 +89,10 @@ namespace Trajectories
             if (Util.IsPaused || Settings == null || !Util.IsFlight)
                 return;
 
-            if (AttachedVessel != FlightGlobals.ActiveVessel)
+            if (ActiveVesselTrajectory.AttachedVessel != FlightGlobals.ActiveVessel)
                 AttachVessel();
 
-            Trajectory.Update();
+            ActiveVesselTrajectory.Update();
             MapOverlay.Update();
             FlightOverlay.Update();
             NavBallOverlay.Update();
@@ -113,39 +106,39 @@ namespace Trajectories
         internal void OnDestroy()
         {
             Util.DebugLog("");
-            AttachedVessel = null;
             AppLauncherButton.DestroyToolbarButton();
             MainGUI.DeSpawn();
             NavBallOverlay.DestroyTransforms();
             FlightOverlay.Destroy();
             MapOverlay.DestroyRenderer();
-            Trajectory.Destroy();
+            ActiveVesselTrajectory.Destroy();
+            ActiveVesselTrajectory = null;
             DescentProfile.Clear();
         }
 
         internal void OnApplicationQuit()
         {
             Util.Log("Ending after {0} seconds", Time.time);
-            AttachedVessel = null;
             AppLauncherButton.Destroy();
             MainGUI.Destroy();
             NavBallOverlay.Destroy();
             FlightOverlay.Destroy();
             MapOverlay.Destroy();
-            Trajectory.Destroy();
+            ActiveVesselTrajectory.Destroy();
+            ActiveVesselTrajectory = null;
             DescentProfile.Destroy();
             if (Settings != null)
                 Settings.Destroy();
             Settings = null;
         }
 
-        private void AttachVessel()
+        private static void AttachVessel()
         {
             Util.DebugLog("Loading profiles for vessel");
 
-            AttachedVessel = FlightGlobals.ActiveVessel;
+            ActiveVesselTrajectory = new Trajectory(FlightGlobals.ActiveVessel);
 
-            if (AttachedVessel == null)
+            if (ActiveVesselTrajectory.AttachedVessel == null)
             {
                 Util.DebugLog("No vessel");
                 DescentProfile.Clear();
@@ -154,7 +147,7 @@ namespace Trajectories
             }
             else
             {
-                TrajectoriesVesselSettings module = AttachedVessel.Parts.SelectMany(p => p.Modules.OfType<TrajectoriesVesselSettings>()).FirstOrDefault();
+                TrajectoriesVesselSettings module = ActiveVesselTrajectory.AttachedVessel.Parts.SelectMany(p => p.Modules.OfType<TrajectoriesVesselSettings>()).FirstOrDefault();
                 if (module == null)
                 {
                     Util.DebugLog("No TrajectoriesVesselSettings module");

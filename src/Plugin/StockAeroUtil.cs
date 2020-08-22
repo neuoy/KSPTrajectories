@@ -120,21 +120,21 @@ namespace Trajectories
         }
 
         //*******************************************************
-        public static Vector3d SimAeroForce(Vector3d v_wrld_vel, Vector3 position)
+        public static Vector3d SimAeroForce(Vessel vessel, Vector3d v_wrld_vel, Vector3 position)
         {
-            CelestialBody body = Trajectories.AttachedVessel.mainBody;
+            CelestialBody body = vessel.mainBody;
             double latitude = body.GetLatitude(position) / 180.0 * Math.PI;
             double altitude = (position - body.position).magnitude - body.Radius;
 
-            return SimAeroForce(v_wrld_vel, altitude, latitude);
+            return SimAeroForce(vessel, v_wrld_vel, altitude, latitude);
         }
 
         //*******************************************************
-        public static Vector3d SimAeroForce(Vector3d v_wrld_vel, double altitude, double latitude = 0.0)
+        public static Vector3d SimAeroForce(Vessel vessel, Vector3d v_wrld_vel, double altitude, double latitude = 0.0)
         {
             Profiler.Start("SimAeroForce");
 
-            CelestialBody body = Trajectories.AttachedVessel.mainBody;
+            CelestialBody body = vessel.mainBody;
             double pressure = body.GetPressure(altitude);
             // Lift and drag for force accumulation.
             Vector3d total_lift = Vector3d.zero;
@@ -154,10 +154,10 @@ namespace Trajectories
             if (mach > 25.0) { mach = 25.0; }
 
             // Loop through all parts, accumulating drag and lift.
-            for (int i = 0; i < Trajectories.AttachedVessel.Parts.Count; ++i)
+            for (int i = 0; i < vessel.Parts.Count; ++i)
             {
                 // need checks on shielded components
-                Part p = Trajectories.AttachedVessel.Parts[i];
+                Part p = vessel.Parts[i];
                 #if DEBUG
                 TrajectoriesDebug partDebug = VesselAerodynamicModel.DebugParts ? p.FindModuleImplementing<TrajectoriesDebug>() : null;
                 if (partDebug != null)

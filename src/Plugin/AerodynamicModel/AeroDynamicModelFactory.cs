@@ -27,7 +27,7 @@ namespace Trajectories
 {
     public static class AerodynamicModelFactory
     {
-        public static VesselAerodynamicModel GetModel(CelestialBody body)
+        public static VesselAerodynamicModel GetModel(Trajectory trajectory, CelestialBody body)
         {
             foreach (var loadedAssembly in AssemblyLoader.loadedAssemblies)
             {
@@ -40,7 +40,7 @@ namespace Trajectories
 
                                 var FARAPI_CalculateVesselAeroForces = FARAPIType.GetMethodEx("CalculateVesselAeroForces", BindingFlags.Public | BindingFlags.Static, new Type[] { typeof(Vessel), typeof(Vector3).MakeByRefType(), typeof(Vector3).MakeByRefType(), typeof(Vector3), typeof(double) });
 
-                            return new FARModel(body, FARAPI_CalculateVesselAeroForces);
+                            return new FARModel(trajectory, body, FARAPI_CalculateVesselAeroForces);
 
                         //case "MyModAssembly":
                         // implement here your atmo mod detection
@@ -54,7 +54,7 @@ namespace Trajectories
             }
 
             // Using stock model if no other aerodynamic is detected or if any error occurred
-            return new StockModel(body);
+            return new StockModel(trajectory, body);
         }
     }
 }

@@ -24,7 +24,7 @@ using System.Linq;
 
 namespace Trajectories
 {
-    internal static class TargetProfile
+    internal class TargetProfile
     {
         /// <returns> True if the target is set. </returns>
         internal static bool HasTarget() => LocalPosition.HasValue && Body != null;
@@ -121,11 +121,11 @@ namespace Trajectories
         /// <summary> Saves the profile to the active vessel module </summary>
         internal static void Save()
         {
-            if (!Trajectories.IsVesselAttached)
+            if (!Trajectories.ActiveVesselTrajectory.IsVesselAttached)
                 return;
 
             //Util.DebugLog("Saving vessels target profile...");
-            foreach (TrajectoriesVesselSettings module in Trajectories.AttachedVessel.Parts.SelectMany(p => p.Modules.OfType<TrajectoriesVesselSettings>()))
+            foreach (TrajectoriesVesselSettings module in Trajectories.ActiveVesselTrajectory.AttachedVessel.Parts.SelectMany(p => p.Modules.OfType<TrajectoriesVesselSettings>()))
             {
                 Save(module);
             }

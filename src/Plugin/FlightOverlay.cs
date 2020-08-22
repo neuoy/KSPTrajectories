@@ -214,13 +214,13 @@ namespace Trajectories
             if (!Settings.DisplayTrajectories
                 || Util.IsMap
                 || !Settings.DisplayTrajectoriesInFlight
-                || Trajectory.Patches.Count == 0)
+                || Trajectories.ActiveVesselTrajectory.Patches.Count == 0)
                 return;
 
             line.Clear();
-            line.Add(Trajectories.AttachedVessel.GetWorldPos3D());
+            line.Add(Trajectories.ActiveVesselTrajectory.AttachedVessel.GetWorldPos3D());
 
-            lastPatch = Trajectory.Patches[Trajectory.Patches.Count - 1];
+            lastPatch = Trajectories.ActiveVesselTrajectory.Patches[Trajectories.ActiveVesselTrajectory.Patches.Count - 1];
             bodyPosition = lastPatch.StartingState.ReferenceBody.position;
             if (lastPatch.IsAtmospheric)
             {

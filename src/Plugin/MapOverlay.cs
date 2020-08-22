@@ -189,7 +189,7 @@ namespace Trajectories
             }
 
             // create/update meshes from Trajectory patches.
-            foreach (Trajectory.Patch patch in Trajectory.Patches)
+            foreach (Trajectory.Patch patch in Trajectories.ActiveVesselTrajectory.Patches)
             {
                 if (patch.StartingState.StockPatch != null && !Settings.BodyFixedMode &&
                     !Settings.DisplayCompleteTrajectory)

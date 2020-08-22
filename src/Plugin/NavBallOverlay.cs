@@ -65,7 +65,7 @@ namespace Trajectories
         {
             get
             {
-                if (!Trajectories.IsVesselAttached)
+                if (!Trajectories.ActiveVesselTrajectory.IsVesselAttached)
                     return Vector3d.zero;
 
                 Vector2d offsetDir = GetCorrection();
@@ -143,19 +143,19 @@ namespace Trajectories
 
         internal static void Update()
         {
-            patch = Trajectory.Patches.LastOrDefault();
+            patch = Trajectories.ActiveVesselTrajectory.Patches.LastOrDefault();
 
-            if ((!Util.IsFlight && !Util.IsTrackingStation) || !Trajectories.IsVesselAttached || !TargetProfile.WorldPosition.HasValue ||
+            if ((!Util.IsFlight && !Util.IsTrackingStation) || !Trajectories.ActiveVesselTrajectory.IsVesselAttached || !TargetProfile.WorldPosition.HasValue ||
                 patch == null || !patch.ImpactPosition.HasValue || patch.StartingState.ReferenceBody != TargetProfile.Body || !Ready)
             {
                 SetDisplayEnabled(false);
                 return;
             }
 
-            body = Trajectories.AttachedVessel.mainBody;
+            body = Trajectories.ActiveVesselTrajectory.AttachedVessel.mainBody;
 
-            position = Trajectories.AttachedVessel.GetWorldPos3D() - body.position;
-            velocity = Trajectories.AttachedVessel.obt_velocity - body.getRFrmVel(body.position + position); // air velocity
+            position = Trajectories.ActiveVesselTrajectory.AttachedVessel.GetWorldPos3D() - body.position;
+            velocity = Trajectories.ActiveVesselTrajectory.AttachedVessel.obt_velocity - body.getRFrmVel(body.position + position); // air velocity
             up = position.normalized;
             vel_right = Vector3d.Cross(velocity, up).normalized;
             reference = CalcReference();
@@ -201,7 +201,7 @@ namespace Trajectories
 
         private static Vector3d CalcReference()
         {
-            if (!Trajectories.IsVesselAttached || TargetProfile.Body == null)
+            if (!Trajectories.ActiveVesselTrajectory.IsVesselAttached || TargetProfile.Body == null)
                 return Vector3d.zero;
 
             double plannedAngleOfAttack = (double)DescentProfile.GetAngleOfAttack(TargetProfile.Body, position, velocity);
@@ -211,7 +211,7 @@ namespace Trajectories
 
         private static Vector2d GetCorrection()
         {
-            if (!Trajectories.IsVesselAttached)
+            if (!Trajectories.ActiveVesselTrajectory.IsVesselAttached)
                 return Vector2d.zero;
 
             Vector3d? targetPosition = TargetProfile.WorldPosition;
@@ -248,8 +248,8 @@ namespace Trajectories
             Vector2d offsetDir = new Vector2d(Vector3d.Dot(right, offset), Vector3d.Dot(behind, offset));
             offsetDir *= 0.00005d; // 20km <-> 1 <-> 45° (this is purely indicative, no physical meaning, it would be very complicated to compute an actual correction angle as it depends on the spacecraft behavior in the atmosphere ; a small angle will suffice for a plane, but even a big angle might do almost nothing for a rocket)
 
-            Vector3d pos = Trajectories.AttachedVessel.GetWorldPos3D() - body.position;
-            Vector3d vel = Trajectories.AttachedVessel.obt_velocity - body.getRFrmVel(body.position + pos); // air velocity
+            Vector3d pos = Trajectories.ActiveVesselTrajectory.AttachedVessel.GetWorldPos3D() - body.position;
+            Vector3d vel = Trajectories.ActiveVesselTrajectory.AttachedVessel.obt_velocity - body.getRFrmVel(body.position + pos); // air velocity
 
             double plannedAngleOfAttack = (double)DescentProfile.GetAngleOfAttack(body, pos, vel);
             if (plannedAngleOfAttack < Util.HALF_PI)

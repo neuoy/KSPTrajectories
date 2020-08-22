@@ -263,11 +263,11 @@ namespace Trajectories
         /// <summary> Saves the profile to the active vessel module </summary>
         internal static void Save()
         {
-            if (!Trajectories.IsVesselAttached || !Ready)
+            if (!Trajectories.ActiveVesselTrajectory.IsVesselAttached || !Ready)
                 return;
 
             //Util.DebugLog("Saving vessels descent profile...");
-            foreach (TrajectoriesVesselSettings module in Trajectories.AttachedVessel.Parts.SelectMany(p => p.Modules.OfType<TrajectoriesVesselSettings>()))
+            foreach (TrajectoriesVesselSettings module in Trajectories.ActiveVesselTrajectory.AttachedVessel.Parts.SelectMany(p => p.Modules.OfType<TrajectoriesVesselSettings>()))
             {
                 Save(module);
             }

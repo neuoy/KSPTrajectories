@@ -29,11 +29,11 @@ namespace Trajectories
     {
         public override string AerodynamicModelName { get { return Localizer.Format("#autoLOC_Trajectories_Stock"); } }
 
-        public StockModel(CelestialBody body) : base( body) { }
+        public StockModel(Trajectory trajectory, CelestialBody body) : base(trajectory, body) { }
 
         protected override Vector3d ComputeForces_Model(Vector3d airVelocity, double altitude)
         {
-            return StockAeroUtil.SimAeroForce(airVelocity, altitude);
+            return StockAeroUtil.SimAeroForce(trajectory_.AttachedVessel, airVelocity, altitude);
         }
 
         public override Vector2d PackForces(Vector3d forces, double altitudeAboveSea, double velocity)

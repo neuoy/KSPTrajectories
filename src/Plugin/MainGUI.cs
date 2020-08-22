@@ -742,7 +742,7 @@ namespace Trajectories
         private static bool ButtonEnabler_TargetImpact()
         {
             // grab the last patch that was calculated
-            Trajectory.Patch lastPatch = Trajectory.Patches.LastOrDefault();
+            Trajectory.Patch lastPatch = Trajectories.ActiveVesselTrajectory.Patches.LastOrDefault();
 
             if (lastPatch != null && lastPatch.ImpactPosition.HasValue)
                 return true;
@@ -761,7 +761,7 @@ namespace Trajectories
 
         private static bool ButtonEnabler_TargetWaypoint()
         {
-            if (Trajectories.AttachedVessel?.navigationWaypoint != null)
+            if (Trajectories.ActiveVesselTrajectory.AttachedVessel?.navigationWaypoint != null)
                 return true;
             return false;
         }
@@ -823,7 +823,7 @@ namespace Trajectories
 
         private static void OnButtonClick_AutoUpdateAerodynamicModel(bool inState) => Settings.AutoUpdateAerodynamicModel = inState;
 
-        private static void OnButtonClick_Update() => Trajectory.InvalidateAerodynamicModel();
+        private static void OnButtonClick_Update() => Trajectories.ActiveVesselTrajectory.InvalidateAerodynamicModel();
 
         private static void OnButtonClick_UseBlizzyToolbar(bool inState)
         {
@@ -894,7 +894,7 @@ namespace Trajectories
         private static void OnButtonClick_TargetImpact()
         {
             // grab the last patch that was calculated
-            Trajectory.Patch lastPatch = Trajectory.Patches.LastOrDefault();
+            Trajectory.Patch lastPatch = Trajectories.ActiveVesselTrajectory.Patches.LastOrDefault();
 
             if (lastPatch != null && lastPatch.ImpactPosition.HasValue)
             {
@@ -929,7 +929,7 @@ namespace Trajectories
         private static void OnButtonClick_TargetWaypoint()
         {
             // grab the currently selected waypoint
-            FinePrint.Waypoint navigationWaypoint = Trajectories.AttachedVessel?.navigationWaypoint;
+            FinePrint.Waypoint navigationWaypoint = Trajectories.ActiveVesselTrajectory.AttachedVessel?.navigationWaypoint;
 
             if (navigationWaypoint != null)
             {
@@ -1204,10 +1204,10 @@ namespace Trajectories
         private static void UpdateInfoPage()
         {
             // grab the last patch that was calculated
-            Trajectory.Patch lastPatch = Trajectory.Patches.LastOrDefault();
+            Trajectory.Patch lastPatch = Trajectories.ActiveVesselTrajectory.Patches.LastOrDefault();
 
             // max G-force
-            max_gforce_txt = string.Format("{0:0.00}", Settings.DisplayTrajectories ? Trajectory.MaxAccel / 9.81 : 0);
+            max_gforce_txt = string.Format("{0:0.00}", Settings.DisplayTrajectories ? Trajectories.ActiveVesselTrajectory.MaxAccel / 9.81 : 0);
 
             // impact values
             if (lastPatch != null && lastPatch.ImpactPosition.HasValue && Settings.DisplayTrajectories)
@@ -1253,7 +1253,7 @@ namespace Trajectories
         private static void UpdateTargetPage()
         {
             // grab the last patch that was calculated
-            Trajectory.Patch lastPatch = Trajectory.Patches.LastOrDefault();
+            Trajectory.Patch lastPatch = Trajectories.ActiveVesselTrajectory.Patches.LastOrDefault();
             CelestialBody targetBody = TargetProfile.Body;
 
             // target position and distance values
@@ -1293,22 +1293,22 @@ namespace Trajectories
         private static void UpdateSettingsPage()
         {
             // aerodynamic model
-            aerodynamic_model_txt = aerodynamic_model_hdrtxt + Trajectory.AerodynamicModelName;
+            aerodynamic_model_txt = aerodynamic_model_hdrtxt + Trajectories.ActiveVesselTrajectory.AerodynamicModelName;
 
             // performance
             calculation_time_txt = calculation_time_hdrtxt +
-                string.Format("{0:0.0}ms | {1:0.0} %", Trajectory.ComputationTime,
-                    (Trajectory.ComputationTime / Trajectory.GameFrameTime) * 100.0f);
+                string.Format("{0:0.0}ms | {1:0.0} %", Trajectories.ActiveVesselTrajectory.ComputationTime,
+                    (Trajectories.ActiveVesselTrajectory.ComputationTime / Trajectories.ActiveVesselTrajectory.GameFrameTime) * 100.0f);
 
             // num errors
-            num_errors_txt = errors_hdrtxt + string.Format("{0:0}", Trajectory.ErrorCount);
+            num_errors_txt = errors_hdrtxt + string.Format("{0:0}", Trajectories.ActiveVesselTrajectory.ErrorCount);
         }
 
         /// <summary> Updates the strings used by the info and target page to display target distance </summary>
         private static void UpdateTargetDistance()
         {
             // grab the last patch that was calculated
-            Trajectory.Patch lastPatch = Trajectory.Patches.LastOrDefault();
+            Trajectory.Patch lastPatch = Trajectories.ActiveVesselTrajectory.Patches.LastOrDefault();
             CelestialBody targetBody = TargetProfile.Body;
             CelestialBody lastPatchBody = lastPatch?.StartingState.ReferenceBody;
 

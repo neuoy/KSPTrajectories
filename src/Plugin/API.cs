@@ -97,9 +97,9 @@ namespace Trajectories
         /// </summary>
         public static double? GetEndTime()
         {
-            if (Trajectories.IsVesselAttached)
+            if (Trajectories.ActiveVesselTrajectory.IsVesselAttached)
             {
-                foreach (Trajectory.Patch patch in Trajectory.Patches)
+                foreach (Trajectory.Patch patch in Trajectories.ActiveVesselTrajectory.Patches)
                 {
                     if (patch.ImpactPosition.HasValue)
                         return patch.EndTime;
@@ -114,9 +114,9 @@ namespace Trajectories
         /// </summary>
         public static double? GetTimeTillImpact()
         {
-            if (Trajectories.IsVesselAttached)
+            if (Trajectories.ActiveVesselTrajectory.IsVesselAttached)
             {
-                foreach (Trajectory.Patch patch in Trajectory.Patches)
+                foreach (Trajectory.Patch patch in Trajectories.ActiveVesselTrajectory.Patches)
                 {
                     if (patch.ImpactPosition.HasValue)
                         return patch.EndTime - Planetarium.GetUniversalTime();
@@ -130,9 +130,9 @@ namespace Trajectories
         /// </summary>
         public static Vector3? GetImpactPosition()
         {
-            if (Trajectories.IsVesselAttached)
+            if (Trajectories.ActiveVesselTrajectory.IsVesselAttached)
             {
-                foreach (Trajectory.Patch patch in Trajectory.Patches)
+                foreach (Trajectory.Patch patch in Trajectories.ActiveVesselTrajectory.Patches)
                 {
                     if (patch.ImpactPosition != null)
                         return patch.ImpactPosition;
@@ -146,9 +146,9 @@ namespace Trajectories
         /// </summary>
         public static Vector3? GetImpactVelocity()
         {
-            if (Trajectories.IsVesselAttached)
+            if (Trajectories.ActiveVesselTrajectory.IsVesselAttached)
             {
-                foreach (Trajectory.Patch patch in Trajectory.Patches)
+                foreach (Trajectory.Patch patch in Trajectories.ActiveVesselTrajectory.Patches)
                 {
                     if (patch.ImpactVelocity != null)
                         return patch.ImpactVelocity;
@@ -162,9 +162,9 @@ namespace Trajectories
         /// </summary>
         public static Orbit GetSpaceOrbit()
         {
-            if (Trajectories.IsVesselAttached)
+            if (Trajectories.ActiveVesselTrajectory.IsVesselAttached)
             {
-                foreach (Trajectory.Patch patch in Trajectory.Patches)
+                foreach (Trajectory.Patch patch in Trajectories.ActiveVesselTrajectory.Patches)
                 {
 
                     if ((patch.StartingState.StockPatch != null) || patch.IsAtmospheric)
@@ -180,7 +180,7 @@ namespace Trajectories
         /// <summary>
         /// Returns true if a target has been set, false if not, or Null if no active vessel.
         /// </summary>
-        public static bool HasTarget() => Trajectories.IsVesselAttached && TargetProfile.HasTarget();
+        public static bool HasTarget() => Trajectories.ActiveVesselTrajectory.IsVesselAttached && TargetProfile.HasTarget();
 
         /// <summary>
         /// Returns the planned direction or Null if no active vessel or no set target.
@@ -197,7 +197,7 @@ namespace Trajectories
         /// </summary>
         public static void SetTarget(double lat, double lon, double? alt = null)
         {
-            if (Trajectories.IsVesselAttached)
+            if (Trajectories.ActiveVesselTrajectory.IsVesselAttached)
             {
                 CelestialBody body = FlightGlobals.GetHomeBody();
                 if (body != null)
@@ -208,14 +208,14 @@ namespace Trajectories
         /// <summary>
         /// Returns the trajectories target as latitude, longitude and altitude at the HomeWorld or Null if no active vessel or no set target.
         /// </summary>
-        public static Vector3d? GetTarget() => Trajectories.IsVesselAttached ? TargetProfile.GetLatLonAlt() : null;
+        public static Vector3d? GetTarget() => Trajectories.ActiveVesselTrajectory.IsVesselAttached ? TargetProfile.GetLatLonAlt() : null;
 
         /// <summary>
         /// Clears the trajectories target.
         /// </summary>
         public static void ClearTarget()
         {
-            if (Trajectories.IsVesselAttached)
+            if (Trajectories.ActiveVesselTrajectory.IsVesselAttached)
                 TargetProfile.Clear();
         }
 
@@ -225,14 +225,14 @@ namespace Trajectories
         {
             get
             {
-                if (Trajectories.IsVesselAttached)
+                if (Trajectories.ActiveVesselTrajectory.IsVesselAttached)
                     return !DescentProfile.AtmosEntry.Retrograde && !DescentProfile.HighAltitude.Retrograde &&
                             !DescentProfile.LowAltitude.Retrograde && !DescentProfile.FinalApproach.Retrograde;
                 return null;
             }
             set
             {
-                if (Trajectories.IsVesselAttached && value.HasValue)
+                if (Trajectories.ActiveVesselTrajectory.IsVesselAttached && value.HasValue)
                 {
                     DescentProfile.Reset(value.Value ? 0d : Math.PI);
                     DescentProfile.Save();
@@ -246,14 +246,14 @@ namespace Trajectories
         {
             get
             {
-                if (Trajectories.IsVesselAttached)
+                if (Trajectories.ActiveVesselTrajectory.IsVesselAttached)
                     return DescentProfile.AtmosEntry.Retrograde && DescentProfile.HighAltitude.Retrograde &&
                             DescentProfile.LowAltitude.Retrograde && DescentProfile.FinalApproach.Retrograde;
                 return null;
             }
             set
             {
-                if (Trajectories.IsVesselAttached && value.HasValue)
+                if (Trajectories.ActiveVesselTrajectory.IsVesselAttached && value.HasValue)
                 {
                     DescentProfile.Reset(value.Value ? Math.PI : 0d);
                     DescentProfile.Save();
@@ -267,7 +267,7 @@ namespace Trajectories
         /// </summary>
         public static void ResetDescentProfile(double AoA = Math.PI)
         {
-            if (Trajectories.IsVesselAttached)
+            if (Trajectories.ActiveVesselTrajectory.IsVesselAttached)
             {
                 DescentProfile.Reset(AoA);
                 DescentProfile.Save();
@@ -284,7 +284,7 @@ namespace Trajectories
         {
             get
             {
-                if (Trajectories.IsVesselAttached)
+                if (Trajectories.ActiveVesselTrajectory.IsVesselAttached)
                 {
                     return new List<double>
                     {
@@ -298,7 +298,7 @@ namespace Trajectories
             }
             set
             {
-                if (Trajectories.IsVesselAttached && value.Count == 4)
+                if (Trajectories.ActiveVesselTrajectory.IsVesselAttached && value.Count == 4)
                 {
                     DescentProfile.AtmosEntry.AngleRad = value[0];
                     DescentProfile.HighAltitude.AngleRad = value[1];
@@ -317,7 +317,7 @@ namespace Trajectories
         {
             get
             {
-                if (Trajectories.IsVesselAttached)
+                if (Trajectories.ActiveVesselTrajectory.IsVesselAttached)
                 {
                     return new List<bool>
                     {
@@ -331,7 +331,7 @@ namespace Trajectories
             }
             set
             {
-                if (Trajectories.IsVesselAttached && value.Count == 4)
+                if (Trajectories.ActiveVesselTrajectory.IsVesselAttached && value.Count == 4)
                 {
                     DescentProfile.AtmosEntry.Horizon = !value[0];
                     DescentProfile.HighAltitude.Horizon = !value[1];
@@ -350,7 +350,7 @@ namespace Trajectories
         {
             get
             {
-                if (Trajectories.IsVesselAttached)
+                if (Trajectories.ActiveVesselTrajectory.IsVesselAttached)
                 {
                     return new List<bool>
                     {
@@ -364,7 +364,7 @@ namespace Trajectories
             }
             set
             {
-                if (Trajectories.IsVesselAttached && value.Count == 4)
+                if (Trajectories.ActiveVesselTrajectory.IsVesselAttached && value.Count == 4)
                 {
                     DescentProfile.AtmosEntry.Retrograde = value[0];
                     DescentProfile.HighAltitude.Retrograde = value[1];
@@ -378,6 +378,6 @@ namespace Trajectories
         /// <summary>
         /// Triggers a recalculation of the trajectory.
         /// </summary>
-        public static void UpdateTrajectory() => Trajectory.ComputeTrajectory();
+        public static void UpdateTrajectory() => Trajectories.ActiveVesselTrajectory.ComputeTrajectory();
     }
 }

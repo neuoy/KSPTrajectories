@@ -35,6 +35,7 @@ namespace Trajectories
 
         public abstract string AerodynamicModelName { get; }
 
+        protected Trajectory trajectory_;
         protected CelestialBody body_;
         private bool isValid;
         private double referenceDrag = 0;
@@ -49,11 +50,12 @@ namespace Trajectories
         public static bool DebugParts { get; set; }
 
         // constructor
-        protected VesselAerodynamicModel(CelestialBody body)
+        protected VesselAerodynamicModel(Trajectory trajectory, CelestialBody body)
         {
+            trajectory_ = trajectory;
             body_ = body;
 
-            referencePartCount = Trajectories.AttachedVessel.Parts.Count;
+            referencePartCount = Trajectories.ActiveVesselTrajectory.AttachedVessel.Parts.Count;
 
             UpdateVesselMass();
 
@@ -66,7 +68,7 @@ namespace Trajectories
             // mass_ = vessel_.totalMass;       // this kills performance on vessel load, so we don't do that anymore
 
             mass_ = 0d;
-            foreach (Part part in Trajectories.AttachedVessel.Parts)
+            foreach (Part part in Trajectories.ActiveVesselTrajectory.AttachedVessel.Parts)
             {
                 if (part.physicalSignificance == Part.PhysicalSignificance.NONE)
                     continue;
@@ -97,7 +99,7 @@ namespace Trajectories
 
         public bool IsValidFor(CelestialBody body)
         {
-            if (!Trajectories.IsVesselAttached || body_ != body)
+            if (!Trajectories.ActiveVesselTrajectory.IsVesselAttached || body_ != body)
                 return false;
 
             if (Settings.AutoUpdateAerodynamicModel)
@@ -108,7 +110,7 @@ namespace Trajectories
                     referenceDrag = newRefDrag;
                 }
                 double ratio = Math.Max(newRefDrag, referenceDrag) / Math.Max(1, Math.Min(newRefDrag, referenceDrag));
-                if (ratio > 1.2 && DateTime.Now > nextAllowedAutomaticUpdate || referencePartCount != Trajectories.AttachedVessel.Parts.Count)
+                if (ratio > 1.2 && DateTime.Now > nextAllowedAutomaticUpdate || referencePartCount != Trajectories.ActiveVesselTrajectory.AttachedVessel.Parts.Count)
                 {
                     nextAllowedAutomaticUpdate = DateTime.Now.AddSeconds(10); // limit updates frequency (could make the game almost unresponsive on some computers)
 #if DEBUG
@@ -135,7 +137,7 @@ namespace Trajectories
         /// </summary>
         public Vector3d GetForces(CelestialBody body, Vector3d bodySpacePosition, Vector3d airVelocity, double angleOfAttack)
         {
-            if (body != Trajectories.AttachedVessel.mainBody)
+            if (body != Trajectories.ActiveVesselTrajectory.AttachedVessel.mainBody)
                 throw new Exception("Can't predict aerodynamic forces on another body in current implementation");
 
             double altitudeAboveSea = bodySpacePosition.magnitude - body.Radius;
@@ -170,10 +172,10 @@ namespace Trajectories
         public Vector3d ComputeForces(double altitude, Vector3d airVelocity, Vector3d vup, double angleOfAttack)
         {
             Profiler.Start("ComputeForces");
-            if (!Trajectories.IsVesselAttached || !Trajectories.AttachedVessel.mainBody.atmosphere || altitude >= body_.atmosphereDepth)
+            if (!Trajectories.ActiveVesselTrajectory.IsVesselAttached || !Trajectories.ActiveVesselTrajectory.AttachedVessel.mainBody.atmosphere || altitude >= body_.atmosphereDepth)
                 return Vector3d.zero;
 
-            Transform vesselTransform = Trajectories.AttachedVessel.ReferenceTransform;
+            Transform vesselTransform = Trajectories.ActiveVesselTrajectory.AttachedVessel.ReferenceTransform;
             if (vesselTransform == null)
                 return Vector3d.zero;
 

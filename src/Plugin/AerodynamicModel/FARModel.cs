@@ -32,8 +32,8 @@ namespace Trajectories
 
         public override string AerodynamicModelName { get { return "FAR"; } }
 
-        public FARModel(CelestialBody body, MethodInfo CalculateVesselAeroForces)
-            : base(body)
+        public FARModel(Trajectory trajectory, CelestialBody body, MethodInfo CalculateVesselAeroForces)
+            : base(trajectory, body)
         {
             FARAPI_CalculateVesselAeroForces = CalculateVesselAeroForces;
         }
@@ -41,7 +41,7 @@ namespace Trajectories
         protected override Vector3d ComputeForces_Model(Vector3d airVelocity, double altitude)
         {
             //Util.DebugLog("Getting FAR forces");
-            if (!Trajectories.IsVesselAttached || Trajectories.AttachedVessel.packed)
+            if (!trajectory_.IsVesselAttached || trajectory_.AttachedVessel.packed)
                 return Vector3d.zero;
 
             if (airVelocity.x == 0d || airVelocity.y == 0d || airVelocity.z == 0d)
@@ -51,7 +51,7 @@ namespace Trajectories
             }
 
             Vector3 worldAirVel = new Vector3((float)airVelocity.x, (float)airVelocity.y, (float)airVelocity.z);
-            var parameters = new object[] { Trajectories.AttachedVessel, Vector3.zero, Vector3.zero, worldAirVel, altitude };
+            var parameters = new object[] { trajectory_.AttachedVessel, Vector3.zero, Vector3.zero, worldAirVel, altitude };
             FARAPI_CalculateVesselAeroForces.Invoke(null, parameters);
             return (Vector3)parameters[1];
         }

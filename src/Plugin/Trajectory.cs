@@ -33,7 +33,7 @@ namespace Trajectories
     /// Handles trajectory prediction, performing a lightweight physical simulation to
     /// predict a vessels trajectory in space and atmosphere.
     /// </summary>
-    internal static class Trajectory
+    public class Trajectory
     {
         internal class VesselState
         {
@@ -107,41 +107,51 @@ namespace Trajectories
 
         private const double MAX_INCREMENT_TIME = 2.0d;      // in ms
 
-        private static VesselAerodynamicModel aerodynamicModel_;
+        private VesselAerodynamicModel aerodynamicModel_;
 
-        internal static string AerodynamicModelName => aerodynamicModel_ == null ? Localizer.Format("#autoLOC_Trajectories_NotLoaded") :
+        internal string AerodynamicModelName => aerodynamicModel_ == null ? Localizer.Format("#autoLOC_Trajectories_NotLoaded") :
                                                                                    aerodynamicModel_.AerodynamicModelName;
 
-        private static List<Patch> patchesBackBuffer_ = new List<Patch>();
+        private List<Patch> patchesBackBuffer_ = new List<Patch>();
 
-        internal static List<Patch> Patches { get; private set; } = new List<Patch>();
+        internal List<Patch> Patches { get; private set; } = new List<Patch>();
 
-        private static float maxAccelBackBuffer_;
+        private float maxAccelBackBuffer_;
 
-        internal static float MaxAccel { get; private set; }
+        internal float MaxAccel { get; private set; }
 
-        internal static int ErrorCount { get; private set; }
+        internal int ErrorCount { get; private set; }
 
-        private static IEnumerator<bool> partialComputation_;
+        private IEnumerator<bool> partialComputation_;
 
-        private static double increment_time;
+        private double increment_time;
 
         //private static double computation_time;
 
         ///<summary> Trajectory calculation time of last frame in ms </summary>
-        internal static double ComputationTime { get; private set; }
+        internal double ComputationTime { get; private set; }
 
         //private static double total_time;
 
-        private static double frame_time;
+        private double frame_time;
 
         //private static double game_frame_time;
 
         ///<summary> Time of game frame in ms </summary>
-        internal static double GameFrameTime { get; private set; }
+        internal double GameFrameTime { get; private set; }
 
-        internal static void Start()
+        /// <summary> The vessel that trajectories is attached to </summary>
+        internal Vessel AttachedVessel { get; }
+
+        /// <returns> True if trajectories is attached to a vessel </returns>
+        internal bool IsVesselAttached => AttachedVessel != null;
+
+        /// <returns> True if trajectories is attached to a vessel and that the vessel also has parts </returns>
+        internal bool VesselHasParts => IsVesselAttached ? AttachedVessel.Parts.Count != 0 : false;
+
+        internal Trajectory(Vessel vessel)
         {
+            AttachedVessel = vessel;
             Util.DebugLog("Constructing");
         }
 
@@ -149,9 +159,9 @@ namespace Trajectories
             ConstructTelemetry();
 #endif
 
-        internal static void Destroy() => Util.DebugLog("");
+        internal void Destroy() => Util.DebugLog("");
 
-        internal static void Update()
+        internal void Update()
         {
             //Profiler.Start("Trajectory.Update");
 
@@ -331,11 +341,11 @@ namespace Trajectories
         }
 #endif
 
-        internal static void InvalidateAerodynamicModel() => aerodynamicModel_.Invalidate();
+        internal void InvalidateAerodynamicModel() => aerodynamicModel_.Invalidate();
 
-        internal static void ComputeTrajectory()
+        internal void ComputeTrajectory()
         {
-            if (!Trajectories.VesselHasParts || Trajectories.AttachedVessel.LandedOrSplashed)
+            if (!VesselHasParts || AttachedVessel.LandedOrSplashed)
             {
                 increment_time = 0d;
                 Patches.Clear();
@@ -348,8 +358,8 @@ namespace Trajectories
                 increment_time = Util.Clocks;
 
                 // create or update aerodynamic model
-                if (aerodynamicModel_ == null || !aerodynamicModel_.IsValidFor(Trajectories.AttachedVessel.mainBody))
-                    aerodynamicModel_ = AerodynamicModelFactory.GetModel(Trajectories.AttachedVessel.mainBody);
+                if (aerodynamicModel_ == null || !aerodynamicModel_.IsValidFor(AttachedVessel.mainBody))
+                    aerodynamicModel_ = AerodynamicModelFactory.GetModel(this, AttachedVessel.mainBody);
                 else
                     aerodynamicModel_.UpdateVesselMass();
 
@@ -398,10 +408,10 @@ namespace Trajectories
             }
         }
 
-        private static IEnumerable<bool> ComputeTrajectoryIncrement()
+        private IEnumerable<bool> ComputeTrajectoryIncrement()
         {
             // create new VesselState from vessel
-            VesselState state = new VesselState(Trajectories.AttachedVessel);
+            VesselState state = new VesselState(AttachedVessel);
 
             // iterate over patches until MaxPatchCount is reached
             for (int patchIdx = 0; patchIdx < Settings.MaxPatchCount; ++patchIdx)
@@ -415,10 +425,10 @@ namespace Trajectories
                     yield return false;
 
                 // if we have a patched conics solver, check for maneuver nodes
-                if (null != Trajectories.AttachedVessel.patchedConicSolver)
+                if (null != AttachedVessel.patchedConicSolver)
                 {
                     // search through maneuver nodes of the vessel
-                    List<ManeuverNode> maneuverNodes = Trajectories.AttachedVessel.patchedConicSolver.maneuverNodes;
+                    List<ManeuverNode> maneuverNodes = AttachedVessel.patchedConicSolver.maneuverNodes;
                     foreach (ManeuverNode node in maneuverNodes)
                     {
                         // if the maneuver node time corresponds to the end time of the last patch
@@ -478,7 +488,7 @@ namespace Trajectories
             return orbit;
         }
 
-        private static double FindOrbitBodyIntersection(Orbit orbit, double startTime, double endTime, double bodyAltitude)
+        private double FindOrbitBodyIntersection(Orbit orbit, double startTime, double endTime, double bodyAltitude)
         {
             // binary search of entry time in atmosphere
             // I guess an analytic solution could be found, but I'm too lazy to search it
@@ -510,7 +520,7 @@ namespace Trajectories
             return to;
         }
 
-        private static VesselState AddPatch_outState;
+        private VesselState AddPatch_outState;
 
         private struct SimulationState
         {
@@ -575,9 +585,9 @@ namespace Trajectories
             return state;
         }
 
-        private static IEnumerable<bool> AddPatch(VesselState startingState)
+        private IEnumerable<bool> AddPatch(VesselState startingState)
         {
-            if (null == Trajectories.AttachedVessel.patchedConicSolver)
+            if (null == AttachedVessel.patchedConicSolver)
             {
                 Util.LogWarning("patchedConicsSolver is null, Skipping.");
                 yield break;
@@ -596,14 +606,14 @@ namespace Trajectories
             // the flight plan does not always contain the first patches (before the first maneuver node),
             // so we populate it with the current orbit and associated encounters etc.
             List<Orbit> flightPlan = new List<Orbit>();
-            for (Orbit orbit = Trajectories.AttachedVessel.orbit; orbit != null && orbit.activePatch; orbit = orbit.nextPatch)
+            for (Orbit orbit = AttachedVessel.orbit; orbit != null && orbit.activePatch; orbit = orbit.nextPatch)
             {
-                if (Trajectories.AttachedVessel.patchedConicSolver.flightPlan.Contains(orbit))
+                if (AttachedVessel.patchedConicSolver.flightPlan.Contains(orbit))
                     break;
                 flightPlan.Add(orbit);
             }
 
-            foreach (Orbit orbit in Trajectories.AttachedVessel.patchedConicSolver.flightPlan)
+            foreach (Orbit orbit in AttachedVessel.patchedConicSolver.flightPlan)
             {
                 flightPlan.Add(orbit);
             }
@@ -741,7 +751,7 @@ namespace Trajectories
                 }
                 else
                 {
-                    if (patch.StartingState.ReferenceBody != Trajectories.AttachedVessel.mainBody)
+                    if (patch.StartingState.ReferenceBody != AttachedVessel.mainBody)
                     {
                         // currently, we can't handle predictions for another body, so we stop
                         AddPatch_outState = null;
