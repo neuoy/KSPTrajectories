@@ -184,7 +184,8 @@ namespace Trajectories
             foreach (KeyValuePair<string, Entry> p in entries)
             {
                 Entry e = p.Value;
-                double time = Util.Microseconds(e.prev_time / e.prev_calls);
+                double time = e.prev_calls > 0L ? Util.Microseconds(e.prev_time / e.prev_calls) : 0d;
+                double avg = e.tot_calls > 0L ? Util.Microseconds(e.tot_time / e.tot_calls) : 0d;
 
 #if PROFILER_TELEMETRY
                 Telemetry.Send(p.Key + "_time", time);
@@ -193,16 +194,21 @@ namespace Trajectories
 
                 if (e.prev_calls > 0L)
                 {
-                    e.last_txt = time.ToString("F2") + "µs";
+                    e.last_txt = time > 1e6d ? (time * 1e-6).ToString("F2") + "s" :
+                                time > 1e3d ? (time * 1e-3).ToString("F2") + "ms" :
+                                time > 0d ? time.ToString("F2") + "µs" : "";
                     e.calls_txt = e.prev_calls.ToString();
                 }
                 else if (show_zero)
                 {
-                    e.last_txt = "µs";
+                    e.last_txt = "";
                     e.calls_txt = "0";
                 }
 
-                e.avg_txt = (e.tot_calls > 0L ? Util.Microseconds(e.tot_time / e.tot_calls).ToString("F2") : "") + "µs";
+                e.avg_txt = avg > 1e6d ? (avg * 1e-6).ToString("F2") + "s" :
+                            avg > 1e3d ? (avg * 1e-3).ToString("F2") + "ms" :
+                            avg > 0d ? avg.ToString("F2") + "µs" : "";
+
                 e.avg_calls_txt = tot_frames > 0L ? ((float)e.tot_calls / (float)tot_frames).ToString("F3") : "0";
             }
 
