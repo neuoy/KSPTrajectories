@@ -151,8 +151,13 @@ namespace Trajectories
         {
             patch = _trajectory.Patches.LastOrDefault();
 
-            if ((!Util.IsFlight && !Util.IsTrackingStation) || !_trajectory.IsVesselAttached || !_trajectory.TargetProfile.WorldPosition.HasValue ||
-                patch == null || !patch.ImpactPosition.HasValue || patch.StartingState.ReferenceBody != _trajectory.TargetProfile.Body || !Ready)
+            if (!Util.IsFlight && !Util.IsTrackingStation ||
+                !_trajectory.AttachedVessel != FlightGlobals.ActiveVessel ||
+                !_trajectory.IsVesselAttached ||
+                !_trajectory.TargetProfile.WorldPosition.HasValue ||
+                patch?.ImpactPosition == null ||
+                patch.StartingState.ReferenceBody != _trajectory.TargetProfile.Body ||
+                !Ready)
             {
                 SetDisplayEnabled(false);
                 return;
