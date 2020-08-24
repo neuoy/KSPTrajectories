@@ -26,13 +26,13 @@ using UnityEngine;
 
 namespace Trajectories
 {
-    class FARModel: VesselAerodynamicModel
+    internal class FARModel: VesselAerodynamicModel
     {
         private MethodInfo FARAPI_CalculateVesselAeroForces;
 
-        public override string AerodynamicModelName { get { return "FAR"; } }
+        internal override string AerodynamicModelName { get { return "FAR"; } }
 
-        public FARModel(CelestialBody body, MethodInfo CalculateVesselAeroForces)
+        internal FARModel(CelestialBody body, MethodInfo CalculateVesselAeroForces)
             : base(body)
         {
             FARAPI_CalculateVesselAeroForces = CalculateVesselAeroForces;
@@ -56,7 +56,7 @@ namespace Trajectories
             return (Vector3)parameters[1];
         }
 
-        public override Vector2d PackForces(Vector3d forces, double altitudeAboveSea, double velocity)
+        internal override Vector2d PackForces(Vector3d forces, double altitudeAboveSea, double velocity)
         {
             double rho = StockAeroUtil.GetDensity(altitudeAboveSea, body_); // would be even better to use FAR method of computing the air density (which also depends on velocity), but this is already better than nothing
 
@@ -67,7 +67,7 @@ namespace Trajectories
             return new Vector2d(forces.x, forces.y);
         }
 
-        public override Vector3d UnpackForces(Vector2d packedForces, double altitudeAboveSea, double velocity)
+        internal override Vector3d UnpackForces(Vector2d packedForces, double altitudeAboveSea, double velocity)
         {
             double rho = StockAeroUtil.GetDensity(altitudeAboveSea, body_);
             double scale = velocity * velocity * rho;

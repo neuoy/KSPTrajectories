@@ -24,21 +24,21 @@ using UnityEngine;
 
 namespace Trajectories
 {
-    public class AeroForceCache
+    internal class AeroForceCache
     {
-        public double MaxVelocity { get; private set; }
-        public double MaxAoA { get; private set; }
-        public double MaxAltitude { get; private set; }
+        internal double MaxVelocity { get; private set; }
+        internal double MaxAoA { get; private set; }
+        internal double MaxAltitude { get; private set; }
 
-        public int VelocityResolution { get; private set; }
-        public int AoAResolution { get; private set; }
-        public int AltitudeResolution { get; private set; }
+        internal int VelocityResolution { get; private set; }
+        internal int AoAResolution { get; private set; }
+        internal int AltitudeResolution { get; private set; }
 
         private Vector2d[,,] InternalArray;
 
         private VesselAerodynamicModel Model;
 
-        public AeroForceCache(double maxCacheVelocity, double maxCacheAoA, double atmosphereDepth, int vRes, int aoaRes, int altRes, VesselAerodynamicModel model)
+        internal AeroForceCache(double maxCacheVelocity, double maxCacheAoA, double atmosphereDepth, int vRes, int aoaRes, int altRes, VesselAerodynamicModel model)
         {
             Model = model;
 
@@ -56,7 +56,7 @@ namespace Trajectories
                         InternalArray[v, a, m] = new Vector2d(double.NaN, double.NaN);
         }
 
-        public Vector3d GetForce(double velocity, double angleOfAttack, double altitude)
+        internal Vector3d GetForce(double velocity, double angleOfAttack, double altitude)
         {
             double vFrac = (velocity / MaxVelocity * (double)(InternalArray.GetLength(0) - 1));
             int vFloor = Math.Max(0, Math.Min(InternalArray.GetLength(0) - 2, (int)vFrac));

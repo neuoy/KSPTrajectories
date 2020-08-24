@@ -25,9 +25,9 @@ using UnityEngine;
 
 namespace Trajectories
 {
-    public static class AerodynamicModelFactory
+    internal static class AerodynamicModelFactory
     {
-        public static VesselAerodynamicModel GetModel(CelestialBody body)
+        internal static VesselAerodynamicModel GetModel(CelestialBody body)
         {
             foreach (var loadedAssembly in AssemblyLoader.loadedAssemblies)
             {

@@ -28,12 +28,12 @@ using UnityEngine;
 namespace Trajectories
 {
     ///<summary> Abstracts the game aerodynamic computations to provide an unified interface whether the stock drag is used, or a supported mod is installed </summary>
-    public abstract class VesselAerodynamicModel
+    internal abstract class VesselAerodynamicModel
     {
         private double mass_;
-        public double Mass => mass_;
+        internal double Mass => mass_;
 
-        public abstract string AerodynamicModelName { get; }
+        internal abstract string AerodynamicModelName { get; }
 
         protected CelestialBody body_;
         private bool isValid;
@@ -41,12 +41,12 @@ namespace Trajectories
         private int referencePartCount = 0;
         private DateTime nextAllowedAutomaticUpdate = DateTime.Now;
 
-        public bool UseCache => Settings.UseCache;
+        internal bool UseCache => Settings.UseCache;
         protected AeroForceCache cachedForces;
 
-        public static bool Verbose { get; set; }
+        internal static bool Verbose { get; set; }
 
-        public static bool DebugParts { get; set; }
+        internal static bool DebugParts { get; set; }
 
         // constructor
         protected VesselAerodynamicModel(CelestialBody body)
@@ -95,7 +95,9 @@ namespace Trajectories
             return;
         }
 
-        public bool IsValidFor(CelestialBody body)
+        internal bool IsValidFor(CelestialBody body)
+        internal void Invalidate() => isValid = false;
+
         {
             if (!Trajectories.IsVesselAttached || body_ != body)
                 return false;
@@ -121,8 +123,6 @@ namespace Trajectories
             return isValid;
         }
 
-        public void Invalidate() => isValid = false;
-
         private double ComputeReferenceDrag()
         {
             Vector3 forces = ComputeForces(3000, new Vector3d(3000.0, 0, 0), new Vector3(0, 1, 0), 0);
@@ -133,7 +133,7 @@ namespace Trajectories
         /// Returns the total aerodynamic forces that would be applied on the vessel if it was at bodySpacePosition with bodySpaceVelocity relatively to the specified celestial body
         /// This method makes use of the cache if available, otherwise it will call ComputeForces.
         /// </summary>
-        public Vector3d GetForces(CelestialBody body, Vector3d bodySpacePosition, Vector3d airVelocity, double angleOfAttack)
+        internal Vector3d GetForces(CelestialBody body, Vector3d bodySpacePosition, Vector3d airVelocity, double angleOfAttack)
         {
             if (body != Trajectories.AttachedVessel.mainBody)
                 throw new Exception("Can't predict aerodynamic forces on another body in current implementation");
@@ -167,7 +167,7 @@ namespace Trajectories
         /// Compute the aerodynamic forces that would be applied to the vessel if it was in the specified situation (air velocity, altitude and angle of attack).
         /// </summary>
         /// <returns>The computed aerodynamic forces in world space</returns>
-        public Vector3d ComputeForces(double altitude, Vector3d airVelocity, Vector3d vup, double angleOfAttack)
+        internal Vector3d ComputeForces(double altitude, Vector3d airVelocity, Vector3d vup, double angleOfAttack)
         {
             Profiler.Start("ComputeForces");
             if (!Trajectories.IsVesselAttached || !Trajectories.AttachedVessel.mainBody.atmosphere || altitude >= body_.atmosphereDepth)
@@ -245,11 +245,11 @@ namespace Trajectories
         /// Aerodynamic forces are roughly proportional to rho and squared air velocity, so we divide by these values to get something that can be linearly interpolated (the reverse operation is then applied after interpolation)
         /// This operation is optional but should slightly increase the cache accuracy
         /// </summary>
-        public virtual Vector2d PackForces(Vector3d forces, double altitudeAboveSea, double velocity) => new Vector2d(forces.x, forces.y);
+        internal virtual Vector2d PackForces(Vector3d forces, double altitudeAboveSea, double velocity) => new Vector2d(forces.x, forces.y);
 
         /// <summary>
         /// See PackForces
         /// </summary>
-        public virtual Vector3d UnpackForces(Vector2d packedForces, double altitudeAboveSea, double velocity) => new Vector3d(packedForces.x, packedForces.y, 0.0);
+        internal virtual Vector3d UnpackForces(Vector2d packedForces, double altitudeAboveSea, double velocity) => new Vector3d(packedForces.x, packedForces.y, 0.0);
     }
 }

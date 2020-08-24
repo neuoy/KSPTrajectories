@@ -25,18 +25,18 @@ using UnityEngine;
 
 namespace Trajectories
 {
-    class StockModel: VesselAerodynamicModel
+    internal class StockModel: VesselAerodynamicModel
     {
-        public override string AerodynamicModelName { get { return Localizer.Format("#autoLOC_Trajectories_Stock"); } }
+        internal override string AerodynamicModelName { get { return Localizer.Format("#autoLOC_Trajectories_Stock"); } }
 
-        public StockModel(CelestialBody body) : base( body) { }
+        internal StockModel(CelestialBody body) : base( body) { }
 
         protected override Vector3d ComputeForces_Model(Vector3d airVelocity, double altitude)
         {
             return StockAeroUtil.SimAeroForce(airVelocity, altitude);
         }
 
-        public override Vector2d PackForces(Vector3d forces, double altitudeAboveSea, double velocity)
+        internal override Vector2d PackForces(Vector3d forces, double altitudeAboveSea, double velocity)
         {
             double rho = StockAeroUtil.GetDensity(altitudeAboveSea, body_);
             if (rho < 0.0000000001)
@@ -46,7 +46,7 @@ namespace Trajectories
             return new Vector2d(forces.x, forces.y);
         }
 
-        public override Vector3d UnpackForces(Vector2d packedForces, double altitudeAboveSea, double velocity)
+        internal override Vector3d UnpackForces(Vector2d packedForces, double altitudeAboveSea, double velocity)
         {
             double rho = StockAeroUtil.GetDensity(altitudeAboveSea, body_);
             double scale = velocity * velocity * rho;
