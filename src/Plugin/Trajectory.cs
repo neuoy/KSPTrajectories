@@ -513,31 +513,6 @@ namespace Trajectories
         }
 
         /// <summary>
-        /// Integration step function for Verlet integration
-        /// </summary>
-        /// <param name="state">Position+Velocity of the current time step</param>
-        /// <param name="accelerationFunc">Functor that returns the acceleration for a given Position+Velocity</param>
-        /// <param name="dt">Time step interval</param>
-        /// <param name="accel">Stores the value of the accelerationFunc at the current time step</param>
-        /// <returns></returns>
-        private static SimulationState VerletStep(SimulationState state, Func<Vector3d, Vector3d, Vector3d> accelerationFunc, double dt, out Vector3d accel)
-        {
-
-            Profiler.Start("accelerationFunc outside");
-            accel = accelerationFunc(state.position, state.velocity);
-            Profiler.Stop("accelerationFunc outside");
-
-            Vector3d prevPos = state.position - dt * state.velocity;
-
-            SimulationState nextState;
-
-            nextState.position = 2.0 * state.position - prevPos + accel * (dt * dt);
-            nextState.velocity = (nextState.position - state.position) / dt;
-
-            return nextState;
-        }
-
-        /// <summary>
         /// Integration step function for Runge-Kutta 4 integration
         /// </summary>
         /// <param name="state">Position+Velocity of the current time step</param>
@@ -991,14 +966,6 @@ namespace Trajectories
             float angle = (float)(-(time - Planetarium.GetUniversalTime()) * body.angularVelocity.magnitude / Math.PI * 180.0);
             Quaternion bodyRotation = Quaternion.AngleAxis(angle, body.angularVelocity.normalized);
             return bodyRotation * relativePosition;
-        }
-
-        internal static Vector3d GetWorldPositionAtUT(Orbit orbit, double ut)
-        {
-            Vector3d worldPos = Util.SwapYZ(orbit.getRelativePositionAtUT(ut));
-            if (orbit.referenceBody != FlightGlobals.Bodies[0])
-                worldPos += GetWorldPositionAtUT(orbit.referenceBody.orbit, ut);
-            return worldPos;
         }
     }
 }
