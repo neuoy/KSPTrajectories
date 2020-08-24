@@ -25,16 +25,13 @@ using UnityEngine;
 
 namespace Trajectories
 {
-    internal class StockModel: VesselAerodynamicModel
+    internal class StockModel : VesselAerodynamicModel
     {
-        internal override string AerodynamicModelName { get { return Localizer.Format("#autoLOC_Trajectories_Stock"); } }
+        internal override string AerodynamicModelName => Localizer.Format("#autoLOC_Trajectories_Stock");
 
-        internal StockModel(CelestialBody body) : base( body) { }
+        internal StockModel(CelestialBody body) : base(body) { }
 
-        protected override Vector3d ComputeForces_Model(Vector3d airVelocity, double altitude)
-        {
-            return StockAeroUtil.SimAeroForce(airVelocity, altitude);
-        }
+        protected override Vector3d ComputeForces_Model(Vector3d airVelocity, double altitude) => StockAeroUtil.SimAeroForce(airVelocity, altitude);
 
         internal override Vector2d PackForces(Vector3d forces, double altitudeAboveSea, double velocity)
         {

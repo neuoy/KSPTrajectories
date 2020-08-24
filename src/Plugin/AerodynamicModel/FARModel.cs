@@ -26,17 +26,14 @@ using UnityEngine;
 
 namespace Trajectories
 {
-    internal class FARModel: VesselAerodynamicModel
+    internal class FARModel : VesselAerodynamicModel
     {
         private MethodInfo FARAPI_CalculateVesselAeroForces;
 
-        internal override string AerodynamicModelName { get { return "FAR"; } }
+        internal override string AerodynamicModelName => "FAR";
 
         internal FARModel(CelestialBody body, MethodInfo CalculateVesselAeroForces)
-            : base(body)
-        {
-            FARAPI_CalculateVesselAeroForces = CalculateVesselAeroForces;
-        }
+            : base(body) => FARAPI_CalculateVesselAeroForces = CalculateVesselAeroForces;
 
         protected override Vector3d ComputeForces_Model(Vector3d airVelocity, double altitude)
         {
@@ -51,7 +48,7 @@ namespace Trajectories
             }
 
             Vector3 worldAirVel = new Vector3((float)airVelocity.x, (float)airVelocity.y, (float)airVelocity.z);
-            var parameters = new object[] { Trajectories.AttachedVessel, Vector3.zero, Vector3.zero, worldAirVel, altitude };
+            object[] parameters = new object[] { Trajectories.AttachedVessel, Vector3.zero, Vector3.zero, worldAirVel, altitude };
             FARAPI_CalculateVesselAeroForces.Invoke(null, parameters);
             return (Vector3)parameters[1];
         }

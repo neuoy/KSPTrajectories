@@ -29,22 +29,22 @@ namespace Trajectories
     {
         internal static VesselAerodynamicModel GetModel(CelestialBody body)
         {
-            foreach (var loadedAssembly in AssemblyLoader.loadedAssemblies)
+            foreach (AssemblyLoader.LoadedAssembly loadedAssembly in AssemblyLoader.loadedAssemblies)
             {
                 try
                 {
                     switch (loadedAssembly.name)
                     {
                         case "FerramAerospaceResearch":
-                            var FARAPIType = loadedAssembly.assembly.GetType("FerramAerospaceResearch.FARAPI");
+                            Type FARAPIType = loadedAssembly.assembly.GetType("FerramAerospaceResearch.FARAPI");
 
-                                var FARAPI_CalculateVesselAeroForces = FARAPIType.GetMethodEx("CalculateVesselAeroForces", BindingFlags.Public | BindingFlags.Static, new Type[] { typeof(Vessel), typeof(Vector3).MakeByRefType(), typeof(Vector3).MakeByRefType(), typeof(Vector3), typeof(double) });
+                            MethodInfo FARAPI_CalculateVesselAeroForces = FARAPIType.GetMethodEx("CalculateVesselAeroForces", BindingFlags.Public | BindingFlags.Static, new Type[] { typeof(Vessel), typeof(Vector3).MakeByRefType(), typeof(Vector3).MakeByRefType(), typeof(Vector3), typeof(double) });
 
                             return new FARModel(body, FARAPI_CalculateVesselAeroForces);
 
-                        //case "MyModAssembly":
-                        // implement here your atmo mod detection
-                        // return new MyModModel(body, any other parameter);
+                            //case "MyModAssembly":
+                            // implement your atmospheric mod detection here
+                            // return new MyModModel(body, any other parameter);
                     }
                 }
                 catch (Exception e)
@@ -53,7 +53,7 @@ namespace Trajectories
                 }
             }
 
-            // Using stock model if no other aerodynamic is detected or if any error occurred
+            // Using stock model if no other aerodynamic model is detected or if any error occurred
             return new StockModel(body);
         }
     }
