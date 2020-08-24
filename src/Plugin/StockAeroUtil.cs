@@ -151,21 +151,22 @@ namespace Trajectories
 
             double soundSpeed = body.GetSpeedOfSound(pressure, rho);
             double mach = v_wrld_vel.magnitude / soundSpeed;
-            if (mach > 25.0) { mach = 25.0; }
+            if (mach > 25.0)
+                mach = 25.0;
 
             // Loop through all parts, accumulating drag and lift.
             for (int i = 0; i < Trajectories.AttachedVessel.Parts.Count; ++i)
             {
                 // need checks on shielded components
                 Part p = Trajectories.AttachedVessel.Parts[i];
-                #if DEBUG
+#if DEBUG
                 TrajectoriesDebug partDebug = VesselAerodynamicModel.DebugParts ? p.FindModuleImplementing<TrajectoriesDebug>() : null;
                 if (partDebug != null)
                 {
                     partDebug.Drag = 0;
                     partDebug.Lift = 0;
                 }
-                #endif
+#endif
 
                 if (p.ShieldedFromAirstream || p.Rigidbody == null)
                 {
@@ -245,7 +246,7 @@ namespace Trajectories
                 {
                     partDebug.Drag += (float)dragForce.magnitude;
                 }
-                #endif
+#endif
                 total_drag += dragForce;
 
                 // If it isn't a wing or lifter, get body lift.
@@ -271,7 +272,7 @@ namespace Trajectories
                 // Should catch control surface as it is a subclass
                 for (int j = 0; j < p.Modules.Count; ++j)
                 {
-                    var m = p.Modules[j];
+                    PartModule m = p.Modules[j];
                     float mcs_mod;
                     if (m is ModuleLiftingSurface)
                     {
@@ -293,13 +294,13 @@ namespace Trajectories
                         total_lift += local_lift;
                         total_drag += local_drag;
 
-                        #if DEBUG
+#if DEBUG
                         if (partDebug != null)
                         {
                             partDebug.Lift += (float)local_lift.magnitude;
                             partDebug.Drag += (float)local_drag.magnitude;
                         }
-                        #endif
+#endif
                     }
                 }
 

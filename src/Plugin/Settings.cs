@@ -55,9 +55,6 @@ namespace Trajectories
         [Persistent(Default: false)]
         internal static bool BodyFixedMode { get; set; }
 
-        [Persistent(Default: true)]
-        internal static bool AutoUpdateAerodynamicModel { get; set; }
-
         [Persistent(Default: false)]
         internal static bool MainGUIEnabled { get; set; }
 
@@ -72,9 +69,6 @@ namespace Trajectories
 
         [Persistent(Default: 4)]
         internal static int MaxPatchCount { get; set; }
-
-        [Persistent(Default: 15)]
-        internal static int MaxFramesPerPatch { get; set; }
 
         [Persistent(Default: true)]
         internal static bool UseCache { get; set; }

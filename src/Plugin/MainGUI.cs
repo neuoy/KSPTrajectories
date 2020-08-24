@@ -364,7 +364,7 @@ namespace Trajectories
             // create pages
             info_page = new DialogGUIVerticalLayout(false, true, 0, new RectOffset(), TextAnchor.UpperCenter,
                 new DialogGUIHorizontalLayout(
-                    new DialogGUIToggle(() => { return Util.IsPatchedConicsAvailable ? Settings.DisplayTrajectories : false; },
+                    new DialogGUIToggle(() => { return Util.IsPatchedConicsAvailable && Settings.DisplayTrajectories; },
                         Localizer.Format("#autoLOC_Trajectories_ShowTrajectory"), OnButtonClick_DisplayTrajectories),
                     new DialogGUIToggle(() => { return Settings.DisplayTrajectoriesInFlight; },
                         Localizer.Format("#autoLOC_Trajectories_InFlight"), OnButtonClick_DisplayTrajectoriesInFlight)),
@@ -501,27 +501,18 @@ namespace Trajectories
                 );
 
             settings_page = new DialogGUIVerticalLayout(false, true, 0, new RectOffset(), TextAnchor.UpperCenter,
-                new DialogGUIToggle(() => { return ToolbarManager.ToolbarAvailable ? Settings.UseBlizzyToolbar : false; },
+                new DialogGUIToggle(() => { return ToolbarManager.ToolbarAvailable && Settings.UseBlizzyToolbar; },
                     Localizer.Format("#autoLOC_Trajectories_UseBlizzyToolbar"), OnButtonClick_UseBlizzyToolbar),
                 new DialogGUIToggle(() => { return Settings.DefaultDescentIsRetro; },
                     Localizer.Format("#autoLOC_Trajectories_DefaultDescent"), OnButtonClick_UseDescentRetro),
                 new DialogGUIHorizontalLayout(false, false, 0, new RectOffset(), TextAnchor.MiddleCenter,
                     new DialogGUIToggle(() => { return Settings.UseCache; },
-                        Localizer.Format("#autoLOC_Trajectories_UseCache"), OnButtonClick_UseCache),
-                    new DialogGUIToggle(() => { return Settings.AutoUpdateAerodynamicModel; },
-                        Localizer.Format("#autoLOC_Trajectories_AutoUpdate"), OnButtonClick_AutoUpdateAerodynamicModel),
-                    new DialogGUIButton(Localizer.Format("#autoLOC_Trajectories_Update"),
-                        OnButtonClick_Update, BUTTON_WIDTH, BUTTON_HEIGHT, false)),
+                        Localizer.Format("#autoLOC_Trajectories_UseCache"), OnButtonClick_UseCache)),
                 new DialogGUIHorizontalLayout(
                     new DialogGUILabel(Localizer.Format("#autoLOC_Trajectories_MaxPatches"), true),
                     new DialogGUISlider(() => { return Settings.MaxPatchCount; },
                         3f, 10f, true, SETTINGS_SLIDER_WIDTH + 10f, -1, OnSliderSet_MaxPatches),
                     new DialogGUILabel(() => { return Settings.MaxPatchCount.ToString(); }, 25f)),
-                new DialogGUIHorizontalLayout(
-                    new DialogGUILabel(Localizer.Format("#autoLOC_Trajectories_MaxFramesPatch"), true),
-                    new DialogGUISlider(() => { return Settings.MaxFramesPerPatch; },
-                        1f, 50f, true, SETTINGS_SLIDER_WIDTH + 10f, -1, OnSliderSet_MaxFramesPatch),
-                    new DialogGUILabel(() => { return Settings.MaxFramesPerPatch.ToString(); }, 25f)),
                 new DialogGUIHorizontalLayout(
                     new DialogGUILabel(Localizer.Format("#autoLOC_Trajectories_IntegrationStep"), true),
                     new DialogGUISlider(() => { return IntegratorSliderPos; },
@@ -821,10 +812,6 @@ namespace Trajectories
 
         private static void OnButtonClick_UseDescentRetro(bool inState) => Settings.DefaultDescentIsRetro = inState;
 
-        private static void OnButtonClick_AutoUpdateAerodynamicModel(bool inState) => Settings.AutoUpdateAerodynamicModel = inState;
-
-        private static void OnButtonClick_Update() => Trajectory.InvalidateAerodynamicModel();
-
         private static void OnButtonClick_UseBlizzyToolbar(bool inState)
         {
             if (ToolbarManager.ToolbarAvailable)
@@ -1100,8 +1087,6 @@ namespace Trajectories
         // Callback methods are used by the Gui to retrieve information it needs either for displaying or setting values.
         private static void OnSliderSet_MaxPatches(float invalue) => Settings.MaxPatchCount = (int)invalue;
 
-        private static void OnSliderSet_MaxFramesPatch(float invalue) => Settings.MaxFramesPerPatch = (int)invalue;
-
         private static void OnSliderSet_IntegrationStep(float invalue) => IntegratorSliderPos = invalue;
 
         private static void OnSliderSet_EntryAngle(float invalue)
@@ -1293,12 +1278,12 @@ namespace Trajectories
         private static void UpdateSettingsPage()
         {
             // aerodynamic model
-            aerodynamic_model_txt = aerodynamic_model_hdrtxt + Trajectory.AerodynamicModelName;
+            aerodynamic_model_txt = aerodynamic_model_hdrtxt + Trajectories.AerodynamicModelName;
 
             // performance
             calculation_time_txt = calculation_time_hdrtxt +
-                string.Format("{0:0.0}ms | {1:0.0} %", Trajectory.ComputationTime,
-                    (Trajectory.ComputationTime / Trajectory.GameFrameTime) * 100.0f);
+                string.Format("{0:0.0}ms | {1:0.0} %    Patches {2:0}", Trajectory.ComputationTime,
+                    (Trajectory.ComputationTime / Trajectory.GameFrameTime) * 100.0d, Trajectory.CalculatedPatches);
 
             // num errors
             num_errors_txt = errors_hdrtxt + string.Format("{0:0}", Trajectory.ErrorCount);

@@ -19,6 +19,7 @@
 */
 
 using System.Linq;
+using KSP.Localization;
 using UnityEngine;
 
 namespace Trajectories
@@ -35,6 +36,13 @@ namespace Trajectories
 
         internal static Settings Settings { get; private set; }
 
+        /// <summary> The Aerodynamic Model used for atmospheric trajectory calculations </summary>
+        internal static VesselAerodynamicModel AerodynamicModel { get; private set; }
+
+        /// <returns> The name of the Aerodynamic Model </returns>
+        internal static string AerodynamicModelName => AerodynamicModel == null ? Localizer.Format("#autoLOC_Trajectories_NotLoaded") :
+                                                                                   AerodynamicModel.AerodynamicModelName;
+
         /// <summary> The vessel that trajectories is attached to </summary>
         internal static Vessel AttachedVessel { get; private set; }
 
@@ -42,7 +50,7 @@ namespace Trajectories
         internal static bool IsVesselAttached => AttachedVessel != null;
 
         /// <returns> True if trajectories is attached to a vessel and that the vessel also has parts </returns>
-        internal static bool VesselHasParts => IsVesselAttached ? AttachedVessel.Parts.Count != 0 : false;
+        internal static bool VesselHasParts => IsVesselAttached && AttachedVessel.Parts.Count != 0;
 
         //  constructor
         static Trajectories()
@@ -60,10 +68,12 @@ namespace Trajectories
 
             Util.DebugLog("");
 
-            //version = Util.ConfigValue(node, "version", Version);     // get saved version, defaults to current version if none
+            //version = Util.ConfigValue(node, "version", Version);             // get saved version, defaults to current version if none
 
-            Settings ??= new Settings();                          // get trajectories settings from the config.xml file if it exists or create a new one
-            if (Settings != null)
+            Settings ??= new Settings();                                // get trajectories settings from the config.xml file if it exists or create a new one
+            AerodynamicModel ??= AerodynamicModelFactory.GetModel();    // get aerodynamic model, searches for compatible API's
+
+            if (Settings != null && AerodynamicModel != null)
             {
                 Settings.Load();
 
@@ -93,11 +103,14 @@ namespace Trajectories
 
         internal void Update()
         {
-            if (Util.IsPaused || Settings == null || !Util.IsFlight)
+            if (Util.IsPaused || Settings == null || AerodynamicModel == null || !Util.IsFlight)
                 return;
 
             if (AttachedVessel != FlightGlobals.ActiveVessel)
                 AttachVessel();
+
+            if (!IsVesselAttached && !AerodynamicModel.Ready)
+                return;
 
             Trajectory.Update();
             MapOverlay.Update();
@@ -196,6 +209,12 @@ namespace Trajectories
                     TargetProfile.ManualText = module.ManualTargetTxt;
                     Util.Log("Profiles loaded");
                 }
+
+                // init aerodynamic model to new vessel
+#if DEBUG
+                ScreenMessages.PostScreenMessage("Trajectories aerodynamic model updated due to vessel change");
+#endif
+                AerodynamicModel.Init();
             }
         }
     }

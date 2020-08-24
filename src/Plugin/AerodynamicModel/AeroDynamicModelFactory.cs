@@ -27,7 +27,9 @@ namespace Trajectories
 {
     internal static class AerodynamicModelFactory
     {
-        internal static VesselAerodynamicModel GetModel(CelestialBody body)
+        /// <summary> Searches for compatible atmospheric mod API's and sets their required MethodInfo's </summary>
+        /// <returns> The aerodynamic model for a found API or the stock model if none  or an error occurs </returns>
+        internal static VesselAerodynamicModel GetModel()
         {
             foreach (AssemblyLoader.LoadedAssembly loadedAssembly in AssemblyLoader.loadedAssemblies)
             {
@@ -36,15 +38,17 @@ namespace Trajectories
                     switch (loadedAssembly.name)
                     {
                         case "FerramAerospaceResearch":
-                            Type FARAPIType = loadedAssembly.assembly.GetType("FerramAerospaceResearch.FARAPI");
-
-                            MethodInfo FARAPI_CalculateVesselAeroForces = FARAPIType.GetMethodEx("CalculateVesselAeroForces", BindingFlags.Public | BindingFlags.Static, new Type[] { typeof(Vessel), typeof(Vector3).MakeByRefType(), typeof(Vector3).MakeByRefType(), typeof(Vector3), typeof(double) });
-
-                            return new FARModel(body, FARAPI_CalculateVesselAeroForces);
-
-                            //case "MyModAssembly":
+                            return new FARModel(loadedAssembly.assembly.GetType("FerramAerospaceResearch.FARAPI").
+                                GetMethodEx("CalculateVesselAeroForces", BindingFlags.Public | BindingFlags.Static,
+                                new Type[] {
+                                    typeof(Vessel),
+                                    typeof(Vector3).MakeByRefType(),
+                                    typeof(Vector3).MakeByRefType(),
+                                    typeof(Vector3),
+                                    typeof(double)
+                                }));
+                            // case "MyModAssembly":
                             // implement your atmospheric mod detection here
-                            // return new MyModModel(body, any other parameter);
                     }
                 }
                 catch (Exception e)
@@ -52,9 +56,9 @@ namespace Trajectories
                     Util.LogError("Failed to interface with assembly {0}, exception was {1}, using stock model instead", loadedAssembly.name, e.ToString());
                 }
             }
-
             // Using stock model if no other aerodynamic model is detected or if any error occurred
-            return new StockModel(body);
+            return new StockModel();
         }
     }
 }
+

@@ -30,38 +30,36 @@ namespace Trajectories
     ///<summary> Abstracts the game aerodynamic computations to provide an unified interface whether the stock drag is used, or a supported mod is installed </summary>
     internal abstract class VesselAerodynamicModel
     {
-        internal abstract string AerodynamicModelName { get; }
-        protected CelestialBody Body { get; private set; }
-        internal double Mass { get; private set; }
-
-        private bool isValid;
-        private double referenceDrag = 0;
-        private int referencePartCount = 0;
-        private DateTime nextAllowedAutomaticUpdate = DateTime.Now;
+        private int part_count = 0;
+        private double reference_drag = 0;
+        private double next_update_delay = Util.Clocks;
 
         protected AeroForceCache cachedForces;
 
-        internal static bool Verbose { get; set; }
-
+        internal abstract string AerodynamicModelName { get; }
+        internal CelestialBody Body { get; private set; }
+        internal double Mass { get; private set; }
+        internal bool Ready { get; private set; }
         internal static bool DebugParts { get; set; }
 
         // constructor
-        protected VesselAerodynamicModel(CelestialBody body)
+        protected VesselAerodynamicModel()
         {
-            Body = body;
+            Ready = false;
+        }
 
-            referencePartCount = Trajectories.AttachedVessel.Parts.Count;
+        internal void Init()
+        {
+            Body = Trajectories.AttachedVessel.mainBody;
+            part_count = Trajectories.AttachedVessel.Parts.Count;
 
             UpdateVesselMass();
-
             InitCache();
+            Ready = true;
         }
 
         internal void UpdateVesselMass()
         {
-            Profiler.Start("AeroModel.UpdateVesselMass");
-            // mass_ = vessel_.totalMass;       // this kills performance on vessel load, so we don't do that anymore
-
             double mass = 0d;
             foreach (Part part in Trajectories.AttachedVessel.Parts)
             {
@@ -72,7 +70,6 @@ namespace Trajectories
                 mass += partMass;
             }
             Mass = mass;
-            Profiler.Stop("AeroModel.UpdateVesselMass");
         }
 
         private void InitCache()
@@ -87,44 +84,44 @@ namespace Trajectories
             int altitudeResolution = 32;
 
             cachedForces = new AeroForceCache(maxCacheVelocity, maxCacheAoA, Body.atmosphereDepth, velocityResolution, angleOfAttackResolution, altitudeResolution, this);
-
-            isValid = true;
-
-            return;
         }
 
-        internal bool IsValidFor(CelestialBody body)
-        internal void Invalidate() => isValid = false;
-
+        internal void Update()
         {
-            if (!Trajectories.IsVesselAttached || Body != body)
-                return false;
-
-            if (Settings.AutoUpdateAerodynamicModel)
+            if (Body != Trajectories.AttachedVessel.mainBody || part_count != Trajectories.AttachedVessel.Parts.Count)
             {
-                double newRefDrag = ComputeReferenceDrag();
-                if (referenceDrag == 0)
-                {
-                    referenceDrag = newRefDrag;
-                }
-                double ratio = Math.Max(newRefDrag, referenceDrag) / Math.Max(1, Math.Min(newRefDrag, referenceDrag));
-                if (ratio > 1.2 && DateTime.Now > nextAllowedAutomaticUpdate || referencePartCount != Trajectories.AttachedVessel.Parts.Count)
-                {
-                    nextAllowedAutomaticUpdate = DateTime.Now.AddSeconds(10); // limit updates frequency (could make the game almost unresponsive on some computers)
 #if DEBUG
-                    ScreenMessages.PostScreenMessage("Trajectory aerodynamic model auto-updated");
+                ScreenMessages.PostScreenMessage("Trajectories aerodynamic model updated due to body or parts change");
 #endif
-                    isValid = false;
-                }
+                Init();
+                return;
             }
 
-            return isValid;
-        }
+            // limit update frequency (could make the game almost unresponsive on some computers)
+            if (Util.ElapsedSeconds(next_update_delay) < 5d)
+            {
+                UpdateVesselMass();
+                return;
+            }
 
-        private double ComputeReferenceDrag()
-        {
-            Vector3 forces = ComputeForces(3000, new Vector3d(3000.0, 0, 0), new Vector3(0, 1, 0), 0);
-            return forces.sqrMagnitude;
+            next_update_delay = Util.Clocks;
+
+            Vector3d forces = ComputeForces(3000d, new Vector3d(3000d, 0d, 0d), new Vector3d(0d, 1d, 0d), 0d);
+            double newRefDrag = forces.sqrMagnitude;
+            if (reference_drag == 0d)
+            {
+                reference_drag = newRefDrag;
+                UpdateVesselMass();
+                return;
+            }
+
+            if ((Math.Max(newRefDrag, reference_drag) / Math.Max(1d, Math.Min(newRefDrag, reference_drag))) > 1.2d)
+            {
+#if DEBUG
+                ScreenMessages.PostScreenMessage("Trajectories aerodynamic model updated due to ref drag ratio > 1.2");
+#endif
+                Init();
+            }
         }
 
         /// <summary>

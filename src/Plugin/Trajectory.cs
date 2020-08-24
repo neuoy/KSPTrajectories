@@ -107,11 +107,6 @@ namespace Trajectories
 
         private const double MAX_INCREMENT_TIME = 2.0d;      // in ms
 
-        private static VesselAerodynamicModel aerodynamicModel_;
-
-        internal static string AerodynamicModelName => aerodynamicModel_ == null ? Localizer.Format("#autoLOC_Trajectories_NotLoaded") :
-                                                                                   aerodynamicModel_.AerodynamicModelName;
-
         private static List<Patch> patchesBackBuffer_ = new List<Patch>();
 
         internal static List<Patch> Patches { get; private set; } = new List<Patch>();
@@ -126,16 +121,15 @@ namespace Trajectories
 
         private static double increment_time;
 
-        //private static double computation_time;
-
-        ///<summary> Trajectory calculation time of last frame in ms </summary>
+        ///<summary> Trajectory calculation time for last frame in ms </summary>
         internal static double ComputationTime { get; private set; }
 
-        //private static double total_time;
+        private static double patches_calculated;
+
+        ///<summary> Trajectory patches calculated </summary>
+        internal static double CalculatedPatches { get; private set; }
 
         private static double frame_time;
-
-        //private static double game_frame_time;
 
         ///<summary> Time of game frame in ms </summary>
         internal static double GameFrameTime { get; private set; }
@@ -163,8 +157,11 @@ namespace Trajectories
             if (Settings.DisplayTrajectories || Settings.AlwaysUpdate || TargetProfile.WorldPosition.HasValue)
                 ComputeTrajectory();
 
-            // compute computation time
+            // compute computation in frame time
             ComputationTime = ComputationTime * 0.9d + increment_time * 0.1d;
+
+            // compute total patches calculated
+            CalculatedPatches = CalculatedPatches * 0.9d + patches_calculated * 0.1d;
 
             //Profiler.Stop("Trajectory.Update");
         }
@@ -331,13 +328,12 @@ namespace Trajectories
         }
 #endif
 
-        internal static void InvalidateAerodynamicModel() => aerodynamicModel_.Invalidate();
-
         internal static void ComputeTrajectory()
         {
-            if (!Trajectories.VesselHasParts || Trajectories.AttachedVessel.LandedOrSplashed)
+            if (!Trajectories.VesselHasParts || Trajectories.AttachedVessel.LandedOrSplashed || !Trajectories.AerodynamicModel.Ready)
             {
                 increment_time = 0d;
+                patches_calculated = 0d;
                 Patches.Clear();
                 return;
             }
@@ -347,16 +343,13 @@ namespace Trajectories
                 // start of trajectory calculation in current frame
                 increment_time = Util.Clocks;
 
-                // create or update aerodynamic model
-                if (aerodynamicModel_ == null || !aerodynamicModel_.IsValidFor(Trajectories.AttachedVessel.mainBody))
-                    aerodynamicModel_ = AerodynamicModelFactory.GetModel(Trajectories.AttachedVessel.mainBody);
-                else
-                    aerodynamicModel_.UpdateVesselMass();
 
                 // if there is no ongoing partial computation, start a new one
                 if (partialComputation_ == null)
                 {
                     //total_time = Util.Clocks;
+                // update aerodynamic model
+                Trajectories.AerodynamicModel.Update();
 
                     // restart the public buffers
                     patchesBackBuffer_.Clear();
@@ -390,6 +383,7 @@ namespace Trajectories
 
                 // how long did the calculation in this frame take?
                 increment_time = Util.ElapsedMilliseconds(increment_time);
+                patches_calculated = Patches.Count;
             }
             catch (Exception)
             {
@@ -642,6 +636,7 @@ namespace Trajectories
                     patch.SpaceOrbit.getRelativePositionAtUT(patch.StartingState.Time + 1.0).magnitude
                     ) - body.Radius;
             }
+
             if (minAltitude < maxAtmosphereAltitude)
             {
                 double entryTime;
@@ -785,8 +780,6 @@ namespace Trajectories
                     Vector3d lastPositionStored = new Vector3d();
                     bool hitGround = false;
                     int iteration = 0;
-                    int incrementIterations = 0;
-                    int minIterationsPerIncrement = maxIterations / Settings.MaxFramesPerPatch;
 
                     #region Acceleration Functor
 
@@ -805,10 +798,10 @@ namespace Trajectories
                         double aoa = DescentProfile.GetAngleOfAttack(body, position, vel_air) ?? 0d;
 
                         Profiler.Start("GetForces");
-                        Vector3d force_aero = aerodynamicModel_.GetForces(body, position, vel_air, aoa);
+                        Vector3d force_aero = Trajectories.AerodynamicModel.GetForces(body, position, vel_air, aoa);
                         Profiler.Stop("GetForces");
 
-                        Vector3d accel = accel_g + force_aero / aerodynamicModel_.Mass;
+                        Vector3d accel = accel_g + force_aero / Trajectories.AerodynamicModel.Mass;
 
                         Profiler.Stop("accelerationFunc inside");
                         return accel;
@@ -821,14 +814,6 @@ namespace Trajectories
                     while (true)
                     {
                         ++iteration;
-                        ++incrementIterations;
-
-                        if (incrementIterations > minIterationsPerIncrement && Util.ElapsedMilliseconds(increment_time) > MAX_INCREMENT_TIME)
-                        {
-                            yield return false;
-                            incrementIterations = 0;
-                        }
-
 
                         double R = state.position.magnitude;
                         double altitude = R - body.Radius;
@@ -891,6 +876,8 @@ namespace Trajectories
                         Vector3d lastAccel = currentAccel;
                         SimulationState lastState = state;
 
+                        #region Integration Step
+
                         Profiler.Start("IntegrationStep");
 
                         // Verlet integration (more precise than using the velocity)
@@ -913,14 +900,15 @@ namespace Trajectories
                         state.velocity += 0.5 * TimeWarp.fixedDeltaTime * (currentAccel - lastAccel);
 
                         Profiler.Stop("IntegrationStep");
+                        #endregion
 
                         // calculate gravity and aerodynamic force
                         Vector3d gravityAccel = lastState.position * (-body.gravParameter / (R * R * R));
-                        Vector3d aerodynamicForce = (currentAccel - gravityAccel) / aerodynamicModel_.Mass;
+                        Vector3d aerodynamicForce = (currentAccel - gravityAccel) / Trajectories.AerodynamicModel.Mass;
 
                         // acceleration in the vessel reference frame is acceleration - gravityAccel
                         maxAccelBackBuffer_ = Math.Max(
-                            (float)(aerodynamicForce.magnitude / aerodynamicModel_.Mass),
+                            (float)(aerodynamicForce.magnitude / Trajectories.AerodynamicModel.Mass),
                             maxAccelBackBuffer_);
 
                         #region Impact Calculation

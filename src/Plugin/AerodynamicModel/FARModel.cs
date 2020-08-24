@@ -28,12 +28,12 @@ namespace Trajectories
 {
     internal class FARModel : VesselAerodynamicModel
     {
-        private MethodInfo FARAPI_CalculateVesselAeroForces;
+        private readonly MethodInfo FARAPI_CalculateVesselAeroForces;
 
         internal override string AerodynamicModelName => "FAR";
 
-        internal FARModel(CelestialBody body, MethodInfo CalculateVesselAeroForces)
-            : base(body) => FARAPI_CalculateVesselAeroForces = CalculateVesselAeroForces;
+        internal FARModel(MethodInfo CalculateVesselAeroForces)
+            : base() => FARAPI_CalculateVesselAeroForces = CalculateVesselAeroForces;
 
         protected override Vector3d ComputeForces_Model(Vector3d airVelocity, double altitude)
         {
@@ -55,10 +55,13 @@ namespace Trajectories
 
         internal override Vector2d PackForces(Vector3d forces, double altitudeAboveSea, double velocity)
         {
-            double rho = StockAeroUtil.GetDensity(altitudeAboveSea, Body); // would be even better to use FAR method of computing the air density (which also depends on velocity), but this is already better than nothing
+            // would be even better to use FAR method of computing the air density (which also depends on velocity), but this is already better than nothing
+            double rho = StockAeroUtil.GetDensity(altitudeAboveSea, Body);
 
             if (rho < 0.0000000001d)
                 return Vector2d.zero;
+
+            // divide by v² and rho before storing the force, to increase accuracy (the reverse operation is performed when reading from the cache)
             double invScale = 1.0d / (rho * Math.Max(1.0d, velocity * velocity));
             forces *= invScale;
             return new Vector2d(forces.x, forces.y);

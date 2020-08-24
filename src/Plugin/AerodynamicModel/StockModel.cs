@@ -29,16 +29,20 @@ namespace Trajectories
     {
         internal override string AerodynamicModelName => Localizer.Format("#autoLOC_Trajectories_Stock");
 
-        internal StockModel(CelestialBody body) : base(body) { }
+        internal StockModel() : base() { }
 
         protected override Vector3d ComputeForces_Model(Vector3d airVelocity, double altitude) => StockAeroUtil.SimAeroForce(airVelocity, altitude);
 
         internal override Vector2d PackForces(Vector3d forces, double altitudeAboveSea, double velocity)
         {
+            // would be even better to use FAR method of computing the air density (which also depends on velocity), but this is already better than nothing
             double rho = StockAeroUtil.GetDensity(altitudeAboveSea, Body);
-            if (rho < 0.0000000001)
+
+            if (rho < 0.0000000001d)
                 return Vector2d.zero;
-            double invScale = 1.0d / (rho * Math.Max(1.0d, velocity * velocity)); // divide by v² and rho before storing the force, to increase accuracy (the reverse operation is performed when reading from the cache)
+
+            // divide by v² and rho before storing the force, to increase accuracy (the reverse operation is performed when reading from the cache)
+            double invScale = 1.0d / (rho * Math.Max(1.0d, velocity * velocity));
             forces *= invScale;
             return new Vector2d(forces.x, forces.y);
         }
