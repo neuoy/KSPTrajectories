@@ -109,7 +109,7 @@ namespace Trajectories
             if (AttachedVessel != FlightGlobals.ActiveVessel)
                 AttachVessel();
 
-            if (!IsVesselAttached && !AerodynamicModel.Ready)
+            if (!IsVesselAttached || !AerodynamicModel.Ready)
                 return;
 
             Trajectory.Update();
