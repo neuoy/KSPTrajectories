@@ -4,6 +4,7 @@
 
 ### Changes since the last release
  
+ - Multi-threaded trajectory calculations.
  
 ### For Developers
 
