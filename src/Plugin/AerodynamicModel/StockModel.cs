@@ -35,7 +35,7 @@ namespace Trajectories
 
         internal override Vector2d PackForces(Vector3d forces, double altitudeAboveSea, double velocity)
         {
-            double rho = StockAeroUtil.GetDensity(altitudeAboveSea, body_);
+            double rho = StockAeroUtil.GetDensity(altitudeAboveSea, Body);
             if (rho < 0.0000000001)
                 return Vector2d.zero;
             double invScale = 1.0d / (rho * Math.Max(1.0d, velocity * velocity)); // divide by v² and rho before storing the force, to increase accuracy (the reverse operation is performed when reading from the cache)
@@ -45,7 +45,7 @@ namespace Trajectories
 
         internal override Vector3d UnpackForces(Vector2d packedForces, double altitudeAboveSea, double velocity)
         {
-            double rho = StockAeroUtil.GetDensity(altitudeAboveSea, body_);
+            double rho = StockAeroUtil.GetDensity(altitudeAboveSea, Body);
             double scale = velocity * velocity * rho;
 
             return new Vector3d(packedForces.x * scale, packedForces.y * scale, 0.0d);

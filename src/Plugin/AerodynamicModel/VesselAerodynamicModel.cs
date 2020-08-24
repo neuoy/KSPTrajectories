@@ -30,18 +30,15 @@ namespace Trajectories
     ///<summary> Abstracts the game aerodynamic computations to provide an unified interface whether the stock drag is used, or a supported mod is installed </summary>
     internal abstract class VesselAerodynamicModel
     {
-        private double mass_;
-        internal double Mass => mass_;
-
         internal abstract string AerodynamicModelName { get; }
+        protected CelestialBody Body { get; private set; }
+        internal double Mass { get; private set; }
 
-        protected CelestialBody body_;
         private bool isValid;
         private double referenceDrag = 0;
         private int referencePartCount = 0;
         private DateTime nextAllowedAutomaticUpdate = DateTime.Now;
 
-        internal bool UseCache => Settings.UseCache;
         protected AeroForceCache cachedForces;
 
         internal static bool Verbose { get; set; }
@@ -51,7 +48,7 @@ namespace Trajectories
         // constructor
         protected VesselAerodynamicModel(CelestialBody body)
         {
-            body_ = body;
+            Body = body;
 
             referencePartCount = Trajectories.AttachedVessel.Parts.Count;
 
@@ -65,15 +62,16 @@ namespace Trajectories
             Profiler.Start("AeroModel.UpdateVesselMass");
             // mass_ = vessel_.totalMass;       // this kills performance on vessel load, so we don't do that anymore
 
-            mass_ = 0d;
+            double mass = 0d;
             foreach (Part part in Trajectories.AttachedVessel.Parts)
             {
                 if (part.physicalSignificance == Part.PhysicalSignificance.NONE)
                     continue;
 
                 float partMass = part.mass + part.GetResourceMass() + part.GetPhysicslessChildMass();
-                mass_ += partMass;
+                mass += partMass;
             }
+            Mass = mass;
             Profiler.Stop("AeroModel.UpdateVesselMass");
         }
 
@@ -88,7 +86,7 @@ namespace Trajectories
             int angleOfAttackResolution = 33; // even number to include exactly 0°
             int altitudeResolution = 32;
 
-            cachedForces = new AeroForceCache(maxCacheVelocity, maxCacheAoA, body_.atmosphereDepth, velocityResolution, angleOfAttackResolution, altitudeResolution, this);
+            cachedForces = new AeroForceCache(maxCacheVelocity, maxCacheAoA, Body.atmosphereDepth, velocityResolution, angleOfAttackResolution, altitudeResolution, this);
 
             isValid = true;
 
@@ -99,7 +97,7 @@ namespace Trajectories
         internal void Invalidate() => isValid = false;
 
         {
-            if (!Trajectories.IsVesselAttached || body_ != body)
+            if (!Trajectories.IsVesselAttached || Body != body)
                 return false;
 
             if (Settings.AutoUpdateAerodynamicModel)
@@ -144,7 +142,7 @@ namespace Trajectories
                 return Vector3d.zero;
             }
 
-            if (!UseCache)
+            if (!Settings.UseCache)
                 return ComputeForces(altitudeAboveSea, airVelocity, bodySpacePosition, angleOfAttack);
 
             Vector3d force = cachedForces.GetForce(airVelocity.magnitude, angleOfAttack, altitudeAboveSea);
@@ -170,7 +168,7 @@ namespace Trajectories
         internal Vector3d ComputeForces(double altitude, Vector3d airVelocity, Vector3d vup, double angleOfAttack)
         {
             Profiler.Start("ComputeForces");
-            if (!Trajectories.IsVesselAttached || !Trajectories.AttachedVessel.mainBody.atmosphere || altitude >= body_.atmosphereDepth)
+            if (!Trajectories.IsVesselAttached || !Trajectories.AttachedVessel.mainBody.atmosphere || altitude >= Body.atmosphereDepth)
                 return Vector3d.zero;
 
             Transform vesselTransform = Trajectories.AttachedVessel.ReferenceTransform;
