@@ -59,6 +59,12 @@ namespace Trajectories
             Version = typeof(Trajectories).Assembly.GetName().Version.ToString();
             Version = Version.Remove(Version.LastIndexOf("."));
             Util.Log("v{0} Starting", Version);
+
+            // setup worker
+            Worker.OnReport += Worker_OnReport;
+            Worker.OnUpdate += Worker_OnUpdate;
+            Worker.OnError += Worker_OnError;
+            Worker.Initialize();
         }
 
         public override void OnLoad(ConfigNode node)
@@ -134,6 +140,7 @@ namespace Trajectories
             MapOverlay.DestroyRenderer();
             Trajectory.Destroy();
             DescentProfile.Clear();
+            Worker.Cancel();
         }
 
         internal void OnApplicationQuit()
@@ -150,6 +157,7 @@ namespace Trajectories
             if (Settings != null)
                 Settings.Destroy();
             Settings = null;
+            Worker.Dispose();
         }
 
         private void AttachVessel()
@@ -217,5 +225,57 @@ namespace Trajectories
                 AerodynamicModel.Init();
             }
         }
+
+        #region WORKER_THREAD_CALLBACKS
+
+        internal static void Worker_OnUpdate(Worker.JOB job, bool error)
+        {
+            switch (job)
+            {
+                /*case Worker.JOB.DETECT_DEVICES:
+                    case Worker.JOB.RESET_DEVICES:
+                    case Worker.JOB.RESET_NET:
+                    case Worker.JOB.CHANGE_PROTOCOL:
+                        if (DevicesForm.Exists)
+                            DevicesForm.Instance.UpdateData();
+                        break;
+                    case Worker.JOB.TXRX:
+                        if (DebugForm.Exists)
+                            DebugForm.Instance.UpdateData(error);
+                        break;
+                    case Worker.JOB.TXRX_OBDII:
+                        if (DebugForm.Exists)
+                            DebugForm.Instance.UpdateData(error);
+                    break;*/
+            }
+            //if (ModulesForm.Exists)
+            //ModulesForm.Instance.UpdateData();
+        }
+
+        private static void Worker_OnReport(Worker.EVENT_TYPE type, int progress_percentage)
+        {
+            switch (type)
+            {
+                case Worker.EVENT_TYPE.PERCENTAGE:
+                    //MainForm.Instance.ToolStripProgressBar.Value = progress_percentage;
+                    //MainForm.Instance.StatusStrip.Update();
+                    break;
+                case Worker.EVENT_TYPE.STATUSBAR:
+                    //Update_StatusBar();
+                    break;
+                case Worker.EVENT_TYPE.ALL:
+                    //MainForm.Instance.ToolStripProgressBar.Value = progress_percentage;
+                    //Update_AllButtons(true);
+                    //Update_StatusBar();
+                    break;
+                case Worker.EVENT_TYPE.APPCLOSE:
+                    //MainForm.Instance.Close();
+                    break;
+            }
+        }
+
+        private static void Worker_OnError(System.Exception error) => Util.DebugLogError(error.Message);
+
+        #endregion
     }
 }
