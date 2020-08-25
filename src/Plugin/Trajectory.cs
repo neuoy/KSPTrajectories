@@ -22,7 +22,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using KSP.Localization;
 using UnityEngine;
@@ -105,8 +104,6 @@ namespace Trajectories
         internal const double INTEGRATOR_MIN = 0.1d;         // RK4 Integrator minimum step size
         internal const double INTEGRATOR_MAX = 5.0d;         // RK4 Integrator maximum step size
 
-        private const double MAX_INCREMENT_TIME = 2.0d;      // in ms
-
         private static List<Patch> patchesBackBuffer_ = new List<Patch>();
 
         internal static List<Patch> Patches { get; private set; } = new List<Patch>();
@@ -116,8 +113,6 @@ namespace Trajectories
         internal static float MaxAccel { get; private set; }
 
         internal static int ErrorCount { get; private set; }
-
-        private static IEnumerator<bool> partialComputation_;
 
         private static double increment_time;
 
@@ -343,43 +338,25 @@ namespace Trajectories
                 // start of trajectory calculation in current frame
                 increment_time = Util.Clocks;
 
+                // update game data cache
+                GameDataCache.Update();
 
-                // if there is no ongoing partial computation, start a new one
-                if (partialComputation_ == null)
-                {
-                    //total_time = Util.Clocks;
                 // update aerodynamic model
                 Trajectories.AerodynamicModel.Update();
 
-                    // restart the public buffers
-                    patchesBackBuffer_.Clear();
-                    maxAccelBackBuffer_ = 0;
+                // restart the public buffers
+                patchesBackBuffer_.Clear();
+                maxAccelBackBuffer_ = 0;
 
-                    // Create enumerator for Trajectory increment calculator
-                    partialComputation_ = ComputeTrajectoryIncrement().GetEnumerator();
-                }
+                ComputeTrajectoryPatches();
 
-                // we are finished when there are no more partial computations to be done
-                bool finished = !partialComputation_.MoveNext();
+                // swap the buffers for the patches and the maximum acceleration,
+                // "publishing" the results
+                List<Patch> tmp = Patches;
+                Patches = patchesBackBuffer_;
+                patchesBackBuffer_ = tmp;
 
-                // when calculation is finished,
-                if (finished)
-                {
-                    // swap the buffers for the patches and the maximum acceleration,
-                    // "publishing" the results
-                    List<Patch> tmp = Patches;
-                    Patches = patchesBackBuffer_;
-                    patchesBackBuffer_ = tmp;
-
-                    MaxAccel = maxAccelBackBuffer_;
-
-                    // Reset partial computation
-                    partialComputation_.Dispose();
-                    partialComputation_ = null;
-
-                    // how long did the whole calculation take?
-                    //total_time = Util.ElapsedMilliseconds(total_time);
-                }
+                MaxAccel = maxAccelBackBuffer_;
 
                 // how long did the calculation in this frame take?
                 increment_time = Util.ElapsedMilliseconds(increment_time);
@@ -392,10 +369,16 @@ namespace Trajectories
             }
         }
 
-        private static IEnumerable<bool> ComputeTrajectoryIncrement()
+        private static void ComputeTrajectoryPatches()
         {
+            if (GameDataCache.AttachedVessel.patchedConicSolver == null)
+            {
+                Util.LogWarning("patchedConicsSolver is null, Skipping.");
+                return;
+            }
+
             // create new VesselState from vessel
-            VesselState state = new VesselState(Trajectories.AttachedVessel);
+            VesselState state = new VesselState(GameDataCache.AttachedVessel);
 
             // iterate over patches until MaxPatchCount is reached
             for (int patchIdx = 0; patchIdx < Settings.MaxPatchCount; ++patchIdx)
@@ -404,32 +387,22 @@ namespace Trajectories
                 if (state == null)
                     break;
 
-                // If we spent more time in this calculation than allowed, pause until the next frame
-                if (Util.ElapsedMilliseconds(increment_time) > MAX_INCREMENT_TIME)
-                    yield return false;
-
-                // if we have a patched conics solver, check for maneuver nodes
-                if (null != Trajectories.AttachedVessel.patchedConicSolver)
+                // search through maneuver nodes of the vessel
+                foreach (ManeuverNode node in GameDataCache.ManeuverNodes)
                 {
-                    // search through maneuver nodes of the vessel
-                    List<ManeuverNode> maneuverNodes = Trajectories.AttachedVessel.patchedConicSolver.maneuverNodes;
-                    foreach (ManeuverNode node in maneuverNodes)
+                    // if the maneuver node time corresponds to the end time of the last patch
+                    if (node.UT == state.Time)
                     {
-                        // if the maneuver node time corresponds to the end time of the last patch
-                        if (node.UT == state.Time)
-                        {
-                            // add the velocity change of the burn to the velocity of the last patch
-                            state.Velocity += node.GetBurnVector(CreateOrbitFromState(state));
-                            break;
-                        }
+                        // add the velocity change of the burn to the velocity of the last patch
+                        state.Velocity += node.GetBurnVector(CreateOrbitFromState(state));
+                        break;
                     }
-
-                    // Add one patch, then pause execution after every patch
-                    foreach (bool result in AddPatch(state))
-                        yield return false;
                 }
 
-                state = AddPatch_outState;
+                // Add patch
+                Profiler.Start("Trajectory.AddPatch");
+                state = AddPatch(state);
+                Profiler.Stop("Trajectory.AddPatch");
             }
         }
 
@@ -504,8 +477,6 @@ namespace Trajectories
             return to;
         }
 
-        private static VesselState AddPatch_outState;
-
         private struct SimulationState
         {
             internal Vector3d position;
@@ -544,14 +515,8 @@ namespace Trajectories
             return state;
         }
 
-        private static IEnumerable<bool> AddPatch(VesselState startingState)
+        private static VesselState AddPatch(VesselState startingState)
         {
-            if (null == Trajectories.AttachedVessel.patchedConicSolver)
-            {
-                Util.LogWarning("patchedConicsSolver is null, Skipping.");
-                yield break;
-            }
-
             CelestialBody body = startingState.ReferenceBody;
 
             Patch patch = new Patch
@@ -565,14 +530,14 @@ namespace Trajectories
             // the flight plan does not always contain the first patches (before the first maneuver node),
             // so we populate it with the current orbit and associated encounters etc.
             List<Orbit> flightPlan = new List<Orbit>();
-            for (Orbit orbit = Trajectories.AttachedVessel.orbit; orbit != null && orbit.activePatch; orbit = orbit.nextPatch)
+            for (Orbit orbit = GameDataCache.Orbit; orbit != null && orbit.activePatch; orbit = orbit.nextPatch)
             {
-                if (Trajectories.AttachedVessel.patchedConicSolver.flightPlan.Contains(orbit))
+                if (GameDataCache.FlightPlan.Contains(orbit))
                     break;
                 flightPlan.Add(orbit);
             }
 
-            foreach (Orbit orbit in Trajectories.AttachedVessel.patchedConicSolver.flightPlan)
+            foreach (Orbit orbit in GameDataCache.FlightPlan)
             {
                 flightPlan.Add(orbit);
             }
@@ -636,14 +601,13 @@ namespace Trajectories
 
                         patch.EndTime = entryTime;
                         patchesBackBuffer_.Add(patch);
-                        AddPatch_outState = new VesselState
+                        return new VesselState
                         {
                             Position = Util.SwapYZ(patch.SpaceOrbit.getRelativePositionAtUT(entryTime)),
                             ReferenceBody = body,
                             Time = entryTime,
                             Velocity = Util.SwapYZ(patch.SpaceOrbit.getOrbitalVelocityAtUT(entryTime))
                         };
-                        yield break;
                     }
                     else
                     {
@@ -682,8 +646,7 @@ namespace Trajectories
                             patch.ImpactPosition = CalculateRotatedPosition(body, patch.RawImpactPosition.Value, t);
                             patch.ImpactVelocity = Util.SwapYZ(patch.SpaceOrbit.getOrbitalVelocityAtUT(t));
                             patchesBackBuffer_.Add(patch);
-                            AddPatch_outState = null;
-                            yield break;
+                            return null;
                         }
                         else
                         {
@@ -691,7 +654,7 @@ namespace Trajectories
                             patchesBackBuffer_.Add(patch);
                             if (nextPatch != null)
                             {
-                                AddPatch_outState = new VesselState
+                                return new VesselState
                                 {
                                     Position = Util.SwapYZ(patch.SpaceOrbit.getRelativePositionAtUT(patch.EndTime)),
                                     Velocity = Util.SwapYZ(patch.SpaceOrbit.getOrbitalVelocityAtUT(patch.EndTime)),
@@ -699,23 +662,20 @@ namespace Trajectories
                                     Time = patch.EndTime,
                                     StockPatch = nextPatch
                                 };
-                                yield break;
                             }
                             else
                             {
-                                AddPatch_outState = null;
-                                yield break;
+                                return null;
                             }
                         }
                     }
                 }
                 else
                 {
-                    if (patch.StartingState.ReferenceBody != Trajectories.AttachedVessel.mainBody)
+                    if (patch.StartingState.ReferenceBody != GameDataCache.AttachedVessel.mainBody)
                     {
                         // currently, we can't handle predictions for another body, so we stop
-                        AddPatch_outState = null;
-                        yield break;
+                        return null;
                     }
 
                     // simulate atmospheric flight (drag and lift), until impact or atmosphere exit
@@ -825,26 +785,23 @@ namespace Trajectories
                             {
                                 ScreenMessages.PostScreenMessage("WARNING: trajectory prediction stopped, too many iterations");
                                 patchesBackBuffer_.Add(patch);
-                                AddPatch_outState = null;
-                                yield break;
+                                return null;
                             }
                             else if (atmosphereCoeff <= 0.0 || hitGround)
                             {
                                 patchesBackBuffer_.Add(patch);
-                                AddPatch_outState = null;
-                                yield break;
+                                return null;
                             }
                             else
                             {
                                 patchesBackBuffer_.Add(patch);
-                                AddPatch_outState = new VesselState
+                                return new VesselState
                                 {
                                     Position = state.position,
                                     Velocity = state.velocity,
                                     ReferenceBody = body,
                                     Time = patch.EndTime
                                 };
-                                yield break;
                             }
                         }
 
@@ -943,7 +900,7 @@ namespace Trajectories
                 patchesBackBuffer_.Add(patch);
                 if (nextPatch != null)
                 {
-                    AddPatch_outState = new VesselState
+                    return new VesselState
                     {
                         Position = Util.SwapYZ(patch.SpaceOrbit.getRelativePositionAtUT(patch.EndTime)),
                         Velocity = Util.SwapYZ(patch.SpaceOrbit.getOrbitalVelocityAtUT(patch.EndTime)),
@@ -951,12 +908,10 @@ namespace Trajectories
                         Time = patch.EndTime,
                         StockPatch = nextPatch
                     };
-                    yield break;
                 }
                 else
                 {
-                    AddPatch_outState = null;
-                    yield break;
+                    return null;
                 }
             }
         }
