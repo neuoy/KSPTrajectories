@@ -113,6 +113,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="3rdParty\ToolbarWrapper.cs" />
+    <Compile Include="3rdParty\Worker.cs" />
     <Compile Include="AerodynamicModel\AeroDynamicModelFactory.cs" />
     <Compile Include="AerodynamicModel\AeroForceCache.cs" />
     <Compile Include="AerodynamicModel\FARModel.cs" />
