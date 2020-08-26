@@ -115,9 +115,6 @@ namespace Trajectories
             if (AttachedVessel != FlightGlobals.ActiveVessel)
                 AttachVessel();
 
-            if (!IsVesselAttached || !AerodynamicModel.Ready)
-                return;
-
             Trajectory.Update();
             MapOverlay.Update();
             FlightOverlay.Update();
@@ -164,6 +161,7 @@ namespace Trajectories
         {
             Util.DebugLog("Loading profiles for vessel");
 
+            Worker.Cancel();
             AttachedVessel = FlightGlobals.ActiveVessel;
 
             if (AttachedVessel == null)
@@ -217,12 +215,6 @@ namespace Trajectories
                     TargetProfile.ManualText = module.ManualTargetTxt;
                     Util.Log("Profiles loaded");
                 }
-
-                // init aerodynamic model to new vessel
-#if DEBUG
-                ScreenMessages.PostScreenMessage("Trajectories aerodynamic model updated due to vessel change");
-#endif
-                AerodynamicModel.Init();
             }
         }
 

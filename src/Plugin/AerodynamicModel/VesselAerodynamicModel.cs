@@ -30,51 +30,22 @@ namespace Trajectories
     ///<summary> Abstracts the game aerodynamic computations to provide an unified interface whether the stock drag is used, or a supported mod is installed </summary>
     internal abstract class VesselAerodynamicModel
     {
-        private int part_count = 0;
         private double reference_drag = 0;
         private double next_update_delay = Util.Clocks;
 
         protected AeroForceCache cachedForces;
 
         internal abstract string AerodynamicModelName { get; }
-        internal CelestialBody Body { get; private set; }
-        internal double Mass { get; private set; }
-        internal bool Ready { get; private set; }
         internal static bool DebugParts { get; set; }
 
         // constructor
-        protected VesselAerodynamicModel()
-        {
-            Ready = false;
-        }
+        protected VesselAerodynamicModel() { }
 
-        internal void Init()
-        {
-            Body = Trajectories.AttachedVessel.mainBody;
-            part_count = Trajectories.AttachedVessel.Parts.Count;
-
-            UpdateVesselMass();
-            InitCache();
-            Ready = true;
-        }
-
-        internal void UpdateVesselMass()
-        {
-            double mass = 0d;
-            foreach (Part part in Trajectories.AttachedVessel.Parts)
-            {
-                if (part.physicalSignificance == Part.PhysicalSignificance.NONE)
-                    continue;
-
-                float partMass = part.mass + part.GetResourceMass() + part.GetPhysicslessChildMass();
-                mass += partMass;
-            }
-            Mass = mass;
-        }
+        internal void Init() => InitCache();
 
         private void InitCache()
         {
-            Util.DebugLog("Initializing cache");
+            Util.DebugLog("");
 
             double maxCacheVelocity = 10000.0;
             double maxCacheAoA = Math.PI;     //  180.0 / 180.0 * Math.PI
@@ -83,26 +54,14 @@ namespace Trajectories
             int angleOfAttackResolution = 33; // even number to include exactly 0°
             int altitudeResolution = 32;
 
-            cachedForces = new AeroForceCache(maxCacheVelocity, maxCacheAoA, Body.atmosphereDepth, velocityResolution, angleOfAttackResolution, altitudeResolution, this);
+            cachedForces = new AeroForceCache(maxCacheVelocity, maxCacheAoA, GameDataCache.Body.atmosphereDepth, velocityResolution, angleOfAttackResolution, altitudeResolution, this);
         }
 
         internal void Update()
         {
-            if (Body != Trajectories.AttachedVessel.mainBody || part_count != Trajectories.AttachedVessel.Parts.Count)
-            {
-#if DEBUG
-                ScreenMessages.PostScreenMessage("Trajectories aerodynamic model updated due to body or parts change");
-#endif
-                Init();
-                return;
-            }
-
-            // limit update frequency (could make the game almost unresponsive on some computers)
+            // limit update frequency to 5 seconds (could make the game almost unresponsive on some computers)
             if (Util.ElapsedSeconds(next_update_delay) < 5d)
-            {
-                UpdateVesselMass();
                 return;
-            }
 
             next_update_delay = Util.Clocks;
 
@@ -111,7 +70,6 @@ namespace Trajectories
             if (reference_drag == 0d)
             {
                 reference_drag = newRefDrag;
-                UpdateVesselMass();
                 return;
             }
 
@@ -125,16 +83,13 @@ namespace Trajectories
         }
 
         /// <summary>
-        /// Returns the total aerodynamic forces that would be applied on the vessel if it was at bodySpacePosition with bodySpaceVelocity relatively to the specified celestial body
+        /// Returns the total aerodynamic forces that would be applied on the vessel if it was at bodySpacePosition with bodySpaceVelocity relatively to the GameDataCache celestial body
         /// This method makes use of the cache if available, otherwise it will call ComputeForces.
         /// </summary>
-        internal Vector3d GetForces(CelestialBody body, Vector3d bodySpacePosition, Vector3d airVelocity, double angleOfAttack)
+        internal Vector3d GetForces(Vector3d bodySpacePosition, Vector3d airVelocity, double angleOfAttack)
         {
-            if (body != Trajectories.AttachedVessel.mainBody)
-                throw new Exception("Can't predict aerodynamic forces on another body in current implementation");
-
-            double altitudeAboveSea = bodySpacePosition.magnitude - body.Radius;
-            if (altitudeAboveSea > body.atmosphereDepth)
+            double altitudeAboveSea = bodySpacePosition.magnitude - GameDataCache.Body.Radius;
+            if (altitudeAboveSea > GameDataCache.Body.atmosphereDepth)
             {
                 return Vector3d.zero;
             }
@@ -165,17 +120,14 @@ namespace Trajectories
         internal Vector3d ComputeForces(double altitude, Vector3d airVelocity, Vector3d vup, double angleOfAttack)
         {
             Profiler.Start("ComputeForces");
-            if (!Trajectories.IsVesselAttached || !Trajectories.AttachedVessel.mainBody.atmosphere || altitude >= Body.atmosphereDepth)
-                return Vector3d.zero;
 
-            Transform vesselTransform = Trajectories.AttachedVessel.ReferenceTransform;
-            if (vesselTransform == null)
+            if (!GameDataCache.Body.atmosphere || altitude >= GameDataCache.Body.atmosphereDepth)
                 return Vector3d.zero;
 
             // this is weird, but the vessel orientation does not match the reference transform (up is forward), this code fixes it but I don't know if it'll work in all cases
-            Vector3d vesselBackward = -vesselTransform.up.normalized;
+            Vector3d vesselBackward = -GameDataCache.VesselTransformUp.normalized;
             Vector3d vesselForward = -vesselBackward;
-            Vector3d vesselUp = -vesselTransform.forward.normalized;
+            Vector3d vesselUp = -GameDataCache.VesselTransformForward.normalized;
             Vector3d vesselRight = Vector3d.Cross(vesselUp, vesselBackward).normalized;
 
             Vector3d airVelocityForFixedAoA = (vesselForward * Math.Cos(-angleOfAttack) + vesselUp * Math.Sin(-angleOfAttack)) * airVelocity.magnitude;
@@ -222,7 +174,7 @@ namespace Trajectories
             if (double.IsNaN(res.x) || double.IsNaN(res.y) || double.IsNaN(res.z))
             {
                 Util.LogWarning("{0} res is NaN (altitude={1}, airVelocity={2}, angleOfAttack={3}", AerodynamicModelName, altitude, airVelocity.magnitude, angleOfAttack);
-                return new Vector3d(0, 0, 0); // Don't send NaN into the simulation as it would cause bad things (infinite loops, crash, etc.). I think this case only happens at the atmosphere edge, so the total force should be 0 anyway.
+                return Vector3d.zero; // Don't send NaN into the simulation as it would cause bad things (infinite loops, crash, etc.). I think this case only happens at the atmosphere edge, so the total force should be 0 anyway.
             }
 
 

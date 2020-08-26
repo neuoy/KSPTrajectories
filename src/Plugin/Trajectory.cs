@@ -52,15 +52,6 @@ namespace Trajectories
             internal Orbit StockPatch { get; set; }
 
             internal VesselState() { }
-
-            internal VesselState(Vessel vessel)
-            {
-                ReferenceBody = vessel.orbit.referenceBody;
-                Time = Planetarium.GetUniversalTime();
-                Position = vessel.GetWorldPos3D() - ReferenceBody.position;
-                Velocity = vessel.obt_velocity;
-                StockPatch = vessel.orbit;
-            }
         }
 
         internal struct Point
@@ -325,7 +316,7 @@ namespace Trajectories
 
         internal static void ComputeTrajectory()
         {
-            if (!Trajectories.VesselHasParts || Trajectories.AttachedVessel.LandedOrSplashed || !Trajectories.AerodynamicModel.Ready)
+            if (!Trajectories.VesselHasParts || Trajectories.AttachedVessel.LandedOrSplashed)
             {
                 increment_time = 0d;
                 patches_calculated = 0d;
@@ -339,7 +330,13 @@ namespace Trajectories
                 increment_time = Util.Clocks;
 
                 // update game data cache
-                GameDataCache.Update();
+                if (!GameDataCache.Update())
+                {
+                    increment_time = 0d;
+                    patches_calculated = 0d;
+                    Patches.Clear();
+                    return;
+                }
 
                 // update aerodynamic model
                 Trajectories.AerodynamicModel.Update();
@@ -371,14 +368,15 @@ namespace Trajectories
 
         private static void ComputeTrajectoryPatches()
         {
-            if (GameDataCache.AttachedVessel.patchedConicSolver == null)
+            // create starting VesselState
+            VesselState state = new VesselState
             {
-                Util.LogWarning("patchedConicsSolver is null, Skipping.");
-                return;
-            }
-
-            // create new VesselState from vessel
-            VesselState state = new VesselState(GameDataCache.AttachedVessel);
+                ReferenceBody = GameDataCache.Orbit.referenceBody,
+                Time = GameDataCache.UniversalTime,
+                Position = GameDataCache.VesselWorldPos - GameDataCache.Orbit.referenceBody.position,
+                Velocity = GameDataCache.VesselOrbitVelocity,
+                StockPatch = GameDataCache.Orbit
+            };
 
             // iterate over patches until MaxPatchCount is reached
             for (int patchIdx = 0; patchIdx < Settings.MaxPatchCount; ++patchIdx)
@@ -672,7 +670,7 @@ namespace Trajectories
                 }
                 else
                 {
-                    if (patch.StartingState.ReferenceBody != GameDataCache.AttachedVessel.mainBody)
+                    if (patch.StartingState.ReferenceBody != GameDataCache.Body)
                     {
                         // currently, we can't handle predictions for another body, so we stop
                         return null;
@@ -733,10 +731,10 @@ namespace Trajectories
                         double aoa = DescentProfile.GetAngleOfAttack(body, position, vel_air) ?? 0d;
 
                         Profiler.Start("GetForces");
-                        Vector3d force_aero = Trajectories.AerodynamicModel.GetForces(body, position, vel_air, aoa);
+                        Vector3d force_aero = Trajectories.AerodynamicModel.GetForces(position, vel_air, aoa);
                         Profiler.Stop("GetForces");
 
-                        Vector3d accel = accel_g + force_aero / Trajectories.AerodynamicModel.Mass;
+                        Vector3d accel = accel_g + force_aero / GameDataCache.VesselMass;
 
                         Profiler.Stop("accelerationFunc inside");
                         return accel;
@@ -836,11 +834,11 @@ namespace Trajectories
 
                         // calculate gravity and aerodynamic force
                         Vector3d gravityAccel = lastState.position * (-body.gravParameter / (R * R * R));
-                        Vector3d aerodynamicForce = (currentAccel - gravityAccel) / Trajectories.AerodynamicModel.Mass;
+                        Vector3d aerodynamicForce = (currentAccel - gravityAccel) / GameDataCache.VesselMass;
 
                         // acceleration in the vessel reference frame is acceleration - gravityAccel
                         maxAccelBackBuffer_ = Math.Max(
-                            (float)(aerodynamicForce.magnitude / Trajectories.AerodynamicModel.Mass),
+                            (float)(aerodynamicForce.magnitude / GameDataCache.VesselMass),
                             maxAccelBackBuffer_);
 
                         #region Impact Calculation
