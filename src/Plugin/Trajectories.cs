@@ -263,7 +263,7 @@ namespace Trajectories
                     break;
             }
 
-            Util.DebugLogError("{0} failed, {1}", job, error.Message);
+            Util.DebugLogError("{0} failed, {1}", job, error.ToString());
         }
 
         #endregion
