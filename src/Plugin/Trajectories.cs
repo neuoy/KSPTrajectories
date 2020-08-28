@@ -220,7 +220,7 @@ namespace Trajectories
 
         #region WORKER_THREAD_CALLBACKS
 
-        internal static void Worker_OnUpdate(Worker.JOB job, bool error)
+        internal static void Worker_OnUpdate(Worker.JOB job, bool result)
         {
             switch (job)
             {
@@ -266,7 +266,10 @@ namespace Trajectories
             }
         }
 
-        private static void Worker_OnError(System.Exception error) => Util.DebugLogError(error.Message);
+        private static void Worker_OnError(Worker.JOB job, System.Exception error)
+        {
+            Util.DebugLogError("{0} failed, {1}", job, error.Message);
+        }
 
         #endregion
     }

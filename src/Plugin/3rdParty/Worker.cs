@@ -38,8 +38,8 @@ namespace Trajectories
 {
     #region EVENT_DELEGATES
     internal delegate void WorkerReportEventHandler(Worker.EVENT_TYPE type, int progress_percentage = 0);
-    internal delegate void WorkerUpdateEventHandler(Worker.JOB job, bool error);
-    internal delegate void WorkerErrorEventHandler(Exception error);
+    internal delegate void WorkerUpdateEventHandler(Worker.JOB job, bool result);
+    internal delegate void WorkerErrorEventHandler(Worker.JOB job, Exception error);
     #endregion
 
     ///<summary> Background worker classes and methods </summary>
@@ -232,10 +232,11 @@ namespace Trajectories
         /// <summary> Event method that is invoked when the worker thread has completed been cancelled or on error </summary>
         private static void Completed(object sender, RunWorkerCompletedEventArgs e)
         {
-            Util.DebugLog("");
-
             if ((e.Error != null))
-                OnError(e.Error);
+            {
+                Util.DebugLog("Error detected");
+                OnError(CurrentJob, e.Error);
+            }
             else if (e.Cancelled)
             {
                 Util.DebugLog("Job cancelled");
