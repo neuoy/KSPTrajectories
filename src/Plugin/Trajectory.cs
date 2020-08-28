@@ -105,9 +105,9 @@ namespace Trajectories
 
         internal static int ErrorCount { get; private set; }
 
-        private static double increment_time;
+        private static double calculation_time;
 
-        ///<summary> Trajectory calculation time for last frame in ms </summary>
+        ///<summary> Trajectory calculation time in ms </summary>
         internal static double ComputationTime { get; private set; }
 
         private static double patches_calculated;
@@ -133,23 +133,22 @@ namespace Trajectories
 
         internal static void Update()
         {
-            //Profiler.Start("Trajectory.Update");
-
             // compute game frame time
             GameFrameTime = GameFrameTime * 0.9d + Util.ElapsedMilliseconds(frame_time) * 0.1d;
             frame_time = Util.Clocks;
 
             // should the trajectory be calculated?
-            if (Settings.DisplayTrajectories || Settings.AlwaysUpdate || TargetProfile.WorldPosition.HasValue)
+            if (!Worker.Busy && (Settings.DisplayTrajectories || Settings.AlwaysUpdate || TargetProfile.WorldPosition.HasValue))
                 ComputeTrajectory();
+        }
 
-            // compute computation in frame time
-            ComputationTime = ComputationTime * 0.9d + increment_time * 0.1d;
+        private static void UpdateTiming()
+        {
+            // compute computation time
+            ComputationTime = ComputationTime * 0.9d + calculation_time * 0.1d;
 
             // compute total patches calculated
             CalculatedPatches = CalculatedPatches * 0.9d + patches_calculated * 0.1d;
-
-            //Profiler.Stop("Trajectory.Update");
         }
 
 #if DEBUG_TELEMETRY
@@ -318,46 +317,37 @@ namespace Trajectories
         {
             if (!Trajectories.VesselHasParts || Trajectories.AttachedVessel.LandedOrSplashed)
             {
-                increment_time = 0d;
+                calculation_time = 0d;
                 patches_calculated = 0d;
                 Patches.Clear();
+                UpdateTiming();
                 return;
             }
 
             try
             {
-                // start of trajectory calculation in current frame
-                increment_time = Util.Clocks;
+                // start of trajectory calculation timing
+                calculation_time = Util.Clocks;
 
                 // update game data cache
                 if (!GameDataCache.Update())
                 {
-                    increment_time = 0d;
+                    calculation_time = 0d;
                     patches_calculated = 0d;
                     Patches.Clear();
+                    UpdateTiming();
                     return;
                 }
 
                 // update aerodynamic model
                 Trajectories.AerodynamicModel.Update();
 
-                // restart the public buffers
+                // clear the public buffers
                 patchesBackBuffer_.Clear();
                 maxAccelBackBuffer_ = 0;
 
-                ComputeTrajectoryPatches();
-
-                // swap the buffers for the patches and the maximum acceleration,
-                // "publishing" the results
-                List<Patch> tmp = Patches;
-                Patches = patchesBackBuffer_;
-                patchesBackBuffer_ = tmp;
-
-                MaxAccel = maxAccelBackBuffer_;
-
-                // how long did the calculation in this frame take?
-                increment_time = Util.ElapsedMilliseconds(increment_time);
-                patches_calculated = Patches.Count;
+                // start compute patches thread
+                Worker.Thread.RunWorkerAsync(Worker.JOB.COMPUTE_PATCHES);
             }
             catch (Exception)
             {
@@ -366,8 +356,32 @@ namespace Trajectories
             }
         }
 
-        private static void ComputeTrajectoryPatches()
+        internal static void ComputeComplete()
         {
+            // swap the buffers for the patches and the maximum acceleration,
+            // "publishing" the results
+            List<Patch> tmp = Patches;
+            Patches = patchesBackBuffer_;
+            patchesBackBuffer_ = tmp;
+
+            MaxAccel = maxAccelBackBuffer_;
+
+            // how long did the calculation take?
+            calculation_time = Util.ElapsedMilliseconds(calculation_time);
+            patches_calculated = Patches.Count;
+            UpdateTiming();
+        }
+
+        internal static void ComputeError()
+        {
+            calculation_time = Util.ElapsedMilliseconds(calculation_time);
+            UpdateTiming();
+        }
+
+        internal static void ComputeTrajectoryPatches()
+        {
+            double progress_step = 1 / Settings.MaxPatchCount;
+
             // create starting VesselState
             VesselState state = new VesselState
             {
@@ -381,6 +395,8 @@ namespace Trajectories
             // iterate over patches until MaxPatchCount is reached
             for (int patchIdx = 0; patchIdx < Settings.MaxPatchCount; ++patchIdx)
             {
+                double progress = progress_step;
+
                 // stop if we don't have a vessel state
                 if (state == null)
                     break;
@@ -401,6 +417,9 @@ namespace Trajectories
                 Profiler.Start("Trajectory.AddPatch");
                 state = AddPatch(state);
                 Profiler.Stop("Trajectory.AddPatch");
+
+                Worker.Thread.ReportProgress((int)(progress * 100));
+                progress += progress_step;
             }
         }
 

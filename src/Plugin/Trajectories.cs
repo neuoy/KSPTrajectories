@@ -224,21 +224,9 @@ namespace Trajectories
         {
             switch (job)
             {
-                /*case Worker.JOB.DETECT_DEVICES:
-                    case Worker.JOB.RESET_DEVICES:
-                    case Worker.JOB.RESET_NET:
-                    case Worker.JOB.CHANGE_PROTOCOL:
-                        if (DevicesForm.Exists)
-                            DevicesForm.Instance.UpdateData();
-                        break;
-                    case Worker.JOB.TXRX:
-                        if (DebugForm.Exists)
-                            DebugForm.Instance.UpdateData(error);
-                        break;
-                    case Worker.JOB.TXRX_OBDII:
-                        if (DebugForm.Exists)
-                            DebugForm.Instance.UpdateData(error);
-                    break;*/
+                case Worker.JOB.COMPUTE_PATCHES:
+                    Trajectory.ComputeComplete();
+                    break;
             }
             //if (ModulesForm.Exists)
             //ModulesForm.Instance.UpdateData();
@@ -268,6 +256,13 @@ namespace Trajectories
 
         private static void Worker_OnError(Worker.JOB job, System.Exception error)
         {
+            switch (job)
+            {
+                case Worker.JOB.COMPUTE_PATCHES:
+                    Trajectory.ComputeError();
+                    break;
+            }
+
             Util.DebugLogError("{0} failed, {1}", job, error.Message);
         }
 

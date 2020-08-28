@@ -52,10 +52,7 @@ namespace Trajectories
         internal enum JOB
         {
             NO_JOB = 0,
-            DETECT_DEVICES,
-            RESET_DEVICES,
-            RESET_NET,
-            CHANGE_PROTOCOL,
+            COMPUTE_PATCHES,
         }
 
         ///<summary> Worker event types </summary>
@@ -150,13 +147,13 @@ namespace Trajectories
                 e.Cancel = true;
                 return;
             }
-            Thread.ReportProgress(10);
+            //Thread.ReportProgress(10);
 
             switch (CurrentJob)
             {
-                //case JOB.DETECT_DEVICES:
-                    //DeviceManager.DetectDevices();
-                    //break;
+                case JOB.COMPUTE_PATCHES:
+                    Trajectory.ComputeTrajectoryPatches();
+                    break;
                 //case JOB.RESET_DEVICES:
                     //DeviceManager.ResetDevices();
                     //return;
