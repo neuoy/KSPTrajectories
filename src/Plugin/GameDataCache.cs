@@ -19,6 +19,7 @@
 */
 
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace Trajectories
 {
@@ -29,6 +30,11 @@ namespace Trajectories
 
         internal static Vessel AttachedVessel { get; private set; }
         internal static List<Part> VesselParts { get; private set; }
+        internal static List<Transform> PartTransforms { get; private set; }
+        internal static List<Quaternion> PartRotations { get; private set; }
+        internal static List<Vector3d> PartTransformsUp { get; private set; }
+        internal static List<Vector3d> PartTransformsForward { get; private set; }
+        internal static List<Vector3d> PartTransformsRight { get; private set; }
         internal static double VesselMass { get; private set; }
         internal static Vector3d VesselWorldPos { get; private set; }
         internal static Vector3d VesselOrbitVelocity { get; private set; }
@@ -66,6 +72,15 @@ namespace Trajectories
                 return false;
             }
 
+            if (PartTransforms == null || PartTransforms.Count != VesselParts.Count)
+            {
+                CreatePartTransforms();
+            }
+            else
+            {
+                UpdatePartTransforms();
+            }
+
             UpdateVesselMass();
             VesselWorldPos = AttachedVessel.GetWorldPos3D();
             VesselOrbitVelocity = AttachedVessel.obt_velocity;
@@ -80,18 +95,53 @@ namespace Trajectories
             return true;
         }
 
+        private static void CreatePartTransforms()
+        {
+            PartTransforms ??= new List<Transform>(VesselParts.Count);
+            PartRotations ??= new List<Quaternion>(VesselParts.Count);
+            PartTransformsUp ??= new List<Vector3d>(VesselParts.Count);
+            PartTransformsForward ??= new List<Vector3d>(VesselParts.Count);
+            PartTransformsRight ??= new List<Vector3d>(VesselParts.Count);
+            PartTransforms.Clear();
+            PartRotations.Clear();
+            PartTransformsUp.Clear();
+            PartTransformsForward.Clear();
+            PartTransformsRight.Clear();
+
+            foreach (Part part in VesselParts)
+            {
+                PartTransforms.Add(part.transform);
+                PartRotations.Add(part.transform.rotation);
+                PartTransformsUp.Add(part.transform.up);
+                PartTransformsForward.Add(part.transform.forward);
+                PartTransformsRight.Add(part.transform.right);
+            }
+        }
+
+        private static void UpdatePartTransforms()
+        {
+            int part_index = 0;
+            foreach (Part part in VesselParts)
+            {
+                PartTransforms[part_index] = part.transform;
+                PartRotations[part_index] = part.transform.rotation;
+                PartTransformsUp[part_index] = part.transform.up;
+                PartTransformsForward[part_index] = part.transform.forward;
+                PartTransformsRight[part_index] = part.transform.right;
+                part_index++;
+            }
+        }
+
         private static void UpdateVesselMass()
         {
-            double mass = 0d;
             foreach (Part part in VesselParts)
             {
                 if (part.physicalSignificance == Part.PhysicalSignificance.NONE)
                     continue;
 
                 float partMass = part.mass + part.GetResourceMass() + part.GetPhysicslessChildMass();
-                mass += partMass;
+                VesselMass += partMass;
             }
-            VesselMass = mass;
         }
 
     }
