@@ -143,6 +143,17 @@ namespace Trajectories
         internal static double Lerp(double a, double b, double t) => (a * (1 - t)) + (b * t);
 
         /// <summary> Clamps a double value </summary>
+        internal static double Clamp01(double value)
+        {
+            if (value < 0d)
+                return 0d;
+            else if (value > 1d)
+                return 1d;
+            else
+                return value;
+        }
+
+        /// <summary> Clamps a double value </summary>
         internal static double Clamp(double value, double min, double max)
         {
             if (value < min)
