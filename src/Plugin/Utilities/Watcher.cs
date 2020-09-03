@@ -57,6 +57,7 @@ namespace Trajectories
         // an entry in the watcher
         private class Entry
         {
+            public bool in_gui;             // if true the entry has been added to the Gui
             public double value;            // used to store last value
             public string value_txt = "";   // last value display string
         }
@@ -144,6 +145,10 @@ namespace Trajectories
             }
 #endif
 
+            // add entries to dialog
+            if (dialog_items.children.Count != entries.Count)
+                UpdateDialogItems();
+
             // hide or show the dialog box
             if ((Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl)) && Input.GetKeyUp(KeyCode.W))
                 visible = !visible;
@@ -157,6 +162,15 @@ namespace Trajectories
             else if (popup_dialog != null)
             {
                 popup_dialog.gameObject.SetActive(false);
+            }
+        }
+
+        private static void UpdateDialogItems()
+        {
+            foreach (KeyValuePair<string, Entry> p in entries)
+            {
+                if (!p.Value.in_gui)
+                    AddDialogItem(p);
             }
         }
 
@@ -308,10 +322,12 @@ namespace Trajectories
 
         private static void OnButtonClick_ShowZero(bool inState) => show_zero = inState;
 
-        private static void AddDialogItem(string e_name)
+        private static void AddDialogItem(KeyValuePair<string, Entry> entry)
         {
             if (!Ready)
                 return;
+
+            string e_name = entry.Key;
             //Util.DebugLog("{0}: {1}", e_name, dialog_items.children.Count.ToString());
 
             // add item
@@ -324,6 +340,7 @@ namespace Trajectories
             Stack<Transform> stack = new Stack<Transform>();
             stack.Push(dialog_items.uiItem.gameObject.transform);
             dialog_items.children[dialog_items.children.Count - 1].Create(ref stack, HighLogic.UISkin);
+            entry.Value.in_gui = true;
         }
 #endif
 
@@ -338,7 +355,6 @@ namespace Trajectories
             if (!entries.ContainsKey(e_name))
             {
                 entries.Add(e_name, new Entry());
-                AddDialogItem(e_name);
 #if WATCHER_TELEMETRY
                 if (!channels.Contains(e_name))
                     channels.Add(e_name);
