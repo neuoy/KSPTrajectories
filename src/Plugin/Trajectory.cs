@@ -23,7 +23,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using KSP.Localization;
 using UnityEngine;
 
 namespace Trajectories
@@ -63,7 +62,7 @@ namespace Trajectories
             /// <summary>
             /// Ground altitude above (or under) sea level, in meters.
             /// </summary>
-            internal float groundAltitude;
+            internal double groundAltitude;
 
             /// <summary>
             /// Universal time
@@ -99,9 +98,9 @@ namespace Trajectories
 
         internal static List<Patch> Patches { get; private set; } = new List<Patch>();
 
-        private static float maxAccelBackBuffer_;
+        private static double maxAccelBackBuffer_;
 
-        internal static float MaxAccel { get; private set; }
+        internal static double MaxAccel { get; private set; }
 
         internal static int ErrorCount { get; private set; }
 
@@ -120,10 +119,7 @@ namespace Trajectories
         ///<summary> Time of game frame in ms </summary>
         internal static double GameFrameTime { get; private set; }
 
-        internal static void Start()
-        {
-            Util.DebugLog("Constructing");
-        }
+        internal static void Start() => Util.DebugLog("Constructing");
 
 #if DEBUG_TELEMETRY
             ConstructTelemetry();
@@ -344,7 +340,7 @@ namespace Trajectories
 
                 // clear the public buffers
                 patchesBackBuffer_.Clear();
-                maxAccelBackBuffer_ = 0;
+                maxAccelBackBuffer_ = 0d;
 
                 // start compute patches thread
                 Worker.Thread.RunWorkerAsync(Worker.JOB.COMPUTE_PATCHES);
@@ -380,7 +376,7 @@ namespace Trajectories
 
         internal static void ComputeTrajectoryPatches()
         {
-            double progress_step = 1 / Settings.MaxPatchCount;
+            double progress_step = 1d / Settings.MaxPatchCount;
 
             // create starting VesselState
             VesselState state = new VesselState
@@ -418,7 +414,7 @@ namespace Trajectories
                 state = AddPatch(state);
                 Profiler.Stop("Trajectory.AddPatch");
 
-                Worker.Thread.ReportProgress((int)(progress * 100));
+                Worker.Thread.ReportProgress((int)(progress * 100d));
                 progress += progress_step;
             }
         }
@@ -430,24 +426,16 @@ namespace Trajectories
         internal static double GetGroundAltitude(CelestialBody body, Vector3d relativePosition)
         {
             if (body.pqsController == null)
-                return 0;
+                return 0d;
 
-            double lat = body.GetLatitude(relativePosition + body.position) / 180.0 * Math.PI;
-            double lon = body.GetLongitude(relativePosition + body.position) / 180.0 * Math.PI;
+            double lat = body.GetLatitude(relativePosition + body.position) / 180d * Math.PI;
+            double lon = body.GetLongitude(relativePosition + body.position) / 180d * Math.PI;
             Vector3d rad = new Vector3d(Math.Cos(lat) * Math.Cos(lon), Math.Sin(lat), Math.Cos(lat) * Math.Sin(lon));
             double elevation = body.pqsController.GetSurfaceHeight(rad) - body.Radius;
             if (body.ocean)
-                elevation = Math.Max(elevation, 0.0);
+                elevation = Math.Max(elevation, 0d);
 
             return elevation;
-        }
-
-        internal static double RealMaxAtmosphereAltitude(CelestialBody body)
-        {
-            if (!body.atmosphere)
-                return 0;
-            // Change for 1.0 refer to atmosphereDepth
-            return body.atmosphereDepth;
         }
 
         private static Orbit CreateOrbitFromState(VesselState state)
@@ -471,7 +459,7 @@ namespace Trajectories
             double to = endTime;
 
             int loopCount = 0;
-            while (to - from > 0.1)
+            while (to - from > 0.1d)
             {
                 ++loopCount;
                 if (loopCount > 1000)
@@ -480,7 +468,7 @@ namespace Trajectories
                     ++ErrorCount;
                     break;
                 }
-                double middle = (from + to) * 0.5;
+                double middle = (from + to) * 0.5d;
                 if (orbit.getRelativePositionAtUT(middle).magnitude < bodyAltitude)
                 {
                     to = middle;
@@ -514,20 +502,20 @@ namespace Trajectories
             Vector3d v1 = state.velocity;
             accel = accelerationFunc(p1, v1);
 
-            Vector3d p2 = state.position + 0.5 * v1 * dt;
-            Vector3d v2 = state.velocity + 0.5 * accel * dt;
+            Vector3d p2 = state.position + 0.5d * v1 * dt;
+            Vector3d v2 = state.velocity + 0.5d * accel * dt;
             Vector3d a2 = accelerationFunc(p2, v2);
 
-            Vector3d p3 = state.position + 0.5 * v2 * dt;
-            Vector3d v3 = state.velocity + 0.5 * a2 * dt;
+            Vector3d p3 = state.position + 0.5d * v2 * dt;
+            Vector3d v3 = state.velocity + 0.5d * a2 * dt;
             Vector3d a3 = accelerationFunc(p3, v3);
 
             Vector3d p4 = state.position + v3 * dt;
             Vector3d v4 = state.velocity + a3 * dt;
             Vector3d a4 = accelerationFunc(p4, v4);
 
-            state.position = state.position + (dt / 6.0) * (v1 + 2.0 * v2 + 2.0 * v3 + v4);
-            state.velocity = state.velocity + (dt / 6.0) * (accel + 2.0 * a2 + 2.0 * a3 + a4);
+            state.position = state.position + (dt / 6d) * (v1 + 2d * v2 + 2d * v3 + v4);
+            state.velocity = state.velocity + (dt / 6d) * (accel + 2d * a2 + 2d * a3 + a4);
 
             return state;
         }
@@ -575,22 +563,16 @@ namespace Trajectories
             }
 
             if (nextPatch != null)
-            {
                 patch.EndTime = nextPatch.StartUT;
-            }
 
-            double maxAtmosphereAltitude = RealMaxAtmosphereAltitude(body);
-            if (!body.atmosphere)
-            {
-                maxAtmosphereAltitude = body.pqsController.mapMaxHeight;
-            }
+            double maxAtmosphereAltitude = body.atmosphere ? body.atmosphereDepth : body.pqsController.mapMaxHeight;
 
             double minAltitude = patch.SpaceOrbit.PeA;
-            if (patch.SpaceOrbit.timeToPe < 0 || patch.EndTime < startingState.Time + patch.SpaceOrbit.timeToPe)
+            if (patch.SpaceOrbit.timeToPe < 0d || patch.EndTime < startingState.Time + patch.SpaceOrbit.timeToPe)
             {
                 minAltitude = Math.Min(
                     patch.SpaceOrbit.getRelativePositionAtUT(patch.EndTime).magnitude,
-                    patch.SpaceOrbit.getRelativePositionAtUT(patch.StartingState.Time + 1.0).magnitude
+                    patch.SpaceOrbit.getRelativePositionAtUT(patch.StartingState.Time + 1d).magnitude
                     ) - body.Radius;
             }
 
@@ -610,7 +592,7 @@ namespace Trajectories
                         body.Radius + maxAtmosphereAltitude);
                 }
 
-                if (entryTime > startingState.Time + 0.1 || !body.atmosphere)
+                if (entryTime > startingState.Time + 0.1d || !body.atmosphere)
                 {
                     if (body.atmosphere)
                     {
@@ -640,7 +622,7 @@ namespace Trajectories
                         if (groundRangeExit <= entryTime)
                             groundRangeExit = startingState.Time + patch.SpaceOrbit.timeToPe;
 
-                        double iterationSize = (groundRangeExit - entryTime) / 100.0;
+                        double iterationSize = (groundRangeExit - entryTime) / 100d;
                         double t;
                         bool groundImpact = false;
                         for (t = entryTime; t < groundRangeExit; t += iterationSize)
@@ -705,13 +687,13 @@ namespace Trajectories
 
                     // some shallow entries can result in very long flight. For performances reasons,
                     // we limit the prediction duration
-                    int maxIterations = (int)(60.0 * 60.0 / dt);
+                    int maxIterations = (int)(60d * 60d / dt);
 
                     int chunkSize = 128;
 
                     // time between two consecutive stored positions (more intermediate positions are computed for better accuracy),
                     // also used for ground collision checks
-                    double trajectoryInterval = 10.0;
+                    double trajectoryInterval = 10d;
 
                     List<Point[]> buffer = new List<Point[]>
                     {
@@ -724,12 +706,12 @@ namespace Trajectories
                     state.velocity = Util.SwapYZ(patch.SpaceOrbit.getOrbitalVelocityAtUT(entryTime));
 
                     // Initialize a patch with zero acceleration
-                    Vector3d currentAccel = new Vector3d(0.0, 0.0, 0.0);
+                    Vector3d currentAccel = Vector3d.zero;
 
 
                     double currentTime = entryTime;
-                    double lastPositionStoredUT = 0;
-                    Vector3d lastPositionStored = new Vector3d();
+                    double lastPositionStoredUT = 0d;
+                    Vector3d lastPositionStored = Vector3d.zero;
                     bool hitGround = false;
                     int iteration = 0;
 
@@ -771,12 +753,12 @@ namespace Trajectories
                         double altitude = R - body.Radius;
                         double atmosphereCoeff = altitude / maxAtmosphereAltitude;
                         if (hitGround
-                            || atmosphereCoeff <= 0.0 || atmosphereCoeff >= 1.0
+                            || atmosphereCoeff <= 0d || atmosphereCoeff >= 1d
                             || iteration == maxIterations || currentTime > patch.EndTime)
                         {
                             //Util.PostSingleScreenMessage("atmo force", "Atmospheric accumulated force: " + accumulatedForces.ToString("0.00"));
 
-                            if (hitGround || atmosphereCoeff <= 0.0)
+                            if (hitGround || atmosphereCoeff <= 0d)
                             {
                                 patch.RawImpactPosition = state.position;
                                 patch.ImpactPosition = CalculateRotatedPosition(body, patch.RawImpactPosition.Value, currentTime);
@@ -804,7 +786,7 @@ namespace Trajectories
                                 patchesBackBuffer_.Add(patch);
                                 return null;
                             }
-                            else if (atmosphereCoeff <= 0.0 || hitGround)
+                            else if (atmosphereCoeff <= 0d || hitGround)
                             {
                                 patchesBackBuffer_.Add(patch);
                                 return null;
@@ -845,8 +827,8 @@ namespace Trajectories
                         // For us,
                         // h is the time step of the outer simulation (KSP), which is the physics time step
                         // y''(t) is the difference of the velocity/acceleration divided by the physics time step
-                        state.position += 0.5 * TimeWarp.fixedDeltaTime * currentAccel * dt;
-                        state.velocity += 0.5 * TimeWarp.fixedDeltaTime * (currentAccel - lastAccel);
+                        state.position += 0.5d * GameDataCache.WarpDeltaTime * currentAccel * dt;
+                        state.velocity += 0.5d * GameDataCache.WarpDeltaTime * (currentAccel - lastAccel);
 
                         Profiler.Stop("IntegrationStep");
                         #endregion
@@ -856,31 +838,29 @@ namespace Trajectories
                         Vector3d aerodynamicForce = (currentAccel - gravityAccel) / GameDataCache.VesselMass;
 
                         // acceleration in the vessel reference frame is acceleration - gravityAccel
-                        maxAccelBackBuffer_ = Math.Max(
-                            (float)(aerodynamicForce.magnitude / GameDataCache.VesselMass),
-                            maxAccelBackBuffer_);
+                        maxAccelBackBuffer_ = Math.Max(aerodynamicForce.magnitude / GameDataCache.VesselMass, maxAccelBackBuffer_);
 
                         #region Impact Calculation
 
                         Profiler.Start("AddPatch#impact");
 
-                        double interval = altitude < 10000.0 ? trajectoryInterval * 0.1 : trajectoryInterval;
+                        double interval = altitude < 10000d ? trajectoryInterval * 0.1d : trajectoryInterval;
                         if (currentTime >= lastPositionStoredUT + interval)
                         {
                             double groundAltitude = GetGroundAltitude(body, CalculateRotatedPosition(body, state.position, currentTime));
-                            if (lastPositionStoredUT > 0)
+                            if (lastPositionStoredUT > 0d)
                             {
                                 // check terrain collision, to detect impact on mountains etc.
-                                Vector3 rayOrigin = lastPositionStored;
-                                Vector3 rayEnd = state.position;
+                                Vector3d rayOrigin = lastPositionStored;
+                                Vector3d rayEnd = state.position;
                                 double absGroundAltitude = groundAltitude + body.Radius;
                                 if (absGroundAltitude > rayEnd.magnitude)
                                 {
                                     hitGround = true;
-                                    float coeff = Math.Max(0.01f, (float)((absGroundAltitude - rayOrigin.magnitude)
-                                        / (rayEnd.magnitude - rayOrigin.magnitude)));
-                                    state.position = rayEnd * coeff + rayOrigin * (1.0f - coeff);
-                                    currentTime = currentTime * coeff + lastPositionStoredUT * (1.0f - coeff);
+                                    double coeff = Math.Max(0.01d, (absGroundAltitude - rayOrigin.magnitude)
+                                        / (rayEnd.magnitude - rayOrigin.magnitude));
+                                    state.position = rayEnd * coeff + rayOrigin * (1d - coeff);
+                                    currentTime = currentTime * coeff + lastPositionStoredUT * (1d - coeff);
                                 }
                             }
 
@@ -897,7 +877,7 @@ namespace Trajectories
                             }
                             buffer.Last()[nextPosIdx].aerodynamicForce = aerodynamicForce;
                             buffer.Last()[nextPosIdx].orbitalVelocity = state.velocity;
-                            buffer.Last()[nextPosIdx].groundAltitude = (float)groundAltitude;
+                            buffer.Last()[nextPosIdx].groundAltitude = groundAltitude;
                             buffer.Last()[nextPosIdx].time = currentTime;
                             buffer.Last()[nextPosIdx++].pos = nextPos;
                             lastPositionStored = state.position;

@@ -27,6 +27,7 @@ namespace Trajectories
     internal static class GameDataCache
     {
         internal static double UniversalTime { get; set; }
+        internal static double WarpDeltaTime { get; set; }
 
         internal static Vessel AttachedVessel { get; private set; }
         internal static List<Part> VesselParts { get; private set; }
@@ -53,6 +54,7 @@ namespace Trajectories
             Profiler.Start("GameDataCache.Update");
 
             UniversalTime = Planetarium.GetUniversalTime();
+            WarpDeltaTime = TimeWarp.fixedDeltaTime;
 
             if (AttachedVessel != Trajectories.AttachedVessel || Body != Trajectories.AttachedVessel.mainBody || VesselParts.Count != Trajectories.AttachedVessel.Parts.Count)
             {

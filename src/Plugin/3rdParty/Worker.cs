@@ -136,7 +136,7 @@ namespace Trajectories
         /// <summary> Code that is executed inside the worker thread </summary>
         private static void DoWork(object sender, DoWorkEventArgs e)
         {
-            Util.DebugLog("{0}", ((JOB)e.Argument).ToString());
+            //Util.DebugLog("{0}", ((JOB)e.Argument).ToString());
             CurrentJob = (JOB)e.Argument;
             //DeviceManager.CONNECT_MODE connect_mode = DeviceManager.CONNECT_MODE.NORMAL;
 
@@ -242,7 +242,7 @@ namespace Trajectories
             {
                 // Operation succeeded.
                 OnReport(EVENT_TYPE.PERCENTAGE, 100);
-                Util.DebugLog("ProgressChanged: 100%");
+                //Util.DebugLog("ProgressChanged: 100%");
 
                 OnUpdate(CurrentJob, (bool)(e.Result ?? false));
             }
@@ -257,7 +257,7 @@ namespace Trajectories
             OnReport(EVENT_TYPE.ALL);
             CurrentJob = JOB.NO_JOB;
 
-            Util.DebugLog("Done.");
+            //Util.DebugLog("Done.");
 
             //if (DevicesFormWaiting)
             //DevicesForm.Instance.WorkerFinished();
@@ -266,7 +266,7 @@ namespace Trajectories
         /// <summary> Event method that is invoked when the worker thread needs to report any progress data </summary>
         private static void ProgressChanged(object sender, ProgressChangedEventArgs e)
         {
-            Util.DebugLog("{0}%", e.ProgressPercentage);
+            //Util.DebugLog("{0}%", e.ProgressPercentage);
             OnReport(EVENT_TYPE.PERCENTAGE, e.ProgressPercentage);
             if (e.UserState != null)
             {
