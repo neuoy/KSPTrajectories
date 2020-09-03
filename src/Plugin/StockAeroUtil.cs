@@ -122,7 +122,7 @@ namespace Trajectories
         //*******************************************************
         public static Vector3d SimAeroForce(Vector3d v_wrld_vel, Vector3 position)
         {
-            CelestialBody body = Trajectories.AttachedVessel.mainBody;
+            CelestialBody body = GameDataCache.Body;
             double latitude = body.GetLatitude(position) / 180.0 * Math.PI;
             double altitude = (position - body.position).magnitude - body.Radius;
 
@@ -134,31 +134,29 @@ namespace Trajectories
         {
             Profiler.Start("SimAeroForce");
 
-            CelestialBody body = Trajectories.AttachedVessel.mainBody;
-            double pressure = body.GetPressure(altitude);
+            CelestialBody body = GameDataCache.Body;
+
+            double rho = GetDensity(altitude, body);
+            if (rho <= 0)
+                return Vector3.zero;
+
+            // dynamic pressure for standard drag equation
+            double dyn_pressure = 0.0005 * rho * v_wrld_vel.sqrMagnitude;
+
+            double mach = v_wrld_vel.magnitude / body.GetSpeedOfSound(body.GetPressure(altitude), rho);
+            if (mach > 25.0)
+                mach = 25.0;
+
             // Lift and drag for force accumulation.
             Vector3d total_lift = Vector3d.zero;
             Vector3d total_drag = Vector3d.zero;
 
-            // dynamic pressure for standard drag equation
-            double rho = GetDensity(altitude, body);
-            double dyn_pressure = 0.0005 * rho * v_wrld_vel.sqrMagnitude;
-
-            if (rho <= 0)
-            {
-                return Vector3.zero;
-            }
-
-            double soundSpeed = body.GetSpeedOfSound(pressure, rho);
-            double mach = v_wrld_vel.magnitude / soundSpeed;
-            if (mach > 25.0)
-                mach = 25.0;
-
             // Loop through all parts, accumulating drag and lift.
-            for (int i = 0; i < Trajectories.AttachedVessel.Parts.Count; ++i)
+            int part_index = -1;
+            foreach (Part p in GameDataCache.VesselParts)
             {
-                // need checks on shielded components
-                Part p = Trajectories.AttachedVessel.Parts[i];
+                part_index++;
+
 #if DEBUG
                 TrajectoriesDebug partDebug = VesselAerodynamicModel.DebugParts ? p.FindModuleImplementing<TrajectoriesDebug>() : null;
                 if (partDebug != null)
@@ -168,14 +166,16 @@ namespace Trajectories
                 }
 #endif
 
+                // need checks on shielded components
                 if (p.ShieldedFromAirstream || p.Rigidbody == null)
-                {
                     continue;
-                }
 
-                // Get Drag
+                Transform part_transform = GameDataCache.PartTransforms[part_index];
+
+                // get drag
                 Vector3d sim_dragVectorDir = v_wrld_vel.normalized;
-                Vector3d sim_dragVectorDirLocal = -(p.transform.InverseTransformDirection(sim_dragVectorDir));
+                //Vector3d sim_dragVectorDirLocal = -part_transform.InverseTransformDirection(sim_dragVectorDir);
+                Vector3d sim_dragVectorDirLocal = Vector3d.zero;   // temporary until I get InverseTransformDirection working
 
                 Vector3d liftForce = Vector3d.zero;
                 Vector3d dragForce;
@@ -226,11 +226,11 @@ namespace Trajectories
                         break;
 
                     case Part.DragModel.CYLINDRICAL:
-                        dragForce = -sim_dragVectorDir * Mathf.Lerp(p.minimum_drag, p.maximum_drag, Mathf.Abs(Vector3.Dot(p.partTransform.TransformDirection(p.dragReferenceVector), sim_dragVectorDir)));
+                        dragForce = -sim_dragVectorDir * Util.Lerp(p.minimum_drag, p.maximum_drag, Math.Abs(Vector3d.Dot(part_transform.TransformDirection(p.dragReferenceVector), sim_dragVectorDir)));
                         break;
 
                     case Part.DragModel.CONIC:
-                        dragForce = -sim_dragVectorDir * Mathf.Lerp(p.minimum_drag, p.maximum_drag, Vector3.Angle(p.partTransform.TransformDirection(p.dragReferenceVector), sim_dragVectorDir) / 180f);
+                        dragForce = -sim_dragVectorDir * Util.Lerp(p.minimum_drag, p.maximum_drag, Vector3d.Angle(part_transform.TransformDirection(p.dragReferenceVector), sim_dragVectorDir) / 180d);
                         break;
 
                     default:
@@ -256,7 +256,7 @@ namespace Trajectories
 
                     float simbodyLiftScalar = p.bodyLiftMultiplier * PhysicsGlobals.BodyLiftMultiplier * (float)dyn_pressure;
                     simbodyLiftScalar *= PhysicsGlobals.GetLiftingSurfaceCurve("BodyLift").liftMachCurve.Evaluate((float)mach);
-                    Vector3 bodyLift = p.transform.rotation * (simbodyLiftScalar * liftForce);
+                    Vector3 bodyLift = GameDataCache.PartRotations[part_index] * (simbodyLiftScalar * liftForce);
                     bodyLift = Vector3.ProjectOnPlane(bodyLift, sim_dragVectorDir);
                     // Only accumulate forces for non-LiftModules
                     total_lift += bodyLift;
@@ -268,27 +268,50 @@ namespace Trajectories
 
                 Profiler.Start("SimAeroForce#LiftingSurface");
 
-                // Find ModuleLifingSurface for wings and liftforce.
+                // Find ModuleLifingSurface for wings and lift force.
                 // Should catch control surface as it is a subclass
-                for (int j = 0; j < p.Modules.Count; ++j)
+                foreach (PartModule m in p.Modules)
                 {
-                    PartModule m = p.Modules[j];
-                    float mcs_mod;
+                    double mcs_mod;
                     if (m is ModuleLiftingSurface)
                     {
-                        mcs_mod = 1.0f;
-                        double liftQ = dyn_pressure * 1000;
                         ModuleLiftingSurface wing = (ModuleLiftingSurface)m;
-                        Vector3 nVel = Vector3.zero;
-                        Vector3 liftVector = Vector3.zero;
-                        float liftdot;
-                        float absdot;
-                        wing.SetupCoefficients(v_wrld_vel, out nVel, out liftVector, out liftdot, out absdot);
+                        mcs_mod = 1.0d;
+                        double liftQ = dyn_pressure * 1000d;
+                        Vector3d liftVector = Vector3d.zero;
+                        double absdot;
+
+                        //wing.SetupCoefficients(v_wrld_vel, out nVel, out liftVector, out liftdot, out absdot);
+                        #region SETUP_COEFFICIENTS
+                        switch (wing.transformDir)
+                        {
+                            case ModuleLiftingSurface.TransformDir.X:
+                                liftVector = GameDataCache.PartTransformsRight[part_index];
+                                break;
+                            case ModuleLiftingSurface.TransformDir.Y:
+                                liftVector = GameDataCache.PartTransformsUp[part_index];
+                                break;
+                            case ModuleLiftingSurface.TransformDir.Z:
+                                liftVector = GameDataCache.PartTransformsForward[part_index];
+                                break;
+                        }
+                        Vector3d nVel = v_wrld_vel.normalized;
+                        liftVector *= wing.transformSign;
+                        double liftdot = Vector3d.Dot(nVel, liftVector);
+                        if (wing.omnidirectional)
+                        {
+                            absdot = Math.Abs(liftdot);
+                        }
+                        else
+                        {
+                            absdot = Util.Clamp01(liftdot);
+                        }
+                        #endregion SETUP_COEFFICIENTS
 
                         double prevMach = p.machNumber;
                         p.machNumber = mach;
-                        Vector3 local_lift = mcs_mod * wing.GetLiftVector(liftVector, liftdot, absdot, liftQ, (float)mach);
-                        Vector3 local_drag = mcs_mod * wing.GetDragVector(nVel, absdot, liftQ);
+                        Vector3d local_lift = mcs_mod * (Vector3d)wing.GetLiftVector(liftVector, (float)liftdot, (float)absdot, liftQ, (float)mach);
+                        Vector3d local_drag = mcs_mod * (Vector3d)wing.GetDragVector(nVel, (float)absdot, liftQ);
                         p.machNumber = prevMach;
 
                         total_lift += local_lift;
