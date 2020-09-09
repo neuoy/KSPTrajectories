@@ -43,6 +43,14 @@ namespace Trajectories
         internal static Vector3d VesselTransformForward { get; private set; }
 
         internal static CelestialBody Body { get; private set; }
+        internal static Vector3d BodyWorldPos { get; private set; }
+        internal static bool BodyHasAtmosphere { get; private set; }
+        internal static bool BodyHasOcean { get; set; }
+        internal static double BodyAtmosphereDepth { get; set; }
+        internal static double BodyMaxGroundHeight { get; set; }
+        internal static double BodyRadius { get; set; }
+        internal static Vector3d BodyAngularVelocity { get; set; }
+        internal static double BodyGravityParameter { get; set; }
 
         internal static List<ManeuverNode> ManeuverNodes { get; private set; }
         internal static Orbit Orbit { get; private set; }
@@ -64,6 +72,7 @@ namespace Trajectories
                 VesselParts = new List<Part>(AttachedVessel.Parts);
 
                 Body = FlightGlobals.Bodies.Find((CelestialBody b) => { return b.name == AttachedVessel.mainBody.name; });
+                UpdateBodyCache();
 
                 Trajectories.AerodynamicModel.Init();
             }
@@ -74,6 +83,27 @@ namespace Trajectories
                 return false;
             }
 
+            UpdateVesselCache();
+
+            BodyWorldPos = Body.position;
+
+            ManeuverNodes = new List<ManeuverNode>(AttachedVessel.patchedConicSolver.maneuverNodes);
+            Orbit = new Orbit(AttachedVessel.orbit);
+            FlightPlan = new List<Orbit>(AttachedVessel.patchedConicSolver.flightPlan);
+
+            Profiler.Stop("GameDataCache.Update");
+            return true;
+        }
+
+        private static void UpdateVesselCache()
+        {
+            UpdateVesselMass();
+
+            VesselWorldPos = AttachedVessel.GetWorldPos3D();
+            VesselOrbitVelocity = AttachedVessel.obt_velocity;
+            VesselTransformUp = AttachedVessel.ReferenceTransform.up;
+            VesselTransformForward = AttachedVessel.ReferenceTransform.forward;
+
             if (PartTransforms == null || PartTransforms.Count != VesselParts.Count)
             {
                 CreatePartTransforms();
@@ -83,18 +113,6 @@ namespace Trajectories
                 UpdatePartTransforms();
             }
 
-            UpdateVesselMass();
-            VesselWorldPos = AttachedVessel.GetWorldPos3D();
-            VesselOrbitVelocity = AttachedVessel.obt_velocity;
-            VesselTransformUp = AttachedVessel.ReferenceTransform.up;
-            VesselTransformForward = AttachedVessel.ReferenceTransform.forward;
-
-            ManeuverNodes = new List<ManeuverNode>(AttachedVessel.patchedConicSolver.maneuverNodes);
-            Orbit = new Orbit(AttachedVessel.orbit);
-            FlightPlan = new List<Orbit>(AttachedVessel.patchedConicSolver.flightPlan);
-
-            Profiler.Stop("GameDataCache.Update");
-            return true;
         }
 
         private static void CreatePartTransforms()
@@ -146,5 +164,15 @@ namespace Trajectories
             }
         }
 
+        private static void UpdateBodyCache()
+        {
+            BodyHasAtmosphere = Body.atmosphere;
+            BodyHasOcean = Body.ocean;
+            BodyAtmosphereDepth = Body.atmosphereDepth;
+            BodyMaxGroundHeight = Body.pqsController.mapMaxHeight;
+            BodyRadius = Body.Radius;
+            BodyAngularVelocity = Body.angularVelocity;
+            BodyGravityParameter = Body.gravParameter;
+        }
     }
 }
