@@ -170,16 +170,11 @@ namespace Trajectories
                 if (p.ShieldedFromAirstream || p.Rigidbody == null)
                     continue;
 
-                Transform part_transform = GameDataCache.PartTransforms[part_index];
-
                 // get drag
                 Vector3d sim_dragVectorDir = v_wrld_vel.normalized;
-                //Vector3d sim_dragVectorDirLocal = -part_transform.InverseTransformDirection(sim_dragVectorDir);
-                Vector3d sim_dragVectorDirLocal = Vector3d.zero;   // temporary until I get InverseTransformDirection working
 
                 Vector3d liftForce = Vector3d.zero;
                 Vector3d dragForce;
-
 
                 Profiler.Start("SimAeroForce#drag");
                 switch (p.dragModel)
@@ -189,6 +184,10 @@ namespace Trajectories
                         DragCubeList cubes = p.DragCubes;
 
                         DragCubeList.CubeData p_drag_data = new DragCubeList.CubeData();
+
+                        //Vector3d sim_dragVectorDirLocal = -part_transform.InverseTransformDirection(sim_dragVectorDir);   // Not thread safe
+                        // temporary until I get a better InverseTransformDirection workaround
+                        Vector3d sim_dragVectorDirLocal = -(GameDataCache.PartRotations[part_index].Inverse() * sim_dragVectorDir);
 
                         double drag;
                         if (cubes.None) // since 1.0.5, some parts don't have drag cubes (for example fuel lines and struts)
@@ -226,11 +225,11 @@ namespace Trajectories
                         break;
 
                     case Part.DragModel.CYLINDRICAL:
-                        dragForce = -sim_dragVectorDir * Util.Lerp(p.minimum_drag, p.maximum_drag, Math.Abs(Vector3d.Dot(part_transform.TransformDirection(p.dragReferenceVector), sim_dragVectorDir)));
+                        dragForce = -sim_dragVectorDir * Util.Lerp(p.minimum_drag, p.maximum_drag, Math.Abs(Vector3d.Dot(GameDataCache.PartRotations[part_index] * p.dragReferenceVector, sim_dragVectorDir)));
                         break;
 
                     case Part.DragModel.CONIC:
-                        dragForce = -sim_dragVectorDir * Util.Lerp(p.minimum_drag, p.maximum_drag, Vector3d.Angle(part_transform.TransformDirection(p.dragReferenceVector), sim_dragVectorDir) / 180d);
+                        dragForce = -sim_dragVectorDir * Util.Lerp(p.minimum_drag, p.maximum_drag, Vector3d.Angle(GameDataCache.PartRotations[part_index] * p.dragReferenceVector, sim_dragVectorDir) / 180d);
                         break;
 
                     default:
