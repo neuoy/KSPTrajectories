@@ -31,7 +31,6 @@ namespace Trajectories
 
         internal static Vessel AttachedVessel { get; private set; }
         internal static List<Part> VesselParts { get; private set; }
-        internal static List<Transform> PartTransforms { get; private set; }
         internal static List<Quaternion> PartRotations { get; private set; }
         internal static List<Vector3d> PartTransformsUp { get; private set; }
         internal static List<Vector3d> PartTransformsForward { get; private set; }
@@ -104,7 +103,7 @@ namespace Trajectories
             VesselTransformUp = AttachedVessel.ReferenceTransform.up;
             VesselTransformForward = AttachedVessel.ReferenceTransform.forward;
 
-            if (PartTransforms == null || PartTransforms.Count != VesselParts.Count)
+            if (PartRotations == null || PartRotations.Count != VesselParts.Count)
             {
                 CreatePartTransforms();
             }
@@ -117,12 +116,10 @@ namespace Trajectories
 
         private static void CreatePartTransforms()
         {
-            PartTransforms ??= new List<Transform>(VesselParts.Count);
             PartRotations ??= new List<Quaternion>(VesselParts.Count);
             PartTransformsUp ??= new List<Vector3d>(VesselParts.Count);
             PartTransformsForward ??= new List<Vector3d>(VesselParts.Count);
             PartTransformsRight ??= new List<Vector3d>(VesselParts.Count);
-            PartTransforms.Clear();
             PartRotations.Clear();
             PartTransformsUp.Clear();
             PartTransformsForward.Clear();
@@ -130,7 +127,6 @@ namespace Trajectories
 
             foreach (Part part in VesselParts)
             {
-                PartTransforms.Add(part.transform);
                 PartRotations.Add(part.transform.rotation);
                 PartTransformsUp.Add(part.transform.up);
                 PartTransformsForward.Add(part.transform.forward);
@@ -143,7 +139,6 @@ namespace Trajectories
             int part_index = 0;
             foreach (Part part in VesselParts)
             {
-                PartTransforms[part_index] = part.transform;
                 PartRotations[part_index] = part.transform.rotation;
                 PartTransformsUp[part_index] = part.transform.up;
                 PartTransformsForward[part_index] = part.transform.forward;
