@@ -134,10 +134,17 @@ namespace Trajectories
         }
 
 
+
         // --------------------------------------------------------------------------
         // --- Math -----------------------------------------------------------------
 
         internal const double HALF_PI = Math.PI * 0.5d;
+
+        /// <returns> true if not a number </returns>
+        internal static bool IsNaN(this float value) => float.IsNaN(value);
+
+        /// <returns> true if not a number </returns>
+        internal static bool IsNaN(this double value) => double.IsNaN(value);
 
         /// <summary> Linearly interpolates a double value between a and b by t </summary>
         internal static double Lerp(double a, double b, double t) => (a * (1 - t)) + (b * t);
@@ -174,6 +181,34 @@ namespace Trajectories
             else
                 return value;
         }
+
+        /// <summary> Clamps a double value using the absolute value for comparison, optional return values for min and max can be passed </summary>
+        internal static double ClampAbs(double value, double min, double max, double rtn_min = 0d, double rtn_max = 1d)
+        {
+            if (Math.Abs(value) < min)
+                return rtn_min;
+            else if (Math.Abs(value) > max)
+                return rtn_max;
+            else
+                return value;
+        }
+
+
+
+        // --------------------------------------------------------------------------
+        // --- Vectors --------------------------------------------------------------
+
+        /// <returns> true if any of the Vector2 elements are not a number </returns>
+        internal static bool IsNaN(this Vector2 value) => value.x.IsNaN() || value.y.IsNaN();
+
+        /// <returns> true if any of the Vector2d elements are not a number </returns>
+        internal static bool IsNaN(this Vector2d value) => value.x.IsNaN() || value.y.IsNaN();
+
+        /// <returns> true if any of the Vector3 elements are not a number </returns>
+        internal static bool IsNaN(this Vector3 value) => value.x.IsNaN() || value.y.IsNaN() || value.z.IsNaN();
+
+        /// <returns> true if any of the Vector3d elements are not a number </returns>
+        internal static bool IsNaN(this Vector3d value) => value.x.IsNaN() || value.y.IsNaN() || value.z.IsNaN();
 
         /// <summary> Clamps a Vector2 returning a new Vector2 </summary>
         internal static Vector2 Clamp(this Vector2 value, Vector2 min, Vector2 max)
@@ -238,20 +273,6 @@ namespace Trajectories
             value.z = Clamp(value.z, min.z, max.z);
             return value;
         }
-
-        /// <summary> Clamps a double value using the absolute value for comparison, optional return values for min and max can be passed </summary>
-        internal static double ClampAbs(double value, double min, double max, double rtn_min = 0d, double rtn_max = 1d)
-        {
-            if (Math.Abs(value) < min)
-                return rtn_min;
-            else if (Math.Abs(value) > max)
-                return rtn_max;
-            else
-                return value;
-        }
-
-        // --------------------------------------------------------------------------
-        // --- Vectors --------------------------------------------------------------
 
         private static double swap_double;
         private static float swap_float;
