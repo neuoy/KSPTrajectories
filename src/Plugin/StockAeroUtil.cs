@@ -235,22 +235,23 @@ namespace Trajectories
         {
             Profiler.Start("SimAeroForce");
 
-            CelestialBody body = GameDataCache.Body;
-
             double rho = GetDensity(altitude);
             if (rho <= 0d)
                 return Vector3d.zero;
 
             // dynamic pressure for standard drag equation
             double dyn_pressure = 0.0005d * rho * v_wrld_vel.sqrMagnitude;
+            double pseudoredragmult = PhysicsGlobals.DragCurvePseudoReynolds.Evaluate((float)(rho * Math.Abs(v_wrld_vel.magnitude)));
 
-            double mach = v_wrld_vel.magnitude / body.GetSpeedOfSound(body.GetPressure(altitude), rho);
+            double mach = v_wrld_vel.magnitude / GameDataCache.Body.GetSpeedOfSound(GameDataCache.Body.GetPressure(altitude), rho);
             if (mach > 25d)
                 mach = 25d;
 
             // Lift and drag for force accumulation.
             Vector3d total_lift = Vector3d.zero;
             Vector3d total_drag = Vector3d.zero;
+
+            Vector3d sim_dragVectorDir = v_wrld_vel.normalized;
 
             // Loop through all parts, accumulating drag and lift.
             int part_index = -1;
@@ -272,8 +273,6 @@ namespace Trajectories
                     continue;
 
                 // get drag
-                Vector3d sim_dragVectorDir = v_wrld_vel.normalized;
-
                 Vector3d liftForce = Vector3d.zero;
                 Vector3d dragForce;
 
@@ -309,8 +308,6 @@ namespace Trajectories
                                 Util.DebugLogError("Exception {0} on drag initialization", e);
                             }
 
-                            double pseudoreynolds = rho * Math.Abs(v_wrld_vel.magnitude);
-                            double pseudoredragmult = PhysicsGlobals.DragCurvePseudoReynolds.Evaluate((float)pseudoreynolds);
                             drag = p_drag_data.areaDrag * PhysicsGlobals.DragCubeMultiplier * pseudoredragmult;
 
                             liftForce = p_drag_data.liftForce;
@@ -354,13 +351,12 @@ namespace Trajectories
                 {
                     Profiler.Start("SimAeroForce#BodyLift");
 
-                    float simbodyLiftScalar = p.bodyLiftMultiplier * PhysicsGlobals.BodyLiftMultiplier * (float)dyn_pressure;
+                    double simbodyLiftScalar = p.bodyLiftMultiplier * PhysicsGlobals.BodyLiftMultiplier * dyn_pressure;
                     simbodyLiftScalar *= PhysicsGlobals.GetLiftingSurfaceCurve("BodyLift").liftMachCurve.Evaluate((float)mach);
-                    Vector3 bodyLift = GameDataCache.PartRotations[part_index] * (simbodyLiftScalar * liftForce);
+                    Vector3d bodyLift = GameDataCache.PartRotations[part_index] * (simbodyLiftScalar * liftForce);
                     bodyLift = Vector3.ProjectOnPlane(bodyLift, sim_dragVectorDir);
                     // Only accumulate forces for non-LiftModules
                     total_lift += bodyLift;
-
 
                     Profiler.Stop("SimAeroForce#BodyLift");
                 }
@@ -430,11 +426,9 @@ namespace Trajectories
                 Profiler.Stop("SimAeroForce#LiftingSurface");
 
             }
-            // RETURN STUFF
-            Vector3 force = total_lift + total_drag;
 
             Profiler.Stop("SimAeroForce");
-            return force;
+            return total_lift + total_drag;
         }
     } //StockAeroUtil
 }
