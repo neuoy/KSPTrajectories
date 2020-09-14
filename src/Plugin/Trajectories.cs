@@ -31,6 +31,8 @@ namespace Trajectories
         //public static string version;                           // savegame version
         //public static int uid;                                  // savegame unique id
 
+        private static bool compute_patches_completed;
+
         // version string
         internal static string Version { get; private set; } = "X.X.X";
 
@@ -65,6 +67,7 @@ namespace Trajectories
             Worker.OnUpdate += Worker_OnUpdate;
             Worker.OnError += Worker_OnError;
             Worker.Initialize();
+            compute_patches_completed = false;
         }
 
         public override void OnLoad(ConfigNode node)
@@ -115,6 +118,11 @@ namespace Trajectories
 
             if (AttachedVessel != FlightGlobals.ActiveVessel)
                 AttachVessel();
+
+            if (compute_patches_completed)
+                Trajectory.ComputeComplete();
+
+            compute_patches_completed = false;
 
             Trajectory.Update();
             MapOverlay.Update();
@@ -226,7 +234,8 @@ namespace Trajectories
             switch (job)
             {
                 case Worker.JOB.COMPUTE_PATCHES:
-                    Trajectory.ComputeComplete();
+                    Trajectory.StopTiming();
+                    compute_patches_completed = true;
                     break;
             }
             //if (ModulesForm.Exists)

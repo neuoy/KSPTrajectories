@@ -144,7 +144,7 @@ namespace Trajectories
             ComputationTime = ComputationTime * 0.9d + calculation_time * 0.1d;
 
             // compute total patches calculated
-            CalculatedPatches = CalculatedPatches * 0.9d + patches_calculated * 0.1d;
+            CalculatedPatches = CalculatedPatches * 0.5d + patches_calculated * 0.5d;
         }
 
 #if DEBUG_TELEMETRY
@@ -408,10 +408,14 @@ namespace Trajectories
             patchesBackBuffer_ = tmp;
 
             MaxAccel = maxAccelBackBuffer_;
+        }
 
+        /// <summary> Stops calculation timer, Called when the worker thread has finished executing ComputeTrajectoryPatches() </summary>
+        internal static void StopTiming()
+        {
             // how long did the calculation take?
             calculation_time = Util.ElapsedMilliseconds(calculation_time);
-            patches_calculated = Patches.Count;
+            patches_calculated = patchesBackBuffer_.Count;
             UpdateTiming();
         }
 
