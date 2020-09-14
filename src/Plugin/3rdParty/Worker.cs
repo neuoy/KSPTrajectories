@@ -138,90 +138,26 @@ namespace Trajectories
         {
             //Util.DebugLog("{0}", ((JOB)e.Argument).ToString());
             CurrentJob = (JOB)e.Argument;
-            //DeviceManager.CONNECT_MODE connect_mode = DeviceManager.CONNECT_MODE.NORMAL;
-
-            //ECU_RipperPC.Update_AllButtons(false);      // change to an event maybe ??
 
             if (Thread.CancellationPending)
             {
                 e.Cancel = true;
                 return;
             }
-            //Thread.ReportProgress(10);
 
             switch (CurrentJob)
             {
                 case JOB.COMPUTE_PATCHES:
                     Trajectory.ComputeTrajectoryPatches();
                     break;
-                //case JOB.RESET_DEVICES:
-                    //DeviceManager.ResetDevices();
-                    //return;
-                //case JOB.RESET_NET:
-                    //connect_mode = DeviceManager.CONNECT_MODE.RESET;
-                    //DeviceManager.DetectDevices();
-                    //break;
-                //case JOB.CHANGE_PROTOCOL:
-                    //connect_mode = DeviceManager.CONNECT_MODE.CHANGE;
-                    //DeviceManager.DetectDevices();
-                    //break;
             }
+
             if (Thread.CancellationPending)
             {
                 e.Cancel = true;
                 return;
             }
 
-            // Vehicle Network Connection and AutoDetect Management
-            /*if (DeviceManager.ConnectedDevices.Count > 0)
-            {
-                if (ConnectNetworks)
-                {
-                    Thread.ReportProgress(20, true);
-
-                    switch (connect_mode)
-                    {
-                        case DeviceManager.CONNECT_MODE.RESET:
-                            DeviceManager.CurrentDevice.ResetNetwork();
-                            break;
-                        case DeviceManager.CONNECT_MODE.CHANGE:
-                            DeviceManager.CurrentDevice.ChangeProtocol();
-                            break;
-                        default:
-                            DeviceManager.ConnectNetworks();
-                            break;
-                    }
-
-                    //DeviceManager.CurrentDevice.Update();      // change to an event maybe ??
-                    ConnectNetworks = false;
-                    if (DeviceManager.AutoDetecting)
-                    {
-                        Thread.ReportProgress(30, true);
-                        DateTime auto_detect_time = DateTime.Now;
-                        while (DeviceManager.AutoDetecting && (DateTime.Now < (auto_detect_time + DeviceManager.AutoDetectTime)))
-                        {
-                            if (Thread.CancellationPending)
-                            {
-                                e.Cancel = true;
-                                return;
-                            }
-                            DeviceManager.ConnectNetworks();
-                            //DeviceManager.CurrentDevice.Update();      // change to an event maybe ??
-                            Thread.ReportProgress((int)(30 + ((DateTime.Now - auto_detect_time).TotalSeconds * 2)));
-                        }
-                        double detect_time = (DateTime.Now - auto_detect_time).TotalMilliseconds;
-                        if (detect_time != 0)
-                            Util.DebugLog("Auto detect time {0}", ((detect_time / 1000) > 1 ?
-                                string.Format("{0:F1} seconds", detect_time / 1000) : string.Format("{0:F1} ms", detect_time)));
-                    }
-                }
-                //if (DeviceManager.DoDevicesPassBack)
-                // DeviceManager.CurrentDevice.Update();      // change to an event maybe ??
-            }
-            else
-            {
-            }  */
-            Thread.ReportProgress(90);
             if (Thread.CancellationPending)
                 e.Cancel = true;
         }
@@ -258,9 +194,6 @@ namespace Trajectories
             CurrentJob = JOB.NO_JOB;
 
             //Util.DebugLog("Done.");
-
-            //if (DevicesFormWaiting)
-            //DevicesForm.Instance.WorkerFinished();
         }
 
         /// <summary> Event method that is invoked when the worker thread needs to report any progress data </summary>
@@ -272,8 +205,6 @@ namespace Trajectories
             {
                 Util.DebugLog("Update Data");
                 OnReport(EVENT_TYPE.STATUSBAR);
-                //if (DevicesForm.Exists)
-                //DevicesForm.Instance.UpdateData();
             }
         }
         #endregion
