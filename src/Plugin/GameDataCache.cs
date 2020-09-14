@@ -28,6 +28,7 @@ namespace Trajectories
     {
         internal static double UniversalTime { get; set; }
         internal static double WarpDeltaTime { get; set; }
+        internal static Vector3d SunWorldPos { get; private set; }
 
         internal static Vessel AttachedVessel { get; private set; }
         internal static List<Part> VesselParts { get; private set; }
@@ -46,14 +47,23 @@ namespace Trajectories
         internal static bool BodyHasAtmosphere { get; private set; }
         internal static bool BodyHasOcean { get; set; }
         internal static double BodyAtmosphereDepth { get; set; }
+        internal static double BodyAtmosTempOffset { get; set; }       // The average day/night temperature at the equator
         internal static double BodyMaxGroundHeight { get; set; }
         internal static double BodyRadius { get; set; }
         internal static Vector3d BodyAngularVelocity { get; set; }
         internal static double BodyGravityParameter { get; set; }
+        internal static double BodyRotationPeriod { get; private set; }
+        internal static Vector3d BodyTransformUp { get; private set; }
 
         internal static List<ManeuverNode> ManeuverNodes { get; private set; }
         internal static Orbit Orbit { get; private set; }
         internal static List<Orbit> FlightPlan { get; private set; }
+
+        internal static void Start()
+        {
+            Util.DebugLog("Constructing");
+            SunWorldPos = FlightGlobals.Bodies[0].position;
+        }
 
         /// <summary> Updates entire cache </summary>
         internal static bool Update()
@@ -164,10 +174,17 @@ namespace Trajectories
             BodyHasAtmosphere = Body.atmosphere;
             BodyHasOcean = Body.ocean;
             BodyAtmosphereDepth = Body.atmosphereDepth;
+
+            BodyAtmosTempOffset = Body.latitudeTemperatureBiasCurve.Evaluate(0f)
+                + Body.latitudeTemperatureSunMultCurve.Evaluate(0f) * 0.5d
+                + Body.axialTemperatureSunMultCurve.Evaluate(0f);
+
             BodyMaxGroundHeight = Body.pqsController.mapMaxHeight;
             BodyRadius = Body.Radius;
             BodyAngularVelocity = Body.angularVelocity;
             BodyGravityParameter = Body.gravParameter;
+            BodyRotationPeriod = Body.rotationPeriod;
+            BodyTransformUp = Body.bodyTransform.up;
         }
     }
 }

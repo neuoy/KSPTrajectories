@@ -129,6 +129,97 @@ namespace Trajectories
         }
         #endregion
 
+        #region METHODS_USING_GAMEDATACACHE_BODY
+        /// <returns>
+        /// This function should return exactly the same value as Vessel.atmDensity,
+        ///  but is more generic because you don't need an actual vessel updated by KSP to get a value at the desired location.
+        /// Computations are performed for the GameDataCache body position, which means it's theoretically wrong if you want to know the temperature in the future,
+        ///  but since body rotation is not used (position is given in sun frame), you should get accurate results up to a few weeks.
+        /// </returns>
+        /// <param name="position"></param>
+        public static double GetTemperature(Vector3d position)
+        {
+            if (!GameDataCache.BodyHasAtmosphere)
+                return PhysicsGlobals.SpaceTemperature;
+
+            double altitude = (position - GameDataCache.BodyWorldPos).magnitude - GameDataCache.BodyRadius;
+            if (altitude > GameDataCache.BodyAtmosphereDepth)
+                return PhysicsGlobals.SpaceTemperature;
+
+            Vector3d up = (position - GameDataCache.BodyWorldPos).normalized;
+            float polarAngle = (float)Math.Acos(Vector3d.Dot(GameDataCache.BodyTransformUp, up));
+            if (polarAngle > Util.HALF_PI)
+                polarAngle = Mathf.PI - polarAngle;
+
+            float time = ((float)Util.HALF_PI - polarAngle) * Mathf.Rad2Deg;
+
+            Vector3d sunVector = (GameDataCache.SunWorldPos - position).normalized;
+            double sunAxialDot = Vector3d.Dot(sunVector, GameDataCache.BodyTransformUp);
+            double bodyPolarAngle = Math.Acos(Vector3d.Dot(GameDataCache.BodyTransformUp, up));
+            double sunPolarAngle = Math.Acos(sunAxialDot);
+            double sunBodyMaxDot = (1d + Math.Cos(sunPolarAngle - bodyPolarAngle)) * 0.5d;
+            double sunBodyMinDot = (1d + Math.Cos(sunPolarAngle + bodyPolarAngle)) * 0.5d;
+            double sunDotCorrected = (1d + Vector3d.Dot(
+                sunVector,
+                Quaternion.AngleAxis(45f * Math.Sign(GameDataCache.BodyRotationPeriod), GameDataCache.BodyTransformUp) * up))
+                * 0.5d;
+            double sunDotNormalized = (sunDotCorrected - sunBodyMinDot) / (sunBodyMaxDot - sunBodyMinDot);
+            double atmosphereTemperatureOffset = GameDataCache.Body.latitudeTemperatureBiasCurve.Evaluate(time)
+                + GameDataCache.Body.latitudeTemperatureSunMultCurve.Evaluate(time) * sunDotNormalized
+                + GameDataCache.Body.axialTemperatureSunMultCurve.Evaluate((float)sunAxialDot);
+            double temperature = GameDataCache.Body.GetTemperature(altitude) +
+                GameDataCache.Body.atmosphereTemperatureSunMultCurve.Evaluate((float)altitude) * atmosphereTemperatureOffset;
+
+            return temperature;
+        }
+        /// <returns>
+        /// The air density (rho) for the specified altitude on the GameDataCache body.
+        /// This is an approximation, because actual calculations, taking sun exposure into account to compute air temperature,
+        ///  require to know the actual point on the body where the density is to be computed (knowing the altitude is not enough).
+        /// However, the difference is small for high altitudes, so it makes very little difference for trajectory prediction.
+        /// </returns>
+        /// <param name="altitude">Altitude above sea level (in meters)</param>
+        public static double GetDensity(double altitude)
+        {
+            if (!GameDataCache.BodyHasAtmosphere)
+                return 0d;
+
+            if (altitude > GameDataCache.BodyAtmosphereDepth)
+                return 0d;
+
+            double pressure = GameDataCache.Body.GetPressure(altitude);
+
+            // get an average day/night temperature at the equator
+            double temperature = // body.GetFullTemperature(altitude, atmosphereTemperatureOffset);
+                GameDataCache.Body.GetTemperature(altitude) +
+                GameDataCache.Body.atmosphereTemperatureSunMultCurve.Evaluate((float)altitude) * GameDataCache.BodyAtmosTempOffset;
+
+
+            return GameDataCache.Body.GetDensity(pressure, temperature);
+        }
+
+        /// <returns>
+        /// The air density (rho) for the specified altitude on the GameDataCache body.
+        /// This is an approximation, because actual calculations, taking sun exposure into account to compute air temperature,
+        ///  require to know the actual point on the body where the density is to be computed (knowing the altitude is not enough).
+        /// However, the difference is small for high altitudes, so it makes very little difference for trajectory prediction.
+        /// </returns>
+        /// <param name="position">position above sea level (in meters)</param>
+        public static double GetDensity(Vector3d position)
+        {
+            if (!GameDataCache.BodyHasAtmosphere)
+                return 0d;
+
+            double altitude = (position - GameDataCache.BodyWorldPos).magnitude - GameDataCache.BodyRadius;
+            if (altitude > GameDataCache.BodyAtmosphereDepth)
+                return 0d;
+
+            double pressure = GameDataCache.Body.GetPressure(altitude);
+            double temperature = GetTemperature(position);   // body.GetFullTemperature(position);
+
+            return GameDataCache.Body.GetDensity(pressure, temperature);
+        }
+        #endregion
 
         //*******************************************************
         public static Vector3d SimAeroForce(Vector3d v_wrld_vel, Vector3d position)
@@ -146,7 +237,7 @@ namespace Trajectories
 
             CelestialBody body = GameDataCache.Body;
 
-            double rho = GetDensity(altitude, body);
+            double rho = GetDensity(altitude);
             if (rho <= 0d)
                 return Vector3d.zero;
 

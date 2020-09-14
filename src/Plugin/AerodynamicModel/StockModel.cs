@@ -36,7 +36,7 @@ namespace Trajectories
         internal override Vector2d PackForces(Vector3d forces, double altitudeAboveSea, double velocity)
         {
             // would be even better to use FAR method of computing the air density (which also depends on velocity), but this is already better than nothing
-            double rho = StockAeroUtil.GetDensity(altitudeAboveSea, GameDataCache.Body);
+            double rho = StockAeroUtil.GetDensity(altitudeAboveSea);
 
             if (rho < 0.0000000001d)
                 return Vector2d.zero;
@@ -49,7 +49,7 @@ namespace Trajectories
 
         internal override Vector3d UnpackForces(Vector2d packedForces, double altitudeAboveSea, double velocity)
         {
-            double rho = StockAeroUtil.GetDensity(altitudeAboveSea, GameDataCache.Body);
+            double rho = StockAeroUtil.GetDensity(altitudeAboveSea);
             double scale = velocity * velocity * rho;
 
             return new Vector3d(packedForces.x * scale, packedForces.y * scale, 0.0d);

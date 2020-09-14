@@ -83,6 +83,7 @@ namespace Trajectories
             {
                 Settings.Load();
 
+                GameDataCache.Start();
                 DescentProfile.Start();
                 Trajectory.Start();
                 MapOverlay.Start();
