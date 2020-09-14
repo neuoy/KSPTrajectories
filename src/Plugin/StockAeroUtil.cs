@@ -31,15 +31,15 @@ namespace Trajectories
     /// <summary> Provides several methods to access stock aero information </summary>
     public static class StockAeroUtil
     {
-        /// <summary>
+        #region METHODS_TAKING_BODY_PARAMETER
+        /// <returns>
         /// This function should return exactly the same value as Vessel.atmDensity,
         ///  but is more generic because you don't need an actual vessel updated by KSP to get a value at the desired location.
         /// Computations are performed for the current body position, which means it's theoretically wrong if you want to know the temperature in the future,
         ///  but since body rotation is not used (position is given in sun frame), you should get accurate results up to a few weeks.
-        /// </summary>
+        /// </returns>
         /// <param name="position"></param>
         /// <param name="body"></param>
-        /// <returns></returns>
         public static double GetTemperature(Vector3d position, CelestialBody body)
         {
             if (!body.atmosphere)
@@ -49,82 +49,92 @@ namespace Trajectories
             if (altitude > body.atmosphereDepth)
                 return PhysicsGlobals.SpaceTemperature;
 
-            Vector3 up = (position - body.position).normalized;
-            float polarAngle = Mathf.Acos(Vector3.Dot(body.bodyTransform.up, up));
-            if (polarAngle > Mathf.PI / 2.0f)
-            {
+            Vector3d up = (position - body.position).normalized;
+            float polarAngle = (float)Math.Acos(Vector3d.Dot(body.bodyTransform.up, up));
+            if (polarAngle > Util.HALF_PI)
                 polarAngle = Mathf.PI - polarAngle;
-            }
-            float time = (Mathf.PI / 2.0f - polarAngle) * 57.29578f;
 
-            Vector3 sunVector = (FlightGlobals.Bodies[0].position - position).normalized;
-            float sunAxialDot = Vector3.Dot(sunVector, body.bodyTransform.up);
-            float bodyPolarAngle = Mathf.Acos(Vector3.Dot(body.bodyTransform.up, up));
-            float sunPolarAngle = Mathf.Acos(sunAxialDot);
-            float sunBodyMaxDot = (1.0f + Mathf.Cos(sunPolarAngle - bodyPolarAngle)) * 0.5f;
-            float sunBodyMinDot = (1.0f + Mathf.Cos(sunPolarAngle + bodyPolarAngle)) * 0.5f;
-            float sunDotCorrected = (1.0f + Vector3.Dot(sunVector, Quaternion.AngleAxis(45f * Mathf.Sign((float)body.rotationPeriod), body.bodyTransform.up) * up)) * 0.5f;
-            float sunDotNormalized = (sunDotCorrected - sunBodyMinDot) / (sunBodyMaxDot - sunBodyMinDot);
-            double atmosphereTemperatureOffset = (double)body.latitudeTemperatureBiasCurve.Evaluate(time) + (double)body.latitudeTemperatureSunMultCurve.Evaluate(time) * sunDotNormalized + (double)body.axialTemperatureSunMultCurve.Evaluate(sunAxialDot);
-            double temperature = body.GetTemperature(altitude) + (double)body.atmosphereTemperatureSunMultCurve.Evaluate((float)altitude) * atmosphereTemperatureOffset;
+            float time = ((float)Util.HALF_PI - polarAngle) * Mathf.Rad2Deg;
+
+            Vector3d sunVector = (FlightGlobals.Bodies[0].position - position).normalized;
+            double sunAxialDot = Vector3d.Dot(sunVector, body.bodyTransform.up);
+            double bodyPolarAngle = Math.Acos(Vector3d.Dot(body.bodyTransform.up, up));
+            double sunPolarAngle = Math.Acos(sunAxialDot);
+            double sunBodyMaxDot = (1d + Math.Cos(sunPolarAngle - bodyPolarAngle)) * 0.5d;
+            double sunBodyMinDot = (1d + Math.Cos(sunPolarAngle + bodyPolarAngle)) * 0.5d;
+            double sunDotCorrected = (1d + Vector3d.Dot(
+                sunVector,
+                Quaternion.AngleAxis(45f * Math.Sign(body.rotationPeriod), body.bodyTransform.up) * up))
+                * 0.5d;
+            double sunDotNormalized = (sunDotCorrected - sunBodyMinDot) / (sunBodyMaxDot - sunBodyMinDot);
+            double atmosphereTemperatureOffset = body.latitudeTemperatureBiasCurve.Evaluate(time)
+                + body.latitudeTemperatureSunMultCurve.Evaluate(time) * sunDotNormalized
+                + body.axialTemperatureSunMultCurve.Evaluate((float)sunAxialDot);
+            double temperature = body.GetTemperature(altitude)
+                + body.atmosphereTemperatureSunMultCurve.Evaluate((float)altitude) * atmosphereTemperatureOffset;
 
             return temperature;
         }
 
-        /// <summary>
-        /// Gets the air density (rho) for the specified altitude on the specified body.
-        /// This is an approximation, because actual calculations, taking sun exposure into account to compute air temperature, require to know the actual point on the body where the density is to be computed (knowing the altitude is not enough).
+        /// <returns>
+        /// The air density (rho) for the specified altitude on the specified body.
+        /// This is an approximation, because actual calculations, taking sun exposure into account to compute air temperature,
+        ///  require to know the actual point on the body where the density is to be computed (knowing the altitude is not enough).
         /// However, the difference is small for high altitudes, so it makes very little difference for trajectory prediction.
-        /// </summary>
+        /// </returns>
         /// <param name="altitude">Altitude above sea level (in meters)</param>
         /// <param name="body"></param>
-        /// <returns></returns>
         public static double GetDensity(double altitude, CelestialBody body)
         {
             if (!body.atmosphere)
-                return 0;
+                return 0d;
 
             if (altitude > body.atmosphereDepth)
-                return 0;
+                return 0d;
 
             double pressure = body.GetPressure(altitude);
 
             // get an average day/night temperature at the equator
-            double sunDot = 0.5;
-            float sunAxialDot = 0;
-            double atmosphereTemperatureOffset = (double)body.latitudeTemperatureBiasCurve.Evaluate(0)
-                + (double)body.latitudeTemperatureSunMultCurve.Evaluate(0) * sunDot
-                + (double)body.axialTemperatureSunMultCurve.Evaluate(sunAxialDot);
+            double atmosphereTemperatureOffset = body.latitudeTemperatureBiasCurve.Evaluate(0f)
+                + body.latitudeTemperatureSunMultCurve.Evaluate(0f) * 0.5d
+                + body.axialTemperatureSunMultCurve.Evaluate(0f);
             double temperature = // body.GetFullTemperature(altitude, atmosphereTemperatureOffset);
-                body.GetTemperature(altitude)
-                + (double)body.atmosphereTemperatureSunMultCurve.Evaluate((float)altitude) * atmosphereTemperatureOffset;
+                body.GetTemperature(altitude) + body.atmosphereTemperatureSunMultCurve.Evaluate((float)altitude) * atmosphereTemperatureOffset;
 
 
             return body.GetDensity(pressure, temperature);
         }
 
+        /// <returns>
+        /// The air density (rho) for the specified altitude on the specified body.
+        /// This is an approximation, because actual calculations, taking sun exposure into account to compute air temperature,
+        ///  require to know the actual point on the body where the density is to be computed (knowing the altitude is not enough).
+        /// However, the difference is small for high altitudes, so it makes very little difference for trajectory prediction.
+        /// </returns>
+        /// <param name="position">position above sea level (in meters)</param>
+        /// <param name="body"></param>
         public static double GetDensity(Vector3d position, CelestialBody body)
         {
             if (!body.atmosphere)
-                return 0;
+                return 0d;
 
             double altitude = (position - body.position).magnitude - body.Radius;
             if (altitude > body.atmosphereDepth)
-                return 0;
+                return 0d;
 
             double pressure = body.GetPressure(altitude);
-            double temperature = // body.GetFullTemperature(position);
-                GetTemperature(position, body);
+            double temperature = GetTemperature(position, body);   // body.GetFullTemperature(position);
 
             return body.GetDensity(pressure, temperature);
         }
+        #endregion
+
 
         //*******************************************************
-        public static Vector3d SimAeroForce(Vector3d v_wrld_vel, Vector3 position)
+        public static Vector3d SimAeroForce(Vector3d v_wrld_vel, Vector3d position)
         {
-            CelestialBody body = GameDataCache.Body;
-            double latitude = body.GetLatitude(position) / 180.0 * Math.PI;
-            double altitude = (position - body.position).magnitude - body.Radius;
+            double latitude = GameDataCache.Body.GetLatitude(position) / 180d * Math.PI;
+            double altitude = (position - GameDataCache.BodyWorldPos).magnitude - GameDataCache.BodyRadius;
 
             return SimAeroForce(v_wrld_vel, altitude, latitude);
         }
@@ -137,15 +147,15 @@ namespace Trajectories
             CelestialBody body = GameDataCache.Body;
 
             double rho = GetDensity(altitude, body);
-            if (rho <= 0)
-                return Vector3.zero;
+            if (rho <= 0d)
+                return Vector3d.zero;
 
             // dynamic pressure for standard drag equation
-            double dyn_pressure = 0.0005 * rho * v_wrld_vel.sqrMagnitude;
+            double dyn_pressure = 0.0005d * rho * v_wrld_vel.sqrMagnitude;
 
             double mach = v_wrld_vel.magnitude / body.GetSpeedOfSound(body.GetPressure(altitude), rho);
-            if (mach > 25.0)
-                mach = 25.0;
+            if (mach > 25d)
+                mach = 25d;
 
             // Lift and drag for force accumulation.
             Vector3d total_lift = Vector3d.zero;
