@@ -30,6 +30,7 @@ namespace Trajectories
 {
     internal static class Util
     {
+        #region LOGGING
         // --------------------------------------------------------------------------
         // --- Logging --------------------------------------------------------------
 
@@ -83,8 +84,10 @@ namespace Trajectories
                 MainGUI.TrajectoriesTitle, stackTrace.GetFrame(1).GetMethod().ReflectedType.Name,
                 stackTrace.GetFrame(1).GetMethod().Name, string.Format(message, param)));
         }
+        #endregion
 
 
+        #region REFLECTION
         // --------------------------------------------------------------------------
         // --- Reflection -----------------------------------------------------------
 
@@ -132,9 +135,10 @@ namespace Trajectories
                 throw new Exception("Failed to GetMethod " + methodName + " on type " + type.FullName + " with types " + types.ToString() + ":\n" + e.Message + "\n" + e.StackTrace);
             }
         }
+        #endregion
 
 
-
+        #region MATH
         // --------------------------------------------------------------------------
         // --- Math -----------------------------------------------------------------
 
@@ -193,10 +197,15 @@ namespace Trajectories
                 return value;
         }
 
+        #endregion
 
 
+        #region VECTORS
         // --------------------------------------------------------------------------
         // --- Vectors --------------------------------------------------------------
+
+        /// <returns> A new cloned Quaternion </returns>
+        internal static Quaternion Clone(this Quaternion value) => new Quaternion(value.x, value.y, value.z, value.w);
 
         /// <returns> true if any of the Vector2 elements are not a number </returns>
         internal static bool IsNaN(this Vector2 value) => value.x.IsNaN() || value.y.IsNaN();
@@ -297,10 +306,12 @@ namespace Trajectories
 
         internal static string ToString(this Vector3 v, string format = "0.000") => "[" + v.x.ToString(format) + ", " + v.y.ToString(format) + ", " + v.z.ToString(format) + "]";
 
+        #endregion
 
 
+        #region TIME
         // --------------------------------------------------------------------------
-        // --- TIME -----------------------------------------------------------------
+        // --- Time -----------------------------------------------------------------
 
         /// <returns> Number of hours in a KSP day. </returns>
         internal static double HoursInDay => GameSettings.KERBIN_TIME ? 6.0d : 24.0d;
@@ -342,11 +353,12 @@ namespace Trajectories
         /// <returns> Elapsed time in seconds from clocks. </returns>
         internal static double ElapsedSeconds(double clocks) => (Stopwatch.GetTimestamp() - clocks) * clock_frequency;
 
+        #endregion
 
 
-
+        #region GAME_LOGIC
         // --------------------------------------------------------------------------
-        // --- GAME LOGIC -----------------------------------------------------------
+        // --- Game logic -----------------------------------------------------------
 
         /// <returns> True if the current scene is flight. </returns>
         internal static bool IsFlight => HighLogic.LoadedSceneIsFlight;
@@ -380,10 +392,12 @@ namespace Trajectories
                         GameVariables.OrbitDisplayMode.PatchedConics) >= 0;
             }
         }
+        #endregion
 
 
+        #region RANDOM_NUMBER
         // --------------------------------------------------------------------------
-        // --- RANDOM ---------------------------------------------------------------
+        // --- Random number --------------------------------------------------------
 
         /// <summary> Random number generator. </summary>
         private static System.Random rng = new System.Random();
@@ -405,10 +419,12 @@ namespace Trajectories
             fast_float_seed *= 16807;
             return (float)fast_float_seed * 4.6566129e-010f;
         }
+        #endregion
 
 
+        #region CONFIG
         // --------------------------------------------------------------------------
-        // --- CONFIG ---------------------------------------------------------------
+        // --- Config ---------------------------------------------------------------
 
         /// <returns> A config node from the config system </returns>
         internal static ConfigNode ParseConfig(string path) => GameDatabase.Instance.GetConfigNode(path) ?? new ConfigNode();
@@ -443,10 +459,12 @@ namespace Trajectories
                 return default_value;
             }
         }
+        #endregion
 
 
+        #region MISC
         // --------------------------------------------------------------------------
-        // --- MISC -----------------------------------------------------------------
+        // --- Misc -----------------------------------------------------------------
 
         /// <summary>
         /// Calculate the shortest great-circle distance between two points on a sphere which are given by latitude and longitude.
@@ -474,5 +492,6 @@ namespace Trajectories
 
             return lateralDist;
         }
+        #endregion
     }
 }
