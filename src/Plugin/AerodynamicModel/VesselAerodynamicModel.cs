@@ -30,7 +30,7 @@ namespace Trajectories
     ///<summary> Abstracts the game aerodynamic computations to provide an unified interface whether the stock drag is used, or a supported mod is installed </summary>
     internal abstract class VesselAerodynamicModel
     {
-        private double reference_drag = 0;
+        private double reference_drag = 0d;
         private double next_update_delay = Util.Clocks;
 
         protected AeroForceCache cachedForces;
@@ -45,16 +45,16 @@ namespace Trajectories
 
         private void InitCache()
         {
-            Util.DebugLog("");
+            //Util.DebugLog("");
 
-            double maxCacheVelocity = 10000.0;
+            double maxCacheVelocity = 10000d;
             double maxCacheAoA = Math.PI;     //  180.0 / 180.0 * Math.PI
 
             int velocityResolution = 32;
             int angleOfAttackResolution = 33; // even number to include exactly 0°
             int altitudeResolution = 32;
 
-            cachedForces = new AeroForceCache(maxCacheVelocity, maxCacheAoA, GameDataCache.Body.atmosphereDepth, velocityResolution, angleOfAttackResolution, altitudeResolution, this);
+            cachedForces = new AeroForceCache(maxCacheVelocity, maxCacheAoA, GameDataCache.BodyAtmosphereDepth, velocityResolution, angleOfAttackResolution, altitudeResolution, this);
         }
 
         internal void Update()
@@ -83,13 +83,14 @@ namespace Trajectories
         }
 
         /// <summary>
-        /// Returns the total aerodynamic forces that would be applied on the vessel if it was at bodySpacePosition with bodySpaceVelocity relatively to the GameDataCache celestial body
+        /// Returns the total aerodynamic forces that would be applied on the vessel if it was at bodySpacePosition with bodySpaceVelocity relatively
+        /// to the GameDataCache celestial body
         /// This method makes use of the cache if available, otherwise it will call ComputeForces.
         /// </summary>
         internal Vector3d GetForces(Vector3d bodySpacePosition, Vector3d airVelocity, double angleOfAttack)
         {
-            double altitudeAboveSea = bodySpacePosition.magnitude - GameDataCache.Body.Radius;
-            if (altitudeAboveSea > GameDataCache.Body.atmosphereDepth)
+            double altitudeAboveSea = bodySpacePosition.magnitude - GameDataCache.BodyRadius;
+            if (altitudeAboveSea > GameDataCache.BodyAtmosphereDepth)
             {
                 return Vector3d.zero;
             }
@@ -121,7 +122,7 @@ namespace Trajectories
         {
             Profiler.Start("ComputeForces");
 
-            if (!GameDataCache.Body.atmosphere || altitude >= GameDataCache.Body.atmosphereDepth)
+            if (!GameDataCache.BodyHasAtmosphere || altitude >= GameDataCache.BodyAtmosphereDepth)
                 return Vector3d.zero;
 
             // this is weird, but the vessel orientation does not match the reference transform (up is forward), this code fixes it but I don't know if it'll work in all cases
@@ -134,25 +135,34 @@ namespace Trajectories
 
             Vector3d totalForce = ComputeForces_Model(airVelocityForFixedAoA, altitude);
 
-            if (double.IsNaN(totalForce.x) || double.IsNaN(totalForce.y) || double.IsNaN(totalForce.z))
+            if (totalForce.IsNaN())
             {
-                Util.LogWarning("{0} totalForce is NaN (altitude={1}, airVelocity={2}, angleOfAttack={3}", AerodynamicModelName, altitude, airVelocity.magnitude, angleOfAttack);
-                return Vector3d.zero; // Don't send NaN into the simulation as it would cause bad things (infinite loops, crash, etc.). I think this case only happens at the atmosphere edge, so the total force should be 0 anyway.
+                Util.LogError("{0} totalForce {1} is NaN : (altitude={2}, airVelocity={3}, angleOfAttack={4})",
+                    AerodynamicModelName, totalForce, altitude, airVelocity.magnitude, angleOfAttack);
+                // Don't send NaN into the simulation as it would cause bad things (infinite loops, crash, etc.).
+                // I think this case only happens at the atmosphere edge, so the total force should be 0 anyway.
+                return Vector3d.zero;
             }
 
             // convert the force computed by the model (depends on the current vessel orientation, which is irrelevant for the prediction) to the predicted vessel orientation (which depends on the predicted velocity)
             Vector3d localForce = new Vector3d(Vector3d.Dot(vesselRight, totalForce), Vector3d.Dot(vesselUp, totalForce), Vector3d.Dot(vesselBackward, totalForce));
 
-            //if (Double.IsNaN(localForce.x) || Double.IsNaN(localForce.y) || Double.IsNaN(localForce.z))
-            //    throw new Exception("localForce is NAN");
+            if (localForce.IsNaN())
+            {
+                Util.LogError("{0} localForce {1} is NaN : (altitude={2}, airVelocity={3}, angleOfAttack={4})",
+                    AerodynamicModelName, localForce, altitude, airVelocity.magnitude, angleOfAttack);
+                // Don't send NaN into the simulation as it would cause bad things (infinite loops, crash, etc.).
+                //I think this case only happens at the atmosphere edge, so the total force should be 0 anyway.
+                return Vector3d.zero;
+            }
 
             Vector3d velForward = airVelocity.normalized;
             Vector3d velBackward = -velForward;
             Vector3d velRight = Vector3d.Cross(vup, velBackward);
-            if (velRight.sqrMagnitude < 0.001)
+            if (velRight.sqrMagnitude < 0.001d)
             {
                 velRight = Vector3d.Cross(vesselUp, velBackward);
-                if (velRight.sqrMagnitude < 0.001)
+                if (velRight.sqrMagnitude < 0.001d)
                 {
                     velRight = Vector3d.Cross(vesselBackward, velBackward).normalized;
                 }
@@ -162,7 +172,10 @@ namespace Trajectories
                 }
             }
             else
+            {
                 velRight = velRight.normalized;
+            }
+
             Vector3d velUp = Vector3d.Cross(velBackward, velRight).normalized;
 
             Vector3d predictedVesselForward = velForward * Math.Cos(angleOfAttack) + velUp * Math.Sin(angleOfAttack);
@@ -171,12 +184,14 @@ namespace Trajectories
             Vector3d predictedVesselUp = Vector3d.Cross(predictedVesselBackward, predictedVesselRight).normalized;
 
             Vector3d res = predictedVesselRight * localForce.x + predictedVesselUp * localForce.y + predictedVesselBackward * localForce.z;
-            if (double.IsNaN(res.x) || double.IsNaN(res.y) || double.IsNaN(res.z))
+            if (res.IsNaN())
             {
-                Util.LogWarning("{0} res is NaN (altitude={1}, airVelocity={2}, angleOfAttack={3}", AerodynamicModelName, altitude, airVelocity.magnitude, angleOfAttack);
-                return Vector3d.zero; // Don't send NaN into the simulation as it would cause bad things (infinite loops, crash, etc.). I think this case only happens at the atmosphere edge, so the total force should be 0 anyway.
+                Util.LogError("{0} res {1} is NaN : (altitude={2}, airVelocity={3}, angleOfAttack={4})",
+                    AerodynamicModelName, res, altitude, airVelocity.magnitude, angleOfAttack);
+                // Don't send NaN into the simulation as it would cause bad things (infinite loops, crash, etc.).
+                //I think this case only happens at the atmosphere edge, so the total force should be 0 anyway.
+                return Vector3d.zero;
             }
-
 
             Profiler.Stop("ComputeForces");
             return res;
