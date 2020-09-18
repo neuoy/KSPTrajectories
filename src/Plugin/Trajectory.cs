@@ -94,11 +94,12 @@ namespace Trajectories
         internal const double INTEGRATOR_MIN = 0.1d;         // RK4 Integrator minimum step size
         internal const double INTEGRATOR_MAX = 5.0d;         // RK4 Integrator maximum step size
 
-        private static List<Patch> patchesBackBuffer_ = new List<Patch>();
+        private static List<Patch> patches_buffer = new List<Patch>();
+        private static List<Patch> patches_swap_buffer;
 
         internal static List<Patch> Patches { get; private set; } = new List<Patch>();
 
-        private static double maxAccelBackBuffer_;
+        private static double max_accel_buffer;
 
         internal static double MaxAccel { get; private set; }
 
@@ -339,8 +340,8 @@ namespace Trajectories
                 Trajectories.AerodynamicModel.Update();
 
                 // clear the public buffers
-                patchesBackBuffer_.Clear();
-                maxAccelBackBuffer_ = 0d;
+                patches_buffer.Clear();
+                max_accel_buffer = 0d;
 
                 // start compute patches thread, calls ComputeTrajectoryPatches()
                 Worker.Thread.RunWorkerAsync(Worker.JOB.COMPUTE_PATCHES);
@@ -403,11 +404,11 @@ namespace Trajectories
         {
             // swap the buffers for the patches and the maximum acceleration,
             // "publishing" the results
-            List<Patch> tmp = Patches;
-            Patches = patchesBackBuffer_;
-            patchesBackBuffer_ = tmp;
+            patches_swap_buffer = Patches;
+            Patches = patches_buffer;
+            patches_buffer = patches_swap_buffer;
 
-            MaxAccel = maxAccelBackBuffer_;
+            MaxAccel = max_accel_buffer;
         }
 
         /// <summary> Stops calculation timer, Called when the worker thread has finished executing ComputeTrajectoryPatches() </summary>
@@ -415,7 +416,7 @@ namespace Trajectories
         {
             // how long did the calculation take?
             calculation_time = Util.ElapsedMilliseconds(calculation_time);
-            patches_calculated = patchesBackBuffer_.Count;
+            patches_calculated = patches_buffer.Count;
             UpdateTiming();
         }
 
@@ -427,14 +428,11 @@ namespace Trajectories
         }
 
         /// <summary>
-        /// relativePosition is in world frame, but relative to the body (i.e. inertial body space)
+        /// relativePosition is in world frame, but relative to the GameDataCache body (i.e. inertial body space)
         /// returns the altitude above sea level (can be negative for bodies without ocean)
         /// </summary>
         internal static double GetGroundAltitude(Vector3d relativePosition)
         {
-            //if (GameDataCache.BodyPQScontroller == null)
-                //return 0d;
-
             double lat = GameDataCache.Body.GetLatitude(relativePosition + GameDataCache.BodyWorldPos) / 180d * Math.PI;
             double lon = GameDataCache.Body.GetLongitude(relativePosition + GameDataCache.BodyWorldPos) / 180d * Math.PI;
             Vector3d rad = new Vector3d(Math.Cos(lat) * Math.Cos(lon), Math.Sin(lat), Math.Cos(lat) * Math.Sin(lon));
@@ -466,12 +464,17 @@ namespace Trajectories
 
         private static Orbit CreateOrbitFromState(VesselState state)
         {
+            //Util.DebugLog("UT {0}", state.Time);
+
             Orbit orbit = new Orbit();
             orbit.UpdateFromStateVectors(Util.SwapYZ(state.Position), Util.SwapYZ(state.Velocity), GameDataCache.Body, state.Time);
             PatchedConics.SolverParameters pars = new PatchedConics.SolverParameters
             {
                 FollowManeuvers = false
             };
+
+            //Util.DebugLog("Calculating patch for orbit {0}", orbit.ToString());
+
             PatchedConics.CalculatePatch(orbit, new Orbit(), state.Time, pars, null);
             return orbit;
         }
@@ -623,7 +626,7 @@ namespace Trajectories
                         // add the space patch before atmospheric entry
 
                         patch.EndTime = entryTime;
-                        patchesBackBuffer_.Add(patch);
+                        patches_buffer.Add(patch);
                         return new VesselState
                         {
                             ReferenceBody = GameDataCache.Body,
@@ -668,13 +671,13 @@ namespace Trajectories
                             patch.RawImpactPosition = Util.SwapYZ(patch.SpaceOrbit.getRelativePositionAtUT(t));
                             patch.ImpactPosition = CalculateRotatedPosition(patch.RawImpactPosition.Value, t);
                             patch.ImpactVelocity = Util.SwapYZ(patch.SpaceOrbit.getOrbitalVelocityAtUT(t));
-                            patchesBackBuffer_.Add(patch);
+                            patches_buffer.Add(patch);
                             return null;
                         }
                         else
                         {
                             // no impact, just add the space orbit
-                            patchesBackBuffer_.Add(patch);
+                            patches_buffer.Add(patch);
 
                             // currently, we can't handle predictions for another body, so we stop if the next patch body is different
                             if (nextPatch == null || nextPatch.referenceBody != GameDataCache.Body)
@@ -799,17 +802,17 @@ namespace Trajectories
                             if (iteration == maxIterations)
                             {
                                 ScreenMessages.PostScreenMessage("WARNING: trajectory prediction stopped, too many iterations");
-                                patchesBackBuffer_.Add(patch);
+                                patches_buffer.Add(patch);
                                 return null;
                             }
                             else if (atmosphereCoeff <= 0d || hitGround)
                             {
-                                patchesBackBuffer_.Add(patch);
+                                patches_buffer.Add(patch);
                                 return null;
                             }
                             else
                             {
-                                patchesBackBuffer_.Add(patch);
+                                patches_buffer.Add(patch);
                                 return new VesselState
                                 {
                                     ReferenceBody = GameDataCache.Body,
@@ -852,7 +855,7 @@ namespace Trajectories
                         Vector3d aerodynamicForce = (currentAccel - gravityAccel) / GameDataCache.VesselMass;
 
                         // acceleration in the vessel reference frame is acceleration - gravityAccel
-                        maxAccelBackBuffer_ = Math.Max(aerodynamicForce.magnitude / GameDataCache.VesselMass, maxAccelBackBuffer_);
+                        max_accel_buffer = Math.Max(aerodynamicForce.magnitude / GameDataCache.VesselMass, max_accel_buffer);
 
                         #region Impact Calculation
 
@@ -908,7 +911,7 @@ namespace Trajectories
             else
             {
                 // no atmospheric entry, just add the space orbit
-                patchesBackBuffer_.Add(patch);
+                patches_buffer.Add(patch);
 
                 // currently, we can't handle predictions for another body, so we stop if the next patch body is different
                 if (nextPatch == null || nextPatch.referenceBody != GameDataCache.Body)
