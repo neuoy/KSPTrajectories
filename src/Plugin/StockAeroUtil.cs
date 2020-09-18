@@ -231,7 +231,7 @@ namespace Trajectories
         }
 
         //*******************************************************
-        public static Vector3d SimAeroForce(Vector3d v_wrld_vel, double altitude, double latitude = 0.0)
+        public static Vector3d SimAeroForce(Vector3d v_wrld_vel, double altitude, double latitude = 0d)
         {
             Profiler.Start("SimAeroForce");
 
@@ -255,12 +255,12 @@ namespace Trajectories
 
             // Loop through all parts, accumulating drag and lift.
             int part_index = -1;
-            foreach (Part p in GameDataCache.VesselParts)
+            foreach (GameDataCache.PartInfo part_info in GameDataCache.VesselParts)
             {
                 part_index++;
 
 #if DEBUG
-                TrajectoriesDebug partDebug = VesselAerodynamicModel.DebugParts ? p.FindModuleImplementing<TrajectoriesDebug>() : null;
+                TrajectoriesDebug partDebug = VesselAerodynamicModel.DebugParts ? part_info.Part.FindModuleImplementing<TrajectoriesDebug>() : null;
                 if (partDebug != null)
                 {
                     partDebug.Drag = 0;
@@ -269,7 +269,7 @@ namespace Trajectories
 #endif
 
                 // need checks on shielded components
-                if (p.ShieldedFromAirstream || p.Rigidbody == null)
+                if (part_info.ShieldedFromAirstream || !part_info.HasRigidbody)
                     continue;
 
                 // get drag
@@ -277,22 +277,22 @@ namespace Trajectories
                 Vector3d dragForce;
 
                 Profiler.Start("SimAeroForce#drag");
-                switch (p.dragModel)
+                switch (part_info.DragModel)
                 {
                     case Part.DragModel.DEFAULT:
                     case Part.DragModel.CUBE:
-                        DragCubeList cubes = p.DragCubes;
+                        DragCubeList cubes = part_info.DragCubes;
 
                         DragCubeList.CubeData p_drag_data = new DragCubeList.CubeData();
 
                         //Vector3d sim_dragVectorDirLocal = -part_transform.InverseTransformDirection(sim_dragVectorDir);   // Not thread safe
                         // temporary until I get a better InverseTransformDirection workaround
-                        Vector3d sim_dragVectorDirLocal = -(GameDataCache.PartRotations[part_index].Inverse() * sim_dragVectorDir);
+                        Vector3d sim_dragVectorDirLocal = -(part_info.Rotation.Inverse() * sim_dragVectorDir);
 
                         double drag;
-                        if (cubes.None) // since 1.0.5, some parts don't have drag cubes (for example fuel lines and struts)
+                        if (part_info.HasCubes) // since 1.0.5, some parts don't have drag cubes (for example fuel lines and struts)
                         {
-                            drag = p.maximum_drag;
+                            drag = part_info.MaxDrag;
                         }
                         else
                         {
@@ -319,15 +319,17 @@ namespace Trajectories
                         break;
 
                     case Part.DragModel.SPHERICAL:
-                        dragForce = -sim_dragVectorDir * p.maximum_drag;
+                        dragForce = -sim_dragVectorDir * part_info.MaxDrag;
                         break;
 
                     case Part.DragModel.CYLINDRICAL:
-                        dragForce = -sim_dragVectorDir * Util.Lerp(p.minimum_drag, p.maximum_drag, Math.Abs(Vector3d.Dot(GameDataCache.PartRotations[part_index] * p.dragReferenceVector, sim_dragVectorDir)));
+                        dragForce = -sim_dragVectorDir * Util.Lerp(part_info.MinDrag, part_info.MaxDrag,
+                            Math.Abs(Vector3d.Dot(part_info.Rotation * part_info.DragVector, sim_dragVectorDir)));
                         break;
 
                     case Part.DragModel.CONIC:
-                        dragForce = -sim_dragVectorDir * Util.Lerp(p.minimum_drag, p.maximum_drag, Vector3d.Angle(GameDataCache.PartRotations[part_index] * p.dragReferenceVector, sim_dragVectorDir) / 180d);
+                        dragForce = -sim_dragVectorDir * Util.Lerp(part_info.MinDrag, part_info.MaxDrag,
+                            Vector3d.Angle(part_info.Rotation * part_info.DragVector, sim_dragVectorDir) / 180d);
                         break;
 
                     default:
@@ -347,13 +349,13 @@ namespace Trajectories
                 total_drag += dragForce;
 
                 // If it isn't a wing or lifter, get body lift.
-                if (!p.hasLiftModule)
+                if (!part_info.HasLiftModule)
                 {
                     Profiler.Start("SimAeroForce#BodyLift");
 
-                    double simbodyLiftScalar = p.bodyLiftMultiplier * PhysicsGlobals.BodyLiftMultiplier * dyn_pressure;
+                    double simbodyLiftScalar = part_info.BodyLiftMultiplier * PhysicsGlobals.BodyLiftMultiplier * dyn_pressure;
                     simbodyLiftScalar *= PhysicsGlobals.GetLiftingSurfaceCurve("BodyLift").liftMachCurve.Evaluate((float)mach);
-                    Vector3d bodyLift = GameDataCache.PartRotations[part_index] * (simbodyLiftScalar * liftForce);
+                    Vector3d bodyLift = part_info.Rotation * (simbodyLiftScalar * liftForce);
                     bodyLift = Vector3.ProjectOnPlane(bodyLift, sim_dragVectorDir);
                     // Only accumulate forces for non-LiftModules
                     total_lift += bodyLift;
@@ -365,8 +367,8 @@ namespace Trajectories
                 Profiler.Start("SimAeroForce#LiftingSurface");
 
                 // Find ModuleLifingSurface for wings and lift force.
-                // Should catch control surface as it is a subclass
-                foreach (PartModule m in p.Modules)
+                // Should catch control surface as it is a subclass  
+                foreach (PartModule m in part_info.Part.Modules)
                 {
                     double mcs_mod;
                     if (m is ModuleLiftingSurface)
@@ -382,13 +384,13 @@ namespace Trajectories
                         switch (wing.transformDir)
                         {
                             case ModuleLiftingSurface.TransformDir.X:
-                                liftVector = GameDataCache.PartTransformsRight[part_index];
+                                liftVector = part_info.TransformRight;
                                 break;
                             case ModuleLiftingSurface.TransformDir.Y:
-                                liftVector = GameDataCache.PartTransformsUp[part_index];
+                                liftVector = part_info.TransformUp;
                                 break;
                             case ModuleLiftingSurface.TransformDir.Z:
-                                liftVector = GameDataCache.PartTransformsForward[part_index];
+                                liftVector = part_info.TransformForward;
                                 break;
                         }
                         Vector3d nVel = v_wrld_vel.normalized;
@@ -404,11 +406,8 @@ namespace Trajectories
                         }
                         #endregion SETUP_COEFFICIENTS
 
-                        double prevMach = p.machNumber;
-                        p.machNumber = mach;
                         Vector3d local_lift = mcs_mod * (Vector3d)wing.GetLiftVector(liftVector, (float)liftdot, (float)absdot, liftQ, (float)mach);
                         Vector3d local_drag = mcs_mod * (Vector3d)wing.GetDragVector(nVel, (float)absdot, liftQ);
-                        p.machNumber = prevMach;
 
                         total_lift += local_lift;
                         total_drag += local_drag;

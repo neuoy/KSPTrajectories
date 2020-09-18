@@ -26,34 +26,109 @@ namespace Trajectories
     /// <summary> Contains copied game data that can be used outside the Unity main thread. All needed data must be copied and not referenced. </summary>
     internal static class GameDataCache
     {
-        internal static double UniversalTime { get; set; }
-        internal static double WarpDeltaTime { get; set; }
-        internal static Vector3d SunWorldPos { get; private set; }
+        #region VESSEL_PART_PROPERTIES
+        // vessel part properties
+        internal class PartInfo
+        {
+            internal Part Part { get; private set; }
+            internal bool ShieldedFromAirstream { get; private set; }
+            internal bool HasRigidbody { get; private set; }
+            internal Part.DragModel DragModel { get; private set; }
+            internal DragCubeList DragCubes { get; private set; }
+            internal Quaternion Rotation { get; private set; }
+            internal bool HasCubes { get; private set; }
+            internal double MaxDrag { get; private set; }
+            internal double MinDrag { get; private set; }
+            internal Vector3d DragVector { get; private set; }
+            internal bool HasLiftModule { get; private set; }
+            internal double BodyLiftMultiplier { get; private set; }
+            internal Vector3d TransformRight { get; private set; }
+            internal Vector3d TransformUp { get; private set; }
+            internal Vector3d TransformForward { get; private set; }
 
+            internal PartInfo(Part part) => Update(part);
+
+            internal void Update(Part part)
+            {
+                Part = part;
+                ShieldedFromAirstream = part.ShieldedFromAirstream;
+                HasRigidbody = part.Rigidbody != null;
+                DragModel = part.dragModel;
+                DragCubes = part.DragCubes;
+                Rotation = part.transform.rotation.Clone();
+                HasCubes = !part.DragCubes.None;
+                MaxDrag = part.maximum_drag;
+                MinDrag = part.minimum_drag;
+                DragVector = part.dragReferenceVector;
+                HasLiftModule = part.hasLiftModule;
+                BodyLiftMultiplier = part.bodyLiftMultiplier;
+                TransformRight = part.transform.right;
+                TransformUp = part.transform.up;
+                TransformForward = part.transform.forward;
+
+                // update vessel mass
+                if (part.physicalSignificance != Part.PhysicalSignificance.NONE)
+                    VesselMass += part.mass + part.GetResourceMass() + part.GetPhysicslessChildMass();
+            }
+        }
+
+        /// <summary> Adds a collection of KSP Part's to a collection of PartInfo's </summary>
+        internal static void Add(this ICollection<PartInfo> collection, IEnumerable<Part> parts)
+        {
+            VesselMass = 0;
+            foreach (Part part in parts)
+            {
+                collection.Add(new PartInfo(part));
+            }
+        }
+        /// <summary> Updates a collection of PartInfo's from a collection of KSP Part's </summary>
+        internal static void Update(this ICollection<PartInfo> collection, IEnumerable<Part> parts)
+        {
+            IEnumerator<Part> enumerator = parts.GetEnumerator();
+            VesselMass = 0;
+
+            if (!enumerator.MoveNext())
+                return;
+
+            foreach (PartInfo part_info in collection)
+            {
+                part_info.Update(enumerator.Current);
+                if (!enumerator.MoveNext())
+                    break;
+            }
+        }
+        #endregion
+
+        #region BODY_PROPERTIES
+        // body properties
+        internal static CelestialBody Body { get; private set; }
+        internal static Vector3d BodyWorldPos { get; private set; }
+        internal static bool BodyHasAtmosphere { get; private set; }
+        internal static bool BodyHasOcean { get; private set; }
+        internal static double BodyAtmosphereDepth { get; private set; }
+        internal static double BodyAtmosTempOffset { get; private set; }       // The average day/night temperature at the equator
+        internal static double BodyMaxGroundHeight { get; private set; }
+        internal static double BodyRadius { get; private set; }
+        internal static Vector3d BodyAngularVelocity { get; private set; }
+        internal static double BodyGravityParameter { get; private set; }
+        internal static double BodyRotationPeriod { get; private set; }
+        internal static Vector3d BodyTransformUp { get; private set; }
+        #endregion
+
+        #region VESSEL_PROPERTIES
+        // vessel properties
         internal static Vessel AttachedVessel { get; private set; }
-        internal static List<Part> VesselParts { get; private set; }
-        internal static List<Quaternion> PartRotations { get; private set; }
-        internal static List<Vector3d> PartTransformsUp { get; private set; }
-        internal static List<Vector3d> PartTransformsForward { get; private set; }
-        internal static List<Vector3d> PartTransformsRight { get; private set; }
+        internal static List<PartInfo> VesselParts { get; private set; }
         internal static double VesselMass { get; private set; }
         internal static Vector3d VesselWorldPos { get; private set; }
         internal static Vector3d VesselOrbitVelocity { get; private set; }
         internal static Vector3d VesselTransformUp { get; private set; }
         internal static Vector3d VesselTransformForward { get; private set; }
+        #endregion
 
-        internal static CelestialBody Body { get; private set; }
-        internal static Vector3d BodyWorldPos { get; private set; }
-        internal static bool BodyHasAtmosphere { get; private set; }
-        internal static bool BodyHasOcean { get; set; }
-        internal static double BodyAtmosphereDepth { get; set; }
-        internal static double BodyAtmosTempOffset { get; set; }       // The average day/night temperature at the equator
-        internal static double BodyMaxGroundHeight { get; set; }
-        internal static double BodyRadius { get; set; }
-        internal static Vector3d BodyAngularVelocity { get; set; }
-        internal static double BodyGravityParameter { get; set; }
-        internal static double BodyRotationPeriod { get; private set; }
-        internal static Vector3d BodyTransformUp { get; private set; }
+        internal static double UniversalTime { get; private set; }
+        internal static double WarpDeltaTime { get; private set; }
+        internal static Vector3d SunWorldPos { get; private set; }
 
         internal static List<ManeuverNode> ManeuverNodes { get; private set; }
         internal static Orbit Orbit { get; private set; }
@@ -73,28 +148,48 @@ namespace Trajectories
             UniversalTime = Planetarium.GetUniversalTime();
             WarpDeltaTime = TimeWarp.fixedDeltaTime;
 
-            if (AttachedVessel != Trajectories.AttachedVessel || Body != Trajectories.AttachedVessel.mainBody || VesselParts.Count != Trajectories.AttachedVessel.Parts.Count)
+            // check for celestial body change
+            if (Trajectories.AttachedVessel.mainBody?.name != null && Body != Trajectories.AttachedVessel.mainBody)
             {
-                Util.DebugLog("GameDataCache updated due to vessel, body, or parts count changed");
+                Util.DebugLog("Updating body to {0}", Trajectories.AttachedVessel.mainBody?.name);
+
+                Body = null;
+                foreach (CelestialBody body in FlightGlobals.Bodies)
+                {
+                    if (body?.name != null && body.name == Trajectories.AttachedVessel.mainBody.name)
+                    {
+                        Body = body;
+                        break;
+                    }
+                }
+
+                if (Body == null)
+                    return false;
+
+                UpdateBodyCache();
+            }
+
+            // check for vessel changes
+            if (AttachedVessel != Trajectories.AttachedVessel || VesselParts.Count != Trajectories.AttachedVessel.Parts.Count)
+            {
+                Util.DebugLog("Updating due to vessel or parts count change");
 
                 AttachedVessel = Trajectories.AttachedVessel;
-                VesselParts = new List<Part>(AttachedVessel.Parts);
-
-                Body = FlightGlobals.Bodies.Find((CelestialBody b) => { return b.name == AttachedVessel.mainBody.name; });
-                UpdateBodyCache();
+                VesselParts?.Clear();
+                VesselParts = new List<PartInfo>() { AttachedVessel.Parts };
 
                 Trajectories.AerodynamicModel.Init();
             }
 
             if (AttachedVessel.patchedConicSolver == null)
             {
-                Util.DebugLogWarning("PatchedConicsSolver is null, Skipping.");
+                Util.DebugLogWarning("PatchedConicsSolver is null, skipping.");
                 return false;
             }
 
-            UpdateVesselCache();
-
             BodyWorldPos = Body.position;
+
+            UpdateVesselCache();
 
             ManeuverNodes = new List<ManeuverNode>(AttachedVessel.patchedConicSolver.maneuverNodes);
             Orbit = new Orbit(AttachedVessel.orbit);
@@ -102,71 +197,6 @@ namespace Trajectories
 
             Profiler.Stop("GameDataCache.Update");
             return true;
-        }
-
-        private static void UpdateVesselCache()
-        {
-            UpdateVesselMass();
-
-            VesselWorldPos = AttachedVessel.GetWorldPos3D();
-            VesselOrbitVelocity = AttachedVessel.obt_velocity;
-            VesselTransformUp = AttachedVessel.ReferenceTransform.up;
-            VesselTransformForward = AttachedVessel.ReferenceTransform.forward;
-
-            if (PartRotations == null || PartRotations.Count != VesselParts.Count)
-            {
-                CreatePartTransforms();
-            }
-            else
-            {
-                UpdatePartTransforms();
-            }
-
-        }
-
-        private static void CreatePartTransforms()
-        {
-            PartRotations ??= new List<Quaternion>(VesselParts.Count);
-            PartTransformsUp ??= new List<Vector3d>(VesselParts.Count);
-            PartTransformsForward ??= new List<Vector3d>(VesselParts.Count);
-            PartTransformsRight ??= new List<Vector3d>(VesselParts.Count);
-            PartRotations.Clear();
-            PartTransformsUp.Clear();
-            PartTransformsForward.Clear();
-            PartTransformsRight.Clear();
-
-            foreach (Part part in VesselParts)
-            {
-                PartRotations.Add(part.transform.rotation);
-                PartTransformsUp.Add(part.transform.up);
-                PartTransformsForward.Add(part.transform.forward);
-                PartTransformsRight.Add(part.transform.right);
-            }
-        }
-
-        private static void UpdatePartTransforms()
-        {
-            int part_index = 0;
-            foreach (Part part in VesselParts)
-            {
-                PartRotations[part_index] = part.transform.rotation;
-                PartTransformsUp[part_index] = part.transform.up;
-                PartTransformsForward[part_index] = part.transform.forward;
-                PartTransformsRight[part_index] = part.transform.right;
-                part_index++;
-            }
-        }
-
-        private static void UpdateVesselMass()
-        {
-            foreach (Part part in VesselParts)
-            {
-                if (part.physicalSignificance == Part.PhysicalSignificance.NONE)
-                    continue;
-
-                float partMass = part.mass + part.GetResourceMass() + part.GetPhysicslessChildMass();
-                VesselMass += partMass;
-            }
         }
 
         private static void UpdateBodyCache()
@@ -179,12 +209,22 @@ namespace Trajectories
                 + Body.latitudeTemperatureSunMultCurve.Evaluate(0f) * 0.5d
                 + Body.axialTemperatureSunMultCurve.Evaluate(0f);
 
-            BodyMaxGroundHeight = Body.pqsController.mapMaxHeight;
+            BodyMaxGroundHeight = Body.pqsController != null ? Body.pqsController.mapMaxHeight : 0d;
             BodyRadius = Body.Radius;
             BodyAngularVelocity = Body.angularVelocity;
             BodyGravityParameter = Body.gravParameter;
             BodyRotationPeriod = Body.rotationPeriod;
             BodyTransformUp = Body.bodyTransform.up;
+        }
+
+        private static void UpdateVesselCache()
+        {
+            VesselWorldPos = AttachedVessel.GetWorldPos3D();
+            VesselOrbitVelocity = AttachedVessel.obt_velocity;
+            VesselTransformUp = AttachedVessel.ReferenceTransform.up;
+            VesselTransformForward = AttachedVessel.ReferenceTransform.forward;
+
+            VesselParts.Update(AttachedVessel.Parts);
         }
     }
 }
