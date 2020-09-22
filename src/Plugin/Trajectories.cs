@@ -32,6 +32,7 @@ namespace Trajectories
         //public static int uid;                                  // savegame unique id
 
         private static bool compute_patches_completed;
+        private static bool thread_cancelled;
 
         // version string
         internal static string Version { get; private set; } = "X.X.X";
@@ -119,7 +120,7 @@ namespace Trajectories
             if (AttachedVessel != FlightGlobals.ActiveVessel)
                 AttachVessel();
 
-            if (compute_patches_completed)
+            if (!Worker.Busy && compute_patches_completed)
                 Trajectory.ComputeComplete();
 
             compute_patches_completed = false;
@@ -170,7 +171,32 @@ namespace Trajectories
         {
             Util.DebugLog("Loading profiles for vessel");
 
-            Worker.Cancel();
+            double timeout = Util.Clocks;
+            thread_cancelled = false;
+
+            if (Worker.Busy)
+            {
+                Worker.Cancel();
+                while(!thread_cancelled)
+                {
+                    // 25 ms timeout
+                    if (Util.ElapsedMilliseconds(timeout) > 25d)
+                    {
+                        Trajectory.ComputeClear();
+                        GameDataCache.Clear();
+                        break;
+                    }
+                }
+            }
+            else
+            {
+                Trajectory.ComputeClear();
+                GameDataCache.Clear();
+            }
+
+            compute_patches_completed = false;
+            thread_cancelled = false;
+
             AttachedVessel = FlightGlobals.ActiveVessel;
 
             if (AttachedVessel == null)
@@ -238,8 +264,6 @@ namespace Trajectories
                     compute_patches_completed = true;
                     break;
             }
-            //if (ModulesForm.Exists)
-            //ModulesForm.Instance.UpdateData();
         }
 
         private static void Worker_OnReport(Worker.EVENT_TYPE type, int progress_percentage)
@@ -247,19 +271,13 @@ namespace Trajectories
             switch (type)
             {
                 case Worker.EVENT_TYPE.PERCENTAGE:
-                    //MainForm.Instance.ToolStripProgressBar.Value = progress_percentage;
-                    //MainForm.Instance.StatusStrip.Update();
+                    Trajectory.Progress = progress_percentage;
                     break;
-                case Worker.EVENT_TYPE.STATUSBAR:
-                    //Update_StatusBar();
-                    break;
-                case Worker.EVENT_TYPE.ALL:
-                    //MainForm.Instance.ToolStripProgressBar.Value = progress_percentage;
-                    //Update_AllButtons(true);
-                    //Update_StatusBar();
-                    break;
-                case Worker.EVENT_TYPE.APPCLOSE:
-                    //MainForm.Instance.Close();
+                case Worker.EVENT_TYPE.CANCELLED:
+                    Trajectory.ComputeClear();
+                    compute_patches_completed = false;
+                    GameDataCache.Clear();
+                    thread_cancelled = true;
                     break;
             }
         }

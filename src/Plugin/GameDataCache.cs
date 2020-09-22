@@ -163,6 +163,7 @@ namespace Trajectories
 
             UniversalTime = Planetarium.GetUniversalTime();
             WarpDeltaTime = TimeWarp.fixedDeltaTime;
+            SunWorldPos = FlightGlobals.Bodies[0].position;
 
             // check for celestial body change
             if (Trajectories.AttachedVessel.mainBody?.name != null && Body != Trajectories.AttachedVessel.mainBody)
@@ -213,6 +214,41 @@ namespace Trajectories
 
             Profiler.Stop("GameDataCache.Update");
             return true;
+        }
+
+        /// <summary> Clears the cache </summary>
+        internal static void Clear()
+        {
+            ClearBodyCache();
+            ClearVesselCache();
+        }
+
+        private static void ClearBodyCache()
+        {
+            Body = null;
+            BodyHasAtmosphere = false;
+            BodyHasOcean = false;
+            BodyAtmosphereDepth = 0d;
+
+            BodyAtmosTempOffset = 0d;
+
+            BodyMaxGroundHeight = 0d;
+            BodyRadius = 0d;
+            BodyAngularVelocity = Vector3d.zero;
+            BodyGravityParameter = 0d;
+            BodyRotationPeriod = 0d;
+            BodyTransformUp = Vector3d.zero;
+        }
+
+        private static void ClearVesselCache()
+        {
+            AttachedVessel = null;
+            VesselWorldPos = Vector3d.zero;
+            VesselOrbitVelocity = Vector3d.zero;
+            VesselTransformUp = Vector3d.zero;
+            VesselTransformForward = Vector3d.zero;
+
+            VesselParts?.Clear();
         }
 
         private static void UpdateBodyCache()

@@ -115,10 +115,8 @@ namespace Trajectories
         ///<summary> Trajectory patches calculated </summary>
         internal static double CalculatedPatches { get; private set; }
 
-        private static double frame_time;
-
-        ///<summary> Time of game frame in ms </summary>
-        internal static double GameFrameTime { get; private set; }
+        ///<summary> Progress percentage of Trajectory calculation </summary>
+        internal static double Progress { get; set; }
 
         internal static void Start() => Util.DebugLog("Constructing");
 
@@ -130,10 +128,6 @@ namespace Trajectories
 
         internal static void Update()
         {
-            // compute game frame time
-            GameFrameTime = GameFrameTime * 0.9d + Util.ElapsedMilliseconds(frame_time) * 0.1d;
-            frame_time = Util.Clocks;
-
             // should the trajectory be calculated?
             if (!Worker.Busy && (Settings.DisplayTrajectories || Settings.AlwaysUpdate || TargetProfile.WorldPosition.HasValue))
                 ComputeTrajectory();
@@ -314,32 +308,29 @@ namespace Trajectories
         {
             if (!Trajectories.VesselHasParts || Trajectories.AttachedVessel.LandedOrSplashed)
             {
-                calculation_time = 0d;
-                patches_calculated = 0d;
-                Patches.Clear();
-                UpdateTiming();
+                ComputeClear();
+                GameDataCache.Clear();
                 return;
             }
 
             try
             {
                 // start of trajectory calculation timing
+                Progress = 0d;
                 calculation_time = Util.Clocks;
 
                 // update game data cache
                 if (!GameDataCache.Update())
                 {
-                    calculation_time = 0d;
-                    patches_calculated = 0d;
-                    Patches.Clear();
-                    UpdateTiming();
+                    ComputeClear();
+                    GameDataCache.Clear();
                     return;
                 }
 
                 // update aerodynamic model
                 Trajectories.AerodynamicModel.Update();
 
-                // clear the public buffers
+                // clear the buffers
                 patches_buffer.Clear();
                 max_accel_buffer = 0d;
 
@@ -373,8 +364,8 @@ namespace Trajectories
             {
                 double progress = progress_step;
 
-                // stop if we don't have a vessel state
-                if (state == null)
+                // stop if we don't have a vessel state or thread is canceled
+                if (state == null || Worker.Thread.CancellationPending)
                     break;
 
                 // search through maneuver nodes of the vessel
@@ -399,11 +390,22 @@ namespace Trajectories
             }
         }
 
-        /// <summary> Called when the worker thread has finished executing ComputeTrajectoryPatches() </summary>
+        /// <summary> Clears the patch buffers and resets timers.</summary>
+        internal static void ComputeClear()
+        {
+            calculation_time = 0d;
+            patches_calculated = 0d;
+            Progress = 0d;
+            patches_buffer.Clear();
+            max_accel_buffer = 0d;
+            Patches.Clear();
+            MaxAccel = 0d;
+            UpdateTiming();
+        }
+
+        /// <summary> Swaps the buffers. Called via Trajectories.Update when the worker thread flags it has finished executing ComputeTrajectoryPatches() </summary>
         internal static void ComputeComplete()
         {
-            // swap the buffers for the patches and the maximum acceleration,
-            // "publishing" the results
             patches_swap_buffer = Patches;
             Patches = patches_buffer;
             patches_buffer = patches_swap_buffer;
@@ -766,6 +768,9 @@ namespace Trajectories
 
                     while (true)
                     {
+                        if (Worker.Thread.CancellationPending)
+                            return null;
+
                         ++iteration;
 
                         double R = state.position.magnitude;
@@ -801,7 +806,8 @@ namespace Trajectories
 
                             if (iteration == maxIterations)
                             {
-                                ScreenMessages.PostScreenMessage("WARNING: trajectory prediction stopped, too many iterations");
+                                //ScreenMessages.PostScreenMessage("WARNING: trajectory prediction stopped, too many iterations");
+                                Util.LogWarning("trajectory prediction stopped, too many iterations");
                                 patches_buffer.Add(patch);
                                 return null;
                             }

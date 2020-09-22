@@ -60,12 +60,8 @@ namespace Trajectories
         {
             ///<summary> Progress percentage report </summary>
             PERCENTAGE = 0,
-            ///<summary> Update StatusBar </summary>
-            STATUSBAR,
-            ///<summary> Update percentage, form buttons and StatusBar </summary>
-            ALL,
-            ///<summary> App is closing </summary>
-            APPCLOSE
+            ///<summary> Thread was cancelled </summary>
+            CANCELLED
         }
         #endregion
 
@@ -81,12 +77,6 @@ namespace Trajectories
         internal static JOB CurrentJob { get; set; } = JOB.NO_JOB;
         ///<summary> If true then the worker thread is busy </summary>
         internal static bool Busy => Thread != null ? Thread.IsBusy && (CurrentJob != JOB.NO_JOB) : true;
-        ///<summary> If set to true then application is closing and waiting for the worker to finish, the worker should call MainForm.Close() when it has finished </summary>
-        internal static bool Closing { get; set; } = false;
-        ///<summary> True if devices should connect to their vehicle network on the next worker job </summary>
-        internal static bool ConnectNetworks { get; set; } = true;
-        ///<summary> If set to true then the devices form is waiting for the worker to finish, the worker should call DevicesForm.WorkerFinished() when it has finished </summary>
-        internal static bool DevicesFormWaiting { get; set; } = false;
         #endregion
 
         #region EVENTS
@@ -153,12 +143,6 @@ namespace Trajectories
             }
 
             if (Thread.CancellationPending)
-            {
-                e.Cancel = true;
-                return;
-            }
-
-            if (Thread.CancellationPending)
                 e.Cancel = true;
         }
 
@@ -173,6 +157,7 @@ namespace Trajectories
             else if (e.Cancelled)
             {
                 Util.DebugLog("Job cancelled");
+                OnReport(EVENT_TYPE.CANCELLED);
             }
             else
             {
@@ -183,14 +168,6 @@ namespace Trajectories
                 OnUpdate(CurrentJob, (bool)(e.Result ?? false));
             }
 
-            // is application closing
-            if (Closing)
-            {
-                OnReport(EVENT_TYPE.APPCLOSE);
-                return;
-            }
-
-            OnReport(EVENT_TYPE.ALL);
             CurrentJob = JOB.NO_JOB;
 
             //Util.DebugLog("Done.");
@@ -201,11 +178,6 @@ namespace Trajectories
         {
             //Util.DebugLog("{0}%", e.ProgressPercentage);
             OnReport(EVENT_TYPE.PERCENTAGE, e.ProgressPercentage);
-            if (e.UserState != null)
-            {
-                Util.DebugLog("Update Data");
-                OnReport(EVENT_TYPE.STATUSBAR);
-            }
         }
         #endregion
     }

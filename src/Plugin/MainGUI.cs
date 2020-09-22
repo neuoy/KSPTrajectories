@@ -1282,8 +1282,8 @@ namespace Trajectories
 
             // performance
             calculation_time_txt = calculation_time_hdrtxt +
-                string.Format("{0:0.0}ms | {1:0.0} %    Patches {2:0}", Trajectory.ComputationTime,
-                    (Trajectory.ComputationTime / Trajectory.GameFrameTime) * 100.0d, Trajectory.CalculatedPatches);
+                string.Format("{0:0.00}ms | Patches {1,-3:0} | {2,3:0}%", Trajectory.ComputationTime,
+                    Trajectory.CalculatedPatches, Trajectory.Progress);
 
             // num errors
             num_errors_txt = errors_hdrtxt + string.Format("{0:0}", Trajectory.ErrorCount);
