@@ -221,7 +221,7 @@ namespace Trajectories
         }
         #endregion
 
-        //*******************************************************
+        /// <returns> The calculated aerodynamic forces vector (lift and drag) for the GameDataCache vessel with the given velocity and position parameters </returns>
         public static Vector3d SimAeroForce(Vector3d v_wrld_vel, Vector3d position)
         {
             double latitude = GameDataCache.Body.GetLatitude(position) / 180d * Math.PI;
@@ -230,7 +230,7 @@ namespace Trajectories
             return SimAeroForce(v_wrld_vel, altitude, latitude);
         }
 
-        //*******************************************************
+        /// <returns> The calculated aerodynamic forces vector (lift and drag) for the GameDataCache vessel with the given velocity, altitude and latitude parameters </returns>
         public static Vector3d SimAeroForce(Vector3d v_wrld_vel, double altitude, double latitude = 0d)
         {
             Profiler.Start("SimAeroForce");
@@ -272,20 +272,17 @@ namespace Trajectories
                 if (part_info.ShieldedFromAirstream || !part_info.HasRigidbody)
                     continue;
 
-                // get drag
-                Vector3d liftForce = Vector3d.zero;
-                Vector3d dragForce;
+                #region CALCULATE_BODY_DRAG
+                // get body drag
+                Vector3d body_lift = Vector3d.zero;
+                Vector3d body_drag = Vector3d.zero;
 
-                Profiler.Start("SimAeroForce#drag");
+                Profiler.Start("SimAeroForce#BodyDrag");
                 switch (part_info.DragModel)
                 {
                     case Part.DragModel.DEFAULT:
                     case Part.DragModel.CUBE:
                         DragCubeList.CubeData drag_data = new DragCubeList.CubeData();
-
-                        //Vector3d sim_dragVectorDirLocal = -part_transform.InverseTransformDirection(sim_dragVectorDir);   // Not thread safe
-                        // temporary until I get a better InverseTransformDirection workaround
-                        Vector3d sim_dragVectorDirLocal = -(part_info.Rotation.Inverse() * sim_dragVectorDir);
 
                         double drag;
                         if (!part_info.HasCubes) // since 1.0.5, some parts don't have drag cubes (for example fuel lines and struts)
@@ -294,8 +291,11 @@ namespace Trajectories
                         }
                         else
                         {
+                            // Vector3d sim_dragVectorDirLocal = -part_transform.InverseTransformDirection(sim_dragVectorDir);   // Not thread safe
+                            Vector3d sim_dragVectorDirLocal = -(part_info.Rotation.Inverse() * sim_dragVectorDir);
                             try
                             {
+                                // implement manually, sometimes drag_data.areaDrag is NaN ??
                                 part_info.DragCubes?.AddSurfaceDragDirection(-sim_dragVectorDirLocal, (float)mach, ref drag_data);
                             }
                             catch (Exception e)
@@ -306,69 +306,69 @@ namespace Trajectories
                                 Util.DebugLogError("Exception {0} on drag initialization", e);
                             }
 
-                            drag = drag_data.areaDrag * PhysicsGlobals.DragCubeMultiplier * pseudoredragmult;
-                            liftForce = drag_data.liftForce;
+                            drag = !drag_data.areaDrag.IsNaN() ? drag_data.areaDrag * PhysicsGlobals.DragCubeMultiplier * pseudoredragmult : part_info.MaxDrag;
+                            body_lift = drag_data.liftForce;
                         }
 
                         double sim_dragScalar = dyn_pressure * drag * PhysicsGlobals.DragMultiplier;
-                        dragForce = -sim_dragVectorDir * sim_dragScalar;
+                        body_drag = -sim_dragVectorDir * sim_dragScalar;
 
                         break;
 
                     case Part.DragModel.SPHERICAL:
-                        dragForce = -sim_dragVectorDir * part_info.MaxDrag;
+                        body_drag = -sim_dragVectorDir * part_info.MaxDrag;
                         break;
 
                     case Part.DragModel.CYLINDRICAL:
-                        dragForce = -sim_dragVectorDir * Util.Lerp(part_info.MinDrag, part_info.MaxDrag,
+                        body_drag = -sim_dragVectorDir * Util.Lerp(part_info.MinDrag, part_info.MaxDrag,
                             Math.Abs(Vector3d.Dot(part_info.Rotation * part_info.DragVector, sim_dragVectorDir)));
                         break;
 
                     case Part.DragModel.CONIC:
-                        dragForce = -sim_dragVectorDir * Util.Lerp(part_info.MinDrag, part_info.MaxDrag,
+                        body_drag = -sim_dragVectorDir * Util.Lerp(part_info.MinDrag, part_info.MaxDrag,
                             Vector3d.Angle(part_info.Rotation * part_info.DragVector, sim_dragVectorDir) / 180d);
                         break;
 
                     default:
                         // no drag to apply
-                        dragForce = Vector3d.zero;
+                        body_drag = Vector3d.zero;
                         break;
                 }
 
-                Profiler.Stop("SimAeroForce#drag");
+                total_drag += body_drag;
+
+                Profiler.Stop("SimAeroForce#BodyDrag");
 
 #if DEBUG
                 if (partDebug != null)
                 {
-                    partDebug.Drag += (float)dragForce.magnitude;
+                    partDebug.Drag += (float)body_drag.magnitude;
                 }
 #endif
-                total_drag += dragForce;
+                #endregion CALCULATE_BODY_DRAG
 
-                // If it isn't a wing or lifter, get body lift.
+                #region CALCULATE_BODY_LIFT
+                // get body lift
                 if (!part_info.HasLiftModule)
                 {
                     Profiler.Start("SimAeroForce#BodyLift");
 
                     double simbodyLiftScalar = part_info.BodyLiftMultiplier * PhysicsGlobals.BodyLiftMultiplier * dyn_pressure;
                     simbodyLiftScalar *= PhysicsGlobals.GetLiftingSurfaceCurve("BodyLift").liftMachCurve.Evaluate((float)mach);
-                    Vector3d bodyLift = part_info.Rotation * (simbodyLiftScalar * liftForce);
-                    bodyLift = Vector3.ProjectOnPlane(bodyLift, sim_dragVectorDir);
-                    // Only accumulate forces for non-LiftModules
-                    total_lift += bodyLift;
+                    total_lift += Vector3.ProjectOnPlane(part_info.Rotation * (simbodyLiftScalar * body_lift), sim_dragVectorDir);
 
                     Profiler.Stop("SimAeroForce#BodyLift");
                 }
+                #endregion CALCULATE_BODY_LIFT
 
-
-                Profiler.Start("SimAeroForce#LiftingSurface");
-
-                // Find ModuleLifingSurface for wings and lift force.
+                #region CALCULATE_WINGS_DRAG_AND_LIFT
+                // calculate lift force and drag for any wings.
                 // Should catch control surface as it is a subclass
                 foreach (ModuleLiftingSurface wing in part_info.Wings)
+                Profiler.Start("SimAeroForce#LiftingSurfaces");
+
                 {
-                    double mcs_mod = 1.0d;
-                    double liftQ = dyn_pressure * 1000d;
+                    double liftQ = dyn_pressure * 1e3;
                     Vector3d liftVector = Vector3d.zero;
                     double absdot;
 
@@ -399,26 +399,27 @@ namespace Trajectories
                     }
                     #endregion SETUP_COEFFICIENTS
 
-                    Vector3d local_lift = mcs_mod * (Vector3d)wing.GetLiftVector(liftVector, (float)liftdot, (float)absdot, liftQ, (float)mach);
-                    Vector3d local_drag = mcs_mod * (Vector3d)wing.GetDragVector(nVel, (float)absdot, liftQ);
+                    Vector3d wing_lift = wing.GetLiftVector(liftVector, (float)liftdot, (float)absdot, liftQ, (float)mach);   // Not thread safe
+                    Vector3d wing_drag = wing.GetDragVector(nVel, (float)absdot, liftQ);   // Not thread safe
 
-                    total_lift += local_lift;
-                    total_drag += local_drag;
+                    total_lift += wing_lift;
+                    total_drag += wing_drag;
 
 #if DEBUG
                     if (partDebug != null)
                     {
-                        partDebug.Lift += (float)local_lift.magnitude;
-                        partDebug.Drag += (float)local_drag.magnitude;
+                        partDebug.Lift += (float)wing_lift.magnitude;
+                        partDebug.Drag += (float)wing_drag.magnitude;
                     }
 #endif
                 }
 
-                Profiler.Stop("SimAeroForce#LiftingSurface");
-
+                Profiler.Stop("SimAeroForce#LiftingSurfaces");
+                #endregion CALCULATE_WINGS_DRAG_AND_LIFT
             }
 
             Profiler.Stop("SimAeroForce");
+
             return total_lift + total_drag;
         }
     } //StockAeroUtil

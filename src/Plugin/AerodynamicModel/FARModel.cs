@@ -61,18 +61,17 @@ namespace Trajectories
             if (rho < 0.0000000001d)
                 return Vector2d.zero;
 
-            // divide by v² and rho before storing the force, to increase accuracy (the reverse operation is performed when reading from the cache)
-            double invScale = 1.0d / (rho * Math.Max(1.0d, velocity * velocity));
-            forces *= invScale;
+            // divide by v² and rho before packing the force, to increase accuracy (the reverse operation is performed when reading from the cache)
+            forces *= 1d / (rho * Math.Max(1d, velocity * velocity));
             return new Vector2d(forces.x, forces.y);
         }
 
         internal override Vector3d UnpackForces(Vector2d packedForces, double altitudeAboveSea, double velocity)
         {
             double rho = StockAeroUtil.GetDensity(altitudeAboveSea);
-            double scale = velocity * velocity * rho;
 
-            return new Vector3d(packedForces.x * scale, packedForces.y * scale, 0.0d);
+            packedForces *= velocity * velocity * rho;
+            return new Vector3d(packedForces.x, packedForces.y, 0d);
         }
     }
 }

@@ -115,9 +115,9 @@ namespace Trajectories
         }
 
         /// <summary>
-        /// Compute the aerodynamic forces that would be applied to the vessel if it was in the specified situation (air velocity, altitude and angle of attack).
+        /// Compute the aerodynamic forces that would be applied to the GameDataCache vessel if it was in the specified situation (air velocity, altitude and angle of attack).
         /// </summary>
-        /// <returns>The computed aerodynamic forces in world space</returns>
+        /// <returns> The computed aerodynamic forces in world space</returns>
         internal Vector3d ComputeForces(double altitude, Vector3d airVelocity, Vector3d vup, double angleOfAttack)
         {
             Profiler.Start("ComputeForces");
@@ -125,7 +125,7 @@ namespace Trajectories
             if (!GameDataCache.BodyHasAtmosphere || altitude >= GameDataCache.BodyAtmosphereDepth)
                 return Vector3d.zero;
 
-            // this is weird, but the vessel orientation does not match the reference transform (up is forward), this code fixes it but I don't know if it'll work in all cases
+            // this is weird, the vessel orientation does not match the reference transform (up is forward), this code fixes it but I don't know if it'll work in all cases
             Vector3d vesselBackward = -GameDataCache.VesselTransformUp.normalized;
             Vector3d vesselForward = -vesselBackward;
             Vector3d vesselUp = -GameDataCache.VesselTransformForward.normalized;
@@ -133,23 +133,27 @@ namespace Trajectories
 
             Vector3d airVelocityForFixedAoA = (vesselForward * Math.Cos(-angleOfAttack) + vesselUp * Math.Sin(-angleOfAttack)) * airVelocity.magnitude;
 
+            // get lift and drag, for stock model calls SimAeroForce, for FAR model calls FARAPI CalculateVesselAeroForces
             Vector3d totalForce = ComputeForces_Model(airVelocityForFixedAoA, altitude);
 
             if (totalForce.IsNaN())
             {
-                Util.LogError("{0} totalForce {1} is NaN : (altitude={2}, airVelocity={3}, angleOfAttack={4})",
+                Util.LogWarning("{0} totalForce {1} is NaN : (altitude={2}, airVelocity={3}, angleOfAttack={4})",
                     AerodynamicModelName, totalForce, altitude, airVelocity.magnitude, angleOfAttack);
                 // Don't send NaN into the simulation as it would cause bad things (infinite loops, crash, etc.).
                 // I think this case only happens at the atmosphere edge, so the total force should be 0 anyway.
                 return Vector3d.zero;
             }
 
-            // convert the force computed by the model (depends on the current vessel orientation, which is irrelevant for the prediction) to the predicted vessel orientation (which depends on the predicted velocity)
-            Vector3d localForce = new Vector3d(Vector3d.Dot(vesselRight, totalForce), Vector3d.Dot(vesselUp, totalForce), Vector3d.Dot(vesselBackward, totalForce));
+            // convert the force computed by the model (depends on the current vessel orientation, which is irrelevant for the prediction)
+            // to the predicted vessel orientation (which depends on the predicted velocity)
+            Vector3d localForce = new Vector3d(Vector3d.Dot(vesselRight, totalForce),
+                                               Vector3d.Dot(vesselUp, totalForce),
+                                               Vector3d.Dot(vesselBackward, totalForce));
 
             if (localForce.IsNaN())
             {
-                Util.LogError("{0} localForce {1} is NaN : (altitude={2}, airVelocity={3}, angleOfAttack={4})",
+                Util.LogWarning("{0} localForce {1} is NaN : (altitude={2}, airVelocity={3}, angleOfAttack={4})",
                     AerodynamicModelName, localForce, altitude, airVelocity.magnitude, angleOfAttack);
                 // Don't send NaN into the simulation as it would cause bad things (infinite loops, crash, etc.).
                 //I think this case only happens at the atmosphere edge, so the total force should be 0 anyway.
@@ -186,7 +190,7 @@ namespace Trajectories
             Vector3d res = predictedVesselRight * localForce.x + predictedVesselUp * localForce.y + predictedVesselBackward * localForce.z;
             if (res.IsNaN())
             {
-                Util.LogError("{0} res {1} is NaN : (altitude={2}, airVelocity={3}, angleOfAttack={4})",
+                Util.LogWarning("{0} res {1} is NaN : (altitude={2}, airVelocity={3}, angleOfAttack={4})",
                     AerodynamicModelName, res, altitude, airVelocity.magnitude, angleOfAttack);
                 // Don't send NaN into the simulation as it would cause bad things (infinite loops, crash, etc.).
                 //I think this case only happens at the atmosphere edge, so the total force should be 0 anyway.
@@ -198,13 +202,15 @@ namespace Trajectories
         }
 
         /// <summary>
-        /// Computes the aerodynamic forces that would be applied to the vessel if it was in the specified situation (air velocity and altitude). The vessel is assumed to be in its current orientation (the air velocity is already adjusted as needed).
+        /// Computes the aerodynamic (drag and lift) forces that would be applied to the GameDataCache vessel if it was in the specified situation (air velocity and altitude).
+        /// The vessel is assumed to be in its current orientation (the air velocity is already adjusted as needed).
         /// </summary>
-        /// <returns>The computed aerodynamic forces in world space</returns>
+        /// <returns> The computed aerodynamic forces in world space</returns>
         protected abstract Vector3d ComputeForces_Model(Vector3d airVelocity, double altitude);
 
         /// <summary>
-        /// Aerodynamic forces are roughly proportional to rho and squared air velocity, so we divide by these values to get something that can be linearly interpolated (the reverse operation is then applied after interpolation)
+        /// Aerodynamic forces are roughly proportional to rho and squared air velocity, so we divide by these values to get something that can be linearly
+        /// interpolated (the reverse operation is then applied after interpolation)
         /// This operation is optional but should slightly increase the cache accuracy
         /// </summary>
         internal virtual Vector2d PackForces(Vector3d forces, double altitudeAboveSea, double velocity) => new Vector2d(forces.x, forces.y);
