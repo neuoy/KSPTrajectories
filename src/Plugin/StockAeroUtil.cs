@@ -281,16 +281,14 @@ namespace Trajectories
                 {
                     case Part.DragModel.DEFAULT:
                     case Part.DragModel.CUBE:
-                        DragCubeList cubes = part_info.DragCubes;
-
-                        DragCubeList.CubeData p_drag_data = new DragCubeList.CubeData();
+                        DragCubeList.CubeData drag_data = new DragCubeList.CubeData();
 
                         //Vector3d sim_dragVectorDirLocal = -part_transform.InverseTransformDirection(sim_dragVectorDir);   // Not thread safe
                         // temporary until I get a better InverseTransformDirection workaround
                         Vector3d sim_dragVectorDirLocal = -(part_info.Rotation.Inverse() * sim_dragVectorDir);
 
                         double drag;
-                        if (part_info.HasCubes) // since 1.0.5, some parts don't have drag cubes (for example fuel lines and struts)
+                        if (!part_info.HasCubes) // since 1.0.5, some parts don't have drag cubes (for example fuel lines and struts)
                         {
                             drag = part_info.MaxDrag;
                         }
@@ -298,19 +296,18 @@ namespace Trajectories
                         {
                             try
                             {
-                                cubes.AddSurfaceDragDirection(-sim_dragVectorDirLocal, (float)mach, ref p_drag_data);
+                                part_info.DragCubes?.AddSurfaceDragDirection(-sim_dragVectorDirLocal, (float)mach, ref drag_data);
                             }
                             catch (Exception e)
                             {
-                                cubes.SetDrag(sim_dragVectorDirLocal, (float)mach);
-                                cubes.ForceUpdate(true, true);
-                                cubes.AddSurfaceDragDirection(-sim_dragVectorDirLocal, (float)mach, ref p_drag_data);
+                                part_info.DragCubes?.SetDrag(sim_dragVectorDirLocal, (float)mach);
+                                part_info.DragCubes?.ForceUpdate(true, true);
+                                part_info.DragCubes?.AddSurfaceDragDirection(-sim_dragVectorDirLocal, (float)mach, ref drag_data);
                                 Util.DebugLogError("Exception {0} on drag initialization", e);
                             }
 
-                            drag = p_drag_data.areaDrag * PhysicsGlobals.DragCubeMultiplier * pseudoredragmult;
-
-                            liftForce = p_drag_data.liftForce;
+                            drag = drag_data.areaDrag * PhysicsGlobals.DragCubeMultiplier * pseudoredragmult;
+                            liftForce = drag_data.liftForce;
                         }
 
                         double sim_dragScalar = dyn_pressure * drag * PhysicsGlobals.DragMultiplier;
@@ -367,59 +364,54 @@ namespace Trajectories
                 Profiler.Start("SimAeroForce#LiftingSurface");
 
                 // Find ModuleLifingSurface for wings and lift force.
-                // Should catch control surface as it is a subclass  
-                foreach (PartModule m in part_info.Part.Modules)
+                // Should catch control surface as it is a subclass
+                foreach (ModuleLiftingSurface wing in part_info.Wings)
                 {
-                    double mcs_mod;
-                    if (m is ModuleLiftingSurface)
+                    double mcs_mod = 1.0d;
+                    double liftQ = dyn_pressure * 1000d;
+                    Vector3d liftVector = Vector3d.zero;
+                    double absdot;
+
+                    //wing.SetupCoefficients(v_wrld_vel, out nVel, out liftVector, out liftdot, out absdot);
+                    #region SETUP_COEFFICIENTS
+                    switch (wing.transformDir)
                     {
-                        ModuleLiftingSurface wing = (ModuleLiftingSurface)m;
-                        mcs_mod = 1.0d;
-                        double liftQ = dyn_pressure * 1000d;
-                        Vector3d liftVector = Vector3d.zero;
-                        double absdot;
+                        case ModuleLiftingSurface.TransformDir.X:
+                            liftVector = part_info.TransformRight;
+                            break;
+                        case ModuleLiftingSurface.TransformDir.Y:
+                            liftVector = part_info.TransformUp;
+                            break;
+                        case ModuleLiftingSurface.TransformDir.Z:
+                            liftVector = part_info.TransformForward;
+                            break;
+                    }
+                    Vector3d nVel = v_wrld_vel.normalized;
+                    liftVector *= wing.transformSign;
+                    double liftdot = Vector3d.Dot(nVel, liftVector);
+                    if (wing.omnidirectional)
+                    {
+                        absdot = Math.Abs(liftdot);
+                    }
+                    else
+                    {
+                        absdot = Util.Clamp01(liftdot);
+                    }
+                    #endregion SETUP_COEFFICIENTS
 
-                        //wing.SetupCoefficients(v_wrld_vel, out nVel, out liftVector, out liftdot, out absdot);
-                        #region SETUP_COEFFICIENTS
-                        switch (wing.transformDir)
-                        {
-                            case ModuleLiftingSurface.TransformDir.X:
-                                liftVector = part_info.TransformRight;
-                                break;
-                            case ModuleLiftingSurface.TransformDir.Y:
-                                liftVector = part_info.TransformUp;
-                                break;
-                            case ModuleLiftingSurface.TransformDir.Z:
-                                liftVector = part_info.TransformForward;
-                                break;
-                        }
-                        Vector3d nVel = v_wrld_vel.normalized;
-                        liftVector *= wing.transformSign;
-                        double liftdot = Vector3d.Dot(nVel, liftVector);
-                        if (wing.omnidirectional)
-                        {
-                            absdot = Math.Abs(liftdot);
-                        }
-                        else
-                        {
-                            absdot = Util.Clamp01(liftdot);
-                        }
-                        #endregion SETUP_COEFFICIENTS
+                    Vector3d local_lift = mcs_mod * (Vector3d)wing.GetLiftVector(liftVector, (float)liftdot, (float)absdot, liftQ, (float)mach);
+                    Vector3d local_drag = mcs_mod * (Vector3d)wing.GetDragVector(nVel, (float)absdot, liftQ);
 
-                        Vector3d local_lift = mcs_mod * (Vector3d)wing.GetLiftVector(liftVector, (float)liftdot, (float)absdot, liftQ, (float)mach);
-                        Vector3d local_drag = mcs_mod * (Vector3d)wing.GetDragVector(nVel, (float)absdot, liftQ);
-
-                        total_lift += local_lift;
-                        total_drag += local_drag;
+                    total_lift += local_lift;
+                    total_drag += local_drag;
 
 #if DEBUG
-                        if (partDebug != null)
-                        {
-                            partDebug.Lift += (float)local_lift.magnitude;
-                            partDebug.Drag += (float)local_drag.magnitude;
-                        }
-#endif
+                    if (partDebug != null)
+                    {
+                        partDebug.Lift += (float)local_lift.magnitude;
+                        partDebug.Drag += (float)local_drag.magnitude;
                     }
+#endif
                 }
 
                 Profiler.Stop("SimAeroForce#LiftingSurface");

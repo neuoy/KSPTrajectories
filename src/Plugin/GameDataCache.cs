@@ -31,12 +31,13 @@ namespace Trajectories
         internal class PartInfo
         {
             internal Part Part { get; private set; }
+            internal List<ModuleLiftingSurface> Wings { get; private set; }
             internal bool ShieldedFromAirstream { get; private set; }
             internal bool HasRigidbody { get; private set; }
             internal Part.DragModel DragModel { get; private set; }
+            internal bool HasCubes { get; private set; }
             internal DragCubeList DragCubes { get; private set; }
             internal Quaternion Rotation { get; private set; }
-            internal bool HasCubes { get; private set; }
             internal double MaxDrag { get; private set; }
             internal double MinDrag { get; private set; }
             internal Vector3d DragVector { get; private set; }
@@ -46,21 +47,35 @@ namespace Trajectories
             internal Vector3d TransformUp { get; private set; }
             internal Vector3d TransformForward { get; private set; }
 
-            internal PartInfo(Part part) => Update(part);
+            internal PartInfo(Part part)
+            {
+                Part = part;
+
+                Wings = new List<ModuleLiftingSurface>();
+                foreach (ProtoPartModuleSnapshot m in part.protoPartSnapshot.modules)
+                {
+                    if (m.moduleRef is ModuleLiftingSurface)
+                        Wings.Add(m.moduleRef as ModuleLiftingSurface);
+                }
+
+                ShieldedFromAirstream = part.ShieldedFromAirstream;
+                HasRigidbody = part.Rigidbody != null;
+
+                DragModel = part.dragModel;
+                HasCubes = !part.DragCubes.None;
+                DragCubes = part.DragCubes;
+
+                MaxDrag = part.maximum_drag;
+                MinDrag = part.minimum_drag;
+                HasLiftModule = part.hasLiftModule;
+
+                Update(part);
+            }
 
             internal void Update(Part part)
             {
-                Part = part;
-                ShieldedFromAirstream = part.ShieldedFromAirstream;
-                HasRigidbody = part.Rigidbody != null;
-                DragModel = part.dragModel;
-                DragCubes = part.DragCubes;
                 Rotation = part.transform.rotation.Clone();
-                HasCubes = !part.DragCubes.None;
-                MaxDrag = part.maximum_drag;
-                MinDrag = part.minimum_drag;
                 DragVector = part.dragReferenceVector;
-                HasLiftModule = part.hasLiftModule;
                 BodyLiftMultiplier = part.bodyLiftMultiplier;
                 TransformRight = part.transform.right;
                 TransformUp = part.transform.up;
@@ -75,17 +90,18 @@ namespace Trajectories
         /// <summary> Adds a collection of KSP Part's to a collection of PartInfo's </summary>
         internal static void Add(this ICollection<PartInfo> collection, IEnumerable<Part> parts)
         {
-            VesselMass = 0;
+            VesselMass = 0d;
             foreach (Part part in parts)
             {
                 collection.Add(new PartInfo(part));
             }
         }
+
         /// <summary> Updates a collection of PartInfo's from a collection of KSP Part's </summary>
         internal static void Update(this ICollection<PartInfo> collection, IEnumerable<Part> parts)
         {
             IEnumerator<Part> enumerator = parts.GetEnumerator();
-            VesselMass = 0;
+            VesselMass = 0d;
 
             if (!enumerator.MoveNext())
                 return;
@@ -170,9 +186,9 @@ namespace Trajectories
             }
 
             // check for vessel changes
-            if (AttachedVessel != Trajectories.AttachedVessel || VesselParts.Count != Trajectories.AttachedVessel.Parts.Count)
+            if (AttachedVessel != Trajectories.AttachedVessel || VesselParts?.Count != Trajectories.AttachedVessel.Parts.Count)
             {
-                Util.DebugLog("Updating due to vessel or parts count change");
+                Util.DebugLog("Updating due to {0} change", AttachedVessel != Trajectories.AttachedVessel ? "vessel" : "parts count");
 
                 AttachedVessel = Trajectories.AttachedVessel;
                 VesselParts?.Clear();
