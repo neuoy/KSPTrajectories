@@ -27,11 +27,44 @@ namespace Trajectories
     internal static class GameDataCache
     {
         #region VESSEL_PART_PROPERTIES
+        // vessel part wing properties
+        internal class WingInfo
+        {
+            internal ModuleLiftingSurface.TransformDir TransformDir { get; private set; }
+            internal double TransformSign { get; private set; }
+            internal bool OmniDirectional { get; private set; }
+            internal bool HasPartAttached { get; private set; }
+            internal double DeflectionLiftCoeff { get; private set; }
+            internal bool PerpendicularOnly { get; private set; }
+            internal Vector3d VelocityNormal { get; private set; }
+            internal FloatCurve LiftCurve { get; private set; }
+            internal FloatCurve LiftMachCurve { get; private set; }
+            internal FloatCurve DragCurve { get; private set; }
+            internal FloatCurve DragMachCurve { get; private set; }
+
+            internal WingInfo(ModuleLiftingSurface module)
+            {
+                TransformDir = module.transformDir;
+                TransformSign = module.transformSign;
+                OmniDirectional = module.omnidirectional;
+                AttachNode node = Util.ReflectionValue<AttachNode>(module, "attachNode");
+                HasPartAttached = module.nodeEnabled && node.attachedPart != null;
+                DeflectionLiftCoeff = module.deflectionLiftCoeff;
+                PerpendicularOnly = module.perpendicularOnly;
+                VelocityNormal = Util.ReflectionValue<Vector3>(module, "nVel");
+                LiftCurve = module.liftCurve;
+                LiftMachCurve = module.liftMachCurve;
+                DragCurve = module.dragCurve;
+                DragMachCurve = module.dragMachCurve;
+            }
+
+        }
+
         // vessel part properties
         internal class PartInfo
         {
             internal Part Part { get; private set; }
-            internal List<ModuleLiftingSurface> Wings { get; private set; }
+            internal List<WingInfo> Wings { get; private set; }
             internal bool ShieldedFromAirstream { get; private set; }
             internal bool HasRigidbody { get; private set; }
             internal Part.DragModel DragModel { get; private set; }
@@ -51,12 +84,7 @@ namespace Trajectories
             {
                 Part = part;
 
-                Wings = new List<ModuleLiftingSurface>();
-                foreach (ProtoPartModuleSnapshot m in part.protoPartSnapshot.modules)
-                {
-                    if (m.moduleRef is ModuleLiftingSurface)
-                        Wings.Add(m.moduleRef as ModuleLiftingSurface);
-                }
+                Wings = new List<WingInfo>() { part.protoPartSnapshot.modules };
 
                 ShieldedFromAirstream = part.ShieldedFromAirstream;
                 HasRigidbody = part.Rigidbody != null;
@@ -84,6 +112,16 @@ namespace Trajectories
                 // update vessel mass
                 if (part.physicalSignificance != Part.PhysicalSignificance.NONE)
                     VesselMass += part.mass + part.GetResourceMass() + part.GetPhysicslessChildMass();
+            }
+        }
+
+        /// <summary> Adds a collection of KSP Part's LiftingSurface's to a collection of WingInfo's </summary>
+        internal static void Add(this ICollection<WingInfo> collection, IEnumerable<ProtoPartModuleSnapshot> modules)
+        {
+            foreach (ProtoPartModuleSnapshot module in modules)
+            {
+                if (module.moduleRef is ModuleLiftingSurface)
+                    collection.Add(new WingInfo(module.moduleRef as ModuleLiftingSurface));
             }
         }
 

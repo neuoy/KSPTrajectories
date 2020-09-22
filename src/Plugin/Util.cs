@@ -91,6 +91,8 @@ namespace Trajectories
         // --------------------------------------------------------------------------
         // --- Reflection -----------------------------------------------------------
 
+        private static readonly BindingFlags flags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static;
+
         internal static MethodInfo GetMethodEx(this Type type, string methodName, BindingFlags flags)
         {
             try
@@ -135,6 +137,56 @@ namespace Trajectories
                 throw new Exception("Failed to GetMethod " + methodName + " on type " + type.FullName + " with types " + types.ToString() + ":\n" + e.Message + "\n" + e.StackTrace);
             }
         }
+
+        // return a value from a module using reflection
+        // note: useful when the module is from another assembly, unknown at build time
+        // note: useful when the value isn't persistent
+        // note: this function break hard when external API change, by design
+        public static T ReflectionValue<T>(PartModule m, string value_name)
+        {
+            return (T)m.GetType().GetField(value_name, flags).GetValue(m);
+        }
+
+        public static T? SafeReflectionValue<T>(PartModule m, string value_name) where T : struct
+        {
+            FieldInfo fi = m.GetType().GetField(value_name, flags);
+            if (fi == null)
+                return null;
+            return (T)fi.GetValue(m);
+        }
+
+        // set a value from a module using reflection
+        // note: useful when the module is from another assembly, unknown at build time
+        // note: useful when the value isn't persistent
+        // note: this function break hard when external API change, by design
+        public static void ReflectionValue<T>(PartModule m, string value_name, T value)
+        {
+            m.GetType().GetField(value_name, flags).SetValue(m, value);
+        }
+
+        ///<summary> Sets the value of a private field via reflection </summary>
+        public static void ReflectionValue<T>(object instance, string value_name, T value)
+        {
+            instance.GetType().GetField(value_name, flags).SetValue(instance, value);
+        }
+
+        ///<summary> Returns the value of a private field via reflection </summary>
+        public static T ReflectionValue<T>(object instance, string field_name)
+        {
+            return (T)instance.GetType().GetField(field_name, flags).GetValue(instance);
+        }
+
+        public static void ReflectionCall(object m, string call_name)
+        {
+            m.GetType().GetMethod(call_name, flags).Invoke(m, null);
+        }
+
+        public static T ReflectionCall<T>(object m, string call_name)
+        {
+            return (T)(m.GetType().GetMethod(call_name, flags).Invoke(m, null));
+        }
+
+
         #endregion
 
 

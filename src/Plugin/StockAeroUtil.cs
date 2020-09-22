@@ -364,17 +364,17 @@ namespace Trajectories
                 #region CALCULATE_WINGS_DRAG_AND_LIFT
                 // calculate lift force and drag for any wings.
                 // Should catch control surface as it is a subclass
-                foreach (ModuleLiftingSurface wing in part_info.Wings)
                 Profiler.Start("SimAeroForce#LiftingSurfaces");
 
+                foreach (GameDataCache.WingInfo wing in part_info.Wings)
                 {
                     double liftQ = dyn_pressure * 1e3;
                     Vector3d liftVector = Vector3d.zero;
                     double absdot;
 
-                    //wing.SetupCoefficients(v_wrld_vel, out nVel, out liftVector, out liftdot, out absdot);
+                    // wing.SetupCoefficients(v_wrld_vel, out nVel, out liftVector, out liftdot, out absdot);   // Not thread safe
                     #region SETUP_COEFFICIENTS
-                    switch (wing.transformDir)
+                    switch (wing.TransformDir)
                     {
                         case ModuleLiftingSurface.TransformDir.X:
                             liftVector = part_info.TransformRight;
@@ -387,9 +387,9 @@ namespace Trajectories
                             break;
                     }
                     Vector3d nVel = v_wrld_vel.normalized;
-                    liftVector *= wing.transformSign;
+                    liftVector *= wing.TransformSign;
                     double liftdot = Vector3d.Dot(nVel, liftVector);
-                    if (wing.omnidirectional)
+                    if (wing.OmniDirectional)
                     {
                         absdot = Math.Abs(liftdot);
                     }
@@ -399,8 +399,11 @@ namespace Trajectories
                     }
                     #endregion SETUP_COEFFICIENTS
 
-                    Vector3d wing_lift = wing.GetLiftVector(liftVector, (float)liftdot, (float)absdot, liftQ, (float)mach);   // Not thread safe
-                    Vector3d wing_drag = wing.GetDragVector(nVel, (float)absdot, liftQ);   // Not thread safe
+                    //Vector3d wing_lift = wing.GetLiftVector(liftVector, (float)liftdot, (float)absdot, liftQ, (float)mach);   // Not thread safe
+                    //Vector3d wing_drag = wing.GetDragVector(nVel, (float)absdot, liftQ);   // Not thread safe
+
+                    Vector3d wing_lift = wing.GetLiftVector(liftVector, liftdot, absdot, liftQ, mach);
+                    Vector3d wing_drag = wing.GetDragVector(nVel, absdot, liftQ, mach);
 
                     total_lift += wing_lift;
                     total_drag += wing_drag;
@@ -421,6 +424,38 @@ namespace Trajectories
             Profiler.Stop("SimAeroForce");
 
             return total_lift + total_drag;
+        }
+
+        private static Vector3d GetLiftVector(this GameDataCache.WingInfo wing, Vector3d liftVector, double liftdot, double absdot, double Q, double mach)
+        {
+            if (wing.HasPartAttached)
+                return Vector3d.zero;
+
+            double lift_scalar = (Math.Sign(liftdot) * wing.LiftCurve.Evaluate((float)absdot) * wing.LiftMachCurve.Evaluate((float)mach)) * wing.DeflectionLiftCoeff;
+
+            if (lift_scalar != 0d && !lift_scalar.IsNaN())
+            {
+                lift_scalar = Q * (lift_scalar * PhysicsGlobals.LiftMultiplier);
+
+                if (wing.PerpendicularOnly)
+                    return Vector3.ProjectOnPlane(-liftVector * lift_scalar, -wing.VelocityNormal);
+
+                return -liftVector * lift_scalar;
+            }
+            return Vector3d.zero;
+        }
+
+        private static Vector3d GetDragVector(this GameDataCache.WingInfo wing, Vector3d nVel, double absdot, double Q, double mach)
+        {
+            if (wing.HasPartAttached)
+                return Vector3d.zero;
+
+            double drag_scalar = (wing.DragCurve.Evaluate((float)absdot) * wing.DragMachCurve.Evaluate((float)mach)) * wing.DeflectionLiftCoeff;
+
+            if (drag_scalar != 0d && !drag_scalar.IsNaN())
+                return -nVel * (Q * (drag_scalar * PhysicsGlobals.LiftDragMultiplier));
+
+            return Vector3d.zero;
         }
     } //StockAeroUtil
 }
