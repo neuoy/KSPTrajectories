@@ -48,14 +48,14 @@ namespace Trajectories
                 TransformSign = module.transformSign;
                 OmniDirectional = module.omnidirectional;
                 AttachNode node = Util.ReflectionValue<AttachNode>(module, "attachNode");
-                HasPartAttached = module.nodeEnabled && node.attachedPart != null;
+                HasPartAttached = module.nodeEnabled && node?.attachedPart != null;
                 DeflectionLiftCoeff = module.deflectionLiftCoeff;
                 PerpendicularOnly = module.perpendicularOnly;
                 VelocityNormal = Util.ReflectionValue<Vector3>(module, "nVel");
-                LiftCurve = module.liftCurve;
-                LiftMachCurve = module.liftMachCurve;
-                DragCurve = module.dragCurve;
-                DragMachCurve = module.dragMachCurve;
+                LiftCurve = new FloatCurve(module.liftCurve.Curve.keys);
+                LiftMachCurve = new FloatCurve(module.liftMachCurve.Curve.keys);
+                DragCurve = new FloatCurve(module.dragCurve.Curve.keys);
+                DragMachCurve = new FloatCurve(module.dragMachCurve.Curve.keys);
             }
 
         }
@@ -141,15 +141,25 @@ namespace Trajectories
             IEnumerator<Part> enumerator = parts.GetEnumerator();
             VesselMass = 0d;
 
-            if (!enumerator.MoveNext())
-                return;
+            foreach (PartInfo part_info in collection)
+            {
+                if (!enumerator.MoveNext())
+                    break;
+                part_info.Update(enumerator.Current);
+            }
+        }
+
+        /// <summary> Clears a collection of PartInfo's </summary>
+        internal static void Release(this ICollection<PartInfo> collection)
+        {
+            VesselMass = 0d;
 
             foreach (PartInfo part_info in collection)
             {
-                part_info.Update(enumerator.Current);
-                if (!enumerator.MoveNext())
-                    break;
+                part_info.Wings?.Clear();
             }
+
+            collection.Clear();
         }
         #endregion
 
@@ -219,7 +229,10 @@ namespace Trajectories
                 }
 
                 if (Body == null)
+                {
+                    Clear();
                     return false;
+                }
 
                 UpdateBodyCache();
             }
@@ -227,10 +240,11 @@ namespace Trajectories
             // check for vessel changes
             if (AttachedVessel != Trajectories.AttachedVessel || VesselParts?.Count != Trajectories.AttachedVessel.Parts.Count)
             {
-                Util.DebugLog("Updating due to {0} change", AttachedVessel != Trajectories.AttachedVessel ? "vessel" : "parts count");
+                Util.DebugLog("Updating {0} due to {1} change",
+                    Trajectories.AttachedVessel.name, AttachedVessel != Trajectories.AttachedVessel ? "vessel" : "parts count");
 
                 AttachedVessel = Trajectories.AttachedVessel;
-                VesselParts?.Clear();
+                VesselParts?.Release();
                 VesselParts = new List<PartInfo>() { AttachedVessel.Parts };
 
                 Trajectories.AerodynamicModel.Init();
@@ -287,6 +301,7 @@ namespace Trajectories
             VesselTransformForward = Vector3d.zero;
 
             VesselParts?.Clear();
+            VesselParts = null;
         }
 
         private static void UpdateBodyCache()

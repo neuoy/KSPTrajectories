@@ -323,7 +323,6 @@ namespace Trajectories
                 if (!GameDataCache.Update())
                 {
                     ComputeClear();
-                    GameDataCache.Clear();
                     return;
                 }
 
