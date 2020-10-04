@@ -326,8 +326,9 @@ namespace Trajectories
                     return;
                 }
 
-                // update aerodynamic model
-                Trajectories.AerodynamicModel.Update();
+                // update aerodynamic model cache
+                if (Settings.UseCache)
+                    Trajectories.AerodynamicModel.UpdateCache();
 
                 // clear the buffers
                 patches_buffer.Clear();

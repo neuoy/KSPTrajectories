@@ -30,7 +30,7 @@ namespace Trajectories
     ///<summary> Abstracts the game aerodynamic computations to provide an unified interface whether the stock drag is used, or a supported mod is installed </summary>
     internal abstract class VesselAerodynamicModel
     {
-        private double reference_drag = 0d;
+        private double prev_ref_drag = 0d;
         private double next_update_delay = Util.Clocks;
 
         protected AeroForceCache cachedForces;
@@ -41,44 +41,35 @@ namespace Trajectories
         // constructor
         protected VesselAerodynamicModel() { }
 
-        internal void Init() => InitCache();
-
-        private void InitCache()
+        internal void InitCache()
         {
-            //Util.DebugLog("");
-
-            double maxCacheVelocity = 10000d;
-            double maxCacheAoA = Math.PI;     //  180.0 / 180.0 * Math.PI
-
-            int velocityResolution = 32;
-            int angleOfAttackResolution = 33; // even number to include exactly 0°
-            int altitudeResolution = 32;
-
-            cachedForces = new AeroForceCache(maxCacheVelocity, maxCacheAoA, GameDataCache.BodyAtmosphereDepth, velocityResolution, angleOfAttackResolution, altitudeResolution, this);
+            cachedForces = new AeroForceCache(10000d, Math.PI, GameDataCache.BodyAtmosphereDepth, 32, 33, 32, this);
+            next_update_delay = Util.Clocks;
         }
 
-        internal void Update()
+        internal void UpdateCache()
         {
             // limit update frequency to 5 seconds (could make the game almost unresponsive on some computers)
             if (Util.ElapsedSeconds(next_update_delay) < 5d)
                 return;
 
-            next_update_delay = Util.Clocks;
-
-            Vector3d forces = ComputeForces(3000d, new Vector3d(3000d, 0d, 0d), new Vector3d(0d, 1d, 0d), 0d);
-            double newRefDrag = forces.sqrMagnitude;
-            if (reference_drag == 0d)
+            double ref_drag = ComputeForces(3000d, new Vector3d(3000d, 0d, 0d), new Vector3d(0d, 1d, 0d), 0d).sqrMagnitude;
+            if (prev_ref_drag == 0d)
             {
-                reference_drag = newRefDrag;
+                prev_ref_drag = ref_drag;
                 return;
             }
 
-            if ((Math.Max(newRefDrag, reference_drag) / Math.Max(1d, Math.Min(newRefDrag, reference_drag))) > 1.2d)
+            if ((Math.Max(ref_drag, prev_ref_drag) / Math.Max(1d, Math.Min(ref_drag, prev_ref_drag))) > 1.2d)
             {
 #if DEBUG
-                ScreenMessages.PostScreenMessage("Trajectories aerodynamic model updated due to ref drag ratio > 1.2");
+                ScreenMessages.PostScreenMessage("Trajectories aerodynamic model cache updated due to ref drag ratio > 1.2");
 #endif
-                Init();
+                InitCache();
+            }
+            else
+            {
+                next_update_delay = Util.Clocks;
             }
         }
 
