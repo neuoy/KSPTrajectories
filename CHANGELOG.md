@@ -1,9 +1,10 @@
 
-## v2.4.0 for KSP 1.8 to 1.10.x
- - 2020-xx-xx
+## v2.4.0 for KSP 1.8 to 1.11.x
+ - 2021-02-07
 
 ### Changes since the last release
  
+ - Support for KSP 1.11.x
  - Dropped support for KSP 1.3.1 to 1.7.2, private builds can still be made from the backport branch.
  - Added individual Prograde/Retrograde buttons for the descent profile nodes.
  
