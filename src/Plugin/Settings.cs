@@ -40,7 +40,7 @@ namespace Trajectories
         [Persistent(Default: true)]
         internal static bool UseBlizzyToolbar { get; set; }
 
-        [Persistent(Default: true)]
+        [Persistent(Default: false)]
         internal static bool DisplayTrajectories { get; set; }
 
         [Persistent(Default: false)]
