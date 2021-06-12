@@ -67,7 +67,6 @@ namespace Trajectories
         internal struct Point
         {
             internal Vector3d pos;
-            internal Vector3d aerodynamicForce;
             internal Vector3d orbitalVelocity;
 
             /// <summary>
@@ -914,14 +913,12 @@ namespace Trajectories
 
                         Profiler.Stop("IntegrationStep");
 
-                        // calculate gravity and aerodynamic force
+                        // calculate acceleration due to gravity and aerodynamic force
                         Vector3d gravityAccel = lastState.position * (-body.gravParameter / (R * R * R));
-                        Vector3d aerodynamicForce = (currentAccel - gravityAccel) / aerodynamicModel_.Mass;
+                        Vector3d aerodynamicAccel = currentAccel - gravityAccel;
 
                         // acceleration in the vessel reference frame is acceleration - gravityAccel
-                        maxAccelBackBuffer_ = Math.Max(
-                            (float)(aerodynamicForce.magnitude / aerodynamicModel_.Mass),
-                            maxAccelBackBuffer_);
+                        maxAccelBackBuffer_ = Math.Max((float) aerodynamicAccel.magnitude, maxAccelBackBuffer_);
 
                         #region Impact Calculation
 
@@ -958,7 +955,6 @@ namespace Trajectories
                             {
                                 nextPos = CalculateRotatedPosition(body, nextPos, currentTime);
                             }
-                            buffer.Last()[nextPosIdx].aerodynamicForce = aerodynamicForce;
                             buffer.Last()[nextPosIdx].orbitalVelocity = state.velocity;
                             buffer.Last()[nextPosIdx].groundAltitude = (float)groundAltitude;
                             buffer.Last()[nextPosIdx].time = currentTime;
