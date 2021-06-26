@@ -117,11 +117,13 @@ namespace Trajectories
         ///<summary> Progress percentage of Trajectory calculation </summary>
         internal static double Progress { get; set; }
 
-        internal static void Start() => Util.DebugLog("Constructing");
-
+        internal static void Start()
+        {
+            Util.DebugLog("Constructing");
 #if DEBUG_TELEMETRY
             ConstructTelemetry();
 #endif
+        }
 
         internal static void Destroy() => Util.DebugLog("");
 
