@@ -142,11 +142,10 @@ namespace Trajectories
         internal static void Start()
         {
             Util.DebugLog("Constructing");
-        }
-
 #if DEBUG_TELEMETRY
             ConstructTelemetry();
 #endif
+        }
 
         internal static void Destroy() => Util.DebugLog("");
 
