@@ -14,25 +14,25 @@ SET rootPath=%scriptPath%..\..\
 SET initialWD=%CD%
 
 echo Generating %TargetName% Release Package...
-cd "%rootPath%"
+cd /d "%rootPath%"
 rem copy dll from build directory to GameData
 xcopy /y "%initialWD%\%TargetName%.dll" "GameData\%TargetName%\Plugin\*" > nul
 
 IF EXIST package\ rd /s /q package
 mkdir package
-cd package
+cd /d package
 
 mkdir GameData
-cd GameData
+cd /d GameData
 
 mkdir "%TargetName%"
-cd "%TargetName%"
-xcopy /y /e "..\..\..\GameData\%TargetName%\*" .
-xcopy /y ..\..\..\CHANGELOG.md .
-xcopy /y ..\..\..\LICENSE.md .
-xcopy /y ..\..\..\COPYRIGHTS.md .
-xcopy /y ..\..\..\CONTRIBUTING.md .
-xcopy /y ..\..\..\README.md .
+cd /d "%TargetName%"
+xcopy /y /e "%rootPath%\GameData\%TargetName%\*" .
+xcopy /y "%rootPath%\CHANGELOG.md" .
+xcopy /y "%rootPath%\LICENSE.md" .
+xcopy /y "%rootPath%\COPYRIGHTS.md" .
+xcopy /y "%rootPath%\CONTRIBUTING.md" .
+xcopy /y "%rootPath%\README.md" .
 
 echo.
 echo Compressing %TargetName% Release Package...
@@ -40,10 +40,10 @@ IF EXIST "%rootPath%%TargetName%*.zip" del "%rootPath%%TargetName%*.zip"
 "%scriptPath%7za.exe" a "..\..\..\%TargetName%%Dllversion%.zip" ..\..\..\package\GameData
 
 rem check dll file exists
-cd "%rootPath%"
+cd /d "%rootPath%"
 IF NOT EXIST "package\GameData\%TargetName%\Plugin\%TargetName%*.dll" echo **WARNING** %TargetName% dll is missing
 
 rem remove temp files
 rd /s /q package
 
-cd "%initialWD%"
+cd /d "%initialWD%"
