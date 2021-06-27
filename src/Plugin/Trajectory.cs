@@ -307,7 +307,7 @@ namespace Trajectories
 
         internal static void ComputeTrajectory()
         {
-            if (!Trajectories.VesselHasParts || Trajectories.AttachedVessel.LandedOrSplashed)
+            if (!Trajectories.VesselHasParts || Trajectories.AttachedVessel.LandedOrSplashed || Trajectories.AttachedVessel.isEVA)
             {
                 ComputeClear();
                 GameDataCache.Clear();
