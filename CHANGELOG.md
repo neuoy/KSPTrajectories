@@ -1,6 +1,6 @@
 
-## v3.0.0 for KSP 1.8 to 1.11.x
- - 2020-xx-xx
+## v3.0.0 for KSP 1.8 to 1.12.x
+ - 2021-xx-xx
 
 ### Changes since the last release
  
@@ -10,6 +10,17 @@
 
 
 ### Known Issues
+
+------------------------------------------------------------------------------------------------------
+
+## v2.4.1 for KSP 1.8 to 1.12.x
+ - 2021-06-27
+
+### Changes since the last release
+
+ - Support for KSP 1.12.x
+ - Max decelerating G-force readout now correctly displays the predicted value
+ - Targeting vessels that are splashed down is now possible
 
 ------------------------------------------------------------------------------------------------------
 
