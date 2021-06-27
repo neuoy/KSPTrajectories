@@ -745,7 +745,7 @@ namespace Trajectories
             // grab the currently targeted vessel
             Vessel targetVessel = FlightGlobals.fetch.VesselTarget?.GetVessel();
 
-            if (targetVessel != null && targetVessel.Landed)
+            if (targetVessel != null && targetVessel.LandedOrSplashed)
                 return true;
             return false;
         }
@@ -906,7 +906,7 @@ namespace Trajectories
             // grab the currently targeted vessel
             Vessel targetVessel = FlightGlobals.fetch.VesselTarget?.GetVessel();
 
-            if (targetVessel != null && targetVessel.Landed)
+            if (targetVessel != null && targetVessel.LandedOrSplashed)
             {
                 TargetProfile.SetFromWorldPos(targetVessel.lastBody, targetVessel.GetWorldPos3D() - targetVessel.lastBody.position);
                 ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_Trajectories_TargetingVessel", targetVessel.GetName()));
