@@ -412,6 +412,9 @@ namespace Trajectories
         // --------------------------------------------------------------------------
         // --- Game logic -----------------------------------------------------------
 
+        /// <returns> True if the current scene is space center. </returns>
+        internal static bool IsSpaceCenter => HighLogic.LoadedScene == GameScenes.SPACECENTER;
+
         /// <returns> True if the current scene is flight. </returns>
         internal static bool IsFlight => HighLogic.LoadedSceneIsFlight;
 
