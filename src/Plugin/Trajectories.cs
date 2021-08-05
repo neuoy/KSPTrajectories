@@ -1,5 +1,5 @@
 ﻿/*
-  Copyright© (c) 2017-2020 S.Gray, (aka PiezPiedPy).
+  Copyright© (c) 2017-2021 S.Gray, (aka PiezPiedPy).
 
   This file is part of Trajectories.
   Trajectories is available under the terms of GPL-3.0-or-later.
@@ -25,7 +25,7 @@ using UnityEngine;
 namespace Trajectories
 {
     /// <summary> Trajectories KSP Flight scenario class. </summary>
-    [KSPScenario(ScenarioCreationOptions.AddToAllGames, new[] { GameScenes.FLIGHT })]
+    [KSPScenario(ScenarioCreationOptions.AddToAllGames, new[] { GameScenes.SPACECENTER, GameScenes.FLIGHT })]
     internal sealed class Trajectories : ScenarioModule
     {
         //public static string version;                           // savegame version
@@ -63,7 +63,11 @@ namespace Trajectories
             Version = Version.Remove(Version.LastIndexOf("."));
             Util.Log("v{0} Starting", Version);
 
-            // setup worker
+            // setup aero model
+            if (CheckAerodynamicModel())
+                Util.Log("Using {0} Aerodynamic Model", AerodynamicModel.AerodynamicModelName);
+
+            // setup multi-thread worker
             Worker.OnReport += Worker_OnReport;
             Worker.OnUpdate += Worker_OnUpdate;
             Worker.OnError += Worker_OnError;
@@ -71,35 +75,62 @@ namespace Trajectories
             compute_patches_completed = false;
         }
 
-        public override void OnLoad(ConfigNode node)
+        /// <summary> Checks if an Aerodynamic Model exists, if not searches for compatible API's </summary>
+        /// <returns> true if an Aerodynamic Model exists otherwise false on error </returns>
+        private static bool CheckAerodynamicModel()
         {
-            if (node == null)
-                return;
+            if (AerodynamicModel != null)
+                return true;
 
-            Util.DebugLog("");
+            // get aerodynamic model, searches for compatible API's
+            AerodynamicModel = AerodynamicModelFactory.GetModel();
+            if (AerodynamicModel == null)
+            {
+                Util.LogError("There was a problem with the Aerodynamic Model");
+                return false;
+            }
 
-            //version = Util.ConfigValue(node, "version", Version);             // get saved version, defaults to current version if none
+            return true;
+        }
 
-            Settings ??= new Settings();                                // get trajectories settings from the config.xml file if it exists or create a new one
-            AerodynamicModel ??= AerodynamicModelFactory.GetModel();    // get aerodynamic model, searches for compatible API's
+        /// <summary> Checks if settings exist, if not attempts to load from the config.xml file if it exists or creates a new one </summary>
+        /// <returns> true if settings exist otherwise false on error </returns>
+        private static bool CheckSettings()
+        {
+            if (Settings != null)
+                return true;
 
-            if (Settings != null && AerodynamicModel != null)
+            // get trajectories settings from the config.xml file if it exists or create a new one
+            Settings = new Settings();
+            if (Settings != null)
             {
                 Settings.Load();
-
-                GameDataCache.Start();
-                DescentProfile.Start();
-                Trajectory.Start();
-                MapOverlay.Start();
-                FlightOverlay.Start();
-                NavBallOverlay.Start();
-                MainGUI.Start();
-                AppLauncherButton.Start();
+                return true;
             }
             else
             {
                 Util.LogError("There was a problem with the config.xml settings file");
+                return false;
             }
+        }
+
+        public override void OnLoad(ConfigNode node)
+        {
+            Util.DebugLog("");
+
+            if (node == null || !CheckSettings() || !CheckAerodynamicModel() || !Util.IsFlight)
+                return;
+
+            //version = Util.ConfigValue(node, "version", Version);             // get saved version, defaults to current version if none
+
+            GameDataCache.Start();
+            DescentProfile.Start();
+            Trajectory.Start();
+            MapOverlay.Start();
+            FlightOverlay.Start();
+            NavBallOverlay.Start();
+            MainGUI.Start();
+            AppLauncherButton.Start();
         }
 
         /*public override void OnSave(ConfigNode node)
@@ -177,7 +208,7 @@ namespace Trajectories
             if (Worker.Busy)
             {
                 Worker.Cancel();
-                while(!thread_cancelled)
+                while (!thread_cancelled)
                 {
                     // 25 ms timeout
                     if (Util.ElapsedMilliseconds(timeout) > 25d)
