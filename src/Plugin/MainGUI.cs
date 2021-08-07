@@ -49,7 +49,7 @@ namespace Trajectories
         private const int PAGE_PADDING = 10;
 
         // page type enum
-        private enum PageType
+        internal enum PageType
         {
             INFO = 0,
             TARGET,
@@ -591,7 +591,7 @@ namespace Trajectories
         /// </summary>
         private static void SetDataFieldJustification()
         {
-            if (Settings.MainGUICurrentPage == (int)PageType.INFO && impact_latitude_label.text != null)
+            if (Settings.MainGUICurrentPage == PageType.INFO && impact_latitude_label.text != null)
             {
                 impact_latitude_label.text.alignment = TextAlignmentOptions.MidlineRight;
                 impact_longitude_label.text.alignment = TextAlignmentOptions.MidlineRight;
@@ -601,7 +601,7 @@ namespace Trajectories
                 info_distance_latitude_label.text.alignment = TextAlignmentOptions.MidlineRight;
                 info_distance_longitude_label.text.alignment = TextAlignmentOptions.MidlineRight;
             }
-            else if (Settings.MainGUICurrentPage == (int)PageType.TARGET && target_latitude_label.text != null)
+            else if (Settings.MainGUICurrentPage == PageType.TARGET && target_latitude_label.text != null)
             {
                 target_latitude_label.text.alignment = TextAlignmentOptions.MidlineRight;
                 target_longitude_label.text.alignment = TextAlignmentOptions.MidlineRight;
@@ -704,28 +704,28 @@ namespace Trajectories
         //  A page select button will call its ButtonEnabler method which returns false if the currently viewed page matches the button
         private static bool ButtonEnabler_Info()
         {
-            if ((PageType)Settings.MainGUICurrentPage == PageType.INFO)
+            if ((Settings.MainGUICurrentPage == PageType.INFO) || Util.IsSpaceCenter)
                 return false;
             return true;
         }
 
         private static bool ButtonEnabler_Target()
         {
-            if ((PageType)Settings.MainGUICurrentPage == PageType.TARGET)
+            if ((Settings.MainGUICurrentPage == PageType.TARGET) || Util.IsSpaceCenter)
                 return false;
             return true;
         }
 
         private static bool ButtonEnabler_Descent()
         {
-            if ((PageType)Settings.MainGUICurrentPage == PageType.DESCENT)
+            if ((Settings.MainGUICurrentPage == PageType.DESCENT) || Util.IsSpaceCenter)
                 return false;
             return true;
         }
 
         private static bool ButtonEnabler_Settings()
         {
-            if ((PageType)Settings.MainGUICurrentPage == PageType.SETTINGS)
+            if (Settings.MainGUICurrentPage == PageType.SETTINGS)
                 return false;
             return true;
         }
@@ -1122,7 +1122,7 @@ namespace Trajectories
         /// <summary> Changes the page inside the page box. </summary>
         private static void ChangePage(PageType inpage)
         {
-            Settings.MainGUICurrentPage = (int)inpage;
+            Settings.MainGUICurrentPage = inpage;
 
             // remove current page from page box
             page_box.children[0].uiItem.gameObject.DestroyGameObjectImmediate();
@@ -1166,7 +1166,7 @@ namespace Trajectories
                 return;
             update_timer = Util.Clocks;
 
-            switch ((PageType)Settings.MainGUICurrentPage)
+            switch (Settings.MainGUICurrentPage)
             {
                 case PageType.INFO:
                     UpdateInfoPage();

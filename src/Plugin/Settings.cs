@@ -62,7 +62,7 @@ namespace Trajectories
         internal static Vector2 MainGUIWindowPos { get; set; }
 
         [Persistent(Default: null)]
-        internal static int MainGUICurrentPage { get; set; }
+        internal static MainGUI.PageType MainGUICurrentPage { get; set; }
 
         [Persistent(Default: 2.0d)]
         internal static double IntegrationStepSize { get; set; }
