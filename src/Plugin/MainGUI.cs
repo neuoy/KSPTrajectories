@@ -180,18 +180,24 @@ namespace Trajectories
         {
             Util.DebugLog(multi_dialog != null ? "Resetting" : "Constructing");
             // allocate and define window for use in the popup dialog
-            if (multi_dialog == null)
-                Allocate();
+            bool update_page = page_box != null;
+            Allocate();
 
             // set page padding
-            info_page.padding.left = PAGE_PADDING;
-            info_page.padding.right = PAGE_PADDING;
-            target_page.padding.left = PAGE_PADDING;
-            target_page.padding.right = PAGE_PADDING;
-            descent_page.padding.left = PAGE_PADDING;
-            descent_page.padding.right = PAGE_PADDING;
-            settings_page.padding.left = PAGE_PADDING;
-            settings_page.padding.right = PAGE_PADDING;
+            if (Util.IsSpaceCenter)
+            {
+            }
+            else
+            {
+                info_page.padding.left = PAGE_PADDING;
+                info_page.padding.right = PAGE_PADDING;
+                target_page.padding.left = PAGE_PADDING;
+                target_page.padding.right = PAGE_PADDING;
+                descent_page.padding.left = PAGE_PADDING;
+                descent_page.padding.right = PAGE_PADDING;
+                settings_page.padding.left = PAGE_PADDING;
+                settings_page.padding.right = PAGE_PADDING;
+            }
 
             // create popup dialog and add onDestroy listener
             spawned = 0;
@@ -199,6 +205,17 @@ namespace Trajectories
 
             //set data field labels justification
             SetDataFieldJustification();
+
+            if (update_page)
+            {
+                if (Util.IsSpaceCenter)
+                {
+                }
+                else
+                {
+                    ChangePage(Settings.MainGUICurrentPage);
+                }
+            }
         }
 
         /// <summary> Releases held resources. </summary>
@@ -244,7 +261,8 @@ namespace Trajectories
                 Show();
             }
 
-            UpdatePages();
+            if (Util.IsFlight)
+                UpdatePages();
         }
 
         internal static void DeSpawn()
@@ -361,8 +379,66 @@ namespace Trajectories
             // set integrator slider pos;
             SetIntegratorSlider();
 
-            // create pages
-            info_page = new DialogGUIVerticalLayout(false, true, 0, new RectOffset(), TextAnchor.UpperCenter,
+            // create pages and page box with current page inserted into page box
+            if (Util.IsSpaceCenter)
+            {
+            }
+            else if (Util.IsFlight)
+            {
+                AllocateInfoPage();
+                AllocateTargetPage();
+                AllocateDescentPage();
+                AllocateSettingsPage();
+
+                if (page_box == null)
+                {
+                    switch (Settings.MainGUICurrentPage)
+                    {
+                        case PageType.TARGET:
+                            page_box = new DialogGUIBox(null, -1, -1, () => true, target_page);
+                            break;
+                        case PageType.DESCENT:
+                            page_box = new DialogGUIBox(null, -1, -1, () => true, descent_page);
+                            break;
+                        case PageType.SETTINGS:
+                            page_box = new DialogGUIBox(null, -1, -1, () => true, settings_page);
+                            break;
+                        default:
+                            page_box = new DialogGUIBox(null, -1, -1, () => true, info_page);
+                            break;
+                    }
+                }
+            }
+
+            // create base window for popup dialog
+            multi_dialog ??= new MultiOptionDialog(
+               "TrajectoriesMainGUI",
+               "",
+               Localizer.Format("#autoLOC_Trajectories_Title") + " - v" + Trajectories.Version,
+               HighLogic.UISkin,
+               // window origin is center of rect, position is offset from lower left corner of screen and normalized
+               // i.e (0.5, 0.5 is screen center)
+               new Rect(Settings.MainGUIWindowPos.x, Settings.MainGUIWindowPos.y, WIDTH, HEIGHT),
+               new DialogGUIBase[]
+               {
+                   // create page select buttons
+                   new DialogGUIHorizontalLayout(true, false, 4, new RectOffset(), TextAnchor.MiddleCenter,
+                       new DialogGUIButton(Localizer.Format("#autoLOC_900629"),
+                           OnButtonClick_Info, ButtonEnabler_Info, BUTTON_WIDTH, BUTTON_HEIGHT, false),
+                       new DialogGUIButton(Localizer.Format("#autoLOC_Trajectories_Target"),
+                           OnButtonClick_Target, ButtonEnabler_Target, BUTTON_WIDTH, BUTTON_HEIGHT, false),
+                       new DialogGUIButton(Localizer.Format("#autoLOC_Trajectories_Descent"),
+                           OnButtonClick_Descent, ButtonEnabler_Descent, BUTTON_WIDTH, BUTTON_HEIGHT, false),
+                       new DialogGUIButton(Localizer.Format("#autoLOC_900734"),
+                           OnButtonClick_Settings, ButtonEnabler_Settings, BUTTON_WIDTH, BUTTON_HEIGHT, false)),
+                   // insert page box
+                   page_box
+               });
+        }
+
+        private static void AllocateInfoPage()
+        {
+            info_page ??= new DialogGUIVerticalLayout(false, true, 0, new RectOffset(), TextAnchor.UpperCenter,
                 new DialogGUIHorizontalLayout(
                     new DialogGUIToggle(() => { return Util.IsPatchedConicsAvailable && Settings.DisplayTrajectories; },
                         Localizer.Format("#autoLOC_Trajectories_ShowTrajectory"), OnButtonClick_DisplayTrajectories),
@@ -402,8 +478,11 @@ namespace Trajectories
                     new DialogGUISpace(2),
                     info_distance_longitude_label)
                 );
+        }
 
-            target_page = new DialogGUIVerticalLayout(false, true, 0, new RectOffset(), TextAnchor.UpperCenter,
+        private static void AllocateTargetPage()
+        {
+            target_page ??= new DialogGUIVerticalLayout(false, true, 0, new RectOffset(), TextAnchor.UpperCenter,
                 new DialogGUIHorizontalLayout(TextAnchor.MiddleRight,
                     new DialogGUILabel(Localizer.Format("#autoLOC_Trajectories_TargetBody"), true),
                     new DialogGUILabel(() => { return target_body_txt; })),
@@ -446,9 +525,11 @@ namespace Trajectories
                         OnButtonClick_TargetClear, ButtonEnabler_TargetClear, TARGET_BUTTON_WIDTH, BUTTON_HEIGHT, false)),
                 new DialogGUISpace(2)
                 );
+        }
 
-
-            descent_page = new DialogGUIVerticalLayout(false, true, 0, new RectOffset(), TextAnchor.UpperCenter,
+        private static void AllocateDescentPage()
+        {
+            descent_page ??= new DialogGUIVerticalLayout(false, true, 0, new RectOffset(), TextAnchor.UpperCenter,
                 new DialogGUIHorizontalLayout(false, false, 0, new RectOffset(), TextAnchor.MiddleCenter,
                     new DialogGUIButton(Localizer.Format("#autoLOC_900597"),
                         OnButtonClick_Prograde, TARGET_BUTTON_WIDTH, BUTTON_HEIGHT, false),
@@ -499,8 +580,11 @@ namespace Trajectories
                     new DialogGUILabel(() => { return DescentProfile.FinalApproach.AngleText; }, 30f),
                     descent_final_textinput)
                 );
+        }
 
-            settings_page = new DialogGUIVerticalLayout(false, true, 0, new RectOffset(), TextAnchor.UpperCenter,
+        private static void AllocateSettingsPage()
+        {
+            settings_page ??= new DialogGUIVerticalLayout(false, true, 0, new RectOffset(), TextAnchor.UpperCenter,
                 new DialogGUIToggle(() => { return ToolbarManager.ToolbarAvailable && Settings.UseBlizzyToolbar; },
                     Localizer.Format("#autoLOC_Trajectories_UseBlizzyToolbar"), OnButtonClick_UseBlizzyToolbar),
                 new DialogGUIToggle(() => { return Settings.DefaultDescentIsRetro; },
@@ -524,48 +608,10 @@ namespace Trajectories
                 new DialogGUIHorizontalLayout(true, false, 0, new RectOffset(), TextAnchor.MiddleCenter,
                     new DialogGUILabel(() => { return aerodynamic_model_txt; }, true))
                 );
+        }
 
-            // create page box with current page inserted into page box
-            switch ((PageType)Settings.MainGUICurrentPage)
-            {
-                case PageType.TARGET:
-                    page_box = new DialogGUIBox(null, -1, -1, () => true, target_page);
-                    break;
-                case PageType.DESCENT:
-                    page_box = new DialogGUIBox(null, -1, -1, () => true, descent_page);
-                    break;
-                case PageType.SETTINGS:
-                    page_box = new DialogGUIBox(null, -1, -1, () => true, settings_page);
-                    break;
-                default:
-                    page_box = new DialogGUIBox(null, -1, -1, () => true, info_page);
-                    break;
-            }
-
-            // create base window for popup dialog
-            multi_dialog = new MultiOptionDialog(
-               "TrajectoriesMainGUI",
-               "",
-               Localizer.Format("#autoLOC_Trajectories_Title") + " - v" + Trajectories.Version,
-               HighLogic.UISkin,
-               // window origin is center of rect, position is offset from lower left corner of screen and normalized
-               // i.e (0.5, 0.5 is screen center)
-               new Rect(Settings.MainGUIWindowPos.x, Settings.MainGUIWindowPos.y, WIDTH, HEIGHT),
-               new DialogGUIBase[]
-               {
-                   // create page select buttons
-                   new DialogGUIHorizontalLayout(true, false, 4, new RectOffset(), TextAnchor.MiddleCenter,
-                       new DialogGUIButton(Localizer.Format("#autoLOC_900629"),
-                           OnButtonClick_Info, ButtonEnabler_Info, BUTTON_WIDTH, BUTTON_HEIGHT, false),
-                       new DialogGUIButton(Localizer.Format("#autoLOC_Trajectories_Target"),
-                           OnButtonClick_Target, ButtonEnabler_Target, BUTTON_WIDTH, BUTTON_HEIGHT, false),
-                       new DialogGUIButton(Localizer.Format("#autoLOC_Trajectories_Descent"),
-                           OnButtonClick_Descent, ButtonEnabler_Descent, BUTTON_WIDTH, BUTTON_HEIGHT, false),
-                       new DialogGUIButton(Localizer.Format("#autoLOC_900734"),
-                           OnButtonClick_Settings, ButtonEnabler_Settings, BUTTON_WIDTH, BUTTON_HEIGHT, false)),
-                   // insert page box
-                   page_box
-               });
+        private static void AllocateAdvancedPage()
+        {
         }
 
         /// <summary>
