@@ -118,19 +118,26 @@ namespace Trajectories
         {
             Util.DebugLog("");
 
-            if (node == null || !CheckSettings() || !CheckAerodynamicModel() || !Util.IsFlight)
+            if (node == null || !CheckSettings() || !CheckAerodynamicModel())
                 return;
 
             //version = Util.ConfigValue(node, "version", Version);             // get saved version, defaults to current version if none
 
-            GameDataCache.Start();
-            DescentProfile.Start();
-            Trajectory.Start();
-            MapOverlay.Start();
-            FlightOverlay.Start();
-            NavBallOverlay.Start();
-            MainGUI.Start();
-            AppLauncherButton.Start();
+            if (Util.IsSpaceCenter)  // and PQS data is invalid
+            {
+                return;
+            }
+            else if (Util.IsFlight)
+            {
+                GameDataCache.Start();
+                DescentProfile.Start();
+                Trajectory.Start();
+                MapOverlay.Start();
+                FlightOverlay.Start();
+                NavBallOverlay.Start();
+                MainGUI.Start();
+                AppLauncherButton.Start();
+            }
         }
 
         /*public override void OnSave(ConfigNode node)
@@ -145,22 +152,29 @@ namespace Trajectories
 
         internal void Update()
         {
-            if (Util.IsPaused || Settings == null || AerodynamicModel == null || !Util.IsFlight)
+            if (Util.IsPaused || Settings == null || AerodynamicModel == null)
                 return;
 
-            if (AttachedVessel != FlightGlobals.ActiveVessel)
-                AttachVessel();
+            if (Util.IsSpaceCenter)  // and PQS data is invalid
+            {
+                return;
+            }
+            else if (Util.IsFlight)
+            {
+                if (AttachedVessel != FlightGlobals.ActiveVessel)
+                    AttachVessel();
 
-            if (!Worker.Busy && compute_patches_completed)
-                Trajectory.ComputeComplete();
+                if (!Worker.Busy && compute_patches_completed)
+                    Trajectory.ComputeComplete();
 
-            compute_patches_completed = false;
+                compute_patches_completed = false;
 
-            Trajectory.Update();
-            MapOverlay.Update();
-            FlightOverlay.Update();
-            NavBallOverlay.Update();
-            MainGUI.Update();
+                Trajectory.Update();
+                MapOverlay.Update();
+                FlightOverlay.Update();
+                NavBallOverlay.Update();
+                MainGUI.Update();
+            }
         }
 
 #if DEBUG_TELEMETRY
