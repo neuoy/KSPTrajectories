@@ -54,12 +54,14 @@ namespace Trajectories
             INFO = 0,
             TARGET,
             DESCENT,
-            SETTINGS
+            SETTINGS,
+            ADVANCED
         }
 
         // spawned and visible flags
         private static int spawned = 0;
         private static bool visible = false;
+        private static bool advanced_settings = false;
 
         // popup window, page box and pages
         private static MultiOptionDialog multi_dialog;
@@ -70,6 +72,7 @@ namespace Trajectories
         private static DialogGUIVerticalLayout target_page;
         private static DialogGUIVerticalLayout descent_page;
         private static DialogGUIVerticalLayout settings_page;
+        private static DialogGUIVerticalLayout advanced_page;
 
         private static UnityAction<string> keyboard_lockout_action;
         private static UnityAction<string> keyboard_unlock_action;
@@ -179,6 +182,9 @@ namespace Trajectories
         internal static void Start()
         {
             Util.DebugLog(multi_dialog != null ? "Resetting" : "Constructing");
+
+            advanced_settings = false;
+
             // allocate and define window for use in the popup dialog
             bool update_page = page_box != null;
             Allocate();
@@ -197,6 +203,8 @@ namespace Trajectories
                 descent_page.padding.right = PAGE_PADDING;
                 settings_page.padding.left = PAGE_PADDING;
                 settings_page.padding.right = PAGE_PADDING;
+                advanced_page.padding.left = PAGE_PADDING;
+                advanced_page.padding.right = PAGE_PADDING;
             }
 
             // create popup dialog and add onDestroy listener
@@ -389,6 +397,7 @@ namespace Trajectories
                 AllocateTargetPage();
                 AllocateDescentPage();
                 AllocateSettingsPage();
+                AllocateAdvancedPage();
 
                 if (page_box == null)
                 {
@@ -402,6 +411,9 @@ namespace Trajectories
                             break;
                         case PageType.SETTINGS:
                             page_box = new DialogGUIBox(null, -1, -1, () => true, settings_page);
+                            break;
+                        case PageType.ADVANCED:
+                            page_box = new DialogGUIBox(null, -1, -1, () => true, advanced_page);
                             break;
                         default:
                             page_box = new DialogGUIBox(null, -1, -1, () => true, info_page);
@@ -591,7 +603,9 @@ namespace Trajectories
                     Localizer.Format("#autoLOC_Trajectories_DefaultDescent"), OnButtonClick_UseDescentRetro),
                 new DialogGUIHorizontalLayout(false, false, 0, new RectOffset(), TextAnchor.MiddleCenter,
                     new DialogGUIToggle(() => { return Settings.UseCache; },
-                        Localizer.Format("#autoLOC_Trajectories_UseCache"), OnButtonClick_UseCache)),
+                        Localizer.Format("#autoLOC_Trajectories_UseCache"), OnButtonClick_UseCache),
+                    new DialogGUIToggle(() => { return advanced_settings; },
+                        Localizer.Format("#autoLOC_Trajectories_AdvancedSettings"), OnButtonClick_Advanced)),
                 new DialogGUIHorizontalLayout(
                     new DialogGUILabel(Localizer.Format("#autoLOC_Trajectories_MaxPatches"), true),
                     new DialogGUISlider(() => { return Settings.MaxPatchCount; },
@@ -612,6 +626,11 @@ namespace Trajectories
 
         private static void AllocateAdvancedPage()
         {
+            advanced_page ??= new DialogGUIVerticalLayout(false, true, 0, new RectOffset(), TextAnchor.UpperCenter,
+                new DialogGUIHorizontalLayout(
+                    new DialogGUILabel(() => { return calculation_time_txt; }, true),
+                    new DialogGUILabel(() => { return num_errors_txt; }, true))
+                );
         }
 
         /// <summary>
@@ -857,6 +876,13 @@ namespace Trajectories
         private static void OnButtonClick_UseCache(bool inState) => Settings.UseCache = inState;
 
         private static void OnButtonClick_UseDescentRetro(bool inState) => Settings.DefaultDescentIsRetro = inState;
+
+        private static void OnButtonClick_Advanced(bool inState)
+        {
+            advanced_settings = inState;
+            if (inState)
+                ChangePage(PageType.ADVANCED);
+        }
 
         private static void OnButtonClick_UseBlizzyToolbar(bool inState)
         {
@@ -1186,6 +1212,10 @@ namespace Trajectories
                 case PageType.SETTINGS:
                     page_box.children.Add(settings_page);
                     break;
+                case PageType.ADVANCED:
+                    advanced_settings = false;
+                    page_box.children.Add(advanced_page);
+                    break;
                 default:
                     page_box.children.Add(info_page);
                     break;
@@ -1226,6 +1256,7 @@ namespace Trajectories
                     }
                     return;
                 case PageType.SETTINGS:
+                case PageType.ADVANCED:
                     UpdateSettingsPage();
                     return;
             }
