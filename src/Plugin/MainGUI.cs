@@ -192,6 +192,10 @@ namespace Trajectories
             // set page padding
             if (Util.IsSpaceCenter)
             {
+                settings_page.padding.left = PAGE_PADDING;
+                settings_page.padding.right = PAGE_PADDING;
+                advanced_page.padding.left = PAGE_PADDING;
+                advanced_page.padding.right = PAGE_PADDING;
             }
             else
             {
@@ -218,6 +222,7 @@ namespace Trajectories
             {
                 if (Util.IsSpaceCenter)
                 {
+                    ChangePage(Settings.MainGUICurrentPage == PageType.ADVANCED ? PageType.ADVANCED : PageType.SETTINGS);
                 }
                 else
                 {
@@ -390,6 +395,11 @@ namespace Trajectories
             // create pages and page box with current page inserted into page box
             if (Util.IsSpaceCenter)
             {
+                AllocateSettingsPage();
+                AllocateAdvancedPage();
+
+                page_box ??= new DialogGUIBox(null, -1, -1, () => true,
+                    Settings.MainGUICurrentPage == PageType.ADVANCED ? advanced_page : settings_page);
             }
             else if (Util.IsFlight)
             {

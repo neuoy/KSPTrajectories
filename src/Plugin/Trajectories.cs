@@ -33,6 +33,8 @@ namespace Trajectories
 
         private static bool compute_patches_completed;
         private static bool thread_cancelled;
+        private static bool main_gui_prev_enabled;
+        private static MainGUI.PageType main_gui_prev_page;
 
         // version string
         internal static string Version { get; private set; } = "X.X.X";
@@ -125,10 +127,17 @@ namespace Trajectories
 
             if (Util.IsSpaceCenter)  // and PQS data is invalid
             {
+                main_gui_prev_enabled = Settings.MainGUIEnabled;
+                main_gui_prev_page = Settings.MainGUICurrentPage;
+                Settings.MainGUIEnabled = true;
+                Settings.MainGUICurrentPage = MainGUI.PageType.ADVANCED;
+                MainGUI.Start();
                 return;
             }
             else if (Util.IsFlight)
             {
+                Settings.MainGUIEnabled = main_gui_prev_enabled;
+                Settings.MainGUICurrentPage = main_gui_prev_page;
                 GameDataCache.Start();
                 DescentProfile.Start();
                 Trajectory.Start();
@@ -157,6 +166,7 @@ namespace Trajectories
 
             if (Util.IsSpaceCenter)  // and PQS data is invalid
             {
+                MainGUI.Update();
                 return;
             }
             else if (Util.IsFlight)
