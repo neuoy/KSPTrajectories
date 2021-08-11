@@ -19,6 +19,7 @@
 */
 
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Trajectories
@@ -26,14 +27,43 @@ namespace Trajectories
     /// <summary> Contains data such as ground altitude data of all celestial bodies. </summary>
     internal static class CelestialBodyMaps
     {
+        // Map of the ground altitudes for a celestial body
+        internal class GroundAltitudeMap
+        {
+            internal int BodyIndex { get; private set; }
+            internal GroundAltitudeMap(CelestialBody body)
+            {
+                BodyIndex = FlightGlobals.Bodies.IndexOf(body);
+                Util.DebugLog("Creating a ground altitude map for {0} with index {1}", body.displayName, BodyIndex);
+            }
+        }
+
+        /// <summary> Adds a collection of KSP CelestialBody's ground altitudes to a collection of GroundAltitudeMap's </summary>
+        internal static void Add(this ICollection<GroundAltitudeMap> collection, IEnumerable<CelestialBody> bodies)
+        {
+            foreach (CelestialBody body in bodies)
+            {
+                collection.Add(new GroundAltitudeMap(body));
+            }
+        }
+
+        /// <summary> Clears a collection of GroundAltitudeMap's </summary>
+        internal static void Release(this ICollection<GroundAltitudeMap> collection)
+        {
+            collection.Clear();
+        }
+
+        internal static List<GroundAltitudeMap> GroundAltitudeMaps { get; private set; }
         ///<summary> Initializes the celestial body maps </summary>
         internal static void Start()
         {
             Util.DebugLog(GroundAltitudeMaps != null ? "Resetting" : "Constructing");
+
             // create or update maps as needed
 
             // parse celestial bodies, one map per body
 
+                UpdateAltitudeMaps();
         }
 
         ///<summary> Clean up any resources being used </summary>
@@ -48,6 +78,9 @@ namespace Trajectories
         private static void UpdateAltitudeMaps()
         {
             Util.DebugLog("");
+
+            GroundAltitudeMaps?.Release();
+            GroundAltitudeMaps = new List<GroundAltitudeMap>() { FlightGlobals.Bodies };
         }
 
         /// <summary> Gets the ground altitude of the body using the world space relative position </summary>
