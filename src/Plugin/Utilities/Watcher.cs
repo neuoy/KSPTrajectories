@@ -35,7 +35,7 @@ namespace Trajectories
 #endif
 #if DEBUG_WATCHER
     /// <summary> Simple gui for watching the state of variables placed in the Watch methods. Note. no string support </summary>
-    [KSPAddon(KSPAddon.Startup.Flight, false)]
+    [KSPAddon(KSPAddon.Startup.FlightAndKSC, false)]
     public sealed class Watcher : MonoBehaviour
     {
         // constants

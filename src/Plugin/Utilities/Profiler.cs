@@ -37,7 +37,7 @@ namespace Trajectories
 #endif
 #if DEBUG_PROFILER
     /// <summary> Simple profiler for measuring the execution time of code placed between the Start and Stop methods. </summary>
-    [KSPAddon(KSPAddon.Startup.Flight, false)]
+    [KSPAddon(KSPAddon.Startup.FlightAndKSC, false)]
     public sealed class Profiler : MonoBehaviour
     {
         // constants
