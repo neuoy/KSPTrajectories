@@ -181,7 +181,7 @@ namespace Trajectories
         /// </summary>
         internal static void Start()
         {
-            Util.DebugLog(multi_dialog != null ? "Resetting" : "Constructing");
+            Util.DebugLog(page_box != null ? "Resetting" : "Constructing");
 
             advanced_settings = false;
 
@@ -637,9 +637,7 @@ namespace Trajectories
         private static void AllocateAdvancedPage()
         {
             advanced_page ??= new DialogGUIVerticalLayout(false, true, 0, new RectOffset(), TextAnchor.UpperCenter,
-                new DialogGUIHorizontalLayout(
-                    new DialogGUILabel(() => { return calculation_time_txt; }, true),
-                    new DialogGUILabel(() => { return num_errors_txt; }, true))
+                new DialogGUIHorizontalLayout()
                 );
         }
 

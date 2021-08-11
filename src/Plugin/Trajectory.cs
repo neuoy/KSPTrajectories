@@ -430,41 +430,6 @@ namespace Trajectories
             UpdateTiming();
         }
 
-        /// <summary>
-        /// relativePosition is in world frame, but relative to the GameDataCache body (i.e. inertial body space)
-        /// returns the altitude above sea level (can be negative for bodies without ocean)
-        /// </summary>
-        internal static double GetGroundAltitude(Vector3d relativePosition)
-        {
-            double lat = GameDataCache.Body.GetLatitude(relativePosition + GameDataCache.BodyWorldPos) / 180d * Math.PI;
-            double lon = GameDataCache.Body.GetLongitude(relativePosition + GameDataCache.BodyWorldPos) / 180d * Math.PI;
-            Vector3d rad = new Vector3d(Math.Cos(lat) * Math.Cos(lon), Math.Sin(lat), Math.Cos(lat) * Math.Sin(lon));
-            double elevation = 0d;   // Temporary until I find a workaround //GameDataCache.BodyPQScontroller.GetSurfaceHeight(rad) - GameDataCache.BodyRadius;
-            if (GameDataCache.BodyHasOcean)
-                elevation = Math.Max(elevation, 0d);
-
-            return elevation;
-        }
-
-        /// <summary>
-        /// relativePosition is in world frame, but relative to the body (i.e. inertial body space)
-        /// returns the altitude above sea level (can be negative for bodies without ocean)
-        /// </summary>
-        internal static double GetGroundAltitude(CelestialBody body, Vector3d relativePosition)
-        {
-            if (body.pqsController == null)
-                return 0d;
-
-            double lat = body.GetLatitude(relativePosition + body.position) / 180d * Math.PI;
-            double lon = body.GetLongitude(relativePosition + body.position) / 180d * Math.PI;
-            Vector3d rad = new Vector3d(Math.Cos(lat) * Math.Cos(lon), Math.Sin(lat), Math.Cos(lat) * Math.Sin(lon));
-            double elevation = body.pqsController.GetSurfaceHeight(rad) - body.Radius;
-            if (body.ocean)
-                elevation = Math.Max(elevation, 0d);
-
-            return elevation;
-        }
-
         private static Orbit CreateOrbitFromState(VesselState state)
         {
             //Util.DebugLog("UT {0}", state.Time);
@@ -658,7 +623,7 @@ namespace Trajectories
                         for (t = entryTime; t < groundRangeExit; t += iterationSize)
                         {
                             Vector3d pos = patch.SpaceOrbit.getRelativePositionAtUT(t);
-                            double groundAltitude = GetGroundAltitude(CalculateRotatedPosition(Util.SwapYZ(pos), t))
+                            double groundAltitude = CelestialBodyMaps.GetPQSGroundAltitude(CalculateRotatedPosition(Util.SwapYZ(pos), t))
                                 + GameDataCache.BodyRadius;
                             if (pos.magnitude < groundAltitude)
                             {
@@ -871,7 +836,7 @@ namespace Trajectories
                         double interval = altitude < 10000d ? trajectoryInterval * 0.1d : trajectoryInterval;
                         if (currentTime >= lastPositionStoredUT + interval)
                         {
-                            double groundAltitude = GetGroundAltitude(CalculateRotatedPosition(state.position, currentTime));
+                            double groundAltitude = CelestialBodyMaps.GetPQSGroundAltitude(CalculateRotatedPosition(state.position, currentTime));
                             if (lastPositionStoredUT > 0d)
                             {
                                 // check terrain collision, to detect impact on mountains etc.

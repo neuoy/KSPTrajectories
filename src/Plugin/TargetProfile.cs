@@ -73,7 +73,7 @@ namespace Trajectories
             if (!altitude.HasValue)
             {
                 Vector3d relPos = body.GetWorldSurfacePosition(latitude, longitude, 2.0) - body.position;
-                altitude = Trajectory.GetGroundAltitude(body, relPos);
+                altitude = CelestialBodyMaps.GetPQSGroundAltitude(body, relPos);
             }
 
             LocalPosition = body.GetRelSurfacePosition(latitude, longitude, altitude.Value);

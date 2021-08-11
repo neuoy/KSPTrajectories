@@ -124,6 +124,7 @@
     <Compile Include="3rdParty\GLUtils.cs" />
     <Compile Include="GameDataCache.cs" />
     <Compile Include="TargetProfile.cs" />
+    <Compile Include="CelestialBodyMaps.cs" />
     <Compile Include="Trajectories.cs" />
     <Compile Include="Utilities\DebugFastStart.cs" />
     <Compile Include="Utilities\Watcher.cs" />

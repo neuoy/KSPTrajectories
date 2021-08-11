@@ -75,6 +75,9 @@ namespace Trajectories
             Worker.OnError += Worker_OnError;
             Worker.Initialize();
             compute_patches_completed = false;
+
+            // setup the terrain maps
+            CelestialBodyMaps.Start();
         }
 
         /// <summary> Checks if an Aerodynamic Model exists, if not searches for compatible API's </summary>
