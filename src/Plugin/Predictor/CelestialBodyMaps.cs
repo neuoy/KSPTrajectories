@@ -30,7 +30,6 @@ namespace Trajectories
         internal static void Start()
         {
             Util.DebugLog(GroundAltitudeMaps != null ? "Resetting" : "Constructing");
-
             // create or update maps as needed
 
             // parse celestial bodies, one map per body

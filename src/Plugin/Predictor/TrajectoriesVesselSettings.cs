@@ -60,13 +60,13 @@ namespace Trajectories
         public string TargetBody = "";
 
         [KSPField(isPersistant = true, guiActive = false)]
-        public double TargetPosition_x = 0;
+        public double TargetPosition_x = 0d;
 
         [KSPField(isPersistant = true, guiActive = false)]
-        public double TargetPosition_y = 0;
+        public double TargetPosition_y = 0d;
 
         [KSPField(isPersistant = true, guiActive = false)]
-        public double TargetPosition_z = 0;
+        public double TargetPosition_z = 0d;
 
         [KSPField(isPersistant = true, guiActive = false)]
         public string ManualTargetTxt = "";
