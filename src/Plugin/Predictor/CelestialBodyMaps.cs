@@ -34,7 +34,7 @@ namespace Trajectories
             internal GroundAltitudeMap(CelestialBody body)
             {
                 BodyIndex = FlightGlobals.Bodies.IndexOf(body);
-                Util.DebugLog("Creating a ground altitude map for {0} with index {1}", body.displayName, BodyIndex);
+                Util.DebugLog("Creating a ground altitude map for {0} with index {1}", body.name, BodyIndex);
             }
         }
 
@@ -63,7 +63,13 @@ namespace Trajectories
 
             // parse celestial bodies, one map per body
 
+            // check for changes in body list counts
+            if (GroundAltitudeMaps?.Count != FlightGlobals.Bodies?.Count)
+            {
+                Util.Log("Updating celestial body cache due to {0}", GroundAltitudeMaps == null ? "no maps in cache" : "count difference");
+
                 UpdateAltitudeMaps();
+            }
         }
 
         ///<summary> Clean up any resources being used </summary>
