@@ -1461,6 +1461,22 @@ namespace Trajectories
         /// <summary> Updates the strings used by the settings page to display changing values/data </summary>
         private static void UpdateAdvSettingsPage()
         {
+            // celestial body maps info
+            if (CelestialBodyMaps.NeedsUpdate && !CelestialBodyMaps.RunUpdate)
+            {
+                adv_maps_info_txt = Localizer.Format("#autoLOC_Trajectories_BodyMaps_NeedUpdate");
+            }
+            else if (CelestialBodyMaps.RunUpdate)
+            {
+                adv_maps_info_txt = Util.IsSpaceCenter ?
+                    string.Format("{0} Sampling {1} - {2:F2}% completed.",
+                    Localizer.Format("#autoLOC_Trajectories_BodyMaps_RunUpdate"), CelestialBodyMaps.CurrentBodyName, 5f) :
+                    Localizer.Format("#autoLOC_Trajectories_BodyMaps_WaitUpdate");
+            }
+            else
+            {
+                adv_maps_info_txt = Localizer.Format("#autoLOC_Trajectories_BodyMaps_OK");
+            }
         }
         #endregion
     }

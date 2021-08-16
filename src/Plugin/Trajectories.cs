@@ -128,19 +128,37 @@ namespace Trajectories
 
             //version = Util.ConfigValue(node, "version", Version);             // get saved version, defaults to current version if none
 
-            if (Util.IsSpaceCenter)  // and PQS data is invalid
+            if (Util.IsSpaceCenter)
             {
                 main_gui_prev_enabled = Settings.MainGUIEnabled;
                 main_gui_prev_page = Settings.MainGUICurrentPage;
-                Settings.MainGUIEnabled = true;
-                Settings.MainGUICurrentPage = MainGUI.PageType.ADVANCED;
-                MainGUI.Start();
+
+                if (CelestialBodyMaps.NeedsUpdate || CelestialBodyMaps.RunUpdate)
+                {
+                    Settings.MainGUIEnabled = true;
+                    Settings.MainGUICurrentPage = MainGUI.PageType.ADVANCED;
+                    MainGUI.Start();
+                }
+                else
+                {
+                    Settings.MainGUIEnabled = false;
+                }
+
                 return;
             }
             else if (Util.IsFlight)
             {
-                Settings.MainGUIEnabled = main_gui_prev_enabled;
-                Settings.MainGUICurrentPage = main_gui_prev_page;
+                if (CelestialBodyMaps.NeedsUpdate || CelestialBodyMaps.RunUpdate)
+                {
+                    Settings.MainGUIEnabled = true;
+                    Settings.MainGUICurrentPage = MainGUI.PageType.ADVANCED;
+                }
+                else
+                {
+                    Settings.MainGUIEnabled = main_gui_prev_enabled;
+                    Settings.MainGUICurrentPage = main_gui_prev_page;
+                }
+
                 GameDataCache.Start();
                 DescentProfile.Start();
                 Trajectory.Start();
@@ -169,6 +187,9 @@ namespace Trajectories
 
             if (Util.IsSpaceCenter)  // and PQS data is invalid
             {
+                if (CelestialBodyMaps.NeedsUpdate || CelestialBodyMaps.RunUpdate)
+                    CelestialBodyMaps.Update();
+
                 MainGUI.Update();
                 return;
             }

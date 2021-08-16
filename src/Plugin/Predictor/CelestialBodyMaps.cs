@@ -105,6 +105,7 @@ namespace Trajectories
 
         internal static List<GroundAltitudeMap> GroundAltitudeMaps { get; private set; }
         internal static string CurrentBodyName { get; private set; }
+        internal static bool NeedsUpdate { get; private set; }
         internal static bool RunUpdate { get; set; }
 
         private static double calculation_time;
@@ -115,12 +116,14 @@ namespace Trajectories
             Util.DebugLog(GroundAltitudeMaps != null ? "Resetting" : "Constructing");
 
             CurrentBodyName = "";
+            NeedsUpdate = false;
             RunUpdate = false;
 
             // check for changes in the celestial bodies
             if (GroundAltitudeMaps?.Count != FlightGlobals.Bodies?.Count)
             {
                 Util.Log("Celestial body cache needs updating due to {0}", GroundAltitudeMaps == null ? "no maps in cache" : "count difference");
+                NeedsUpdate = true;
             }
         }
 
@@ -149,6 +152,8 @@ namespace Trajectories
             //GroundAltitudeMaps = new List<GroundAltitudeMap>() { FlightGlobals.Bodies };
             GroundAltitudeMaps = new List<GroundAltitudeMap>();
             GroundAltitudeMaps?.Add(new GroundAltitudeMap(FlightGlobals.Bodies[1]));
+
+            NeedsUpdate = false;
         }
 
         /// <summary> Gets the ground altitude of the body using the world space relative position </summary>
