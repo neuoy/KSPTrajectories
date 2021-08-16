@@ -91,14 +91,14 @@ namespace Trajectories
 
         /// <summary> Gets the ground altitude of the body using the world space relative position </summary>
         /// <returns> the altitude above sea level (can be negative for bodies without ocean) </returns>
-        internal static double GetPQSGroundAltitude(CelestialBody body, Vector3d relative_position)
+        internal static double? GetPQSGroundAltitude(CelestialBody body, Vector3d relative_position)
         {
-            if (body.pqsController == null)
-                return 0d;
+            if (body == null || body.pqsController == null || !body.hasSolidSurface)
+                return null;
 
             Vector2d lat_long = body.GetLatitudeAndLongitude(relative_position + body.position);
             Vector3d radial = QuaternionD.AngleAxis(lat_long.y, Vector3d.down) * QuaternionD.AngleAxis(lat_long.x, Vector3d.forward) * Vector3d.right;
-            double elevation = body.pqsController.GetSurfaceHeight(radial) - body.Radius;
+            double elevation = body.pqsController.GetSurfaceHeight(radial) - body.pqsController.radius;
 
             if (body.ocean)
                 elevation = Math.Max(elevation, 0d);
@@ -108,11 +108,22 @@ namespace Trajectories
 
         /// <summary> Gets the ground altitude of the GameDataCache body using the world space relative position </summary>
         /// <returns> the altitude above sea level (can be negative for bodies without an ocean) </returns>
-        internal static double GetPQSGroundAltitude(Vector3d relative_position)
+        internal static double? GetPQSGroundAltitude(Vector3d relative_position)
         {
-            Vector2d lat_long = GameDataCache.Body.GetLatitudeAndLongitude(relative_position + GameDataCache.BodyWorldPos);
-            Vector3d radial = QuaternionD.AngleAxis(lat_long.y, Vector3d.down) * QuaternionD.AngleAxis(lat_long.x, Vector3d.forward) * Vector3d.right;
-            double elevation = 0d;   // Temporary until I find a workaround //GameDataCache.Body.pqsController.GetSurfaceHeight(radial) - GameDataCache.BodyRadius;
+            if (!GameDataCache.BodyHasSolidSurface)
+                return null;
+
+            Vector3d world_position = (relative_position + GameDataCache.BodyWorldPos).normalized;
+            Vector3d local_position = new(
+                Vector3d.Dot(world_position.xzy, GameDataCache.BodyFrameX),
+                Vector3d.Dot(world_position.xzy, GameDataCache.BodyFrameY),
+                Vector3d.Dot(world_position.xzy, GameDataCache.BodyFrameZ));
+
+            double latitude = Math.Asin(local_position.z) * Mathf.Rad2Deg;
+            double longitude = Math.Atan2(local_position.y, local_position.x) * Mathf.Rad2Deg;
+            Vector3d radial = QuaternionD.AngleAxis(longitude, Vector3d.down) * QuaternionD.AngleAxis(latitude, Vector3d.forward) * Vector3d.right;
+            //double elevation = GameDataCache.Body.pqsController.GetSurfaceHeight(radial) - GameDataCache.BodyPqsRadius.Value;
+            double elevation = 0d;                // Temporary until I find a workaround
 
             if (GameDataCache.BodyHasOcean)
                 elevation = Math.Max(elevation, 0d);

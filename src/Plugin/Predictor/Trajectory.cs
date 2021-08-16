@@ -623,9 +623,9 @@ namespace Trajectories
                         for (t = entryTime; t < groundRangeExit; t += iterationSize)
                         {
                             Vector3d pos = patch.SpaceOrbit.getRelativePositionAtUT(t);
-                            double groundAltitude = CelestialBodyMaps.GetPQSGroundAltitude(CalculateRotatedPosition(Util.SwapYZ(pos), t))
-                                + GameDataCache.BodyRadius;
-                            if (pos.magnitude < groundAltitude)
+                            double? groundAltitude = CelestialBodyMaps.GetPQSGroundAltitude(CalculateRotatedPosition(Util.SwapYZ(pos), t));
+                            groundAltitude = groundAltitude.HasValue ? groundAltitude.Value + GameDataCache.BodyRadius : GameDataCache.BodyRadius;
+                            if (pos.magnitude < groundAltitude.Value)
                             {
                                 t -= iterationSize;
                                 groundImpact = true;
@@ -836,13 +836,17 @@ namespace Trajectories
                         double interval = altitude < 10000d ? trajectoryInterval * 0.1d : trajectoryInterval;
                         if (currentTime >= lastPositionStoredUT + interval)
                         {
-                            double groundAltitude = CelestialBodyMaps.GetPQSGroundAltitude(CalculateRotatedPosition(state.position, currentTime));
+                            double? groundAltitude = CelestialBodyMaps.GetPQSGroundAltitude(CalculateRotatedPosition(state.position, currentTime));
+
+                            if(groundAltitude.HasValue)
+
+
                             if (lastPositionStoredUT > 0d)
                             {
                                 // check terrain collision, to detect impact on mountains etc.
                                 Vector3d rayOrigin = lastPositionStored;
                                 Vector3d rayEnd = state.position;
-                                double absGroundAltitude = groundAltitude + GameDataCache.BodyRadius;
+                                double absGroundAltitude = groundAltitude.HasValue ? groundAltitude.Value + GameDataCache.BodyRadius : GameDataCache.BodyRadius;
                                 if (absGroundAltitude > rayEnd.magnitude)
                                 {
                                     hitGround = true;
@@ -865,7 +869,7 @@ namespace Trajectories
                                 nextPos = CalculateRotatedPosition(nextPos, currentTime);
                             }
                             buffer.Last()[nextPosIdx].orbitalVelocity = state.velocity;
-                            buffer.Last()[nextPosIdx].groundAltitude = groundAltitude;
+                            buffer.Last()[nextPosIdx].groundAltitude = groundAltitude.HasValue ? groundAltitude.Value : 0d;
                             buffer.Last()[nextPosIdx].time = currentTime;
                             buffer.Last()[nextPosIdx++].pos = nextPos;
                             lastPositionStored = state.position;

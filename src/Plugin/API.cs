@@ -180,7 +180,7 @@ namespace Trajectories
         /// <summary>
         /// Returns true if a target has been set, false if not, or Null if no active vessel.
         /// </summary>
-        public static bool HasTarget() => Trajectories.IsVesselAttached && TargetProfile.HasTarget();
+        public static bool HasTarget() => Trajectories.IsVesselAttached && TargetProfile.HasTarget;
 
         /// <summary>
         /// Returns the planned direction or Null if no active vessel or no set target.

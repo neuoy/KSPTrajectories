@@ -169,14 +169,19 @@ namespace Trajectories
         internal static Vector3d BodyWorldPos { get; private set; }
         internal static bool BodyHasAtmosphere { get; private set; }
         internal static bool BodyHasOcean { get; private set; }
+        internal static bool BodyHasSolidSurface { get; private set; }
         internal static double BodyAtmosphereDepth { get; private set; }
         internal static double BodyAtmosTempOffset { get; private set; }       // The average day/night temperature at the equator
         internal static double BodyMaxGroundHeight { get; private set; }
-        internal static double BodyRadius { get; private set; }
+        internal static double BodyRadius { get; private set; }       // Bodies with an atmosphere have a radius equal to their max atmosphere height
+        internal static double? BodyPqsRadius { get; private set; }   // Bodies without a surface have no PQS data
         internal static Vector3d BodyAngularVelocity { get; private set; }
         internal static double BodyGravityParameter { get; private set; }
         internal static double BodyRotationPeriod { get; private set; }
         internal static Vector3d BodyTransformUp { get; private set; }
+        internal static Vector3d BodyFrameX { get; private set; }
+        internal static Vector3d BodyFrameY { get; private set; }
+        internal static Vector3d BodyFrameZ { get; private set; }
         #endregion
 
         #region VESSEL_PROPERTIES
@@ -280,16 +285,21 @@ namespace Trajectories
             Body = null;
             BodyHasAtmosphere = false;
             BodyHasOcean = false;
+            BodyHasSolidSurface = false;
             BodyAtmosphereDepth = 0d;
 
             BodyAtmosTempOffset = 0d;
 
             BodyMaxGroundHeight = 0d;
             BodyRadius = 0d;
+            BodyPqsRadius = null;
             BodyAngularVelocity = Vector3d.zero;
             BodyGravityParameter = 0d;
             BodyRotationPeriod = 0d;
             BodyTransformUp = Vector3d.zero;
+            BodyFrameX = Vector3d.zero;
+            BodyFrameY = Vector3d.zero;
+            BodyFrameZ = Vector3d.zero;
         }
 
         private static void ClearVesselCache()
@@ -308,6 +318,7 @@ namespace Trajectories
         {
             BodyHasAtmosphere = Body.atmosphere;
             BodyHasOcean = Body.ocean;
+            BodyHasSolidSurface = Body.hasSolidSurface;
             BodyAtmosphereDepth = Body.atmosphereDepth;
 
             BodyAtmosTempOffset = Body.latitudeTemperatureBiasCurve.Evaluate(0f)
@@ -316,10 +327,14 @@ namespace Trajectories
 
             BodyMaxGroundHeight = Body.pqsController != null ? Body.pqsController.mapMaxHeight : 0d;
             BodyRadius = Body.Radius;
+            BodyPqsRadius = Body.pqsController.radius;
             BodyAngularVelocity = Body.angularVelocity;
             BodyGravityParameter = Body.gravParameter;
             BodyRotationPeriod = Body.rotationPeriod;
             BodyTransformUp = Body.bodyTransform.up;
+            BodyFrameX = Body.BodyFrame.X;
+            BodyFrameY = Body.BodyFrame.Y;
+            BodyFrameZ = Body.BodyFrame.Z;
         }
 
         private static void UpdateVesselCache()
