@@ -187,11 +187,11 @@ namespace Trajectories
                 Vector3d.Dot(world_position.xzy, GameDataCache.BodyFrameY),
                 Vector3d.Dot(world_position.xzy, GameDataCache.BodyFrameZ));
 
-            double latitude = Math.Asin(local_position.z) * Mathf.Rad2Deg;
-            double longitude = Math.Atan2(local_position.y, local_position.x) * Mathf.Rad2Deg;
-            Vector3d radial = QuaternionD.AngleAxis(longitude, Vector3d.down) * QuaternionD.AngleAxis(latitude, Vector3d.forward) * Vector3d.right;
-            //double elevation = GameDataCache.Body.pqsController.GetSurfaceHeight(radial) - GameDataCache.BodyPqsRadius.Value;
-            double elevation = 0d;                // Temporary until I find a workaround
+            int index = ((int)(((Math.Atan2(local_position.y, local_position.x) * Mathf.Rad2Deg) + 180d) * MAP_WIDTH_DIVISOR) * MAP_WIDTH) +
+                (int)(((Math.Asin(local_position.z) * Mathf.Rad2Deg) + 90d) * MAP_HEIGHT_DIVISOR);
+
+            //double elevation = GroundAltitudeMaps[GameDataCache.BodyIndex].HeightMap[index];
+            double elevation = GroundAltitudeMaps[0].HeightMap[index];
 
             if (GameDataCache.BodyHasOcean)
                 elevation = Math.Max(elevation, 0d);
