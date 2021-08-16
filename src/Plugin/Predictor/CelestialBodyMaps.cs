@@ -105,6 +105,7 @@ namespace Trajectories
 
         internal static List<GroundAltitudeMap> GroundAltitudeMaps { get; private set; }
         internal static string CurrentBodyName { get; private set; }
+        internal static bool RunUpdate { get; set; }
 
         private static double calculation_time;
 
@@ -114,6 +115,7 @@ namespace Trajectories
             Util.DebugLog(GroundAltitudeMaps != null ? "Resetting" : "Constructing");
 
             CurrentBodyName = "";
+            RunUpdate = false;
 
             // check for changes in the celestial bodies
             if (GroundAltitudeMaps?.Count != FlightGlobals.Bodies?.Count)
@@ -133,7 +135,10 @@ namespace Trajectories
         internal static void Update()
         {
             //Profiler.Start("CelestialBodyMaps.Update");
+            if (RunUpdate)
                 UpdateAltitudeMaps();
+
+            RunUpdate = false;
         }
 
         private static void UpdateAltitudeMaps()

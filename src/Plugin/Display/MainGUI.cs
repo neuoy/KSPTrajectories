@@ -115,6 +115,7 @@ namespace Trajectories
         private static DialogGUILabel target_distance_label;
         private static DialogGUILabel target_distance_latitude_label;
         private static DialogGUILabel target_distance_longitude_label;
+        private static DialogGUILabel adv_maps_info_label;
 
         // display update strings
         private static readonly string trajectories_title = Localizer.Format("#autoLOC_Trajectories_Title");
@@ -137,6 +138,7 @@ namespace Trajectories
         private static string target_distance_txt = "";
         private static string target_distance_latitude_txt = "";
         private static string target_distance_longitude_txt = "";
+        private static string adv_maps_info_txt = "";
 
         // integrator logarithmic slider
         private static float integrator_sliderPos;
@@ -274,8 +276,7 @@ namespace Trajectories
                 Show();
             }
 
-            if (Util.IsFlight)
-                UpdatePages();
+            UpdatePages();
         }
 
         internal static void DeSpawn()
@@ -388,6 +389,7 @@ namespace Trajectories
             target_distance_label = new DialogGUILabel(() => { return target_distance_txt; }, 60);
             target_distance_latitude_label = new DialogGUILabel(() => { return target_distance_latitude_txt; }, 80);
             target_distance_longitude_label = new DialogGUILabel(() => { return target_distance_longitude_txt; }, 80);
+            adv_maps_info_label = new DialogGUILabel(() => { return adv_maps_info_txt; });
 
             // set integrator slider pos;
             SetIntegratorSlider();
@@ -637,7 +639,10 @@ namespace Trajectories
         private static void AllocateAdvancedPage()
         {
             advanced_page ??= new DialogGUIVerticalLayout(false, true, 0, new RectOffset(), TextAnchor.UpperCenter,
-                new DialogGUIHorizontalLayout()
+                new DialogGUIHorizontalLayout(adv_maps_info_label),
+                new DialogGUIHorizontalLayout(false, false, 0, new RectOffset(), TextAnchor.MiddleCenter,
+                    new DialogGUIButton(Localizer.Format("#autoLOC_Trajectories_BodyMaps_UpdateMaps"),
+                    OnButtonClick_UpdateMaps, ButtonEnabler_UpdateMaps, BUTTON_WIDTH + 25f, BUTTON_HEIGHT, false))
                 );
         }
 
@@ -843,6 +848,13 @@ namespace Trajectories
                 return true;
             return false;
         }
+
+        private static bool ButtonEnabler_UpdateMaps()
+        {
+            if (!CelestialBodyMaps.RunUpdate)
+                return true;
+            return false;
+        }
         #endregion
 
         #region  OnButtonClick methods called by the GuiButtons and Toggles
@@ -1027,6 +1039,10 @@ namespace Trajectories
 
         private static void OnButtonClick_TargetClear() => TargetProfile.Clear();
 
+        private static void OnButtonClick_UpdateMaps() => CelestialBodyMaps.RunUpdate = true;
+        #endregion
+
+        #region OnTextInput methods for the Gui text input boxes
         private static string OnTextInput_TargetManual(string inString)
         {
             string[] latLng = inString.Split(new char[] { ',', ';' });
@@ -1254,7 +1270,7 @@ namespace Trajectories
             {
                 case PageType.INFO:
                     UpdateInfoPage();
-                    return;
+                    break;
                 case PageType.TARGET:
                     UpdateTargetPage();
                     if (manual_target_txt_changed)
@@ -1262,11 +1278,13 @@ namespace Trajectories
                         ChangePage(PageType.TARGET);
                         manual_target_txt_changed = false;
                     }
-                    return;
+                    break;
                 case PageType.SETTINGS:
-                case PageType.ADVANCED:
                     UpdateSettingsPage();
-                    return;
+                    break;
+                case PageType.ADVANCED:
+                    UpdateAdvSettingsPage();
+                    break;
             }
         }
 
@@ -1438,6 +1456,11 @@ namespace Trajectories
                 target_distance_longitude_txt = "-: -.-- " + Localizer.Format("#autoLOC_Trajectories_km");
             }
 
+        }
+
+        /// <summary> Updates the strings used by the settings page to display changing values/data </summary>
+        private static void UpdateAdvSettingsPage()
+        {
         }
         #endregion
     }
