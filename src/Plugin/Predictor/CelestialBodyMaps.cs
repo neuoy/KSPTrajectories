@@ -27,14 +27,59 @@ namespace Trajectories
     /// <summary> Contains data such as ground altitude data of all celestial bodies. </summary>
     internal static class CelestialBodyMaps
     {
+        private const int MAP_WIDTH = 360 * 2;       // 720 x 360 map size , 0.5deg/index
+        private const int MAP_HEIGHT = (int)(MAP_WIDTH * 0.5f);
+        private const double MAP_WIDTH_SCALAR = 360d / MAP_WIDTH;
+        private const double MAP_HEIGHT_SCALAR = 180d / MAP_HEIGHT;
+        private const double MAP_WIDTH_DIVISOR = 1d / MAP_WIDTH_SCALAR;
+        private const double MAP_HEIGHT_DIVISOR = 1d / MAP_HEIGHT_SCALAR;
+
         // Map of the ground altitudes for a celestial body
         internal class GroundAltitudeMap
         {
             internal int BodyIndex { get; private set; }
+            internal double[] HeightMap { get; private set; }
+
+            // constructor
             internal GroundAltitudeMap(CelestialBody body)
             {
+                if (body == null)
+                    return;
+
                 BodyIndex = FlightGlobals.Bodies.IndexOf(body);
+
+                // check if body has surface data
+                if (body.pqsController == null || !body.hasSolidSurface)
+                    return;
+
+                CurrentBodyName = body.name;
                 Util.DebugLog("Creating a ground altitude map for {0} with index {1}", body.name, BodyIndex);
+
+                calculation_time = Util.Clocks;
+
+                int index = 0;
+                HeightMap = new double[MAP_WIDTH * MAP_HEIGHT];
+
+                for (int y = 0; y < MAP_HEIGHT; y++)
+                {
+                    for (int x = 0; x < MAP_WIDTH; x++)
+                    {
+                        // sample and store surface height
+                        Vector3d radial = QuaternionD.AngleAxis((x * MAP_WIDTH_SCALAR) - 180d, Vector3d.down) *                         // longitude
+                                            QuaternionD.AngleAxis((y * MAP_HEIGHT_SCALAR) - 90d, Vector3d.forward) * Vector3d.right;    // latitude
+                        HeightMap[index] = body.pqsController.GetSurfaceHeight(radial) - body.pqsController.radius;
+                        index++;
+                    }
+                }
+
+                calculation_time = Util.ElapsedSeconds(calculation_time);
+                Util.DebugLog("Ground altitude map for {0} with index {1} completed in {2:0.00}s", body.name, BodyIndex, calculation_time);
+            }
+
+            internal void Clear()
+            {
+                BodyIndex = 0;
+                HeightMap = null;
             }
         }
 
@@ -50,35 +95,45 @@ namespace Trajectories
         /// <summary> Clears a collection of GroundAltitudeMap's </summary>
         internal static void Release(this ICollection<GroundAltitudeMap> collection)
         {
+            foreach (GroundAltitudeMap altitude_map in collection)
+            {
+                altitude_map.Clear();
+            }
+
             collection.Clear();
         }
 
         internal static List<GroundAltitudeMap> GroundAltitudeMaps { get; private set; }
+        internal static string CurrentBodyName { get; private set; }
+
+        private static double calculation_time;
+
         ///<summary> Initializes the celestial body maps </summary>
         internal static void Start()
         {
             Util.DebugLog(GroundAltitudeMaps != null ? "Resetting" : "Constructing");
 
-            // create or update maps as needed
+            CurrentBodyName = "";
 
-            // parse celestial bodies, one map per body
-
-            // check for changes in body list counts
+            // check for changes in the celestial bodies
             if (GroundAltitudeMaps?.Count != FlightGlobals.Bodies?.Count)
             {
-                Util.Log("Updating celestial body cache due to {0}", GroundAltitudeMaps == null ? "no maps in cache" : "count difference");
-
-                UpdateAltitudeMaps();
+                Util.Log("Celestial body cache needs updating due to {0}", GroundAltitudeMaps == null ? "no maps in cache" : "count difference");
             }
         }
 
         ///<summary> Clean up any resources being used </summary>
-        internal static void Destroy() => Util.DebugLog("");
+        internal static void Destroy()
+        {
+            Util.DebugLog("");
 
-        internal static bool Update()
+            GroundAltitudeMaps?.Release();
+        }
+
+        internal static void Update()
         {
             //Profiler.Start("CelestialBodyMaps.Update");
-            return true;
+                UpdateAltitudeMaps();
         }
 
         private static void UpdateAltitudeMaps()
@@ -86,7 +141,9 @@ namespace Trajectories
             Util.DebugLog("");
 
             GroundAltitudeMaps?.Release();
-            GroundAltitudeMaps = new List<GroundAltitudeMap>() { FlightGlobals.Bodies };
+            //GroundAltitudeMaps = new List<GroundAltitudeMap>() { FlightGlobals.Bodies };
+            GroundAltitudeMaps = new List<GroundAltitudeMap>();
+            GroundAltitudeMaps?.Add(new GroundAltitudeMap(FlightGlobals.Bodies[1]));
         }
 
         /// <summary> Gets the ground altitude of the body using the world space relative position </summary>
@@ -108,9 +165,10 @@ namespace Trajectories
 
         /// <summary> Gets the ground altitude of the GameDataCache body using the world space relative position </summary>
         /// <returns> the altitude above sea level (can be negative for bodies without an ocean) </returns>
-        internal static double? GetPQSGroundAltitude(Vector3d relative_position)
+        internal static double? GroundAltitude(Vector3d relative_position)
         {
-            if (!GameDataCache.BodyHasSolidSurface)
+            if (!GameDataCache.BodyHasSolidSurface || GameDataCache.BodyIndex >= GroundAltitudeMaps?.Count ||
+                (GroundAltitudeMaps?[0]?.BodyIndex != GameDataCache.BodyIndex))
                 return null;
 
             Vector3d world_position = (relative_position + GameDataCache.BodyWorldPos).normalized;

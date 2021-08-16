@@ -166,6 +166,7 @@ namespace Trajectories
         #region BODY_PROPERTIES
         // body properties
         internal static CelestialBody Body { get; private set; }
+        internal static int BodyIndex { get; private set; }
         internal static Vector3d BodyWorldPos { get; private set; }
         internal static bool BodyHasAtmosphere { get; private set; }
         internal static bool BodyHasOcean { get; private set; }
@@ -224,13 +225,18 @@ namespace Trajectories
                 Util.DebugLog("Updating body to {0}", Trajectories.AttachedVessel.mainBody?.name);
 
                 Body = null;
+                BodyIndex = 0;
+
+                int index = 0;
                 foreach (CelestialBody body in FlightGlobals.Bodies)
                 {
                     if (body?.name != null && body.name == Trajectories.AttachedVessel.mainBody.name)
                     {
                         Body = body;
+                        BodyIndex = index;
                         break;
                     }
+                    index++;
                 }
 
                 if (Body == null)
@@ -283,6 +289,7 @@ namespace Trajectories
         private static void ClearBodyCache()
         {
             Body = null;
+            BodyIndex = 0;
             BodyHasAtmosphere = false;
             BodyHasOcean = false;
             BodyHasSolidSurface = false;

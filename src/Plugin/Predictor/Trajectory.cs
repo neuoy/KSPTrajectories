@@ -623,7 +623,7 @@ namespace Trajectories
                         for (t = entryTime; t < groundRangeExit; t += iterationSize)
                         {
                             Vector3d pos = patch.SpaceOrbit.getRelativePositionAtUT(t);
-                            double? groundAltitude = CelestialBodyMaps.GetPQSGroundAltitude(CalculateRotatedPosition(Util.SwapYZ(pos), t));
+                            double? groundAltitude = CelestialBodyMaps.GroundAltitude(CalculateRotatedPosition(Util.SwapYZ(pos), t));
                             groundAltitude = groundAltitude.HasValue ? groundAltitude.Value + GameDataCache.BodyRadius : GameDataCache.BodyRadius;
                             if (pos.magnitude < groundAltitude.Value)
                             {
@@ -836,7 +836,7 @@ namespace Trajectories
                         double interval = altitude < 10000d ? trajectoryInterval * 0.1d : trajectoryInterval;
                         if (currentTime >= lastPositionStoredUT + interval)
                         {
-                            double? groundAltitude = CelestialBodyMaps.GetPQSGroundAltitude(CalculateRotatedPosition(state.position, currentTime));
+                            double? groundAltitude = CelestialBodyMaps.GroundAltitude(CalculateRotatedPosition(state.position, currentTime));
 
                             if(groundAltitude.HasValue)
 

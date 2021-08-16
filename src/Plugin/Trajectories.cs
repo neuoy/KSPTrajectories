@@ -219,6 +219,7 @@ namespace Trajectories
             MapOverlay.Destroy();
             Trajectory.Destroy();
             DescentProfile.Destroy();
+            CelestialBodyMaps.Destroy();
             if (Settings != null)
                 Settings.Destroy();
             Settings = null;
