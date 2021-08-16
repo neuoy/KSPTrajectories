@@ -24,10 +24,11 @@ using System.Linq;
 
 namespace Trajectories
 {
+    /// <summary> Contains data required for a ground target, used by the GUI and various overlays to set and display target information. </summary>
     internal static class TargetProfile
     {
         /// <returns> True if the target is set. </returns>
-        internal static bool HasTarget() => LocalPosition.HasValue && Body != null;
+        internal static bool HasTarget => LocalPosition.HasValue && Body != null && Body.hasSolidSurface;
 
         /// <summary> The targets reference body </summary>
         internal static CelestialBody Body { get; set; } = null;
@@ -49,6 +50,9 @@ namespace Trajectories
         /// <summary> Sets the target to a body and a World position. Saves the target to the active vessel. </summary>
         internal static void SetFromWorldPos(CelestialBody body, Vector3d position)
         {
+            if (body == null || !body.hasSolidSurface)
+                return;
+
             Body = body;
             WorldPosition = position;
 
@@ -58,6 +62,9 @@ namespace Trajectories
         /// <summary> Sets the target to a body and a body-relative position. </summary>
         internal static void SetFromLocalPos(CelestialBody body, Vector3d position)
         {
+            if (body == null || !body.hasSolidSurface)
+                return;
+
             Body = body;
             LocalPosition = position;
         }
@@ -68,14 +75,19 @@ namespace Trajectories
         /// </summary>
         internal static void SetFromLatLonAlt(CelestialBody body, double latitude, double longitude, double? altitude = null)
         {
-            Body = body;
+            if (body == null || !body.hasSolidSurface)
+                return;
 
             if (!altitude.HasValue)
             {
                 Vector3d relPos = body.GetWorldSurfacePosition(latitude, longitude, 2.0) - body.position;
                 altitude = CelestialBodyMaps.GetPQSGroundAltitude(body, relPos);
+
+                if (!altitude.HasValue)
+                    return;
             }
 
+            Body = body;
             LocalPosition = body.GetRelSurfacePosition(latitude, longitude, altitude.Value);
 
             Save();
@@ -86,18 +98,14 @@ namespace Trajectories
         /// </summary>
         public static Vector3d? GetLatLonAlt()
         {
-            if (Body != null && WorldPosition.HasValue)
-            {
-                double latitude;
-                double longitude;
-                double altitude;
-                Body.GetLatLonAlt(WorldPosition.Value + Body.position, out latitude, out longitude, out altitude);
-                return new Vector3d(latitude, longitude, altitude);
-            }
-            else
-            {
+            if (Body == null || !Body.hasSolidSurface || !WorldPosition.HasValue)
                 return null;
-            }
+
+            double latitude;
+            double longitude;
+            double altitude;
+            Body.GetLatLonAlt(WorldPosition.Value + Body.position, out latitude, out longitude, out altitude);
+            return new Vector3d(latitude, longitude, altitude);
         }
 
         /// <summary> Clears the target </summary>
