@@ -380,6 +380,7 @@ namespace Trajectories
         }
 
         internal static double clock_frequency = 1d / Stopwatch.Frequency;
+        private const double MINUETS_SCALAR = 1d / 60d;
 
         /// <returns> Current time in clocks. </returns>
         internal static double Clocks => Stopwatch.GetTimestamp();
@@ -405,6 +406,16 @@ namespace Trajectories
         /// <returns> Elapsed time in seconds from clocks. </returns>
         internal static double ElapsedSeconds(double clocks) => (Stopwatch.GetTimestamp() - clocks) * clock_frequency;
 
+        /// <returns> Elapsed time in minuets from clocks. </returns>
+        internal static double ElapsedMinuets(double clocks) => ((Stopwatch.GetTimestamp() - clocks) * clock_frequency) * MINUETS_SCALAR;
+
+        /// <returns> Elapsed time in minuets and seconds from clocks. eg 108.369s returns 1 minuet and 48.369 seconds </returns>
+        internal static void ElapsedMinuetsSeconds(double clocks, out int minuets, out double seconds)
+        {
+            double ts = Stopwatch.GetTimestamp();
+            minuets = (int)(((ts - clocks) * clock_frequency) * MINUETS_SCALAR);
+            seconds = ((ts - clocks) * clock_frequency) - (minuets * 60);
+        }
         #endregion
 
 
