@@ -35,7 +35,7 @@ namespace Trajectories
         private const double MAP_HEIGHT_DIVISOR = 1d / MAP_HEIGHT_SCALAR;
 
         // Map of the ground altitudes for a celestial body
-        internal class GroundAltitudeMap
+        private class GroundAltitudeMap
         {
             internal int BodyIndex { get; private set; }
             internal double[] HeightMap { get; private set; }
@@ -43,22 +43,33 @@ namespace Trajectories
             // constructor
             internal GroundAltitudeMap(CelestialBody body)
             {
-                if (body == null)
+                if (FlightGlobals.Bodies == null || body == null)
                     return;
 
                 BodyIndex = FlightGlobals.Bodies.IndexOf(body);
 
                 // check if body has surface data
                 if (body.pqsController == null || !body.hasSolidSurface)
+                {
+                    Util.Log("Skipping ground altitude map for {0} - No surface found.", body.name);
                     return;
+                }
 
-                CurrentBodyName = body.name;
+                HeightMap = new double[MAP_WIDTH * MAP_HEIGHT];
+            }
+
+            internal IEnumerable<bool> SampleIncrement()
+            {
+                CelestialBody body = FlightGlobals.Bodies?[BodyIndex];
+
+                if (HeightMap == null || body == null)
+                    yield return true;
+
                 Util.DebugLog("Creating a ground altitude map for {0} with index {1}", body.name, BodyIndex);
 
                 calculation_time = Util.Clocks;
 
-                int index = 0;
-                HeightMap = new double[MAP_WIDTH * MAP_HEIGHT];
+                current_sampler_index = 0;
 
                 for (int y = 0; y < MAP_HEIGHT; y++)
                 {
@@ -67,13 +78,16 @@ namespace Trajectories
                         // sample and store surface height
                         Vector3d radial = QuaternionD.AngleAxis((x * MAP_WIDTH_SCALAR) - 180d, Vector3d.down) *                         // longitude
                                             QuaternionD.AngleAxis((y * MAP_HEIGHT_SCALAR) - 90d, Vector3d.forward) * Vector3d.right;    // latitude
-                        HeightMap[index] = body.pqsController.GetSurfaceHeight(radial) - body.pqsController.radius;
-                        index++;
+                        HeightMap[current_sampler_index] = body.pqsController.GetSurfaceHeight(radial) - body.pqsController.radius;
+                        current_sampler_index++;
                     }
+                    // return if calculation time is too long so we don't lag the game
+                    if (Util.ElapsedMilliseconds(calculation_time) > 25d)     // 40 fps
+                        yield return false;
                 }
 
                 calculation_time = Util.ElapsedSeconds(calculation_time);
-                Util.DebugLog("Ground altitude map for {0} with index {1} completed in {2:0.00}s", body.name, BodyIndex, calculation_time);
+                Util.Log("Ground altitude map for {0} completed in {2:0.0}s", body.name, BodyIndex, calculation_time);
             }
 
             internal void Clear()
@@ -84,7 +98,7 @@ namespace Trajectories
         }
 
         /// <summary> Adds a collection of KSP CelestialBody's ground altitudes to a collection of GroundAltitudeMap's </summary>
-        internal static void Add(this ICollection<GroundAltitudeMap> collection, IEnumerable<CelestialBody> bodies)
+        private static void Add(this ICollection<GroundAltitudeMap> collection, IEnumerable<CelestialBody> bodies)
         {
             foreach (CelestialBody body in bodies)
             {
@@ -93,7 +107,7 @@ namespace Trajectories
         }
 
         /// <summary> Clears a collection of GroundAltitudeMap's </summary>
-        internal static void Release(this ICollection<GroundAltitudeMap> collection)
+        private static void Release(this ICollection<GroundAltitudeMap> collection)
         {
             foreach (GroundAltitudeMap altitude_map in collection)
             {
@@ -103,26 +117,40 @@ namespace Trajectories
             collection.Clear();
         }
 
-        internal static List<GroundAltitudeMap> GroundAltitudeMaps { get; private set; }
-        internal static string CurrentBodyName { get; private set; }
+        /// <returns> The name of the celestial body currently being mapped </returns>
+        internal static string CurrentBodyName => FlightGlobals.Bodies?[CurrentBodyIndex]?.name ?? "";
+        /// <returns> The index of the celestial body currently being mapped </returns>
+        internal static int CurrentBodyIndex => current_body_index >= 0 && (current_body_index < (FlightGlobals.Bodies?.Count ?? 0d)) ? current_body_index : 0;
+        /// <returns> true if the maps are outdated </returns>
         internal static bool NeedsUpdate { get; private set; }
-        internal static bool RunUpdate { get; set; }
+        /// <summary> If set to true, triggers a map update </summary>
+        /// <returns> true if the maps are updating otherwise false </returns>
+        internal static bool RunUpdate { get => run_update; set { if (value) run_update = true; } }
+        /// <returns> The total percentage of all celestial bodies mapped </returns>
+        internal static double PercentComplete => ((double)current_body_index / FlightGlobals.Bodies?.Count ?? 0d) * 100d;
 
+        private static List<GroundAltitudeMap> ground_altitude_maps;
+        private static IEnumerator<bool> body_incrementer;
+        private static IEnumerator<bool> sample_incrementer;
+        private static bool run_update;
+        private static int current_body_index;
+        private static int current_sampler_index;
+        private static double update_time;
         private static double calculation_time;
 
         ///<summary> Initializes the celestial body maps </summary>
         internal static void Start()
         {
-            Util.DebugLog(GroundAltitudeMaps != null ? "Resetting" : "Constructing");
+            Util.DebugLog(ground_altitude_maps != null ? "Resetting" : "Constructing");
 
-            CurrentBodyName = "";
+            current_body_index = 0;
             NeedsUpdate = false;
-            RunUpdate = false;
+            run_update = false;
 
             // check for changes in the celestial bodies
-            if (GroundAltitudeMaps?.Count != FlightGlobals.Bodies?.Count)
+            if (ground_altitude_maps?.Count != FlightGlobals.Bodies?.Count)
             {
-                Util.Log("Celestial body cache needs updating due to {0}", GroundAltitudeMaps == null ? "no maps in cache" : "count difference");
+                Util.LogWarning("Celestial body cache needs updating due to {0}", ground_altitude_maps == null ? "no maps in cache" : "count difference");
                 NeedsUpdate = true;
             }
         }
@@ -132,32 +160,116 @@ namespace Trajectories
         {
             Util.DebugLog("");
 
-            GroundAltitudeMaps?.Release();
+            ground_altitude_maps?.Release();
         }
 
         internal static void Update()
         {
             //Profiler.Start("CelestialBodyMaps.Update");
-            if (RunUpdate)
+            if (run_update)
                 UpdateAltitudeMaps();
-
-            RunUpdate = false;
         }
 
         private static void UpdateAltitudeMaps()
         {
-            Util.DebugLog("");
+            if (FlightGlobals.Bodies == null)
+                return;
 
-            GroundAltitudeMaps?.Release();
-            //GroundAltitudeMaps = new List<GroundAltitudeMap>() { FlightGlobals.Bodies };
-            GroundAltitudeMaps = new List<GroundAltitudeMap>();
-            GroundAltitudeMaps?.Add(new GroundAltitudeMap(FlightGlobals.Bodies[1]));
+            // is this a new update or an ongoing update
+            if (body_incrementer == null)
+            {
+                Util.Log("Sampling celestial bodies, this may take a few minuets");
+                update_time = Util.Clocks;
+                current_body_index = 0;
+                ground_altitude_maps?.Release();
+                ground_altitude_maps = new List<GroundAltitudeMap>();
 
-            NeedsUpdate = false;
+                if (ground_altitude_maps == null)
+                {
+                    run_update = false;
+                    Util.LogWarning("There was a problem creating the ground altitude maps");
+                    return;
+                }
+
+                // create enumerator for stepping through the celestial bodies
+                body_incrementer = BodyIncrement().GetEnumerator();
+            }
+
+            // execute a celestial body sampler
+            bool finished = !body_incrementer.MoveNext();
+            bool error = body_incrementer.Current;
+
+            if (error && !finished)
+            {
+                Util.LogWarning("There was a problem sampling the celestial bodies");
+            }
+
+            // finished when no more celestial bodies are left to be done
+            if (finished)    // || error)
+            {
+                // clear sampling enumerator
+                sample_incrementer?.Dispose();
+                sample_incrementer = null;
+                current_sampler_index = 0;
+
+                // clear celestial bodies enumerator
+                body_incrementer.Dispose();
+                body_incrementer = null;
+                current_body_index = 0;
+
+                run_update = false;
+                NeedsUpdate = false;
+
+                // how long did the sampling of all the celestial bodies take?
+                Util.ElapsedMinuetsSeconds(update_time, out int minuets, out double seconds);
+                Util.Log("Finished Sampling of celestial bodies, completed in {0}:{1:0.0}s", minuets, seconds);
+            }
+        }
+
+        private static IEnumerable<bool> BodyIncrement()
+        {
+            current_body_index = 0;
+
+            while (current_body_index < FlightGlobals.Bodies.Count)
+            {
+                CelestialBody body = FlightGlobals.Bodies[current_body_index];
+
+                if (body == null)
+                    yield return true;        // report problem
+
+                // is this a new sample or an ongoing sample
+                if (sample_incrementer == null)
+                {
+                    Util.Log("Sampling {0}...", CurrentBodyName);
+                    current_sampler_index = 0;
+                    ground_altitude_maps?.Add(new GroundAltitudeMap(body));
+
+                    if (ground_altitude_maps?[current_body_index] == null)
+                        yield return true;        // report problem
+
+                    // create enumerator for sampling increments
+                    sample_incrementer = ground_altitude_maps?[current_body_index].SampleIncrement().GetEnumerator();
+                }
+
+                // execute a sampling increment
+                bool finished = !sample_incrementer.MoveNext();
+
+                // finished when no more sampling increments are left to be done
+                if (finished || sample_incrementer.Current)
+                {
+                    // clear sampling enumerator
+                    sample_incrementer.Dispose();
+                    sample_incrementer = null;
+                    current_sampler_index = 0;
+                    current_body_index++;
+                }
+
+                yield return false;   // return so we don't lag the game
+            }
         }
 
         /// <summary> Gets the ground altitude of the body using the world space relative position </summary>
-        /// <returns> the altitude above sea level (can be negative for bodies without ocean) </returns>
+        /// <returns> The altitude above sea level, can be negative for bodies without an ocean or null for bodies without a surface </returns>
         internal static double? GetPQSGroundAltitude(CelestialBody body, Vector3d relative_position)
         {
             if (body == null || body.pqsController == null || !body.hasSolidSurface)
@@ -174,11 +286,11 @@ namespace Trajectories
         }
 
         /// <summary> Gets the ground altitude of the GameDataCache body using the world space relative position </summary>
-        /// <returns> the altitude above sea level (can be negative for bodies without an ocean) </returns>
+        /// <returns> The altitude above sea level, can be negative for bodies without an ocean or null for bodies without a surface </returns>
         internal static double? GroundAltitude(Vector3d relative_position)
         {
-            if (!GameDataCache.BodyHasSolidSurface || GameDataCache.BodyIndex >= GroundAltitudeMaps?.Count ||
-                (GroundAltitudeMaps?[0]?.BodyIndex != GameDataCache.BodyIndex))
+            if (!GameDataCache.BodyHasSolidSurface || GameDataCache.BodyIndex >= ground_altitude_maps?.Count ||
+                (ground_altitude_maps?[GameDataCache.BodyIndex]?.BodyIndex != GameDataCache.BodyIndex))
                 return null;
 
             Vector3d world_position = (relative_position + GameDataCache.BodyWorldPos).normalized;
@@ -191,10 +303,10 @@ namespace Trajectories
                 (int)(((Math.Asin(local_position.z) * Mathf.Rad2Deg) + 90d) * MAP_HEIGHT_DIVISOR);
 
             //double elevation = GroundAltitudeMaps[GameDataCache.BodyIndex].HeightMap[index];
-            double elevation = GroundAltitudeMaps[0].HeightMap[index];
+            double? elevation = ground_altitude_maps[GameDataCache.BodyIndex].HeightMap?[index];
 
             if (GameDataCache.BodyHasOcean)
-                elevation = Math.Max(elevation, 0d);
+                elevation = elevation.HasValue ? Math.Max(elevation.Value, 0d) : null;
 
             return elevation;
         }

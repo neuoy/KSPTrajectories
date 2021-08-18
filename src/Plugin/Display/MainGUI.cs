@@ -1469,8 +1469,8 @@ namespace Trajectories
             else if (CelestialBodyMaps.RunUpdate)
             {
                 adv_maps_info_txt = Util.IsSpaceCenter ?
-                    string.Format("{0} Sampling {1} - {2:F2}% completed.",
-                    Localizer.Format("#autoLOC_Trajectories_BodyMaps_RunUpdate"), CelestialBodyMaps.CurrentBodyName, 5f) :
+                    string.Format("{0} Sampling {1} - {2:F0}% completed.",
+                    Localizer.Format("#autoLOC_Trajectories_BodyMaps_RunUpdate"), CelestialBodyMaps.CurrentBodyName, CelestialBodyMaps.PercentComplete) :
                     Localizer.Format("#autoLOC_Trajectories_BodyMaps_WaitUpdate");
             }
             else
