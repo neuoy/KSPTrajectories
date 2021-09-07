@@ -128,6 +128,8 @@ namespace Trajectories
 
             //version = Util.ConfigValue(node, "version", Version);             // get saved version, defaults to current version if none
 
+            CelestialBodyMaps.SetPath();
+
             if (Util.IsSpaceCenter)
             {
                 main_gui_prev_enabled = Settings.MainGUIEnabled;

@@ -618,7 +618,7 @@ namespace Trajectories
                             groundRangeExit = startingState.Time + patch.SpaceOrbit.timeToPe;
 
                         double iterationSize = (groundRangeExit - entryTime) / 100d;
-                        double t;
+                        double t = 0d;
                         bool groundImpact = false;
                         if (GameDataCache.BodyHasSolidSurface)
                         {

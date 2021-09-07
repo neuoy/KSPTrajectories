@@ -40,6 +40,8 @@ namespace Trajectories
             internal int BodyIndex { get; private set; }
             internal double[] HeightMap { get; private set; }
 
+            private string file_name;
+
             // constructor
             internal GroundAltitudeMap(CelestialBody body)
             {
@@ -97,6 +99,29 @@ namespace Trajectories
                 BodyIndex = 0;
                 HeightMap = null;
             }
+
+            /// <summary> Saves the surface height map to a binary file </summary>
+            internal void Save()
+            {
+                CelestialBody body = FlightGlobals.Bodies?[BodyIndex];
+
+                if (maps_path.Length <= 0 || HeightMap == null || body == null)
+                    return;
+
+                file_name = body.name + " Height Map";
+
+                try
+                {
+                    System.IO.File.WriteAllBytes(maps_path + file_name + ".bin", HeightMap.ToByteArray());
+                }
+                catch (Exception e)
+                {
+                    Util.LogWarning("Error saving Celestial body map '{0}' - {1}", file_name + ".bin", e.Message);
+                    return;
+                }
+
+                Util.Log("Saved Celestial body map '{0}'", file_name + ".bin");
+            }
         }
 
         /// <summary> Adds a collection of KSP CelestialBody's ground altitudes to a collection of GroundAltitudeMap's </summary>
@@ -131,6 +156,7 @@ namespace Trajectories
         /// <returns> The total percentage of all celestial bodies mapped </returns>
         internal static double PercentComplete => ((double)current_body_index / FlightGlobals.Bodies?.Count ?? 0d) * 100d;
 
+        private static string maps_path;
         private static List<GroundAltitudeMap> ground_altitude_maps;
         private static IEnumerator<bool> body_incrementer;
         private static IEnumerator<bool> sample_incrementer;
@@ -154,6 +180,23 @@ namespace Trajectories
             {
                 Util.LogWarning("Celestial body cache needs updating due to {0}", ground_altitude_maps == null ? "no maps in cache" : "count difference");
                 NeedsUpdate = true;
+            }
+        }
+
+        ///<summary> Sets the celestial body maps file path </summary>
+        internal static void SetPath()
+        {
+            maps_path = KSPUtil.ApplicationRootPath + "GameData/Trajectories/BodyMaps/";
+            Util.DebugLog("Path set to {0}", maps_path);
+
+            try
+            {
+                System.IO.Directory.CreateDirectory(maps_path);
+            }
+            catch (Exception e)
+            {
+                Util.LogWarning("Error creating Celestial body maps directory {0} - {1}", maps_path, e.Message);
+                return;
             }
         }
 
@@ -263,6 +306,9 @@ namespace Trajectories
                     sample_incrementer.Dispose();
                     sample_incrementer = null;
                     current_sampler_index = 0;
+
+                    // save sampled data
+                    ground_altitude_maps?[current_body_index].Save();
                     current_body_index++;
                 }
 
