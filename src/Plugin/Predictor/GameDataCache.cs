@@ -267,6 +267,9 @@ namespace Trajectories
                 return false;
             }
 
+            BodyFrameX = Body.BodyFrame.X;
+            BodyFrameY = Body.BodyFrame.Y;
+            BodyFrameZ = Body.BodyFrame.Z;
             BodyWorldPos = Body.position;
 
             UpdateVesselCache();
@@ -307,6 +310,7 @@ namespace Trajectories
             BodyFrameX = Vector3d.zero;
             BodyFrameY = Vector3d.zero;
             BodyFrameZ = Vector3d.zero;
+            BodyWorldPos = Vector3d.zero;
         }
 
         private static void ClearVesselCache()
@@ -339,9 +343,6 @@ namespace Trajectories
             BodyGravityParameter = Body.gravParameter;
             BodyRotationPeriod = Body.rotationPeriod;
             BodyTransformUp = Body.bodyTransform.up;
-            BodyFrameX = Body.BodyFrame.X;
-            BodyFrameY = Body.BodyFrame.Y;
-            BodyFrameZ = Body.BodyFrame.Z;
         }
 
         private static void UpdateVesselCache()

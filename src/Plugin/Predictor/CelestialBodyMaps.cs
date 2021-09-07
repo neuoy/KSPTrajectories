@@ -58,6 +58,7 @@ namespace Trajectories
                 HeightMap = new double[MAP_WIDTH * MAP_HEIGHT];
             }
 
+            /// <summary> Samples the PQS surface height in increments </summary>
             internal IEnumerable<bool> SampleIncrement()
             {
                 CelestialBody body = FlightGlobals.Bodies?[BodyIndex];
@@ -90,6 +91,7 @@ namespace Trajectories
                 Util.Log("Ground altitude map for {0} completed in {2:0.0}s", body.name, BodyIndex, calculation_time);
             }
 
+            /// <summary> Clears all data </summary>
             internal void Clear()
             {
                 BodyIndex = 0;
@@ -293,16 +295,21 @@ namespace Trajectories
                 (ground_altitude_maps?[GameDataCache.BodyIndex]?.BodyIndex != GameDataCache.BodyIndex))
                 return null;
 
-            Vector3d world_position = (relative_position + GameDataCache.BodyWorldPos).normalized;
-            Vector3d local_position = new(
-                Vector3d.Dot(world_position.xzy, GameDataCache.BodyFrameX),
-                Vector3d.Dot(world_position.xzy, GameDataCache.BodyFrameY),
-                Vector3d.Dot(world_position.xzy, GameDataCache.BodyFrameZ));
+            Vector3d local_position = (relative_position.normalized).xzy;
+            local_position = new(
+                Vector3d.Dot(local_position, GameDataCache.BodyFrameX),
+                Vector3d.Dot(local_position, GameDataCache.BodyFrameY),
+                Vector3d.Dot(local_position, GameDataCache.BodyFrameZ));
 
             int index = ((int)(((Math.Atan2(local_position.y, local_position.x) * Mathf.Rad2Deg) + 180d) * MAP_WIDTH_DIVISOR) * MAP_WIDTH) +
                 (int)(((Math.Asin(local_position.z) * Mathf.Rad2Deg) + 90d) * MAP_HEIGHT_DIVISOR);
 
-            //double elevation = GroundAltitudeMaps[GameDataCache.BodyIndex].HeightMap[index];
+            if (index < 0 || index > ground_altitude_maps[GameDataCache.BodyIndex].HeightMap?.Length)
+            {
+                Util.LogWarning("Ground altitude map index {0} out of range [0-{1}]", index, ground_altitude_maps[GameDataCache.BodyIndex].HeightMap?.Length);
+                return null;
+            }
+
             double? elevation = ground_altitude_maps[GameDataCache.BodyIndex].HeightMap?[index];
 
             if (GameDataCache.BodyHasOcean)
