@@ -558,6 +558,20 @@ namespace Trajectories
 
             return lateralDist;
         }
+
+        /// <returns> A byte array of all the BitConverted values </returns>
+        internal static byte[] ToByteArray(this double[] array_in)
+        {
+            List<byte> bytes = new List<byte>();
+
+            foreach (double value in array_in)
+            {
+                bytes.AddRange(BitConverter.GetBytes(value));
+            }
+
+            return bytes.ToArray();
+        }
+
         #endregion
     }
 }
