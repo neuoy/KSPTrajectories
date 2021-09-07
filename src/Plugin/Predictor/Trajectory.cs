@@ -620,16 +620,19 @@ namespace Trajectories
                         double iterationSize = (groundRangeExit - entryTime) / 100d;
                         double t;
                         bool groundImpact = false;
-                        for (t = entryTime; t < groundRangeExit; t += iterationSize)
+                        if (GameDataCache.BodyHasSolidSurface)
                         {
-                            Vector3d pos = patch.SpaceOrbit.getRelativePositionAtUT(t);
-                            double? groundAltitude = CelestialBodyMaps.GroundAltitude(CalculateRotatedPosition(Util.SwapYZ(pos), t));
-                            groundAltitude = groundAltitude.HasValue ? groundAltitude.Value + GameDataCache.BodyRadius : GameDataCache.BodyRadius;
-                            if (pos.magnitude < groundAltitude.Value)
+                            for (t = entryTime; t < groundRangeExit; t += iterationSize)
                             {
-                                t -= iterationSize;
-                                groundImpact = true;
-                                break;
+                                Vector3d pos = patch.SpaceOrbit.getRelativePositionAtUT(t);
+                                double? groundAltitude = CelestialBodyMaps.GroundAltitude(CalculateRotatedPosition(Util.SwapYZ(pos), t));
+                                groundAltitude = groundAltitude.HasValue ? groundAltitude.Value + GameDataCache.BodyRadius : GameDataCache.BodyRadius;
+                                if (pos.magnitude < groundAltitude.Value)
+                                {
+                                    t -= iterationSize;
+                                    groundImpact = true;
+                                    break;
+                                }
                             }
                         }
 
@@ -830,53 +833,54 @@ namespace Trajectories
                         max_accel_buffer = Math.Max(aerodynamicAccel.magnitude, max_accel_buffer);
 
                         #region Impact Calculation
-
-                        Profiler.Start("AddPatch#impact");
-
-                        double interval = altitude < 10000d ? trajectoryInterval * 0.1d : trajectoryInterval;
-                        if (currentTime >= lastPositionStoredUT + interval)
+                        if (GameDataCache.BodyHasSolidSurface)
                         {
-                            double? groundAltitude = CelestialBodyMaps.GroundAltitude(CalculateRotatedPosition(state.position, currentTime));
+                            Profiler.Start("AddPatch#impact");
 
-                            if(groundAltitude.HasValue)
-
-
-                            if (lastPositionStoredUT > 0d)
+                            double interval = altitude < 10000d ? trajectoryInterval * 0.1d : trajectoryInterval;
+                            if (currentTime >= lastPositionStoredUT + interval)
                             {
-                                // check terrain collision, to detect impact on mountains etc.
-                                Vector3d rayOrigin = lastPositionStored;
-                                Vector3d rayEnd = state.position;
-                                double absGroundAltitude = groundAltitude.HasValue ? groundAltitude.Value + GameDataCache.BodyRadius : GameDataCache.BodyRadius;
-                                if (absGroundAltitude > rayEnd.magnitude)
+                                double? groundAltitude = CelestialBodyMaps.GroundAltitude(CalculateRotatedPosition(state.position, currentTime));
+
+                                if (!groundAltitude.HasValue)
+                                    Util.LogWarning("Ground altitude has no value");
+
+                                if (lastPositionStoredUT > 0d)
                                 {
-                                    hitGround = true;
-                                    double coeff = Math.Max(0.01d, (absGroundAltitude - rayOrigin.magnitude)
-                                        / (rayEnd.magnitude - rayOrigin.magnitude));
-                                    state.position = rayEnd * coeff + rayOrigin * (1d - coeff);
-                                    currentTime = currentTime * coeff + lastPositionStoredUT * (1d - coeff);
+                                    // check terrain collision, to detect impact on mountains etc.
+                                    Vector3d rayOrigin = lastPositionStored;
+                                    Vector3d rayEnd = state.position;
+                                    double absGroundAltitude = groundAltitude.HasValue ? groundAltitude.Value + GameDataCache.BodyRadius : GameDataCache.BodyRadius;
+                                    if (absGroundAltitude > rayEnd.magnitude)
+                                    {
+                                        hitGround = true;
+                                        double coeff = Math.Max(0.01d, (absGroundAltitude - rayOrigin.magnitude)
+                                            / (rayEnd.magnitude - rayOrigin.magnitude));
+                                        state.position = rayEnd * coeff + rayOrigin * (1d - coeff);
+                                        currentTime = currentTime * coeff + lastPositionStoredUT * (1d - coeff);
+                                    }
                                 }
+
+                                lastPositionStoredUT = currentTime;
+                                if (nextPosIdx == chunkSize)
+                                {
+                                    buffer.Add(new Point[chunkSize]);
+                                    nextPosIdx = 0;
+                                }
+                                Vector3d nextPos = state.position;
+                                if (Settings.BodyFixedMode)
+                                {
+                                    nextPos = CalculateRotatedPosition(nextPos, currentTime);
+                                }
+                                buffer.Last()[nextPosIdx].orbitalVelocity = state.velocity;
+                                buffer.Last()[nextPosIdx].groundAltitude = groundAltitude.HasValue ? groundAltitude.Value : 0d;
+                                buffer.Last()[nextPosIdx].time = currentTime;
+                                buffer.Last()[nextPosIdx++].pos = nextPos;
+                                lastPositionStored = state.position;
                             }
 
-                            lastPositionStoredUT = currentTime;
-                            if (nextPosIdx == chunkSize)
-                            {
-                                buffer.Add(new Point[chunkSize]);
-                                nextPosIdx = 0;
-                            }
-                            Vector3d nextPos = state.position;
-                            if (Settings.BodyFixedMode)
-                            {
-                                nextPos = CalculateRotatedPosition(nextPos, currentTime);
-                            }
-                            buffer.Last()[nextPosIdx].orbitalVelocity = state.velocity;
-                            buffer.Last()[nextPosIdx].groundAltitude = groundAltitude.HasValue ? groundAltitude.Value : 0d;
-                            buffer.Last()[nextPosIdx].time = currentTime;
-                            buffer.Last()[nextPosIdx++].pos = nextPos;
-                            lastPositionStored = state.position;
+                            Profiler.Stop("AddPatch#impact");
                         }
-
-                        Profiler.Stop("AddPatch#impact");
-
                         #endregion
                     }
 

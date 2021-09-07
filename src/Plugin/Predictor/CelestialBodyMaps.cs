@@ -291,9 +291,9 @@ namespace Trajectories
         /// <returns> The altitude above sea level, can be negative for bodies without an ocean or null for bodies without a surface </returns>
         internal static double? GroundAltitude(Vector3d relative_position)
         {
-            if (!GameDataCache.BodyHasSolidSurface || GameDataCache.BodyIndex >= ground_altitude_maps?.Count ||
+            if (GameDataCache.BodyIndex >= ground_altitude_maps?.Count ||
                 (ground_altitude_maps?[GameDataCache.BodyIndex]?.BodyIndex != GameDataCache.BodyIndex))
-                return null;
+                return null;      // todo: move checks to calling methods or elsewhere
 
             Vector3d local_position = (relative_position.normalized).xzy;
             local_position = new(
