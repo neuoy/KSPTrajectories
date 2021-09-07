@@ -75,6 +75,25 @@ namespace Trajectories
 
         [Persistent(Default: true)]
         internal static bool DefaultDescentIsRetro { get; set; }
+
+        // hotkeys
+        [Persistent(Default: true)]
+        internal static bool EnableDisplayTrajectoryHotKeyMod { get; set; }
+
+        [Persistent(Default: KeyCode.LeftAlt)]
+        internal static KeyCode DisplayTrajectoryHotKeyMod { get; set; }
+
+        [Persistent(Default: KeyCode.T)]
+        internal static KeyCode DisplayTrajectoryHotKey { get; set; }
+
+        [Persistent(Default: true)]
+        internal static bool EnableMainGUIHotKeyMod { get; set; }
+
+        [Persistent(Default: KeyCode.RightAlt)]
+        internal static KeyCode MainGUIHotKeyMod { get; set; }
+
+        [Persistent(Default: KeyCode.T)]
+        internal static KeyCode MainGUIHotKey { get; set; }
         #endregion
 
         private static PluginConfiguration config;

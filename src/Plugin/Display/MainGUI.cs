@@ -265,7 +265,16 @@ namespace Trajectories
                 (InputLockManager.GetControlLock("TrajectoriesKeyboardLockout") == ControlTypes.KEYBOARDINPUT))
                 KeyboardUnlock("");
 
+            // show trajectory hotkey
+            if ((Settings.EnableDisplayTrajectoryHotKeyMod ? Input.GetKey(Settings.DisplayTrajectoryHotKeyMod) : true)
+                && Input.GetKeyUp(Settings.DisplayTrajectoryHotKey))
+                OnButtonClick_DisplayTrajectories(!Settings.DisplayTrajectories);
+
             // hide or show the dialog box
+            if ((Settings.EnableDisplayTrajectoryHotKeyMod ? Input.GetKey(Settings.MainGUIHotKeyMod) : true)
+                && Input.GetKeyUp(Settings.MainGUIHotKey))
+                Settings.MainGUIEnabled = !Settings.MainGUIEnabled;
+
             if ((!Settings.MainGUIEnabled || PlanetariumCamera.Camera == null) && visible)
             {
                 Hide();
