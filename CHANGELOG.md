@@ -1,8 +1,22 @@
 
+## v2.4.3 for KSP 1.8 to 1.12.x
+ - 2021-xx-xx
+
+### Changes since the last release
+ 
+ 
+### For Developers
+
+
+### Known Issues
+
+------------------------------------------------------------------------------------------------------
+
 ## v2.4.2 for KSP 1.8 to 1.12.x
  - 2021-09-07
 
 ### Changes since the last release
+
  - Added hotkeys to show/hide the GUI (RightAlt+T) and to show/hide the Trajectory (LeftAlt+T),
     default keys can be changed by editing the config.xml file.
  
