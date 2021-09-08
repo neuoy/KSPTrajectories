@@ -562,7 +562,7 @@ namespace Trajectories
         /// <returns> A byte array of all the BitConverted values </returns>
         internal static byte[] ToByteArray(this double[] array_in)
         {
-            List<byte> bytes = new List<byte>();
+            List<byte> bytes = new();
 
             foreach (double value in array_in)
             {
@@ -572,6 +572,18 @@ namespace Trajectories
             return bytes.ToArray();
         }
 
+        /// <returns> A double array of all the BitConverted values </returns>
+        internal static double[] ToDoubleArray(this byte[] array_in)
+        {
+            List<double> doubles = new();
+
+            for (int index = 0; index < array_in.Length; index += sizeof(double))
+            {
+                doubles.Add(BitConverter.ToDouble(array_in, index));
+            }
+
+            return doubles.ToArray();
+        }
         #endregion
     }
 }
