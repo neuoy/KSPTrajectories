@@ -1,6 +1,5 @@
 ﻿/*
   Copyright© (c) 2016-2017 Youen Toupin, (aka neuoy).
-  Copyright© (c) 2017-2018 A.Korsunsky, (aka fat-lobyte).
   Copyright© (c) 2017-2020 S.Gray, (aka PiezPiedPy).
 
   This file is part of Trajectories.
@@ -21,37 +20,18 @@
 */
 
 using System;
-using System.Reflection;
+using KSP.Localization;
 using UnityEngine;
 
 namespace Trajectories
 {
-    internal class FARModel : VesselAerodynamicModel
+    internal class StockModel : AeroDynamicModel
     {
-        private readonly MethodInfo FARAPI_CalculateVesselAeroForces;
+        internal override string AerodynamicModelName => Localizer.Format("#autoLOC_Trajectories_Stock");
 
-        internal override string AerodynamicModelName => "FAR";
+        internal StockModel() : base() { }
 
-        internal FARModel(MethodInfo CalculateVesselAeroForces)
-            : base() => FARAPI_CalculateVesselAeroForces = CalculateVesselAeroForces;
-
-        protected override Vector3d ComputeForces_Model(Vector3d airVelocity, double altitude)
-        {
-            //Util.DebugLog("Getting FAR forces");
-            if (!Trajectories.IsVesselAttached || Trajectories.AttachedVessel.packed)
-                return Vector3d.zero;
-
-            if (airVelocity.x == 0d || airVelocity.y == 0d || airVelocity.z == 0d)
-            {
-                Util.DebugLogWarning("Zero in FAR air velocity: {0} at altitude: {1}", airVelocity, altitude);
-                return Vector3d.zero;
-            }
-
-            Vector3 worldAirVel = new Vector3((float)airVelocity.x, (float)airVelocity.y, (float)airVelocity.z);
-            object[] parameters = new object[] { Trajectories.AttachedVessel, Vector3.zero, Vector3.zero, worldAirVel, altitude };
-            FARAPI_CalculateVesselAeroForces.Invoke(null, parameters);
-            return (Vector3)parameters[1];
-        }
+        protected override Vector3d ComputeForces_Model(Vector3d airVelocity, double altitude) => StockAeroUtil.SimAeroForce(airVelocity, altitude);
 
         internal override Vector2d PackForces(Vector3d forces, double altitudeAboveSea, double velocity)
         {

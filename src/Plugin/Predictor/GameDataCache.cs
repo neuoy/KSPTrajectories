@@ -258,7 +258,7 @@ namespace Trajectories
                 VesselParts?.Release();
                 VesselParts = new List<PartInfo>() { AttachedVessel.Parts };
 
-                Trajectories.AerodynamicModel.InitCache();
+                Trajectories.AeroDynamicModel.InitCache();
             }
 
             if (AttachedVessel.patchedConicSolver == null)

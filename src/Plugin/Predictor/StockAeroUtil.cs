@@ -260,7 +260,7 @@ namespace Trajectories
                 part_index++;
 
 #if DEBUG
-                TrajectoriesDebug partDebug = VesselAerodynamicModel.DebugParts ? part_info.Part.FindModuleImplementing<TrajectoriesDebug>() : null;
+                TrajectoriesDebug partDebug = AeroDynamicModel.DebugParts ? part_info.Part.FindModuleImplementing<TrajectoriesDebug>() : null;
                 if (partDebug != null)
                 {
                     partDebug.Drag = 0;

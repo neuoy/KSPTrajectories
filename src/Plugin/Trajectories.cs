@@ -42,11 +42,11 @@ namespace Trajectories
         internal static Settings Settings { get; private set; }
 
         /// <summary> The Aerodynamic Model used for atmospheric trajectory calculations </summary>
-        internal static VesselAerodynamicModel AerodynamicModel { get; private set; }
+        internal static AeroDynamicModel AeroDynamicModel { get; private set; }
 
         /// <returns> The name of the Aerodynamic Model </returns>
-        internal static string AerodynamicModelName => AerodynamicModel == null ? Localizer.Format("#autoLOC_Trajectories_NotLoaded") :
-                                                                                   AerodynamicModel.AerodynamicModelName;
+        internal static string AerodynamicModelName => AeroDynamicModel == null ? Localizer.Format("#autoLOC_Trajectories_NotLoaded") :
+                                                                                   AeroDynamicModel.AerodynamicModelName;
 
         /// <summary> The vessel that trajectories is attached to </summary>
         internal static Vessel AttachedVessel { get; private set; }
@@ -67,7 +67,7 @@ namespace Trajectories
 
             // setup aero model
             if (CheckAerodynamicModel())
-                Util.Log("Using {0} Aerodynamic Model", AerodynamicModel.AerodynamicModelName);
+                Util.Log("Using {0} Aerodynamic Model", AeroDynamicModel.AerodynamicModelName);
 
             // setup multi-thread worker
             Worker.OnReport += Worker_OnReport;
@@ -84,12 +84,12 @@ namespace Trajectories
         /// <returns> true if an Aerodynamic Model exists otherwise false on error </returns>
         private static bool CheckAerodynamicModel()
         {
-            if (AerodynamicModel != null)
+            if (AeroDynamicModel != null)
                 return true;
 
             // get aerodynamic model, searches for compatible API's
-            AerodynamicModel = AerodynamicModelFactory.GetModel();
-            if (AerodynamicModel == null)
+            AeroDynamicModel = AeroDynamicModelFactory.GetModel();
+            if (AeroDynamicModel == null)
             {
                 Util.LogError("There was a problem with the Aerodynamic Model");
                 return false;
@@ -186,7 +186,7 @@ namespace Trajectories
         internal void Update()
         {
 
-            if (Settings == null || AerodynamicModel == null)
+            if (Settings == null || AeroDynamicModel == null)
                 return;
 
             if (Input.GetKey(KeyCode.Escape) || Util.IsPaused)

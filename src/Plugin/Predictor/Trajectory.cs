@@ -329,7 +329,7 @@ namespace Trajectories
 
                 // update aerodynamic model cache
                 if (Settings.UseCache)
-                    Trajectories.AerodynamicModel.UpdateCache();
+                    Trajectories.AeroDynamicModel.UpdateCache();
 
                 // clear the buffers
                 patches_buffer.Clear();
@@ -722,7 +722,7 @@ namespace Trajectories
                         double aoa = DescentProfile.GetAngleOfAttack(GameDataCache.Body, position, vel_air) ?? 0d;
 
                         Profiler.Start("GetForces");
-                        Vector3d force_aero = Trajectories.AerodynamicModel.GetForces(position, vel_air, aoa);
+                        Vector3d force_aero = Trajectories.AeroDynamicModel.GetForces(position, vel_air, aoa);
                         Profiler.Stop("GetForces");
 
                         Vector3d accel = accel_g + force_aero / GameDataCache.VesselMass;
