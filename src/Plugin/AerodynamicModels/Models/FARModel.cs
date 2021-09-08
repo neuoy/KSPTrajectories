@@ -26,7 +26,7 @@ using UnityEngine;
 
 namespace Trajectories
 {
-    internal class FARModel : AeroDynamicModel
+    internal class FARModel : AerodynamicModel
     {
         private readonly MethodInfo FARAPI_CalculateVesselAeroForces;
 

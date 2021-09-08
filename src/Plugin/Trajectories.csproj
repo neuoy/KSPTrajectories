@@ -114,7 +114,7 @@
   <ItemGroup>
     <Compile Include="3rdParty\ToolbarWrapper.cs" />
     <Compile Include="3rdParty\Worker.cs" />
-    <Compile Include="AerodynamicModels\AeroDynamicModelFactory.cs" />
+    <Compile Include="AerodynamicModels\AerodynamicModelFactory.cs" />
     <Compile Include="AerodynamicModels\AeroForceCache.cs" />
     <Compile Include="AerodynamicModels\Models\FARModel.cs" />
     <Compile Include="AerodynamicModels\Models\StockModel.cs" />
@@ -141,7 +141,7 @@
     <Compile Include="TrajectoriesVesselSettings.cs" />
     <Compile Include="Predictor\Trajectory.cs" />
     <Compile Include="Utilities\Util.cs" />
-    <Compile Include="AerodynamicModels\AeroDynamicModel.cs" />
+    <Compile Include="AerodynamicModels\AerodynamicModel.cs" />
   </ItemGroup>
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

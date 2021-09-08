@@ -25,7 +25,7 @@ using UnityEngine;
 
 namespace Trajectories
 {
-    internal class StockModel : AeroDynamicModel
+    internal class StockModel : AerodynamicModel
     {
         internal override string AerodynamicModelName => Localizer.Format("#autoLOC_Trajectories_Stock");
 

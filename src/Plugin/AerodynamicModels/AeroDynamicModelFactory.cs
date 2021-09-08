@@ -25,11 +25,11 @@ using UnityEngine;
 
 namespace Trajectories
 {
-    internal static class AeroDynamicModelFactory
+    internal static class AerodynamicModelFactory
     {
         /// <summary> Searches for compatible atmospheric mod API's and sets their required MethodInfo's </summary>
         /// <returns> The aerodynamic model for a found API or the stock model if none or an error occurs </returns>
-        internal static AeroDynamicModel GetModel()
+        internal static AerodynamicModel GetModel()
         {
             foreach (AssemblyLoader.LoadedAssembly loadedAssembly in AssemblyLoader.loadedAssemblies)
             {

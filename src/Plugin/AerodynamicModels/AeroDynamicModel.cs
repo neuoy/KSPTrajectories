@@ -28,7 +28,7 @@ using UnityEngine;
 namespace Trajectories
 {
     ///<summary> Abstracts the game aerodynamic computations to provide an unified interface whether the stock drag is used, or a supported mod is installed </summary>
-    internal abstract class AeroDynamicModel
+    internal abstract class AerodynamicModel
     {
         private double prev_ref_drag = 0d;
         private double next_update_delay = Util.Clocks;
@@ -39,7 +39,7 @@ namespace Trajectories
         internal static bool DebugParts { get; set; }
 
         // constructor
-        protected AeroDynamicModel() { }
+        protected AerodynamicModel() { }
 
         internal void InitCache()
         {

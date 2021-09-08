@@ -36,9 +36,9 @@ namespace Trajectories
 
         private Vector2d[,,] InternalArray;
 
-        private AeroDynamicModel Model;
+        private AerodynamicModel Model;
 
-        internal AeroForceCache(double maxCacheVelocity, double maxCacheAoA, double atmosphereDepth, int vRes, int aoaRes, int altRes, AeroDynamicModel model)
+        internal AeroForceCache(double maxCacheVelocity, double maxCacheAoA, double atmosphereDepth, int vRes, int aoaRes, int altRes, AerodynamicModel model)
         {
             Model = model;
 
