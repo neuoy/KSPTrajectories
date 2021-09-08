@@ -128,7 +128,7 @@ namespace Trajectories
 
             //version = Util.ConfigValue(node, "version", Version);             // get saved version, defaults to current version if none
 
-            CelestialBodyMaps.SetPath();
+            CelestialBodyMaps.CheckMaps();
 
             if (Util.IsSpaceCenter)
             {

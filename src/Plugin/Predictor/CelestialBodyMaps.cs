@@ -58,6 +58,7 @@ namespace Trajectories
                 }
 
                 HeightMap = new double[MAP_WIDTH * MAP_HEIGHT];
+                file_name = body.name + " Height Map" + ".bin";
             }
 
             /// <summary> Samples the PQS surface height in increments </summary>
@@ -90,7 +91,7 @@ namespace Trajectories
                 }
 
                 calculation_time = Util.ElapsedSeconds(calculation_time);
-                Util.Log("Ground altitude map for {0} completed in {2:0.0}s", body.name, BodyIndex, calculation_time);
+                Util.Log("Ground altitude map for {0} completed in {1:0.0}s", body.name, calculation_time);
             }
 
             /// <summary> Clears all data </summary>
@@ -105,31 +106,60 @@ namespace Trajectories
             {
                 CelestialBody body = FlightGlobals.Bodies?[BodyIndex];
 
-                if (maps_path.Length <= 0 || HeightMap == null || body == null)
+                if (maps_path?.Length <= 0 || file_name?.Length <= 0 || HeightMap == null || body == null
+                    || body.pqsController == null || !body.hasSolidSurface)
                     return;
-
-                file_name = body.name + " Height Map";
 
                 try
                 {
-                    System.IO.File.WriteAllBytes(maps_path + file_name + ".bin", HeightMap.ToByteArray());
+                    System.IO.File.WriteAllBytes(maps_path + file_name, HeightMap.ToByteArray());
                 }
                 catch (Exception e)
                 {
-                    Util.LogWarning("Error saving Celestial body map '{0}' - {1}", file_name + ".bin", e.Message);
+                    Util.LogWarning("Error saving Celestial body map '{0}' - {1}", file_name, e.Message);
                     return;
                 }
 
-                Util.Log("Saved Celestial body map '{0}'", file_name + ".bin");
+                Util.Log("Saved Celestial body map '{0}'", file_name);
+            }
+
+            /// <summary> Loads the surface height map from a binary file </summary>
+            internal void Load()
+            {
+                CelestialBody body = FlightGlobals.Bodies?[BodyIndex];
+
+                if (maps_path?.Length <= 0 || file_name?.Length <= 0 || HeightMap == null || body == null
+                    || body.pqsController == null || !body.hasSolidSurface)
+                    return;
+
+                // todo: check file exists
+                calculation_time = Util.Clocks;
+
+                try
+                {
+                    HeightMap = System.IO.File.ReadAllBytes(maps_path + file_name).ToDoubleArray();
+                }
+                catch (Exception e)
+                {
+                    Util.LogWarning("Error loading Celestial body map '{0}' - {1}", file_name, e.Message);
+                    return;
+                }
+
+                calculation_time = Util.ElapsedMilliseconds(calculation_time);
+                Util.DebugLog("Loaded Celestial body map '{0}' in {1:0.000}ms", file_name, calculation_time);
             }
         }
 
-        /// <summary> Adds a collection of KSP CelestialBody's ground altitudes to a collection of GroundAltitudeMap's </summary>
-        private static void Add(this ICollection<GroundAltitudeMap> collection, IEnumerable<CelestialBody> bodies)
+        /// <summary> Adds a collection of KSP CelestialBody's to a collection of GroundAltitudeMap's.
+        ///  Also attempts to load saved bin files unless the load parameter is set to false </summary>
+        private static void Add(this ICollection<GroundAltitudeMap> collection, IEnumerable<CelestialBody> bodies, bool load = true)
         {
             foreach (CelestialBody body in bodies)
             {
-                collection.Add(new GroundAltitudeMap(body));
+                GroundAltitudeMap altitude_map = new GroundAltitudeMap(body);
+                if (load)
+                    altitude_map.Load();
+                collection.Add(altitude_map);
             }
         }
 
@@ -156,7 +186,9 @@ namespace Trajectories
         /// <returns> The total percentage of all celestial bodies mapped </returns>
         internal static double PercentComplete => ((double)current_body_index / FlightGlobals.Bodies?.Count ?? 0d) * 100d;
 
+        private static bool first_check;
         private static string maps_path;
+        private static List<string> height_files;
         private static List<GroundAltitudeMap> ground_altitude_maps;
         private static IEnumerator<bool> body_incrementer;
         private static IEnumerator<bool> sample_incrementer;
@@ -172,32 +204,9 @@ namespace Trajectories
             Util.DebugLog(ground_altitude_maps != null ? "Resetting" : "Constructing");
 
             current_body_index = 0;
+            first_check = false;
             NeedsUpdate = false;
             run_update = false;
-
-            // check for changes in the celestial bodies
-            if (ground_altitude_maps?.Count != FlightGlobals.Bodies?.Count)
-            {
-                Util.LogWarning("Celestial body cache needs updating due to {0}", ground_altitude_maps == null ? "no maps in cache" : "count difference");
-                NeedsUpdate = true;
-            }
-        }
-
-        ///<summary> Sets the celestial body maps file path </summary>
-        internal static void SetPath()
-        {
-            maps_path = KSPUtil.ApplicationRootPath + "GameData/Trajectories/BodyMaps/";
-            Util.DebugLog("Path set to {0}", maps_path);
-
-            try
-            {
-                System.IO.Directory.CreateDirectory(maps_path);
-            }
-            catch (Exception e)
-            {
-                Util.LogWarning("Error creating Celestial body maps directory {0} - {1}", maps_path, e.Message);
-                return;
-            }
         }
 
         ///<summary> Clean up any resources being used </summary>
@@ -215,6 +224,86 @@ namespace Trajectories
                 UpdateAltitudeMaps();
         }
 
+        ///<summary> Sets the celestial body maps file path </summary>
+        private static void SetPath()
+        {
+            maps_path = KSPUtil.ApplicationRootPath + "GameData/Trajectories/BodyMaps/";
+            Util.DebugLog("Path set to {0}", maps_path);
+
+            try
+            {
+                System.IO.Directory.CreateDirectory(maps_path);
+            }
+            catch (Exception e)
+            {
+                Util.LogWarning("Error creating Celestial body maps directory {0} - {1}", maps_path, e.Message);
+                return;
+            }
+        }
+
+        ///<summary> Updates the list of celestial body map files </summary>
+        private static void GetFiles()
+        {
+            try
+            {
+                height_files = new(System.IO.Directory.EnumerateFiles(maps_path));
+            }
+            catch (Exception e)
+            {
+                Util.LogWarning("Error enumerating Celestial body maps directory {0} - {1}", maps_path, e.Message);
+                return;
+            }
+        }
+
+        ///<summary> Loads celestial body maps and checks for changes </summary>
+        internal static void CheckMaps()
+        {
+            if (first_check)
+                return;
+
+            SetPath();
+            GetFiles();
+
+            int num_bodies = 0;
+            foreach (CelestialBody body in FlightGlobals.Bodies)
+            {
+                if (body?.pqsController != null && body.hasSolidSurface)
+                {
+                    num_bodies++;
+                }
+            }
+
+            if (height_files?.Count != num_bodies)
+            {
+                height_files = height_files?.Count <= 0 ? height_files = null : height_files;
+                Util.LogWarning("Celestial body cache needs updating due to {0}", height_files == null ? "no maps in cache" : "count difference");
+                NeedsUpdate = true;
+            }
+            else
+            {
+                // load saved maps
+                Util.Log("Loading Celestial body maps");
+                LoadAltitudeMaps();
+            }
+
+            first_check = true;
+        }
+
+        ///<summary> Loads the celestial body altitude maps from previously saved bin files </summary>
+        internal static void LoadAltitudeMaps()
+        {
+            ground_altitude_maps?.Release();
+            ground_altitude_maps = new();
+            ground_altitude_maps.Add(FlightGlobals.Bodies);
+
+            if (ground_altitude_maps == null)
+            {
+                Util.LogWarning("There was a problem loading the ground altitude maps");
+                return;
+            }
+        }
+
+        ///<summary> Updates the celestial body altitude maps by sampling PQS data </summary>
         private static void UpdateAltitudeMaps()
         {
             if (FlightGlobals.Bodies == null)
@@ -227,7 +316,7 @@ namespace Trajectories
                 update_time = Util.Clocks;
                 current_body_index = 0;
                 ground_altitude_maps?.Release();
-                ground_altitude_maps = new List<GroundAltitudeMap>();
+                ground_altitude_maps = new();
 
                 if (ground_altitude_maps == null)
                 {
