@@ -273,7 +273,7 @@ namespace Trajectories
             // hide or show the dialog box
             if ((Settings.EnableDisplayTrajectoryHotKeyMod ? Input.GetKey(Settings.MainGUIHotKeyMod) : true)
                 && Input.GetKeyUp(Settings.MainGUIHotKey))
-                Settings.MainGUIEnabled = !Settings.MainGUIEnabled;
+                Settings.MainGUIEnabled = (CelestialBodyMaps.NeedsUpdate || CelestialBodyMaps.RunUpdate) || !Settings.MainGUIEnabled;
 
             if ((!Settings.MainGUIEnabled || PlanetariumCamera.Camera == null) && visible)
             {
@@ -651,7 +651,9 @@ namespace Trajectories
                 new DialogGUIHorizontalLayout(adv_maps_info_label),
                 new DialogGUIHorizontalLayout(false, false, 0, new RectOffset(), TextAnchor.MiddleCenter,
                     new DialogGUIButton(Localizer.Format("#autoLOC_Trajectories_BodyMaps_UpdateMaps"),
-                    OnButtonClick_UpdateMaps, ButtonEnabler_UpdateMaps, BUTTON_WIDTH + 25f, BUTTON_HEIGHT, false))
+                    OnButtonClick_UpdateMaps, ButtonEnabler_UpdateMaps, BUTTON_WIDTH + 25f, BUTTON_HEIGHT, false),
+                    new DialogGUIButton(Localizer.Format("#autoLOC_8001021"),
+                    OnButtonClick_AdvClose, ButtonEnabler_AdvClose, BUTTON_WIDTH + 25f, BUTTON_HEIGHT, false))
                 );
         }
 
@@ -791,28 +793,28 @@ namespace Trajectories
         //  A page select button will call its ButtonEnabler method which returns false if the currently viewed page matches the button
         private static bool ButtonEnabler_Info()
         {
-            if ((Settings.MainGUICurrentPage == PageType.INFO) || Util.IsSpaceCenter)
+            if ((Settings.MainGUICurrentPage == PageType.INFO) || Util.IsSpaceCenter || CelestialBodyMaps.NeedsUpdate || CelestialBodyMaps.RunUpdate)
                 return false;
             return true;
         }
 
         private static bool ButtonEnabler_Target()
         {
-            if ((Settings.MainGUICurrentPage == PageType.TARGET) || Util.IsSpaceCenter)
+            if ((Settings.MainGUICurrentPage == PageType.TARGET) || Util.IsSpaceCenter || CelestialBodyMaps.NeedsUpdate || CelestialBodyMaps.RunUpdate)
                 return false;
             return true;
         }
 
         private static bool ButtonEnabler_Descent()
         {
-            if ((Settings.MainGUICurrentPage == PageType.DESCENT) || Util.IsSpaceCenter)
+            if ((Settings.MainGUICurrentPage == PageType.DESCENT) || Util.IsSpaceCenter || CelestialBodyMaps.NeedsUpdate || CelestialBodyMaps.RunUpdate)
                 return false;
             return true;
         }
 
         private static bool ButtonEnabler_Settings()
         {
-            if (Settings.MainGUICurrentPage == PageType.SETTINGS)
+            if (Settings.MainGUICurrentPage == PageType.SETTINGS || CelestialBodyMaps.NeedsUpdate || CelestialBodyMaps.RunUpdate)
                 return false;
             return true;
         }
@@ -861,6 +863,13 @@ namespace Trajectories
         private static bool ButtonEnabler_UpdateMaps()
         {
             if (!CelestialBodyMaps.RunUpdate)
+                return true;
+            return false;
+        }
+
+        private static bool ButtonEnabler_AdvClose()
+        {
+            if (!(CelestialBodyMaps.NeedsUpdate || CelestialBodyMaps.RunUpdate))
                 return true;
             return false;
         }
@@ -1049,6 +1058,8 @@ namespace Trajectories
         private static void OnButtonClick_TargetClear() => TargetProfile.Clear();
 
         private static void OnButtonClick_UpdateMaps() => CelestialBodyMaps.RunUpdate = true;
+
+        private static void OnButtonClick_AdvClose() => Settings.MainGUIEnabled = (CelestialBodyMaps.NeedsUpdate || CelestialBodyMaps.RunUpdate);
         #endregion
 
         #region OnTextInput methods for the Gui text input boxes

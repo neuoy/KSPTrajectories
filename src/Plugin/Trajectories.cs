@@ -144,6 +144,7 @@ namespace Trajectories
                 else
                 {
                     Settings.MainGUIEnabled = false;
+                    MainGUI.Start();
                 }
 
                 return;
@@ -184,10 +185,17 @@ namespace Trajectories
 
         internal void Update()
         {
-            if (Util.IsPaused || Settings == null || AerodynamicModel == null)
+
+            if (Settings == null || AerodynamicModel == null)
                 return;
 
-            if (Util.IsSpaceCenter)  // and PQS data is invalid
+            if (Input.GetKey(KeyCode.Escape) || Util.IsPaused)
+            {
+                MainGUI.Hide();
+                return;
+            }
+
+            if (Util.IsSpaceCenter)
             {
                 if (CelestialBodyMaps.NeedsUpdate || CelestialBodyMaps.RunUpdate)
                     CelestialBodyMaps.Update();

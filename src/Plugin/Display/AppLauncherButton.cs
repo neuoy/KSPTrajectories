@@ -165,13 +165,13 @@ namespace Trajectories
             }
             else
             {
-                Settings.MainGUIEnabled = !Settings.MainGUIEnabled;
+                Settings.MainGUIEnabled = (CelestialBodyMaps.NeedsUpdate || CelestialBodyMaps.RunUpdate) || !Settings.MainGUIEnabled;
             }
         }
 
         private static void OnStockTrue() => Settings.MainGUIEnabled = true;
 
-        private static void OnStockFalse() => Settings.MainGUIEnabled = false;
+        private static void OnStockFalse() => Settings.MainGUIEnabled = (CelestialBodyMaps.NeedsUpdate || CelestialBodyMaps.RunUpdate);
 
         private static void DestroyStockToolbarButton()
         {
