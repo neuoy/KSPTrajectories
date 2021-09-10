@@ -111,7 +111,7 @@ namespace Trajectories
             catch (Exception e)
             {
                 ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_Trajectories_ModLoadError"));
-                Util.LogWarning("Error creating config - {0}, usually caused by a mod failing to load before Trajectories loads", e.Message);
+                Util.LogError("Error creating config - {0}, usually caused by a mod failing to load before Trajectories loads", e.Message);
             }
         }
 
@@ -134,7 +134,14 @@ namespace Trajectories
             catch (Exception e)
             {
                 ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_Trajectories_ModLoadError"));
-                Util.LogWarning("Error creating config - {0}, usually caused by a mod failing to load before Trajectories loads", e.Message);
+                Util.LogError("Error creating config - {0}, usually caused by a mod failing to load before Trajectories loads", e.Message);
+                return;
+            }
+
+            if (config == null)
+            {
+                Util.LogError("Error creating config");
+                return;
             }
 
             try
