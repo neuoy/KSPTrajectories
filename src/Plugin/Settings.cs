@@ -24,6 +24,7 @@ using System;
 using System.Linq;
 using System.Reflection;
 using KSP.IO;
+using KSP.Localization;
 using UnityEngine;
 
 namespace Trajectories
@@ -103,7 +104,15 @@ namespace Trajectories
         static Settings()
         {
             Util.DebugLog("");
-            config ??= PluginConfiguration.CreateForType<Settings>();
+            try
+            {
+                config ??= PluginConfiguration.CreateForType<Settings>();
+            }
+            catch (Exception e)
+            {
+                ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_Trajectories_ModLoadError"));
+                Util.LogWarning("Error creating config - {0}, usually caused by a mod failing to load before Trajectories loads", e.Message);
+            }
         }
 
         internal static void Destroy()
@@ -118,7 +127,15 @@ namespace Trajectories
                 return;
 
             Util.Log("Loading settings");
-            config ??= PluginConfiguration.CreateForType<Settings>();
+            try
+            {
+                config ??= PluginConfiguration.CreateForType<Settings>();
+            }
+            catch (Exception e)
+            {
+                ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_Trajectories_ModLoadError"));
+                Util.LogWarning("Error creating config - {0}, usually caused by a mod failing to load before Trajectories loads", e.Message);
+            }
 
             try
             {

@@ -72,8 +72,8 @@ namespace Trajectories
 
             //if (Verbose)
             //{
-            //    Util.PostSingleScreenMessage("cache cell", "cache cell: [" + vFloor + ", " + aFloor + ", " + mFloor + "]");
-            //    Util.PostSingleScreenMessage("altitude cell", "altitude cell: " + altitude + " / " + MaxAltitude + " * " + (double)(InternalArray.GetLength(2) - 1));
+            //    ScreenMessages.PostScreenMessage("cache cell", "cache cell: [" + vFloor + ", " + aFloor + ", " + mFloor + "]");
+            //    ScreenMessages.PostScreenMessage("altitude cell", "altitude cell: " + altitude + " / " + MaxAltitude + " * " + (double)(InternalArray.GetLength(2) - 1));
             //}
 
             Vector2d res = Sample3d(vFloor, vFrac, aFloor, aFrac, mFloor, mFrac);

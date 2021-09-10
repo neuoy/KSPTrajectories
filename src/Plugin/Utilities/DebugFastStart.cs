@@ -70,7 +70,7 @@ namespace Trajectories
         {
             if (HighLogic.LoadedScene == GameScenes.SPACECENTER && loadedVessel > 0)
             {
-                Util.PostSingleScreenMessage("debug fast start", "count: " + loadedVessel);
+                ScreenMessages.PostScreenMessage("debug fast start", "count: " + loadedVessel);
                 --loadedVessel;
                 if (loadedVessel == 0)
                 {
