@@ -1,6 +1,6 @@
 ﻿/*
   Copyright© (c) 2017-2018 A.Korsunsky, (aka fat-lobyte).
-  Copyright© (c) 2017-2020 S.Gray, (aka PiezPiedPy).
+  Copyright© (c) 2017-2021 S.Gray, (aka PiezPiedPy).
 
   This file is part of Trajectories.
   Trajectories is available under the terms of GPL-3.0-or-later.
