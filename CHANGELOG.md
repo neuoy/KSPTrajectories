@@ -8,6 +8,7 @@
  
 ### For Developers
 
+ - API method `SetTarget` now correctly targets the active vessels body rather than only the home world.
 
 ### Known Issues
 

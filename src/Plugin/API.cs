@@ -193,13 +193,13 @@ namespace Trajectories
         public static Vector3? CorrectedDirection() => HasTarget() ? NavBallOverlay.CorrectedDirection : null;
 
         /// <summary>
-        /// Set the trajectories target to a latitude, longitude and altitude at the HomeWorld.
+        /// Set the trajectories target to a latitude, longitude and altitude at the  active vessels celestial body.
         /// </summary>
         public static void SetTarget(double lat, double lon, double? alt = null)
         {
             if (Trajectories.IsVesselAttached)
             {
-                CelestialBody body = FlightGlobals.GetHomeBody();
+                CelestialBody body = Trajectories.AttachedVessel.mainBody;
                 if (body != null)
                     TargetProfile.SetFromLatLonAlt(body.flightGlobalsIndex, lat, lon, alt);
             }
