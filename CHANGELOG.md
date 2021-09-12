@@ -8,8 +8,21 @@
  
 ### For Developers
 
- - API method `SetTarget` now correctly targets the active vessels body rather than only the home world.
 
+### Known Issues
+
+------------------------------------------------------------------------------------------------------
+
+## v2.4.3 for KSP 1.8 to 1.12.x
+ - 2021-xx-xx
+
+### Changes since the last release
+
+ 
+### For Developers
+
+ - API method `SetTarget` now correctly targets the active vessels body rather than only the home world.
+ 
 ### Known Issues
 
 ------------------------------------------------------------------------------------------------------
