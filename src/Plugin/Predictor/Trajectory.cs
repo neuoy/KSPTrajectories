@@ -35,19 +35,23 @@ namespace Trajectories
     {
         internal class VesselState
         {
-            internal CelestialBody ReferenceBody { get; set; }
+            /// <summary> Reference body index </summary>
+            internal int BodyIndex { get; set; }
 
-            // universal time
+            /// <summary> Reference body </summary>
+            internal CelestialBody ReferenceBody => FlightGlobals.Bodies[BodyIndex];
+
+            /// <summary> Universal time stamp </summary>
             internal double Time { get; set; }
 
-            // position in world frame relatively to the reference body
+            /// <summary> Position in world frame relatively to the reference body </summary>
             internal Vector3d Position { get; set; }
 
-            // velocity in world frame relatively to the reference body
+            /// <summary> Velocity in world frame relatively to the reference body </summary>
             internal Vector3d Velocity { get; set; }
 
-            // tells whether the patch starting from this state is superimposed on a stock KSP patch, or null if
-            // something makes it diverge (atmospheric entry for example)
+            /// <summary> Contains a stock KSP patch if the patch starting from this state is to be superimposed on to one,
+            /// null if something makes the patch diverge (atmospheric entry for example) </summary>
             internal Orbit StockPatch { get; set; }
 
             internal VesselState() { }
@@ -58,14 +62,10 @@ namespace Trajectories
             internal Vector3d pos;
             internal Vector3d orbitalVelocity;
 
-            /// <summary>
-            /// Ground altitude above (or under) sea level, in meters.
-            /// </summary>
+            /// <summary> Ground altitude above (or under) sea level, in meters or 0 for bodies without a surface </summary>
             internal double groundAltitude;
 
-            /// <summary>
-            /// Universal time
-            /// </summary>
+            /// <summary> Universal time stamp </summary>
             internal double time;
         }
 
@@ -77,7 +77,7 @@ namespace Trajectories
 
             internal bool IsAtmospheric { get; set; }
 
-            // // position array in body space (world frame centered on the body) ; only used when isAtmospheric is true
+            // position array in body space (world frame centered on the body) ; only used when isAtmospheric is true
             internal Point[] AtmosphericTrajectory { get; set; }
 
             // only used when isAtmospheric is false
@@ -353,7 +353,7 @@ namespace Trajectories
             // create starting VesselState
             VesselState state = new VesselState
             {
-                ReferenceBody = GameDataCache.Body,
+                BodyIndex = GameDataCache.BodyIndex,
                 Time = GameDataCache.UniversalTime,
                 Position = GameDataCache.VesselWorldPos - GameDataCache.BodyWorldPos,
                 Velocity = GameDataCache.VesselOrbitVelocity,
@@ -597,7 +597,7 @@ namespace Trajectories
                         patches_buffer.Add(patch);
                         return new VesselState
                         {
-                            ReferenceBody = GameDataCache.Body,
+                            BodyIndex = GameDataCache.BodyIndex,
                             Position = Util.SwapYZ(patch.SpaceOrbit.getRelativePositionAtUT(entryTime)),
                             Time = entryTime,
                             Velocity = Util.SwapYZ(patch.SpaceOrbit.getOrbitalVelocityAtUT(entryTime))
@@ -656,7 +656,7 @@ namespace Trajectories
 
                             return new VesselState
                             {
-                                ReferenceBody = GameDataCache.Body,
+                                BodyIndex = GameDataCache.BodyIndex,
                                 Position = Util.SwapYZ(patch.SpaceOrbit.getRelativePositionAtUT(patch.EndTime)),
                                 Velocity = Util.SwapYZ(patch.SpaceOrbit.getOrbitalVelocityAtUT(patch.EndTime)),
                                 Time = patch.EndTime,
@@ -790,7 +790,7 @@ namespace Trajectories
                                 patches_buffer.Add(patch);
                                 return new VesselState
                                 {
-                                    ReferenceBody = GameDataCache.Body,
+                                    BodyIndex = GameDataCache.BodyIndex,
                                     Position = state.position,
                                     Velocity = state.velocity,
                                     Time = patch.EndTime
@@ -898,7 +898,7 @@ namespace Trajectories
 
                 return new VesselState
                 {
-                    ReferenceBody = GameDataCache.Body,
+                    BodyIndex = GameDataCache.BodyIndex,
                     Position = Util.SwapYZ(patch.SpaceOrbit.getRelativePositionAtUT(patch.EndTime)),
                     Velocity = Util.SwapYZ(patch.SpaceOrbit.getOrbitalVelocityAtUT(patch.EndTime)),
                     Time = patch.EndTime,

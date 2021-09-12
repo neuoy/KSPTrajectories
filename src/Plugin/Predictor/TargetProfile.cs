@@ -30,8 +30,11 @@ namespace Trajectories
         /// <returns> True if the target is set. </returns>
         internal static bool HasTarget => LocalPosition.HasValue && Body != null && Body.hasSolidSurface;
 
+        /// <summary> The targets reference body index </summary>
+        internal static int? BodyIndex { get; set; } = null;
+
         /// <summary> The targets reference body </summary>
-        internal static CelestialBody Body { get; set; } = null;
+        internal static CelestialBody Body => BodyIndex.HasValue ? FlightGlobals.Bodies[BodyIndex.Value] : null;
 
         /// <summary> The targets position in WorldSpace </summary>
         internal static Vector3d? WorldPosition
@@ -48,24 +51,24 @@ namespace Trajectories
         internal static string ManualText { get; set; } = "";
 
         /// <summary> Sets the target to a body and a World position. Saves the target to the active vessel. </summary>
-        internal static void SetFromWorldPos(CelestialBody body, Vector3d position)
+        internal static void SetFromWorldPos(int? body_index, Vector3d position)
         {
-            if (body == null || !body.hasSolidSurface)
+            if (!body_index.HasValue || !FlightGlobals.Bodies[BodyIndex.Value].hasSolidSurface)
                 return;
 
-            Body = body;
+            BodyIndex = body_index;
             WorldPosition = position;
 
             Save();
         }
 
         /// <summary> Sets the target to a body and a body-relative position. </summary>
-        internal static void SetFromLocalPos(CelestialBody body, Vector3d position)
+        internal static void SetFromLocalPos(int? body_index, Vector3d position)
         {
-            if (body == null || !body.hasSolidSurface)
+            if (!body_index.HasValue || !FlightGlobals.Bodies[BodyIndex.Value].hasSolidSurface)
                 return;
 
-            Body = body;
+            BodyIndex = body_index;
             LocalPosition = position;
         }
 
@@ -73,13 +76,14 @@ namespace Trajectories
         /// Sets the target to a body and a World position. If the altitude is not given, it will be calculated as the surface altitude at that latitude/longitude.
         /// Saves the target to the active vessel.
         /// </summary>
-        internal static void SetFromLatLonAlt(CelestialBody body, double latitude, double longitude, double? altitude = null)
+        internal static void SetFromLatLonAlt(int? body_index, double latitude, double longitude, double? altitude = null)
         {
-            if (body == null || !body.hasSolidSurface)
+            if (!body_index.HasValue || !FlightGlobals.Bodies[BodyIndex.Value].hasSolidSurface)
                 return;
 
             if (!altitude.HasValue)
             {
+                CelestialBody body = FlightGlobals.Bodies[BodyIndex.Value];
                 Vector3d relPos = body.GetWorldSurfacePosition(latitude, longitude, 2.0) - body.position;
                 altitude = CelestialBodyMaps.GetPQSGroundAltitude(body, relPos);
 
@@ -87,8 +91,8 @@ namespace Trajectories
                     return;
             }
 
-            Body = body;
-            LocalPosition = body.GetRelSurfacePosition(latitude, longitude, altitude.Value);
+            BodyIndex = body_index;
+            LocalPosition = Body.GetRelSurfacePosition(latitude, longitude, altitude.Value);
 
             Save();
         }
@@ -112,7 +116,7 @@ namespace Trajectories
         internal static void Clear()
         {
             Util.DebugLog("");
-            Body = null;
+            BodyIndex = null;
             LocalPosition = null;
         }
 

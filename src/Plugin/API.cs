@@ -201,7 +201,7 @@ namespace Trajectories
             {
                 CelestialBody body = FlightGlobals.GetHomeBody();
                 if (body != null)
-                    TargetProfile.SetFromLatLonAlt(body, lat, lon, alt);
+                    TargetProfile.SetFromLatLonAlt(body.flightGlobalsIndex, lat, lon, alt);
             }
         }
 

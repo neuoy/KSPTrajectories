@@ -335,7 +335,7 @@ namespace Trajectories
                     }
 
                     // target profile
-                    TargetProfile.SetFromLocalPos(FlightGlobals.Bodies.FirstOrDefault(b => b.name == module.TargetBody),
+                    TargetProfile.SetFromLocalPos(FlightGlobals.Bodies.FirstOrDefault(b => b.name == module.TargetBody).flightGlobalsIndex,
                         new Vector3d(module.TargetPosition_x, module.TargetPosition_y, module.TargetPosition_z));
                     TargetProfile.ManualText = module.ManualTargetTxt;
                     Util.Log("Profiles loaded");

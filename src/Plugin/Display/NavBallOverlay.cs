@@ -146,7 +146,7 @@ namespace Trajectories
             patch = Trajectory.Patches.LastOrDefault();
 
             if ((!Util.IsFlight && !Util.IsTrackingStation) || !Trajectories.IsVesselAttached || !TargetProfile.WorldPosition.HasValue ||
-                patch == null || !patch.ImpactPosition.HasValue || patch.StartingState.ReferenceBody != TargetProfile.Body || !Ready)
+                patch == null || !patch.ImpactPosition.HasValue || patch.StartingState.BodyIndex != TargetProfile.BodyIndex || !Ready)
             {
                 SetDisplayEnabled(false);
                 return;
@@ -215,9 +215,12 @@ namespace Trajectories
                 return Vector2d.zero;
 
             Vector3d? targetPosition = TargetProfile.WorldPosition;
-            CelestialBody body = TargetProfile.Body;
-            if (!targetPosition.HasValue || patch == null || !patch.ImpactPosition.HasValue || patch.StartingState.ReferenceBody != body || !patch.IsAtmospheric)
+
+            if (!targetPosition.HasValue || patch == null || !patch.ImpactPosition.HasValue
+                || patch.StartingState.BodyIndex != TargetProfile.BodyIndex || !patch.IsAtmospheric)
                 return Vector2d.zero;
+
+            CelestialBody body = TargetProfile.Body;
 
             // Get impact position, or, if some point over the trajectory has not enough clearance, smoothly interpolate to that point depending on how much clearance is missing
             Vector3d impactPosition = patch.ImpactPosition.Value;

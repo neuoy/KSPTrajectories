@@ -995,7 +995,7 @@ namespace Trajectories
 
             if (lastPatch != null && lastPatch.ImpactPosition.HasValue)
             {
-                TargetProfile.SetFromWorldPos(lastPatch.StartingState.ReferenceBody, lastPatch.ImpactPosition.Value);
+                TargetProfile.SetFromWorldPos(lastPatch.StartingState.BodyIndex, lastPatch.ImpactPosition.Value);
                 ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_Trajectories_TargetingImpact"));
             }
         }
@@ -1008,7 +1008,7 @@ namespace Trajectories
             double longitude = SpaceCenter.Instance.Longitude;
 
             if (homebody != null)
-                TargetProfile.SetFromLatLonAlt(homebody, latitude, longitude);
+                TargetProfile.SetFromLatLonAlt(homebody.flightGlobalsIndex, latitude, longitude);
         }
 
         private static void OnButtonClick_TargetVessel()
@@ -1018,7 +1018,7 @@ namespace Trajectories
 
             if (targetVessel != null && targetVessel.LandedOrSplashed)
             {
-                TargetProfile.SetFromWorldPos(targetVessel.lastBody, targetVessel.GetWorldPos3D() - targetVessel.lastBody.position);
+                TargetProfile.SetFromWorldPos(targetVessel.lastBody.flightGlobalsIndex, targetVessel.GetWorldPos3D() - targetVessel.lastBody.position);
                 ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_Trajectories_TargetingVessel", targetVessel.GetName()));
             }
         }
@@ -1030,7 +1030,7 @@ namespace Trajectories
 
             if (navigationWaypoint != null)
             {
-                TargetProfile.SetFromLatLonAlt(navigationWaypoint.celestialBody,
+                TargetProfile.SetFromLatLonAlt(navigationWaypoint.celestialBody.flightGlobalsIndex,
                     navigationWaypoint.latitude, navigationWaypoint.longitude, navigationWaypoint.altitude);
                 ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_Trajectories_TargetingWaypoint", navigationWaypoint.name));
             }
@@ -1049,7 +1049,7 @@ namespace Trajectories
 
                 if (double.TryParse(latLng[0].Trim(), out lat) && double.TryParse(latLng[1].Trim(), out lng))
                 {
-                    TargetProfile.SetFromLatLonAlt(body, lat, lng);
+                    TargetProfile.SetFromLatLonAlt(body.flightGlobalsIndex, lat, lng);
                     ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_Trajectories_TargetingManual"));
                 }
             }
