@@ -422,28 +422,28 @@ namespace Trajectories
             return elevation;
         }
 
-        /// <summary> Gets the ground altitude of the GameDataCache body using the world space relative position </summary>
+        /// <summary> Gets the ground altitude of the GameDataCache vessel body using the world space relative position </summary>
         /// <returns> The altitude above sea level, can be negative for bodies without an ocean or null for bodies without a surface </returns>
         internal static double? GroundAltitude(Vector3d relative_position)
         {
             Vector3d local_position = (relative_position.normalized).xzy;
             local_position = new(
-                Vector3d.Dot(local_position, GameDataCache.BodyFrameX),
-                Vector3d.Dot(local_position, GameDataCache.BodyFrameY),
-                Vector3d.Dot(local_position, GameDataCache.BodyFrameZ));
+                Vector3d.Dot(local_position, GameDataCache.VesselBodyInfo.BodyFrameX),
+                Vector3d.Dot(local_position, GameDataCache.VesselBodyInfo.BodyFrameY),
+                Vector3d.Dot(local_position, GameDataCache.VesselBodyInfo.BodyFrameZ));
 
             int index = ((int)(((Math.Atan2(local_position.y, local_position.x) * Mathf.Rad2Deg) + 180d) * MAP_WIDTH_DIVISOR) * MAP_WIDTH) +
                 (int)(((Math.Asin(local_position.z) * Mathf.Rad2Deg) + 90d) * MAP_HEIGHT_DIVISOR);
 
-            if (index < 0 || index > ground_altitude_maps[GameDataCache.BodyIndex.Value].HeightMap?.Length)
+            if (index < 0 || index > ground_altitude_maps[GameDataCache.VesselBodyIndex.Value].HeightMap?.Length)
             {
-                Util.LogWarning("Ground altitude map index {0} out of range [0-{1}]", index, ground_altitude_maps[GameDataCache.BodyIndex.Value].HeightMap?.Length);
+                Util.LogWarning("Ground altitude map index {0} out of range [0-{1}]", index, ground_altitude_maps[GameDataCache.VesselBodyIndex.Value].HeightMap?.Length);
                 return null;
             }
 
-            double? elevation = ground_altitude_maps[GameDataCache.BodyIndex.Value].HeightMap?[index];
+            double? elevation = ground_altitude_maps[GameDataCache.VesselBodyIndex.Value].HeightMap?[index];
 
-            if (GameDataCache.BodyHasOcean)
+            if (GameDataCache.VesselBodyInfo.BodyHasOcean)
                 elevation = elevation.HasValue ? Math.Max(elevation.Value, 0d) : null;
 
             return elevation;

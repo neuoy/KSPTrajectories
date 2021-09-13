@@ -354,9 +354,9 @@ namespace Trajectories
             // create starting VesselState
             VesselState state = new()
             {
-                BodyIndex = GameDataCache.BodyIndex.Value,
+                BodyIndex = GameDataCache.VesselBodyIndex.Value,
                 Time = GameDataCache.UniversalTime,
-                Position = GameDataCache.VesselWorldPos - GameDataCache.BodyWorldPos,
+                Position = GameDataCache.VesselWorldPos - GameDataCache.VesselBodyInfo.BodyWorldPos,
                 Velocity = GameDataCache.VesselOrbitVelocity,
                 StockPatch = GameDataCache.Orbit
             };
@@ -435,7 +435,7 @@ namespace Trajectories
             //Util.DebugLog("UT {0}", state.Time);
 
             Orbit orbit = new Orbit();
-            orbit.UpdateFromStateVectors(Util.SwapYZ(state.Position), Util.SwapYZ(state.Velocity), GameDataCache.Body, state.Time);
+            orbit.UpdateFromStateVectors(Util.SwapYZ(state.Position), Util.SwapYZ(state.Velocity), GameDataCache.VesselBody, state.Time);
             PatchedConics.SolverParameters pars = new PatchedConics.SolverParameters
             {
                 FollowManeuvers = false
@@ -543,24 +543,26 @@ namespace Trajectories
             }
 
 
-            Orbit nextPatch = null;
+            Orbit next_orbit_patch = null;
             if (startingState.StockPatch == null)
             {
-                nextPatch = patch.SpaceOrbit.nextPatch;
+                next_orbit_patch = patch.SpaceOrbit.nextPatch;
             }
             else
             {
                 int planIdx = flightPlan.IndexOf(startingState.StockPatch);
                 if (planIdx >= 0 && planIdx < flightPlan.Count - 1)
                 {
-                    nextPatch = flightPlan[planIdx + 1];
+                    next_orbit_patch = flightPlan[planIdx + 1];
                 }
             }
 
-            if (nextPatch != null)
-                patch.EndTime = nextPatch.StartUT;
+            if (next_orbit_patch != null)
+                patch.EndTime = next_orbit_patch.StartUT;
 
-            double maxAtmosphereAltitude = GameDataCache.BodyHasAtmosphere ? GameDataCache.BodyAtmosphereDepth : GameDataCache.BodyMaxGroundHeight;
+            GameDataCache.BodyInfo body = GameDataCache.VesselBodyInfo;
+
+            double maxAtmosphereAltitude = body.BodyHasAtmosphere ? body.BodyAtmosphereDepth : body.BodyMaxGroundHeight;
 
             double minAltitude = patch.SpaceOrbit.PeA;
             if (patch.SpaceOrbit.timeToPe < 0d || patch.EndTime < startingState.Time + patch.SpaceOrbit.timeToPe)
@@ -568,13 +570,13 @@ namespace Trajectories
                 minAltitude = Math.Min(
                     patch.SpaceOrbit.getRelativePositionAtUT(patch.EndTime).magnitude,
                     patch.SpaceOrbit.getRelativePositionAtUT(patch.StartingState.Time + 1d).magnitude
-                    ) - GameDataCache.BodyRadius;
+                    ) - body.BodyRadius;
             }
 
             if (minAltitude < maxAtmosphereAltitude)
             {
                 double entryTime;
-                if (startingState.Position.magnitude <= GameDataCache.BodyRadius + maxAtmosphereAltitude)
+                if (startingState.Position.magnitude <= body.BodyRadius + maxAtmosphereAltitude)
                 {
                     // whole orbit is inside the atmosphere
                     entryTime = startingState.Time;
@@ -584,12 +586,12 @@ namespace Trajectories
                     entryTime = FindOrbitBodyIntersection(
                         patch.SpaceOrbit,
                         startingState.Time, startingState.Time + patch.SpaceOrbit.timeToPe,
-                        GameDataCache.BodyRadius + maxAtmosphereAltitude);
+                        body.BodyRadius + maxAtmosphereAltitude);
                 }
 
-                if (entryTime > startingState.Time + 0.1d || !GameDataCache.BodyHasAtmosphere)
+                if (entryTime > startingState.Time + 0.1d || !body.BodyHasAtmosphere)
                 {
-                    if (GameDataCache.BodyHasAtmosphere)
+                    if (body.BodyHasAtmosphere)
                     {
                         // add the space patch before atmospheric entry
 
@@ -597,7 +599,7 @@ namespace Trajectories
                         patches_buffer.Add(patch);
                         return new VesselState
                         {
-                            BodyIndex = GameDataCache.BodyIndex.Value,
+                            BodyIndex = GameDataCache.VesselBodyIndex.Value,
                             Position = Util.SwapYZ(patch.SpaceOrbit.getRelativePositionAtUT(entryTime)),
                             Time = entryTime,
                             Velocity = Util.SwapYZ(patch.SpaceOrbit.getOrbitalVelocityAtUT(entryTime))
@@ -612,7 +614,7 @@ namespace Trajectories
                         double groundRangeExit = FindOrbitBodyIntersection(
                             patch.SpaceOrbit,
                             startingState.Time, startingState.Time + patch.SpaceOrbit.timeToPe,
-                            GameDataCache.BodyRadius - maxAtmosphereAltitude);
+                            body.BodyRadius - maxAtmosphereAltitude);
 
                         if (groundRangeExit <= entryTime)
                             groundRangeExit = startingState.Time + patch.SpaceOrbit.timeToPe;
@@ -620,13 +622,13 @@ namespace Trajectories
                         double iterationSize = (groundRangeExit - entryTime) / 100d;
                         double t = 0d;
                         bool groundImpact = false;
-                        if (GameDataCache.BodyHasSolidSurface)
+                        if (body.BodyHasSolidSurface)
                         {
                             for (t = entryTime; t < groundRangeExit; t += iterationSize)
                             {
                                 Vector3d pos = patch.SpaceOrbit.getRelativePositionAtUT(t);
                                 double? groundAltitude = CelestialBodyMaps.GroundAltitude(CalculateRotatedPosition(Util.SwapYZ(pos), t));
-                                groundAltitude = groundAltitude.HasValue ? groundAltitude.Value + GameDataCache.BodyRadius : GameDataCache.BodyRadius;
+                                groundAltitude = groundAltitude.HasValue ? groundAltitude.Value + body.BodyRadius : body.BodyRadius;
                                 if (pos.magnitude < groundAltitude.Value)
                                 {
                                     t -= iterationSize;
@@ -651,16 +653,16 @@ namespace Trajectories
                             patches_buffer.Add(patch);
 
                             // currently, we can't handle predictions for another body, so we stop if the next patch body is different
-                            if (nextPatch == null || nextPatch.referenceBody != GameDataCache.Body)
+                            if (next_orbit_patch == null || next_orbit_patch.referenceBody != GameDataCache.VesselBody)
                                 return null;
 
                             return new VesselState
                             {
-                                BodyIndex = GameDataCache.BodyIndex.Value,
+                                BodyIndex = GameDataCache.VesselBodyIndex.Value,
                                 Position = Util.SwapYZ(patch.SpaceOrbit.getRelativePositionAtUT(patch.EndTime)),
                                 Velocity = Util.SwapYZ(patch.SpaceOrbit.getOrbitalVelocityAtUT(patch.EndTime)),
                                 Time = patch.EndTime,
-                                StockPatch = nextPatch
+                                StockPatch = next_orbit_patch
                             };
                         }
                     }
@@ -714,12 +716,12 @@ namespace Trajectories
 
                         // gravity acceleration
                         double R_ = position.magnitude;
-                        Vector3d accel_g = position * (-GameDataCache.BodyGravityParameter / (R_ * R_ * R_));
+                        Vector3d accel_g = position * (-body.BodyGravityParameter / (R_ * R_ * R_));
 
                         // aero force
-                        Vector3d vel_air = velocity - Vector3d.Cross(GameDataCache.BodyAngularVelocity, position);
+                        Vector3d vel_air = velocity - Vector3d.Cross(body.BodyAngularVelocity, position);
 
-                        double aoa = DescentProfile.GetAngleOfAttack(GameDataCache.Body, position, vel_air) ?? 0d;
+                        double aoa = DescentProfile.GetAngleOfAttack(GameDataCache.VesselBody, position, vel_air) ?? 0d;   // todo: change to use BodyInfo
 
                         Profiler.Start("GetForces");
                         Vector3d force_aero = Trajectories.AerodynamicModel.GetForces(position, vel_air, aoa);
@@ -743,7 +745,7 @@ namespace Trajectories
                         ++iteration;
 
                         double R = state.position.magnitude;
-                        double altitude = R - GameDataCache.BodyRadius;
+                        double altitude = R - body.BodyRadius;
                         double atmosphereCoeff = altitude / maxAtmosphereAltitude;
                         if (hitGround
                             || atmosphereCoeff <= 0d || atmosphereCoeff >= 1d
@@ -790,7 +792,7 @@ namespace Trajectories
                                 patches_buffer.Add(patch);
                                 return new VesselState
                                 {
-                                    BodyIndex = GameDataCache.BodyIndex.Value,
+                                    BodyIndex = GameDataCache.VesselBodyIndex.Value,
                                     Position = state.position,
                                     Velocity = state.velocity,
                                     Time = patch.EndTime
@@ -826,14 +828,14 @@ namespace Trajectories
                         #endregion
 
                         // calculate acceleration due to gravity and aerodynamic force
-                        Vector3d gravityAccel = lastState.position * (-GameDataCache.BodyGravityParameter / (R * R * R));
+                        Vector3d gravityAccel = lastState.position * (-body.BodyGravityParameter / (R * R * R));
                         Vector3d aerodynamicAccel = currentAccel - gravityAccel;
 
                         // acceleration in the vessel reference frame is acceleration - gravityAccel
                         max_accel_buffer = Math.Max(aerodynamicAccel.magnitude, max_accel_buffer);
 
                         #region Impact Calculation
-                        if (GameDataCache.BodyHasSolidSurface)
+                        if (body.BodyHasSolidSurface)
                         {
                             Profiler.Start("AddPatch#impact");
 
@@ -850,7 +852,7 @@ namespace Trajectories
                                     // check terrain collision, to detect impact on mountains etc.
                                     Vector3d rayOrigin = lastPositionStored;
                                     Vector3d rayEnd = state.position;
-                                    double absGroundAltitude = groundAltitude.HasValue ? groundAltitude.Value + GameDataCache.BodyRadius : GameDataCache.BodyRadius;
+                                    double absGroundAltitude = groundAltitude.HasValue ? groundAltitude.Value + body.BodyRadius : body.BodyRadius;
                                     if (absGroundAltitude > rayEnd.magnitude)
                                     {
                                         hitGround = true;
@@ -893,24 +895,24 @@ namespace Trajectories
                 patches_buffer.Add(patch);
 
                 // currently, we can't handle predictions for another body, so we stop if the next patch body is different
-                if (nextPatch == null || nextPatch.referenceBody != GameDataCache.Body)
+                if (next_orbit_patch == null || next_orbit_patch.referenceBody != GameDataCache.VesselBody)
                     return null;
 
                 return new VesselState
                 {
-                    BodyIndex = GameDataCache.BodyIndex.Value,
+                    BodyIndex = GameDataCache.VesselBodyIndex.Value,
                     Position = Util.SwapYZ(patch.SpaceOrbit.getRelativePositionAtUT(patch.EndTime)),
                     Velocity = Util.SwapYZ(patch.SpaceOrbit.getOrbitalVelocityAtUT(patch.EndTime)),
                     Time = patch.EndTime,
-                    StockPatch = nextPatch
+                    StockPatch = next_orbit_patch
                 };
             }
         }
 
         internal static Vector3d CalculateRotatedPosition(Vector3d relativePosition, double time)
         {
-            double angle = -(time - GameDataCache.UniversalTime) * GameDataCache.BodyAngularVelocity.magnitude / Math.PI * 180d;
-            Quaternion bodyRotation = Quaternion.AngleAxis((float)angle, GameDataCache.BodyAngularVelocity.normalized);
+            double angle = -(time - GameDataCache.UniversalTime) * GameDataCache.VesselBodyInfo.BodyAngularVelocity.magnitude / Math.PI * 180d;
+            Quaternion bodyRotation = Quaternion.AngleAxis((float)angle, GameDataCache.VesselBodyInfo.BodyAngularVelocity.normalized);
             return bodyRotation * relativePosition;
         }
 

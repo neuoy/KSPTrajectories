@@ -165,29 +165,83 @@ namespace Trajectories
 
         #region BODY_PROPERTIES
         // body properties
-        internal static CelestialBody Body => BodyIndex.HasValue ? FlightGlobals.Bodies[BodyIndex.Value] : null;   // Not thread safe
-        internal static int? BodyIndex { get; private set; }
-        internal static Vector3d BodyWorldPos { get; private set; }
-        internal static bool BodyHasAtmosphere { get; private set; }
-        internal static bool BodyHasOcean { get; private set; }
-        internal static bool BodyHasSolidSurface { get; private set; }
-        internal static double BodyAtmosphereDepth { get; private set; }
-        internal static double BodyAtmosTempOffset { get; private set; }       // The average day/night temperature at the equator
-        internal static double BodyMaxGroundHeight { get; private set; }
-        internal static double BodyRadius { get; private set; }       // Bodies with an atmosphere have a radius equal to their max atmosphere height
-        internal static double? BodyPqsRadius { get; private set; }   // Bodies without a surface have no PQS data
-        internal static Vector3d BodyAngularVelocity { get; private set; }
-        internal static double BodyGravityParameter { get; private set; }
-        internal static double BodyRotationPeriod { get; private set; }
-        internal static Vector3d BodyTransformUp { get; private set; }
-        internal static Vector3d BodyFrameX { get; private set; }
-        internal static Vector3d BodyFrameY { get; private set; }
-        internal static Vector3d BodyFrameZ { get; private set; }
+        internal class BodyInfo
+        {
+            internal CelestialBody Body => FlightGlobals.Bodies[BodyIndex];   // Not thread safe
+            internal int BodyIndex { get; private set; }
+            internal Vector3d BodyWorldPos { get; private set; }
+            internal bool BodyHasAtmosphere { get; private set; }
+            internal bool BodyHasOcean { get; private set; }
+            internal bool BodyHasSolidSurface { get; private set; }
+            internal double BodyAtmosphereDepth { get; private set; }
+            internal double BodyAtmosTempOffset { get; private set; }       // The average day/night temperature at the equator
+            internal double BodyMaxGroundHeight { get; private set; }
+            internal double BodyRadius { get; private set; }       // Bodies with an atmosphere have a radius equal to their max atmosphere height
+            internal double? BodyPqsRadius { get; private set; }   // Bodies without a surface have no PQS data
+            internal Vector3d BodyAngularVelocity { get; private set; }
+            internal double BodyGravityParameter { get; private set; }
+            internal double BodyRotationPeriod { get; private set; }
+            internal Vector3d BodyTransformUp { get; private set; }
+            internal Vector3d BodyFrameX { get; private set; }
+            internal Vector3d BodyFrameY { get; private set; }
+            internal Vector3d BodyFrameZ { get; private set; }
+            internal BodyInfo(CelestialBody body)
+            {
+                BodyIndex = body.flightGlobalsIndex;
+                BodyHasAtmosphere = body.atmosphere;
+                BodyHasOcean = body.ocean;
+                BodyHasSolidSurface = body.hasSolidSurface;
+                BodyAtmosphereDepth = body.atmosphereDepth;
+
+                BodyAtmosTempOffset = body.latitudeTemperatureBiasCurve.Evaluate(0f)
+                    + body.latitudeTemperatureSunMultCurve.Evaluate(0f) * 0.5d
+                    + body.axialTemperatureSunMultCurve.Evaluate(0f);
+
+                BodyMaxGroundHeight = body.pqsController != null ? body.pqsController.mapMaxHeight : 0d;
+                BodyRadius = body.Radius;
+                BodyPqsRadius = body.pqsController.radius;
+                BodyAngularVelocity = body.angularVelocity;
+                BodyGravityParameter = body.gravParameter;
+                BodyRotationPeriod = body.rotationPeriod;
+                BodyTransformUp = body.bodyTransform.up;
+                Update();
+            }
+
+            internal void Update()
+            {
+                BodyFrameX = Body.BodyFrame.X;
+                BodyFrameY = Body.BodyFrame.Y;
+                BodyFrameZ = Body.BodyFrame.Z;
+                BodyWorldPos = Body.position;
+            }
+        }
+
+        /// <summary> Adds a collection of KSP CelestialBody's to a collection of BodyInfo's </summary>
+        internal static void Add(this ICollection<BodyInfo> collection, IEnumerable<CelestialBody> bodies)
+        {
+            foreach (CelestialBody body in bodies)
+            {
+                collection.Add(new BodyInfo(body));
+            }
+        }
+
+        /// <summary> Updates a collection of BodyInfo's </summary>
+        internal static void Update(this ICollection<BodyInfo> collection)
+        {
+            foreach (BodyInfo body in collection)
+            {
+                body.Update();
+            }
+        }
+
         #endregion
 
         #region VESSEL_PROPERTIES
         // vessel properties
         internal static Vessel AttachedVessel { get; private set; }
+        internal static CelestialBody VesselBody => VesselBodyIndex.HasValue ? FlightGlobals.Bodies[VesselBodyIndex.Value] : null;   // Not thread safe
+        internal static BodyInfo VesselBodyInfo => VesselBodyIndex.HasValue ? Bodies[VesselBodyIndex.Value] : null;
+        internal static int? VesselBodyIndex { get; private set; }
         internal static List<PartInfo> VesselParts { get; private set; }
         internal static double VesselMass { get; private set; }
         internal static Vector3d VesselWorldPos { get; private set; }
@@ -199,6 +253,8 @@ namespace Trajectories
         internal static double UniversalTime { get; private set; }
         internal static double WarpDeltaTime { get; private set; }
         internal static Vector3d SunWorldPos { get; private set; }
+        internal static List<BodyInfo> Bodies { get; private set; }
+
 
         internal static List<ManeuverNode> ManeuverNodes { get; private set; }
         internal static Orbit Orbit { get; private set; }
@@ -208,6 +264,7 @@ namespace Trajectories
         {
             Util.DebugLog("Constructing");
             SunWorldPos = FlightGlobals.Bodies[0].position;
+            Bodies = new() { FlightGlobals.Bodies };
         }
 
         /// <summary> Updates entire cache </summary>
@@ -220,30 +277,28 @@ namespace Trajectories
             SunWorldPos = FlightGlobals.Bodies[0].position;
 
             // check for celestial body change
-            if (Trajectories.AttachedVessel.mainBody?.name != null && Body != Trajectories.AttachedVessel.mainBody)
+            if (Trajectories.AttachedVessel.mainBody?.name != null && VesselBody != Trajectories.AttachedVessel.mainBody)
             {
                 Util.DebugLog("Updating body to {0}", Trajectories.AttachedVessel.mainBody?.name);
 
-                BodyIndex = null;
+                VesselBodyIndex = null;
 
                 int index = 0;
                 foreach (CelestialBody body in FlightGlobals.Bodies)
                 {
                     if (body?.name != null && body.name == Trajectories.AttachedVessel.mainBody.name)
                     {
-                        BodyIndex = index;
+                        VesselBodyIndex = index;
                         break;
                     }
                     index++;
                 }
 
-                if (Body == null)
+                if (VesselBodyInfo == null || VesselBody == null)
                 {
                     Clear();
                     return false;
                 }
-
-                ResetBodyCache();
             }
 
             // check for vessel changes
@@ -254,7 +309,7 @@ namespace Trajectories
 
                 AttachedVessel = Trajectories.AttachedVessel;
                 VesselParts?.Release();
-                VesselParts = new List<PartInfo>() { AttachedVessel.Parts };
+                VesselParts = new() { AttachedVessel.Parts };
 
                 Trajectories.AerodynamicModel.InitCache();
             }
@@ -265,12 +320,13 @@ namespace Trajectories
                 return false;
             }
 
-            UpdateBodyCache();
+            // update only the data that changes
+            Bodies[VesselBodyIndex.Value].Update();
             UpdateVesselCache();
 
             ManeuverNodes = new List<ManeuverNode>(AttachedVessel.patchedConicSolver.maneuverNodes);
             Orbit = new Orbit(AttachedVessel.orbit);
-            FlightPlan = new List<Orbit>(AttachedVessel.patchedConicSolver.flightPlan);
+            FlightPlan = new(AttachedVessel.patchedConicSolver.flightPlan);
 
             Profiler.Stop("GameDataCache.Update");
             return true;
@@ -279,36 +335,13 @@ namespace Trajectories
         /// <summary> Clears the cache </summary>
         internal static void Clear()
         {
-            ClearBodyCache();
             ClearVesselCache();
-        }
-
-        private static void ClearBodyCache()
-        {
-            BodyIndex = null;
-            BodyHasAtmosphere = false;
-            BodyHasOcean = false;
-            BodyHasSolidSurface = false;
-            BodyAtmosphereDepth = 0d;
-
-            BodyAtmosTempOffset = 0d;
-
-            BodyMaxGroundHeight = 0d;
-            BodyRadius = 0d;
-            BodyPqsRadius = null;
-            BodyAngularVelocity = Vector3d.zero;
-            BodyGravityParameter = 0d;
-            BodyRotationPeriod = 0d;
-            BodyTransformUp = Vector3d.zero;
-            BodyFrameX = Vector3d.zero;
-            BodyFrameY = Vector3d.zero;
-            BodyFrameZ = Vector3d.zero;
-            BodyWorldPos = Vector3d.zero;
         }
 
         private static void ClearVesselCache()
         {
             AttachedVessel = null;
+            VesselBodyIndex = null;
             VesselWorldPos = Vector3d.zero;
             VesselOrbitVelocity = Vector3d.zero;
             VesselTransformUp = Vector3d.zero;
@@ -316,34 +349,6 @@ namespace Trajectories
 
             VesselParts?.Clear();
             VesselParts = null;
-        }
-
-        private static void ResetBodyCache()
-        {
-            BodyHasAtmosphere = Body.atmosphere;
-            BodyHasOcean = Body.ocean;
-            BodyHasSolidSurface = Body.hasSolidSurface;
-            BodyAtmosphereDepth = Body.atmosphereDepth;
-
-            BodyAtmosTempOffset = Body.latitudeTemperatureBiasCurve.Evaluate(0f)
-                + Body.latitudeTemperatureSunMultCurve.Evaluate(0f) * 0.5d
-                + Body.axialTemperatureSunMultCurve.Evaluate(0f);
-
-            BodyMaxGroundHeight = Body.pqsController != null ? Body.pqsController.mapMaxHeight : 0d;
-            BodyRadius = Body.Radius;
-            BodyPqsRadius = Body.pqsController.radius;
-            BodyAngularVelocity = Body.angularVelocity;
-            BodyGravityParameter = Body.gravParameter;
-            BodyRotationPeriod = Body.rotationPeriod;
-            BodyTransformUp = Body.bodyTransform.up;
-        }
-
-        private static void UpdateBodyCache()
-        {
-            BodyFrameX = Body.BodyFrame.X;
-            BodyFrameY = Body.BodyFrame.Y;
-            BodyFrameZ = Body.BodyFrame.Z;
-            BodyWorldPos = Body.position;
         }
 
         private static void UpdateVesselCache()

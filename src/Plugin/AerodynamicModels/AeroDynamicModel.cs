@@ -43,7 +43,7 @@ namespace Trajectories
 
         internal void InitCache()
         {
-            cachedForces = new AeroForceCache(10000d, Math.PI, GameDataCache.BodyAtmosphereDepth, 32, 33, 32, this);
+            cachedForces = new AeroForceCache(10000d, Math.PI, GameDataCache.VesselBodyInfo.BodyAtmosphereDepth, 32, 33, 32, this);
             next_update_delay = Util.Clocks;
         }
 
@@ -80,8 +80,8 @@ namespace Trajectories
         /// </summary>
         internal Vector3d GetForces(Vector3d bodySpacePosition, Vector3d airVelocity, double angleOfAttack)
         {
-            double altitudeAboveSea = bodySpacePosition.magnitude - GameDataCache.BodyRadius;
-            if (altitudeAboveSea > GameDataCache.BodyAtmosphereDepth)
+            double altitudeAboveSea = bodySpacePosition.magnitude - GameDataCache.VesselBodyInfo.BodyRadius;
+            if (altitudeAboveSea > GameDataCache.VesselBodyInfo.BodyAtmosphereDepth)
             {
                 return Vector3d.zero;
             }
@@ -113,7 +113,7 @@ namespace Trajectories
         {
             Profiler.Start("ComputeForces");
 
-            if (!GameDataCache.BodyHasAtmosphere || altitude >= GameDataCache.BodyAtmosphereDepth)
+            if (!GameDataCache.VesselBodyInfo.BodyHasAtmosphere || altitude >= GameDataCache.VesselBodyInfo.BodyAtmosphereDepth)
                 return Vector3d.zero;
 
             // this is weird, the vessel orientation does not match the reference transform (up is forward), this code fixes it but I don't know if it'll work in all cases

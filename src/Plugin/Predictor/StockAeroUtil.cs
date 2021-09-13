@@ -139,36 +139,41 @@ namespace Trajectories
         /// <param name="position"></param>
         public static double GetTemperature(Vector3d position)
         {
-            if (!GameDataCache.BodyHasAtmosphere)
+            GameDataCache.BodyInfo body = GameDataCache.VesselBodyInfo;
+
+            if (!body.BodyHasAtmosphere)
                 return PhysicsGlobals.SpaceTemperature;
 
-            double altitude = (position - GameDataCache.BodyWorldPos).magnitude - GameDataCache.BodyRadius;
-            if (altitude > GameDataCache.BodyAtmosphereDepth)
+            double altitude = (position - body.BodyWorldPos).magnitude - body.BodyRadius;
+            if (altitude > body.BodyAtmosphereDepth)
                 return PhysicsGlobals.SpaceTemperature;
 
-            Vector3d up = (position - GameDataCache.BodyWorldPos).normalized;
-            float polarAngle = (float)Math.Acos(Vector3d.Dot(GameDataCache.BodyTransformUp, up));
+            Vector3d up = (position - body.BodyWorldPos).normalized;
+            float polarAngle = (float)Math.Acos(Vector3d.Dot(body.BodyTransformUp, up));
             if (polarAngle > Util.HALF_PI)
                 polarAngle = Mathf.PI - polarAngle;
 
             float time = ((float)Util.HALF_PI - polarAngle) * Mathf.Rad2Deg;
 
             Vector3d sunVector = (GameDataCache.SunWorldPos - position).normalized;
-            double sunAxialDot = Vector3d.Dot(sunVector, GameDataCache.BodyTransformUp);
-            double bodyPolarAngle = Math.Acos(Vector3d.Dot(GameDataCache.BodyTransformUp, up));
+            double sunAxialDot = Vector3d.Dot(sunVector, body.BodyTransformUp);
+            double bodyPolarAngle = Math.Acos(Vector3d.Dot(body.BodyTransformUp, up));
             double sunPolarAngle = Math.Acos(sunAxialDot);
             double sunBodyMaxDot = (1d + Math.Cos(sunPolarAngle - bodyPolarAngle)) * 0.5d;
             double sunBodyMinDot = (1d + Math.Cos(sunPolarAngle + bodyPolarAngle)) * 0.5d;
             double sunDotCorrected = (1d + Vector3d.Dot(
                 sunVector,
-                Quaternion.AngleAxis(45f * Math.Sign(GameDataCache.BodyRotationPeriod), GameDataCache.BodyTransformUp) * up))
+                Quaternion.AngleAxis(45f * Math.Sign(body.BodyRotationPeriod), body.BodyTransformUp) * up))
                 * 0.5d;
             double sunDotNormalized = (sunDotCorrected - sunBodyMinDot) / (sunBodyMaxDot - sunBodyMinDot);
-            double atmosphereTemperatureOffset = GameDataCache.Body.latitudeTemperatureBiasCurve.Evaluate(time)
-                + GameDataCache.Body.latitudeTemperatureSunMultCurve.Evaluate(time) * sunDotNormalized
-                + GameDataCache.Body.axialTemperatureSunMultCurve.Evaluate((float)sunAxialDot);
-            double temperature = GameDataCache.Body.GetTemperature(altitude) +
-                GameDataCache.Body.atmosphereTemperatureSunMultCurve.Evaluate((float)altitude) * atmosphereTemperatureOffset;
+
+            // todo: change to use BodyInfo
+
+            double atmosphereTemperatureOffset = GameDataCache.VesselBody.latitudeTemperatureBiasCurve.Evaluate(time)
+                + GameDataCache.VesselBody.latitudeTemperatureSunMultCurve.Evaluate(time) * sunDotNormalized
+                + GameDataCache.VesselBody.axialTemperatureSunMultCurve.Evaluate((float)sunAxialDot);
+            double temperature = GameDataCache.VesselBody.GetTemperature(altitude) +
+                GameDataCache.VesselBody.atmosphereTemperatureSunMultCurve.Evaluate((float)altitude) * atmosphereTemperatureOffset;
 
             return temperature;
         }
@@ -181,21 +186,23 @@ namespace Trajectories
         /// <param name="altitude">Altitude above sea level (in meters)</param>
         public static double GetDensity(double altitude)
         {
-            if (!GameDataCache.BodyHasAtmosphere)
+            if (!GameDataCache.VesselBodyInfo.BodyHasAtmosphere)
                 return 0d;
 
-            if (altitude > GameDataCache.BodyAtmosphereDepth)
+            if (altitude > GameDataCache.VesselBodyInfo.BodyAtmosphereDepth)
                 return 0d;
 
-            double pressure = GameDataCache.Body.GetPressure(altitude);
+            // todo: change to use BodyInfo
+
+            double pressure = GameDataCache.VesselBody.GetPressure(altitude);
 
             // get an average day/night temperature at the equator
             double temperature = // body.GetFullTemperature(altitude, atmosphereTemperatureOffset);
-                GameDataCache.Body.GetTemperature(altitude) +
-                GameDataCache.Body.atmosphereTemperatureSunMultCurve.Evaluate((float)altitude) * GameDataCache.BodyAtmosTempOffset;
+                GameDataCache.VesselBody.GetTemperature(altitude) +
+                GameDataCache.VesselBody.atmosphereTemperatureSunMultCurve.Evaluate((float)altitude) * GameDataCache.VesselBodyInfo.BodyAtmosTempOffset;
 
 
-            return GameDataCache.Body.GetDensity(pressure, temperature);
+            return GameDataCache.VesselBody.GetDensity(pressure, temperature);
         }
 
         /// <returns>
@@ -207,25 +214,27 @@ namespace Trajectories
         /// <param name="position">position above sea level (in meters)</param>
         public static double GetDensity(Vector3d position)
         {
-            if (!GameDataCache.BodyHasAtmosphere)
+            GameDataCache.BodyInfo body = GameDataCache.VesselBodyInfo;
+
+            if (!body.BodyHasAtmosphere)
                 return 0d;
 
-            double altitude = (position - GameDataCache.BodyWorldPos).magnitude - GameDataCache.BodyRadius;
-            if (altitude > GameDataCache.BodyAtmosphereDepth)
+            double altitude = (position - body.BodyWorldPos).magnitude - body.BodyRadius;
+            if (altitude > body.BodyAtmosphereDepth)
                 return 0d;
 
-            double pressure = GameDataCache.Body.GetPressure(altitude);
+            double pressure = GameDataCache.VesselBody.GetPressure(altitude);    // todo: change to use BodyInfo
             double temperature = GetTemperature(position);   // body.GetFullTemperature(position);
 
-            return GameDataCache.Body.GetDensity(pressure, temperature);
+            return GameDataCache.VesselBody.GetDensity(pressure, temperature);     // todo: change to use BodyInfo
         }
         #endregion
 
         /// <returns> The calculated aerodynamic forces vector (lift and drag) for the GameDataCache vessel with the given velocity and position parameters </returns>
         public static Vector3d SimAeroForce(Vector3d v_wrld_vel, Vector3d position)
         {
-            double latitude = GameDataCache.Body.GetLatitude(position) / 180d * Math.PI;
-            double altitude = (position - GameDataCache.BodyWorldPos).magnitude - GameDataCache.BodyRadius;
+            double latitude = GameDataCache.VesselBody.GetLatitude(position) / 180d * Math.PI;
+            double altitude = (position - GameDataCache.VesselBodyInfo.BodyWorldPos).magnitude - GameDataCache.VesselBodyInfo.BodyRadius;
 
             return SimAeroForce(v_wrld_vel, altitude, latitude);
         }
@@ -243,7 +252,7 @@ namespace Trajectories
             double dyn_pressure = 0.0005d * rho * v_wrld_vel.sqrMagnitude;
             double pseudoredragmult = PhysicsGlobals.DragCurvePseudoReynolds.Evaluate((float)(rho * Math.Abs(v_wrld_vel.magnitude)));
 
-            double mach = v_wrld_vel.magnitude / GameDataCache.Body.GetSpeedOfSound(GameDataCache.Body.GetPressure(altitude), rho);
+            double mach = v_wrld_vel.magnitude / GameDataCache.VesselBody.GetSpeedOfSound(GameDataCache.VesselBody.GetPressure(altitude), rho);
             if (mach > 25d)
                 mach = 25d;
 
