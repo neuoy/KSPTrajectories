@@ -276,29 +276,18 @@ namespace Trajectories
             WarpDeltaTime = TimeWarp.fixedDeltaTime;
             SunWorldPos = FlightGlobals.Bodies[0].position;
 
+            if (Trajectories.AttachedVessel.mainBody == null)
+            {
+                Clear();
+                return false;
+            }
+
             // check for celestial body change
-            if (Trajectories.AttachedVessel.mainBody?.name != null && VesselBody != Trajectories.AttachedVessel.mainBody)
+            if (VesselBodyIndex != Trajectories.AttachedVessel.mainBody.flightGlobalsIndex)
             {
                 Util.DebugLog("Updating body to {0}", Trajectories.AttachedVessel.mainBody?.name);
 
-                VesselBodyIndex = null;
-
-                int index = 0;
-                foreach (CelestialBody body in FlightGlobals.Bodies)
-                {
-                    if (body?.name != null && body.name == Trajectories.AttachedVessel.mainBody.name)
-                    {
-                        VesselBodyIndex = index;
-                        break;
-                    }
-                    index++;
-                }
-
-                if (VesselBodyInfo == null || VesselBody == null)
-                {
-                    Clear();
-                    return false;
-                }
+                VesselBodyIndex = Trajectories.AttachedVessel.mainBody.flightGlobalsIndex;
             }
 
             // check for vessel changes
