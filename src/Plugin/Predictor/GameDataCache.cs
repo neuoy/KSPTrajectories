@@ -165,8 +165,8 @@ namespace Trajectories
 
         #region BODY_PROPERTIES
         // body properties
-        internal static CelestialBody Body { get; private set; }
-        internal static int BodyIndex { get; private set; }
+        internal static CelestialBody Body => BodyIndex.HasValue ? FlightGlobals.Bodies[BodyIndex.Value] : null;   // Not thread safe
+        internal static int? BodyIndex { get; private set; }
         internal static Vector3d BodyWorldPos { get; private set; }
         internal static bool BodyHasAtmosphere { get; private set; }
         internal static bool BodyHasOcean { get; private set; }
@@ -224,15 +224,13 @@ namespace Trajectories
             {
                 Util.DebugLog("Updating body to {0}", Trajectories.AttachedVessel.mainBody?.name);
 
-                Body = null;
-                BodyIndex = 0;
+                BodyIndex = null;
 
                 int index = 0;
                 foreach (CelestialBody body in FlightGlobals.Bodies)
                 {
                     if (body?.name != null && body.name == Trajectories.AttachedVessel.mainBody.name)
                     {
-                        Body = body;
                         BodyIndex = index;
                         break;
                     }
@@ -245,7 +243,7 @@ namespace Trajectories
                     return false;
                 }
 
-                UpdateBodyCache();
+                ResetBodyCache();
             }
 
             // check for vessel changes
@@ -267,11 +265,7 @@ namespace Trajectories
                 return false;
             }
 
-            BodyFrameX = Body.BodyFrame.X;
-            BodyFrameY = Body.BodyFrame.Y;
-            BodyFrameZ = Body.BodyFrame.Z;
-            BodyWorldPos = Body.position;
-
+            UpdateBodyCache();
             UpdateVesselCache();
 
             ManeuverNodes = new List<ManeuverNode>(AttachedVessel.patchedConicSolver.maneuverNodes);
@@ -291,8 +285,7 @@ namespace Trajectories
 
         private static void ClearBodyCache()
         {
-            Body = null;
-            BodyIndex = 0;
+            BodyIndex = null;
             BodyHasAtmosphere = false;
             BodyHasOcean = false;
             BodyHasSolidSurface = false;
@@ -325,7 +318,7 @@ namespace Trajectories
             VesselParts = null;
         }
 
-        private static void UpdateBodyCache()
+        private static void ResetBodyCache()
         {
             BodyHasAtmosphere = Body.atmosphere;
             BodyHasOcean = Body.ocean;
@@ -343,6 +336,14 @@ namespace Trajectories
             BodyGravityParameter = Body.gravParameter;
             BodyRotationPeriod = Body.rotationPeriod;
             BodyTransformUp = Body.bodyTransform.up;
+        }
+
+        private static void UpdateBodyCache()
+        {
+            BodyFrameX = Body.BodyFrame.X;
+            BodyFrameY = Body.BodyFrame.Y;
+            BodyFrameZ = Body.BodyFrame.Z;
+            BodyWorldPos = Body.position;
         }
 
         private static void UpdateVesselCache()

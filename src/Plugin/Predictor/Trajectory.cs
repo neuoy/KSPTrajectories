@@ -39,7 +39,7 @@ namespace Trajectories
             internal int BodyIndex { get; set; }
 
             /// <summary> Reference body </summary>
-            internal CelestialBody ReferenceBody => FlightGlobals.Bodies[BodyIndex];
+            internal CelestialBody ReferenceBody => FlightGlobals.Bodies[BodyIndex];   // Not thread safe
 
             /// <summary> Universal time stamp </summary>
             internal double Time { get; set; }
@@ -349,11 +349,12 @@ namespace Trajectories
         internal static void ComputeTrajectoryPatches()
         {
             double progress_step = 1d / Settings.MaxPatchCount;
+            double progress = progress_step;
 
             // create starting VesselState
-            VesselState state = new VesselState
+            VesselState state = new()
             {
-                BodyIndex = GameDataCache.BodyIndex,
+                BodyIndex = GameDataCache.BodyIndex.Value,
                 Time = GameDataCache.UniversalTime,
                 Position = GameDataCache.VesselWorldPos - GameDataCache.BodyWorldPos,
                 Velocity = GameDataCache.VesselOrbitVelocity,
@@ -363,11 +364,10 @@ namespace Trajectories
             // iterate over patches until MaxPatchCount is reached
             for (int patchIdx = 0; patchIdx < Settings.MaxPatchCount; ++patchIdx)
             {
-                double progress = progress_step;
 
                 // stop if we don't have a vessel state or thread is canceled
                 if (state == null || Worker.Thread.CancellationPending)
-                    break;
+                    return;
 
                 // search through maneuver nodes of the vessel
                 foreach (ManeuverNode node in GameDataCache.ManeuverNodes)
@@ -597,7 +597,7 @@ namespace Trajectories
                         patches_buffer.Add(patch);
                         return new VesselState
                         {
-                            BodyIndex = GameDataCache.BodyIndex,
+                            BodyIndex = GameDataCache.BodyIndex.Value,
                             Position = Util.SwapYZ(patch.SpaceOrbit.getRelativePositionAtUT(entryTime)),
                             Time = entryTime,
                             Velocity = Util.SwapYZ(patch.SpaceOrbit.getOrbitalVelocityAtUT(entryTime))
@@ -656,7 +656,7 @@ namespace Trajectories
 
                             return new VesselState
                             {
-                                BodyIndex = GameDataCache.BodyIndex,
+                                BodyIndex = GameDataCache.BodyIndex.Value,
                                 Position = Util.SwapYZ(patch.SpaceOrbit.getRelativePositionAtUT(patch.EndTime)),
                                 Velocity = Util.SwapYZ(patch.SpaceOrbit.getOrbitalVelocityAtUT(patch.EndTime)),
                                 Time = patch.EndTime,
@@ -790,7 +790,7 @@ namespace Trajectories
                                 patches_buffer.Add(patch);
                                 return new VesselState
                                 {
-                                    BodyIndex = GameDataCache.BodyIndex,
+                                    BodyIndex = GameDataCache.BodyIndex.Value,
                                     Position = state.position,
                                     Velocity = state.velocity,
                                     Time = patch.EndTime
@@ -898,7 +898,7 @@ namespace Trajectories
 
                 return new VesselState
                 {
-                    BodyIndex = GameDataCache.BodyIndex,
+                    BodyIndex = GameDataCache.BodyIndex.Value,
                     Position = Util.SwapYZ(patch.SpaceOrbit.getRelativePositionAtUT(patch.EndTime)),
                     Velocity = Util.SwapYZ(patch.SpaceOrbit.getOrbitalVelocityAtUT(patch.EndTime)),
                     Time = patch.EndTime,

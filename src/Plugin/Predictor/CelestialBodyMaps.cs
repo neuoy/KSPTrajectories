@@ -426,10 +426,6 @@ namespace Trajectories
         /// <returns> The altitude above sea level, can be negative for bodies without an ocean or null for bodies without a surface </returns>
         internal static double? GroundAltitude(Vector3d relative_position)
         {
-            if (GameDataCache.BodyIndex >= ground_altitude_maps?.Count ||
-                (ground_altitude_maps?[GameDataCache.BodyIndex]?.BodyIndex != GameDataCache.BodyIndex))
-                return null;      // todo: move checks to calling methods or elsewhere
-
             Vector3d local_position = (relative_position.normalized).xzy;
             local_position = new(
                 Vector3d.Dot(local_position, GameDataCache.BodyFrameX),
@@ -439,13 +435,13 @@ namespace Trajectories
             int index = ((int)(((Math.Atan2(local_position.y, local_position.x) * Mathf.Rad2Deg) + 180d) * MAP_WIDTH_DIVISOR) * MAP_WIDTH) +
                 (int)(((Math.Asin(local_position.z) * Mathf.Rad2Deg) + 90d) * MAP_HEIGHT_DIVISOR);
 
-            if (index < 0 || index > ground_altitude_maps[GameDataCache.BodyIndex].HeightMap?.Length)
+            if (index < 0 || index > ground_altitude_maps[GameDataCache.BodyIndex.Value].HeightMap?.Length)
             {
-                Util.LogWarning("Ground altitude map index {0} out of range [0-{1}]", index, ground_altitude_maps[GameDataCache.BodyIndex].HeightMap?.Length);
+                Util.LogWarning("Ground altitude map index {0} out of range [0-{1}]", index, ground_altitude_maps[GameDataCache.BodyIndex.Value].HeightMap?.Length);
                 return null;
             }
 
-            double? elevation = ground_altitude_maps[GameDataCache.BodyIndex].HeightMap?[index];
+            double? elevation = ground_altitude_maps[GameDataCache.BodyIndex.Value].HeightMap?[index];
 
             if (GameDataCache.BodyHasOcean)
                 elevation = elevation.HasValue ? Math.Max(elevation.Value, 0d) : null;
