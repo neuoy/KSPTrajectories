@@ -30,9 +30,12 @@ namespace Trajectories
         // body properties
         internal class BodyInfo
         {
+            #region PROPERTIES
             internal CelestialBody Body => FlightGlobals.Bodies[Index];   // Not thread safe
             internal int Index { get; private set; }
+            internal BodyInfo ReferenceBody { get; private set; }
             internal Vector3d Position { get; private set; }
+            internal List<BodyInfo> OrbitingBodies { get; private set; }
             internal bool HasAtmosphere { get; private set; }
             internal bool HasOcean { get; private set; }
             internal bool HasSolidSurface { get; private set; }
@@ -44,14 +47,17 @@ namespace Trajectories
             internal Vector3d AngularVelocity { get; private set; }
             internal double GravityParameter { get; private set; }
             internal double RotationPeriod { get; private set; }
+            internal double SphereOfInfluence { get; private set; }
             internal Vector3d TransformUp { get; private set; }
-            internal Vector3d FrameX { get; private set; }
-            internal Vector3d FrameY { get; private set; }
-            internal Vector3d FrameZ { get; private set; }
+            internal Util.Frame Frame { get; private set; }
+            #endregion
 
             internal BodyInfo(CelestialBody body)
             {
                 Index = body.flightGlobalsIndex;
+                ReferenceBody = body.referenceBody ? Bodies[body.referenceBody.flightGlobalsIndex] : null;
+                OrbitingBodies = new() { body.orbitingBodies };
+
                 HasAtmosphere = body.atmosphere;
                 HasOcean = body.ocean;
                 HasSolidSurface = body.hasSolidSurface;
@@ -63,19 +69,19 @@ namespace Trajectories
 
                 MaxGroundHeight = body.pqsController != null ? body.pqsController.mapMaxHeight : 0d;
                 Radius = body.Radius;
-                PqsRadius = body.pqsController.radius;
+                PqsRadius = body.pqsController?.radius;
                 AngularVelocity = body.angularVelocity;
                 GravityParameter = body.gravParameter;
                 RotationPeriod = body.rotationPeriod;
+                SphereOfInfluence = body.sphereOfInfluence;
                 TransformUp = body.bodyTransform.up;
+                Frame = new();
                 Update();
             }
 
             internal void Update()
             {
-                FrameX = Body.BodyFrame.X;
-                FrameY = Body.BodyFrame.Y;
-                FrameZ = Body.BodyFrame.Z;
+                Frame.Set(Body.BodyFrame);
                 Position = Body.position;
             }
         }

@@ -40,6 +40,7 @@ namespace Trajectories
 
             /// <summary> Reference body </summary>
             internal CelestialBody ReferenceBody => FlightGlobals.Bodies[BodyIndex];   // Not thread safe
+            internal GameDataCache.BodyInfo BodyInfo => GameDataCache.Bodies[BodyIndex];
 
             /// <summary> Universal time stamp </summary>
             internal double Time { get; set; }
@@ -913,6 +914,13 @@ namespace Trajectories
         {
             double angle = -(time - GameDataCache.UniversalTime) * GameDataCache.VesselBodyInfo.AngularVelocity.magnitude / Math.PI * 180d;
             Quaternion bodyRotation = Quaternion.AngleAxis((float)angle, GameDataCache.VesselBodyInfo.AngularVelocity.normalized);
+            return bodyRotation * relativePosition;
+        }
+
+        internal static Vector3d CalculateRotatedPosition(GameDataCache.BodyInfo body, Vector3d relativePosition, double time)
+        {
+            double angle = -(time - Planetarium.GetUniversalTime()) * body.AngularVelocity.magnitude / Math.PI * 180d;
+            Quaternion bodyRotation = Quaternion.AngleAxis((float)angle, body.AngularVelocity.normalized);
             return bodyRotation * relativePosition;
         }
 

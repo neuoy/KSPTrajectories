@@ -24,6 +24,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 namespace Trajectories
@@ -195,6 +196,7 @@ namespace Trajectories
         // --- Math -----------------------------------------------------------------
 
         internal const double HALF_PI = Math.PI * 0.5d;
+        internal const double DOUBLE_PI = Math.PI * 2d;
 
         /// <returns> true if not a number </returns>
         internal static bool IsNaN(this float value) => float.IsNaN(value);
@@ -354,9 +356,68 @@ namespace Trajectories
             return v;
         }
 
-        internal static string ToString(this Vector3d v, string format = "0.000") => "[" + v.x.ToString(format) + ", " + v.y.ToString(format) + ", " + v.z.ToString(format) + "]";
+        internal class Frame
+        {
+            internal Vector3d x;
+            internal Vector3d y;
+            internal Vector3d z;
 
-        internal static string ToString(this Vector3 v, string format = "0.000") => "[" + v.x.ToString(format) + ", " + v.y.ToString(format) + ", " + v.z.ToString(format) + "]";
+            // constructors
+            internal Frame()
+            {
+                x = Vector3d.zero;
+                y = Vector3d.zero;
+                z = Vector3d.zero;
+            }
+            internal Frame(Frame frame)
+            {
+                x = frame.x;
+                y = frame.y;
+                z = frame.z;
+            }
+            internal Frame(Vector3d x, Vector3d y, Vector3d z)
+            {
+                this.x = x;
+                this.y = y;
+                this.z = z;
+            }
+
+            internal Frame(Planetarium.CelestialFrame frame)
+            {
+                x = frame.X;
+                y = frame.Y;
+                z = frame.Z;
+            }
+
+            internal void Set(Vector3d x, Vector3d y, Vector3d z)
+            {
+                this.x = x;
+                this.y = y;
+                this.z = z;
+            }
+            internal void Set(Planetarium.CelestialFrame frame)
+            {
+                x = frame.X;
+                y = frame.Y;
+                z = frame.Z;
+            }
+        }
+
+        internal static Vector3d WorldToLocal(this Vector3d v, Frame frame)
+        {
+            return new(
+                Vector3d.Dot(v, frame.x),
+                Vector3d.Dot(v, frame.y),
+                Vector3d.Dot(v, frame.z));
+        }
+
+        internal static Vector3d LocalToWorld(this Vector3d v, Frame frame) => v.x * frame.x + v.y * frame.y + v.z * frame.z;
+
+        internal static string ToString(this Vector3d v, string format = "0.000") =>
+            "[" + v.x.ToString(format) + ", " + v.y.ToString(format) + ", " + v.z.ToString(format) + "]";
+
+        internal static string ToString(this Vector3 v, string format = "0.000") =>
+            "[" + v.x.ToString(format) + ", " + v.y.ToString(format) + ", " + v.z.ToString(format) + "]";
 
         #endregion
 

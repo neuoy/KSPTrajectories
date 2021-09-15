@@ -427,10 +427,7 @@ namespace Trajectories
         internal static double? GroundAltitude(Vector3d relative_position)
         {
             Vector3d local_position = (relative_position.normalized).xzy;
-            local_position = new(
-                Vector3d.Dot(local_position, GameDataCache.VesselBodyInfo.FrameX),
-                Vector3d.Dot(local_position, GameDataCache.VesselBodyInfo.FrameY),
-                Vector3d.Dot(local_position, GameDataCache.VesselBodyInfo.FrameZ));
+            local_position = local_position.WorldToLocal(GameDataCache.VesselBodyInfo.Frame);
 
             int index = ((int)(((Math.Atan2(local_position.y, local_position.x) * Mathf.Rad2Deg) + 180d) * MAP_WIDTH_DIVISOR) * MAP_WIDTH) +
                 (int)(((Math.Asin(local_position.z) * Mathf.Rad2Deg) + 90d) * MAP_HEIGHT_DIVISOR);

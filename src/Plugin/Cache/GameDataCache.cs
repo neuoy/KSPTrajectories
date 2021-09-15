@@ -18,6 +18,7 @@
   along with Trajectories.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -40,20 +41,24 @@ namespace Trajectories
         internal static Vector3d VesselTransformForward { get; private set; }
         #endregion
 
+        #region GLOBAL_PROPERTIES
         internal static double UniversalTime { get; private set; }
         internal static double WarpDeltaTime { get; private set; }
         internal static Vector3d SunWorldPos { get; private set; }
+        internal static Util.Frame PlanetariumZup { get; private set; }
         internal static List<BodyInfo> Bodies { get; private set; }
 
 
         internal static List<ManeuverNode> ManeuverNodes { get; private set; }
         internal static Orbit Orbit { get; private set; }
         internal static List<Orbit> FlightPlan { get; private set; }
+        #endregion
 
         internal static void Start()
         {
             Util.DebugLog("Constructing");
             SunWorldPos = FlightGlobals.Bodies[0].position;
+            PlanetariumZup = new(Planetarium.Zup);
             Bodies = new() { FlightGlobals.Bodies };
         }
 

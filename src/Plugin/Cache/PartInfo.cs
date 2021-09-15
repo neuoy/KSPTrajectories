@@ -63,6 +63,7 @@ namespace Trajectories
         // vessel part properties
         internal class PartInfo
         {
+            #region PROPERTIES
             internal Part Part { get; private set; }
             internal List<WingInfo> Wings { get; private set; }
             internal bool ShieldedFromAirstream { get; private set; }
@@ -79,6 +80,7 @@ namespace Trajectories
             internal Vector3d TransformRight { get; private set; }
             internal Vector3d TransformUp { get; private set; }
             internal Vector3d TransformForward { get; private set; }
+            #endregion
 
             internal PartInfo(Part part)
             {
@@ -115,6 +117,7 @@ namespace Trajectories
             }
         }
 
+        #region COLLECTION_METHODS
         /// <summary> Adds a collection of KSP Part's LiftingSurface's to a collection of WingInfo's </summary>
         internal static void Add(this ICollection<WingInfo> collection, IEnumerable<ProtoPartModuleSnapshot> modules)
         {
@@ -161,5 +164,6 @@ namespace Trajectories
 
             collection.Clear();
         }
+        #endregion
     }
 }
