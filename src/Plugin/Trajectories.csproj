@@ -119,6 +119,8 @@
     <Compile Include="AerodynamicModels\Models\FARModel.cs" />
     <Compile Include="AerodynamicModels\Models\StockModel.cs" />
     <Compile Include="API.cs" />
+    <Compile Include="Cache\BodyInfo.cs" />
+    <Compile Include="Cache\PartInfo.cs" />
     <Compile Include="Display\AppLauncherButton.cs" />
     <Compile Include="Display\FlightOverlay.cs" />
     <Compile Include="3rdParty\GLUtils.cs" />
