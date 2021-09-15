@@ -30,53 +30,53 @@ namespace Trajectories
         // body properties
         internal class BodyInfo
         {
-            internal CelestialBody Body => FlightGlobals.Bodies[BodyIndex];   // Not thread safe
-            internal int BodyIndex { get; private set; }
-            internal Vector3d BodyWorldPos { get; private set; }
-            internal bool BodyHasAtmosphere { get; private set; }
-            internal bool BodyHasOcean { get; private set; }
-            internal bool BodyHasSolidSurface { get; private set; }
-            internal double BodyAtmosphereDepth { get; private set; }
-            internal double BodyAtmosTempOffset { get; private set; }       // The average day/night temperature at the equator
-            internal double BodyMaxGroundHeight { get; private set; }
-            internal double BodyRadius { get; private set; }       // Bodies with an atmosphere have a radius equal to their max atmosphere height
-            internal double? BodyPqsRadius { get; private set; }   // Bodies without a surface have no PQS data
-            internal Vector3d BodyAngularVelocity { get; private set; }
-            internal double BodyGravityParameter { get; private set; }
-            internal double BodyRotationPeriod { get; private set; }
-            internal Vector3d BodyTransformUp { get; private set; }
-            internal Vector3d BodyFrameX { get; private set; }
-            internal Vector3d BodyFrameY { get; private set; }
-            internal Vector3d BodyFrameZ { get; private set; }
+            internal CelestialBody Body => FlightGlobals.Bodies[Index];   // Not thread safe
+            internal int Index { get; private set; }
+            internal Vector3d Position { get; private set; }
+            internal bool HasAtmosphere { get; private set; }
+            internal bool HasOcean { get; private set; }
+            internal bool HasSolidSurface { get; private set; }
+            internal double AtmosphereDepth { get; private set; }
+            internal double AtmosTempOffset { get; private set; }       // The average day/night temperature at the equator
+            internal double MaxGroundHeight { get; private set; }
+            internal double Radius { get; private set; }       // Bodies with an atmosphere have a radius equal to their max atmosphere height
+            internal double? PqsRadius { get; private set; }   // Bodies without a surface have no PQS data
+            internal Vector3d AngularVelocity { get; private set; }
+            internal double GravityParameter { get; private set; }
+            internal double RotationPeriod { get; private set; }
+            internal Vector3d TransformUp { get; private set; }
+            internal Vector3d FrameX { get; private set; }
+            internal Vector3d FrameY { get; private set; }
+            internal Vector3d FrameZ { get; private set; }
 
             internal BodyInfo(CelestialBody body)
             {
-                BodyIndex = body.flightGlobalsIndex;
-                BodyHasAtmosphere = body.atmosphere;
-                BodyHasOcean = body.ocean;
-                BodyHasSolidSurface = body.hasSolidSurface;
-                BodyAtmosphereDepth = body.atmosphereDepth;
+                Index = body.flightGlobalsIndex;
+                HasAtmosphere = body.atmosphere;
+                HasOcean = body.ocean;
+                HasSolidSurface = body.hasSolidSurface;
+                AtmosphereDepth = body.atmosphereDepth;
 
-                BodyAtmosTempOffset = body.latitudeTemperatureBiasCurve.Evaluate(0f)
+                AtmosTempOffset = body.latitudeTemperatureBiasCurve.Evaluate(0f)
                     + body.latitudeTemperatureSunMultCurve.Evaluate(0f) * 0.5d
                     + body.axialTemperatureSunMultCurve.Evaluate(0f);
 
-                BodyMaxGroundHeight = body.pqsController != null ? body.pqsController.mapMaxHeight : 0d;
-                BodyRadius = body.Radius;
-                BodyPqsRadius = body.pqsController.radius;
-                BodyAngularVelocity = body.angularVelocity;
-                BodyGravityParameter = body.gravParameter;
-                BodyRotationPeriod = body.rotationPeriod;
-                BodyTransformUp = body.bodyTransform.up;
+                MaxGroundHeight = body.pqsController != null ? body.pqsController.mapMaxHeight : 0d;
+                Radius = body.Radius;
+                PqsRadius = body.pqsController.radius;
+                AngularVelocity = body.angularVelocity;
+                GravityParameter = body.gravParameter;
+                RotationPeriod = body.rotationPeriod;
+                TransformUp = body.bodyTransform.up;
                 Update();
             }
 
             internal void Update()
             {
-                BodyFrameX = Body.BodyFrame.X;
-                BodyFrameY = Body.BodyFrame.Y;
-                BodyFrameZ = Body.BodyFrame.Z;
-                BodyWorldPos = Body.position;
+                FrameX = Body.BodyFrame.X;
+                FrameY = Body.BodyFrame.Y;
+                FrameZ = Body.BodyFrame.Z;
+                Position = Body.position;
             }
         }
 

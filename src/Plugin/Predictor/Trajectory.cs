@@ -356,7 +356,7 @@ namespace Trajectories
             {
                 BodyIndex = GameDataCache.VesselBodyIndex.Value,
                 Time = GameDataCache.UniversalTime,
-                Position = GameDataCache.VesselWorldPos - GameDataCache.VesselBodyInfo.BodyWorldPos,
+                Position = GameDataCache.VesselWorldPos - GameDataCache.VesselBodyInfo.Position,
                 Velocity = GameDataCache.VesselOrbitVelocity,
                 StockPatch = GameDataCache.Orbit
             };
@@ -562,7 +562,7 @@ namespace Trajectories
 
             GameDataCache.BodyInfo body = GameDataCache.VesselBodyInfo;
 
-            double maxAtmosphereAltitude = body.BodyHasAtmosphere ? body.BodyAtmosphereDepth : body.BodyMaxGroundHeight;
+            double maxAtmosphereAltitude = body.HasAtmosphere ? body.AtmosphereDepth : body.MaxGroundHeight;
 
             double minAltitude = patch.SpaceOrbit.PeA;
             if (patch.SpaceOrbit.timeToPe < 0d || patch.EndTime < startingState.Time + patch.SpaceOrbit.timeToPe)
@@ -570,13 +570,13 @@ namespace Trajectories
                 minAltitude = Math.Min(
                     patch.SpaceOrbit.getRelativePositionAtUT(patch.EndTime).magnitude,
                     patch.SpaceOrbit.getRelativePositionAtUT(patch.StartingState.Time + 1d).magnitude
-                    ) - body.BodyRadius;
+                    ) - body.Radius;
             }
 
             if (minAltitude < maxAtmosphereAltitude)
             {
                 double entryTime;
-                if (startingState.Position.magnitude <= body.BodyRadius + maxAtmosphereAltitude)
+                if (startingState.Position.magnitude <= body.Radius + maxAtmosphereAltitude)
                 {
                     // whole orbit is inside the atmosphere
                     entryTime = startingState.Time;
@@ -586,12 +586,12 @@ namespace Trajectories
                     entryTime = FindOrbitBodyIntersection(
                         patch.SpaceOrbit,
                         startingState.Time, startingState.Time + patch.SpaceOrbit.timeToPe,
-                        body.BodyRadius + maxAtmosphereAltitude);
+                        body.Radius + maxAtmosphereAltitude);
                 }
 
-                if (entryTime > startingState.Time + 0.1d || !body.BodyHasAtmosphere)
+                if (entryTime > startingState.Time + 0.1d || !body.HasAtmosphere)
                 {
-                    if (body.BodyHasAtmosphere)
+                    if (body.HasAtmosphere)
                     {
                         // add the space patch before atmospheric entry
 
@@ -614,7 +614,7 @@ namespace Trajectories
                         double groundRangeExit = FindOrbitBodyIntersection(
                             patch.SpaceOrbit,
                             startingState.Time, startingState.Time + patch.SpaceOrbit.timeToPe,
-                            body.BodyRadius - maxAtmosphereAltitude);
+                            body.Radius - maxAtmosphereAltitude);
 
                         if (groundRangeExit <= entryTime)
                             groundRangeExit = startingState.Time + patch.SpaceOrbit.timeToPe;
@@ -622,13 +622,13 @@ namespace Trajectories
                         double iterationSize = (groundRangeExit - entryTime) / 100d;
                         double t = 0d;
                         bool groundImpact = false;
-                        if (body.BodyHasSolidSurface)
+                        if (body.HasSolidSurface)
                         {
                             for (t = entryTime; t < groundRangeExit; t += iterationSize)
                             {
                                 Vector3d pos = patch.SpaceOrbit.getRelativePositionAtUT(t);
                                 double? groundAltitude = CelestialBodyMaps.GroundAltitude(CalculateRotatedPosition(Util.SwapYZ(pos), t));
-                                groundAltitude = groundAltitude.HasValue ? groundAltitude.Value + body.BodyRadius : body.BodyRadius;
+                                groundAltitude = groundAltitude.HasValue ? groundAltitude.Value + body.Radius : body.Radius;
                                 if (pos.magnitude < groundAltitude.Value)
                                 {
                                     t -= iterationSize;
@@ -716,10 +716,10 @@ namespace Trajectories
 
                         // gravity acceleration
                         double R_ = position.magnitude;
-                        Vector3d accel_g = position * (-body.BodyGravityParameter / (R_ * R_ * R_));
+                        Vector3d accel_g = position * (-body.GravityParameter / (R_ * R_ * R_));
 
                         // aero force
-                        Vector3d vel_air = velocity - Vector3d.Cross(body.BodyAngularVelocity, position);
+                        Vector3d vel_air = velocity - Vector3d.Cross(body.AngularVelocity, position);
 
                         double aoa = DescentProfile.GetAngleOfAttack(GameDataCache.VesselBody, position, vel_air) ?? 0d;   // todo: change to use BodyInfo
 
@@ -745,7 +745,7 @@ namespace Trajectories
                         ++iteration;
 
                         double R = state.position.magnitude;
-                        double altitude = R - body.BodyRadius;
+                        double altitude = R - body.Radius;
                         double atmosphereCoeff = altitude / maxAtmosphereAltitude;
                         if (hitGround
                             || atmosphereCoeff <= 0d || atmosphereCoeff >= 1d
@@ -828,14 +828,14 @@ namespace Trajectories
                         #endregion
 
                         // calculate acceleration due to gravity and aerodynamic force
-                        Vector3d gravityAccel = lastState.position * (-body.BodyGravityParameter / (R * R * R));
+                        Vector3d gravityAccel = lastState.position * (-body.GravityParameter / (R * R * R));
                         Vector3d aerodynamicAccel = currentAccel - gravityAccel;
 
                         // acceleration in the vessel reference frame is acceleration - gravityAccel
                         max_accel_buffer = Math.Max(aerodynamicAccel.magnitude, max_accel_buffer);
 
                         #region Impact Calculation
-                        if (body.BodyHasSolidSurface)
+                        if (body.HasSolidSurface)
                         {
                             Profiler.Start("AddPatch#impact");
 
@@ -852,7 +852,7 @@ namespace Trajectories
                                     // check terrain collision, to detect impact on mountains etc.
                                     Vector3d rayOrigin = lastPositionStored;
                                     Vector3d rayEnd = state.position;
-                                    double absGroundAltitude = groundAltitude.HasValue ? groundAltitude.Value + body.BodyRadius : body.BodyRadius;
+                                    double absGroundAltitude = groundAltitude.HasValue ? groundAltitude.Value + body.Radius : body.Radius;
                                     if (absGroundAltitude > rayEnd.magnitude)
                                     {
                                         hitGround = true;
@@ -911,8 +911,8 @@ namespace Trajectories
 
         internal static Vector3d CalculateRotatedPosition(Vector3d relativePosition, double time)
         {
-            double angle = -(time - GameDataCache.UniversalTime) * GameDataCache.VesselBodyInfo.BodyAngularVelocity.magnitude / Math.PI * 180d;
-            Quaternion bodyRotation = Quaternion.AngleAxis((float)angle, GameDataCache.VesselBodyInfo.BodyAngularVelocity.normalized);
+            double angle = -(time - GameDataCache.UniversalTime) * GameDataCache.VesselBodyInfo.AngularVelocity.magnitude / Math.PI * 180d;
+            Quaternion bodyRotation = Quaternion.AngleAxis((float)angle, GameDataCache.VesselBodyInfo.AngularVelocity.normalized);
             return bodyRotation * relativePosition;
         }
 
