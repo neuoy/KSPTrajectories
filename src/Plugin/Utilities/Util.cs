@@ -447,13 +447,16 @@ namespace Trajectories
         internal static double Clocks => Stopwatch.GetTimestamp();
 
         /// <summary> Convert from clocks to microseconds. </summary>
-        internal static double Microseconds(double clocks) => clocks * 1e6d * clock_frequency;
+        internal static double ToMicroseconds(double clocks) => clocks * 1e6d * clock_frequency;
 
         /// <summary> Convert from clocks to milliseconds. </summary>
-        internal static double Milliseconds(double clocks) => clocks * 1e3d * clock_frequency;
+        internal static double ToMilliseconds(double clocks) => clocks * 1e3d * clock_frequency;
 
         /// <summary> Convert from clocks to seconds. </summary>
-        internal static double Seconds(double clocks) => clocks * clock_frequency;
+        internal static double ToSeconds(double clocks) => clocks * clock_frequency;
+
+        /// <summary> Convert from seconds to clocks. </summary>
+        internal static double SecondsTo(double seconds) => seconds / clock_frequency;
 
         /// <returns> Elapsed time in clocks. </returns>
         internal static double Elapsed(double clocks) => Stopwatch.GetTimestamp() - clocks;

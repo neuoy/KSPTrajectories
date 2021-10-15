@@ -1,5 +1,5 @@
 ﻿/*
-  Copyright© (c) 2017-2020 S.Gray, (aka PiezPiedPy).
+  Copyright© (c) 2017-2021 S.Gray, (aka PiezPiedPy).
 
   This file is part of Trajectories.
   Trajectories is available under the terms of GPL-3.0-or-later.
@@ -39,10 +39,10 @@ namespace Trajectories
     public sealed class Watcher : MonoBehaviour
     {
         // constants
-        private const float WIDTH = 350.0f;
-        private const float HEIGHT = 400.0f;
+        private const float WIDTH = 380f;
+        private const float HEIGHT = 400f;
 
-        private const float VALUE_WIDTH = 130.0f;
+        private const float VALUE_WIDTH = 160f;
 
         // visible flag
         private static bool visible = false;
@@ -55,10 +55,19 @@ namespace Trajectories
         private static DialogGUIVerticalLayout dialog_items;
 
         // an entry in the watcher
+        private enum Type
+        {
+            DOUBLE = 0,
+            VECTOR3D,
+            STRING
+        }
+
         private class Entry
         {
             public bool in_gui;             // if true the entry has been added to the Gui
+            public Type type;               // used to store last value type
             public double value;            // used to store last value
+            public Vector3d vector;         // used to store last value
             public string value_txt = "";   // last value display string
         }
 
@@ -68,10 +77,10 @@ namespace Trajectories
 
 
         // display update timer
-        private const double UPDATE_FPS = 5.0;      // Frames per second the entry value display will update.
+        private const double UPDATE_FPS = 5d;      // Frames per second the entry value display will update.
         private static double update_timer = Util.Clocks;
         private static readonly double timeout = Stopwatch.Frequency / UPDATE_FPS;
-        private static long tot_frames = 0;         // total physics frames used for avg calculation
+        private static long tot_frames = 0L;         // total physics frames used for avg calculation
         private static string tot_frames_txt = "";  // total physics frames display string
 
         //  constructor
@@ -90,11 +99,11 @@ namespace Trajectories
                new Rect(0.5f, 0.5f, WIDTH, HEIGHT),
                new DialogGUIBase[]
                {
-                   new DialogGUIVerticalLayout(false, false, 0, new RectOffset(), TextAnchor.UpperCenter,
+                   new DialogGUIVerticalLayout(false, false, 0f, new RectOffset(), TextAnchor.UpperCenter,
                        // create reset button
                        new DialogGUIHorizontalLayout(false, false,
                            new DialogGUIButton(Localizer.Format("#autoLOC_900305"),
-                               OnButtonClick_Reset, () => true, 75, 25, false),
+                               OnButtonClick_Reset, () => true, 75f, 25f, false),
                            new DialogGUILabel(() => { return tot_frames_txt; }, VALUE_WIDTH + 50f)),
                        // create header line
                        new DialogGUIHorizontalLayout(
@@ -186,7 +195,20 @@ namespace Trajectories
 #if WATCHER_TELEMETRY
                 Telemetry.Send(p.Key, e.value);
 #endif
-                e.value_txt = e.value.ToString("F8");
+                switch (e.type)
+                {
+                    case Type.DOUBLE:
+                        e.value_txt = e.value.ToString("F8");
+                        break;
+                    case Type.VECTOR3D:
+                        e.value_txt = Util.ToString(e.vector, "0.0000");
+                        break;
+                    case Type.STRING:
+                        break;
+                    default:
+                        e.value_txt = "";
+                        break;
+                }
             }
 
             tot_frames_txt = tot_frames.ToString() + " Frames";
@@ -221,7 +243,7 @@ namespace Trajectories
             float border = 50f;
             bool adjusted = false;
 
-            if (multi_dialog.dialogRect.position.x <= 0.0f || multi_dialog.dialogRect.position.y <= 0.0f)
+            if (multi_dialog.dialogRect.position.x <= 0f || multi_dialog.dialogRect.position.y <= 0f)
             {
                 // default window to center of screen
                 multi_dialog.dialogRect.Set(0.5f, 0.5f, WIDTH, HEIGHT);
@@ -314,6 +336,7 @@ namespace Trajectories
             foreach (KeyValuePair<string, Entry> e in entries)
             {
                 e.Value.value = 0d;
+                e.Value.vector = Vector3d.zero;
                 e.Value.value_txt = "";
             }
 
@@ -344,8 +367,8 @@ namespace Trajectories
         }
 #endif
 
-        [Conditional("DEBUG_WATCHER")]
         /// <summary> Add a watcher entry. </summary>
+        [Conditional("DEBUG_WATCHER")]
         public static void Watch(string e_name, double value)
         {
 #if DEBUG_WATCHER
@@ -361,7 +384,52 @@ namespace Trajectories
 #endif
             }
 
+            entries[e_name].type = Type.DOUBLE;
             entries[e_name].value = value;
+#endif
+        }
+
+        /// <summary> Add a watcher entry. </summary>
+        [Conditional("DEBUG_WATCHER")]
+        public static void Watch(string e_name, Vector3d vector)
+        {
+#if DEBUG_WATCHER
+            if (entries == null)
+                return;
+
+            if (!entries.ContainsKey(e_name))
+            {
+                entries.Add(e_name, new Entry());
+#if WATCHER_TELEMETRY
+                if (!channels.Contains(e_name))
+                    channels.Add(e_name);
+#endif
+            }
+
+            entries[e_name].type = Type.VECTOR3D;
+            entries[e_name].vector = vector;
+#endif
+        }
+
+        /// <summary> Add a watcher entry. </summary>
+        [Conditional("DEBUG_WATCHER")]
+        public static void Watch(string e_name, string text)
+        {
+#if DEBUG_WATCHER
+            if (entries == null)
+                return;
+
+            if (!entries.ContainsKey(e_name))
+            {
+                entries.Add(e_name, new Entry());
+#if WATCHER_TELEMETRY
+                if (!channels.Contains(e_name))
+                    channels.Add(e_name);
+#endif
+            }
+
+            entries[e_name].type = Type.STRING;
+            entries[e_name].value_txt = text;
 #endif
         }
     }

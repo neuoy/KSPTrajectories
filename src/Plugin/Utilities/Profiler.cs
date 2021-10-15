@@ -1,5 +1,5 @@
 ﻿/*
-  Copyright© (c) 2017-2020 S.Gray, (aka PiezPiedPy).
+  Copyright© (c) 2017-2021 S.Gray, (aka PiezPiedPy).
   Copyright© (c) 2017-2018 A.Korsunsky, (aka fat-lobyte).
 
   This file is part of Trajectories.
@@ -34,8 +34,7 @@ namespace Trajectories
     /// <summary> Simple profiler for measuring the execution time of code placed between the Start and Stop methods. </summary>
     public sealed class Profiler
     {
-#endif
-#if DEBUG_PROFILER
+#else
     /// <summary> Simple profiler for measuring the execution time of code placed between the Start and Stop methods. </summary>
     [KSPAddon(KSPAddon.Startup.FlightAndKSC, false)]
     public sealed class Profiler : MonoBehaviour
@@ -198,8 +197,8 @@ namespace Trajectories
             foreach (KeyValuePair<string, Entry> p in entries)
             {
                 Entry e = p.Value;
-                double time = e.prev_calls > 0L ? Util.Microseconds(e.prev_time / e.prev_calls) : 0d;
-                double avg = e.tot_calls > 0L ? Util.Microseconds(e.tot_time / e.tot_calls) : 0d;
+                double time = e.prev_calls > 0L ? Util.ToMicroseconds(e.prev_time / e.prev_calls) : 0d;
+                double avg = e.tot_calls > 0L ? Util.ToMicroseconds(e.tot_time / e.tot_calls) : 0d;
 
 #if PROFILER_TELEMETRY
                 Telemetry.Send(p.Key + "_time", time);
