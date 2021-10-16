@@ -1,6 +1,6 @@
 ﻿/*
   Copyright© (c) 2017-2018 A.Korsunsky, (aka fat-lobyte).
-  Copyright© (c) 2017-2020 S.Gray, (aka PiezPiedPy).
+  Copyright© (c) 2017-2021 S.Gray, (aka PiezPiedPy).
 
   This file is part of Trajectories.
   Trajectories is available under the terms of GPL-3.0-or-later.
@@ -25,151 +25,11 @@ namespace Trajectories
 {
     internal static class FlightOverlay
     {
-        private sealed class TrajectoryLine : MonoBehaviour
-        {
-            internal const float MIN_WIDTH = 0.025f;
-            internal const float MAX_WIDTH = 250f;
-            internal const float DIST_DIV = 1e3f;
-
-            private LineRenderer line_renderer;
-            private Material material;
-            private Vector3 cam_pos;
-
-            private bool Ready => (gameObject && line_renderer && material);
-
-            internal void Awake()
-            {
-                if (!gameObject)
-                    return;
-
-                line_renderer = gameObject.GetComponent<LineRenderer>();
-                if (!line_renderer)
-                {
-                    gameObject.AddComponent<LineRenderer>();
-                    line_renderer = gameObject.GetComponent<LineRenderer>();
-                }
-                if (!line_renderer)
-                    return;
-
-                material ??= new Material(Shader.Find("KSP/Particles/Additive"));
-                material ??= new Material(Shader.Find("Particles/Additive"));
-                if (!material)
-                    return;
-
-                line_renderer.enabled = false;
-                line_renderer.material = material;
-                line_renderer.positionCount = 0;
-                line_renderer.startColor = Color.blue;
-                line_renderer.endColor = Color.blue;
-                line_renderer.numCapVertices = 5;
-                line_renderer.numCornerVertices = 7;
-                line_renderer.startWidth = MIN_WIDTH;
-                line_renderer.endWidth = MIN_WIDTH;
-            }
-
-            internal void OnPreRender()
-            {
-                if (Util.IsPaused || !Util.IsFlight)
-                    return;
-
-                if (!Ready)
-                    Awake();
-
-                // adjust line width according to its distance from the camera
-                if (Ready && (line_renderer.positionCount > 0) && line_renderer.enabled)
-                {
-                    cam_pos = FlightCamera.fetch.mainCamera.transform.position;
-
-                    line_renderer.startWidth = Mathf.Clamp(Vector3.Distance(cam_pos, line_renderer.GetPosition(0)) / DIST_DIV, MIN_WIDTH, MAX_WIDTH);
-                    line_renderer.endWidth = Mathf.Clamp(Vector3.Distance(cam_pos, line_renderer.GetPosition(line_renderer.positionCount - 1)) / DIST_DIV, MIN_WIDTH, MAX_WIDTH);
-
-                    //Watcher.Watch("startWidth", line_renderer.startWidth);
-                    //Watcher.Watch("endWidth", line_renderer.endWidth);
-                }
-            }
-
-            internal void OnEnable()
-            {
-                if (!Ready)
-                    return;
-                line_renderer.enabled = true;
-            }
-
-            internal void OnDisable()
-            {
-                if (!Ready)
-                    return;
-                line_renderer.enabled = false;
-            }
-
-            internal void OnDestroy()
-            {
-                if (line_renderer != null)
-                    UnityEngine.Object.Destroy(line_renderer);
-                if (material != null)
-                    UnityEngine.Object.Destroy(material);
-
-                line_renderer = null;
-                material = null;
-            }
-
-            internal void Clear()
-            {
-                if (!Ready)
-                    return;
-
-                line_renderer.positionCount = 0;
-            }
-
-            internal void Add(Vector3 point)
-            {
-                if (!Ready)
-                    return;
-
-                line_renderer.positionCount++;
-                line_renderer.SetPosition(line_renderer.positionCount - 1, point);
-            }
-        }
-
-        private sealed class TargetingCross : MonoBehaviour
-        {
-            internal const float MIN_SIZE = 2f;
-            internal const float MAX_SIZE = 2e3f;
-            internal const float DIST_DIV = 50f;
-
-            private double latitude = 0d;
-            private double longitude = 0d;
-            private double altitude = 0d;
-            private Vector3 screen_point;
-            private float size = 0f;
-
-            internal Vector3? Position { get; set; }
-            internal CelestialBody Body { get; set; }
-            internal Color Color { get; set; } = Color.red;
-
-            internal void OnPostRender()
-            {
-                if (Position == null || Body == null)
-                    return;
-
-                // get impact position, translate to latitude and longitude
-                Body.GetLatLonAlt(Position.Value, out latitude, out longitude, out altitude);
-                // only draw if visible on the camera
-                screen_point = FlightCamera.fetch.mainCamera.WorldToViewportPoint(Position.Value);
-                if (!(screen_point.z >= 0 && screen_point.x >= 0 && screen_point.x <= 1 && screen_point.y >= 0 && screen_point.y <= 1))
-                    return;
-                // resize marker in respect to distance from camera.
-                size = Mathf.Clamp(Vector3.Distance(FlightCamera.fetch.mainCamera.transform.position, Position.Value) / DIST_DIV, MIN_SIZE, MAX_SIZE);
-                // draw ground marker at this position
-                GLUtils.DrawGroundMarker(Body, latitude, longitude, Color, false, 0, size);
-            }
-        }
-
         private const int DEFAULT_VERTEX_COUNT = 32;
 
-        private static TrajectoryLine line;
-        private static TargetingCross impact_cross;
-        private static TargetingCross target_cross;
+        private static GfxUtil.TrajectoryLine line;                // Todo: Modify to draw a splined curve
+        private static GfxUtil.TargetingCross impact_cross;        // Todo: Modify to use a projected texture   Projector proj = GetComponent<Projector>();
+        private static GfxUtil.TargetingCross target_cross;
 
         // update method variables, put here to stop over use of the garbage collector.
         private static double time = 0d;
@@ -182,23 +42,24 @@ namespace Trajectories
         internal static void Start()
         {
             Util.DebugLog("Constructing");
-            line = FlightCamera.fetch.mainCamera.gameObject.AddComponent<TrajectoryLine>();
-            impact_cross = FlightCamera.fetch.mainCamera.gameObject.AddComponent<TargetingCross>();
-            target_cross = FlightCamera.fetch.mainCamera.gameObject.AddComponent<TargetingCross>();
-            target_cross.Color = Color.green;
+            line = FlightCamera.fetch.mainCamera.gameObject.AddComponent<GfxUtil.TrajectoryLine>();
+            line.Scene = GameScenes.FLIGHT;
+            impact_cross = FlightCamera.fetch.mainCamera.gameObject.AddComponent<GfxUtil.TargetingCross>();
+            target_cross = FlightCamera.fetch.mainCamera.gameObject.AddComponent<GfxUtil.TargetingCross>();
+            target_cross.Color = XKCDColors.AcidGreen;
         }
 
         internal static void Destroy()
         {
             Util.DebugLog("");
             if (line != null)
-                UnityEngine.Object.Destroy(line);
+                Object.Destroy(line);
 
             if (impact_cross != null)
-                UnityEngine.Object.Destroy(impact_cross);
+                Object.Destroy(impact_cross);
 
             if (target_cross != null)
-                UnityEngine.Object.Destroy(target_cross);
+                Object.Destroy(target_cross);
 
             line = null;
             impact_cross = null;
