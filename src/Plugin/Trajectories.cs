@@ -55,6 +55,9 @@ namespace Trajectories
 
         public override void OnLoad(ConfigNode node)
         {
+#if DEBUG
+            DebugLines.Transform = null;
+#endif
             if (node == null)
                 return;
 
@@ -151,6 +154,9 @@ namespace Trajectories
                 DescentProfile.Clear();
                 TargetProfile.Clear();
                 TargetProfile.ManualText = "";
+#if DEBUG
+                DebugLines.Transform = null;
+#endif
             }
             else
             {
@@ -196,6 +202,10 @@ namespace Trajectories
                     TargetProfile.ManualText = module.ManualTargetTxt;
                     Util.Log("Profiles loaded");
                 }
+#if DEBUG
+                DebugLines.Transform = AttachedVessel.transform;
+                //DebugLines.Transform = AttachedVessel.mainBody.transform;
+#endif
             }
         }
     }

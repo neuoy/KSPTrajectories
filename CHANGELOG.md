@@ -4,9 +4,15 @@
 
 ### Changes since the last release
  
- 
+ - Try to mitigate issues as described in issue #183 - Trajectories acting as if it isn't installed when
+    a mod fails to load. Trajectories will now warn the user with an on screen message that there was a
+    problem loading a mod prior to Trajectories loading rather than silently failing. This problem is a
+    KSP bug and can't be fixed in Trajectories. 
+
 ### For Developers
 
+ - Added string and Vector3d types to the Watcher utility.
+ - Added a line drawing debug class useful for debugging vectors etc.
  - API method `SetTarget` now correctly targets the active vessels body rather than only the home world.
 
 ### Known Issues
