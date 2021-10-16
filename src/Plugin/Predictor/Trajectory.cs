@@ -106,10 +106,10 @@ namespace Trajectories
 
         private const double MAX_INCREMENT_TIME = 2.0d;      // in ms
 
-        private static VesselAerodynamicModel aerodynamicModel_;
+        private static AeroDynamicModel aerodynamicModel_;
 
         internal static string AerodynamicModelName => aerodynamicModel_ == null ? Localizer.Format("#autoLOC_Trajectories_NotLoaded") :
-                                                                                   aerodynamicModel_.AerodynamicModelName;
+                                                                                   aerodynamicModel_.AeroDynamicModelName;
 
         private static List<Patch> patchesBackBuffer_ = new List<Patch>();
 
@@ -347,7 +347,7 @@ namespace Trajectories
 
                 // create or update aerodynamic model
                 if (aerodynamicModel_ == null || !aerodynamicModel_.IsValidFor(Trajectories.AttachedVessel.mainBody))
-                    aerodynamicModel_ = AerodynamicModelFactory.GetModel(Trajectories.AttachedVessel.mainBody);
+                    aerodynamicModel_ = AeroDynamicModelFactory.GetModel(Trajectories.AttachedVessel.mainBody);
                 else
                     aerodynamicModel_.UpdateVesselMass();
 

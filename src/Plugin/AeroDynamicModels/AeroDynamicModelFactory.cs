@@ -1,6 +1,6 @@
 ﻿/*
   Copyright© (c) 2016-2017 Youen Toupin, (aka neuoy).
-  Copyright© (c) 2017-2020 S.Gray, (aka PiezPiedPy).
+  Copyright© (c) 2017-2021 S.Gray, (aka PiezPiedPy).
 
   This file is part of Trajectories.
   Trajectories is available under the terms of GPL-3.0-or-later.
@@ -25,9 +25,9 @@ using UnityEngine;
 
 namespace Trajectories
 {
-    public static class AerodynamicModelFactory
+    public static class AeroDynamicModelFactory
     {
-        public static VesselAerodynamicModel GetModel(CelestialBody body)
+        public static AeroDynamicModel GetModel(CelestialBody body)
         {
             foreach (var loadedAssembly in AssemblyLoader.loadedAssemblies)
             {

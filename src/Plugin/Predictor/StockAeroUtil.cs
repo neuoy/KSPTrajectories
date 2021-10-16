@@ -159,7 +159,7 @@ namespace Trajectories
                 // need checks on shielded components
                 Part p = Trajectories.AttachedVessel.Parts[i];
                 #if DEBUG
-                TrajectoriesDebug partDebug = VesselAerodynamicModel.DebugParts ? p.FindModuleImplementing<TrajectoriesDebug>() : null;
+                TrajectoriesDebug partDebug = AeroDynamicModel.DebugParts ? p.FindModuleImplementing<TrajectoriesDebug>() : null;
                 if (partDebug != null)
                 {
                     partDebug.Drag = 0;

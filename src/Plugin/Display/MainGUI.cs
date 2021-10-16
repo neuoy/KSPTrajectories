@@ -517,7 +517,7 @@ namespace Trajectories
                 new DialogGUIHorizontalLayout(false, false, 0, new RectOffset(), TextAnchor.MiddleCenter,
                     new DialogGUIToggle(() => { return Settings.UseCache; },
                         Localizer.Format("#autoLOC_Trajectories_UseCache"), OnButtonClick_UseCache),
-                    new DialogGUIToggle(() => { return Settings.AutoUpdateAerodynamicModel; },
+                    new DialogGUIToggle(() => { return Settings.AutoUpdateAeroDynamicModel; },
                         Localizer.Format("#autoLOC_Trajectories_AutoUpdate"), OnButtonClick_AutoUpdateAerodynamicModel),
                     new DialogGUIButton(Localizer.Format("#autoLOC_Trajectories_Update"),
                         OnButtonClick_Update, BUTTON_WIDTH, BUTTON_HEIGHT, false)),
@@ -830,7 +830,7 @@ namespace Trajectories
 
         private static void OnButtonClick_UseDescentRetro(bool inState) => Settings.DefaultDescentIsRetro = inState;
 
-        private static void OnButtonClick_AutoUpdateAerodynamicModel(bool inState) => Settings.AutoUpdateAerodynamicModel = inState;
+        private static void OnButtonClick_AutoUpdateAerodynamicModel(bool inState) => Settings.AutoUpdateAeroDynamicModel = inState;
 
         private static void OnButtonClick_Update() => Trajectory.InvalidateAerodynamicModel();
 

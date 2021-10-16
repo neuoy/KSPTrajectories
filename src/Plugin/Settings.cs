@@ -57,7 +57,7 @@ namespace Trajectories
         internal static bool BodyFixedMode { get; set; }
 
         [Persistent(Default: true)]
-        internal static bool AutoUpdateAerodynamicModel { get; set; }
+        internal static bool AutoUpdateAeroDynamicModel { get; set; }
 
         [Persistent(Default: false)]
         internal static bool MainGUIEnabled { get; set; }

@@ -113,15 +113,15 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="3rdParty\ToolbarWrapper.cs" />
-    <Compile Include="AerodynamicModel\AeroDynamicModelFactory.cs" />
-    <Compile Include="AerodynamicModel\AeroForceCache.cs" />
-    <Compile Include="AerodynamicModel\FARModel.cs" />
-    <Compile Include="AerodynamicModel\StockModel.cs" />
+    <Compile Include="AeroDynamicModels\AeroDynamicModelFactory.cs" />
+    <Compile Include="AeroDynamicModels\AeroForceCache.cs" />
+    <Compile Include="AeroDynamicModels\Models\FARModel.cs" />
+    <Compile Include="AeroDynamicModels\Models\StockModel.cs" />
     <Compile Include="API.cs" />
-    <Compile Include="AppLauncherButton.cs" />
-    <Compile Include="FlightOverlay.cs" />
+    <Compile Include="Display\AppLauncherButton.cs" />
+    <Compile Include="Display\FlightOverlay.cs" />
     <Compile Include="3rdParty\GLUtils.cs" />
-    <Compile Include="TargetProfile.cs" />
+    <Compile Include="Predictor\TargetProfile.cs" />
     <Compile Include="Trajectories.cs" />
     <Compile Include="Utilities\DebugFastStart.cs" />
     <Compile Include="Utilities\DebugLines.cs" />
@@ -129,18 +129,19 @@
     <Compile Include="Utilities\Profiler.cs" />
     <Compile Include="Utilities\TelemetryWrapper.cs" />
     <Compile Include="Utilities\TrajectoriesDebug.cs" />
-    <Compile Include="DescentProfile.cs" />
-    <Compile Include="MainGUI.cs" />
-    <Compile Include="MapOverlay.cs" />
-    <Compile Include="NavBallOverlay.cs" />
+    <Compile Include="Predictor\DescentProfile.cs" />
+    <Compile Include="Display\MainGUI.cs" />
+    <Compile Include="Display\MapOverlay.cs" />
+    <Compile Include="Display\NavBallOverlay.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Settings.cs" />
-    <Compile Include="StockAeroUtil.cs" />
+    <Compile Include="Predictor\StockAeroUtil.cs" />
     <Compile Include="TrajectoriesVesselSettings.cs" />
-    <Compile Include="Trajectory.cs" />
-    <Compile Include="Util.cs" />
-    <Compile Include="AerodynamicModel\VesselAerodynamicModel.cs" />
+    <Compile Include="Predictor\Trajectory.cs" />
+    <Compile Include="Utilities\Util.cs" />
+    <Compile Include="AeroDynamicModels\AeroDynamicModel.cs" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="PostBuildMacros">
     <GetAssemblyIdentity AssemblyFiles="$(TargetPath)">

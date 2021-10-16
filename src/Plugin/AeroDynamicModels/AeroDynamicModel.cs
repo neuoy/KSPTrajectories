@@ -1,7 +1,7 @@
 ﻿/*
   Copyright© (c) 2016-2017 Youen Toupin, (aka neuoy).
   Copyright© (c) 2017-2018 A.Korsunsky, (aka fat-lobyte).
-  Copyright© (c) 2017-2020 S.Gray, (aka PiezPiedPy).
+  Copyright© (c) 2017-2021 S.Gray, (aka PiezPiedPy).
 
   This file is part of Trajectories.
   Trajectories is available under the terms of GPL-3.0-or-later.
@@ -28,12 +28,12 @@ using UnityEngine;
 namespace Trajectories
 {
     ///<summary> Abstracts the game aerodynamic computations to provide an unified interface whether the stock drag is used, or a supported mod is installed </summary>
-    public abstract class VesselAerodynamicModel
+    public abstract class AeroDynamicModel
     {
         private double mass_;
         public double Mass => mass_;
 
-        public abstract string AerodynamicModelName { get; }
+        public abstract string AeroDynamicModelName { get; }
 
         protected CelestialBody body_;
         private bool isValid;
@@ -49,7 +49,7 @@ namespace Trajectories
         public static bool DebugParts { get; set; }
 
         // constructor
-        protected VesselAerodynamicModel(CelestialBody body)
+        protected AeroDynamicModel(CelestialBody body)
         {
             body_ = body;
 
@@ -100,7 +100,7 @@ namespace Trajectories
             if (!Trajectories.IsVesselAttached || body_ != body)
                 return false;
 
-            if (Settings.AutoUpdateAerodynamicModel)
+            if (Settings.AutoUpdateAeroDynamicModel)
             {
                 double newRefDrag = ComputeReferenceDrag();
                 if (referenceDrag == 0)
@@ -189,7 +189,7 @@ namespace Trajectories
 
             if (double.IsNaN(totalForce.x) || double.IsNaN(totalForce.y) || double.IsNaN(totalForce.z))
             {
-                Util.LogWarning("{0} totalForce is NaN (altitude={1}, airVelocity={2}, angleOfAttack={3}", AerodynamicModelName, altitude, airVelocity.magnitude, angleOfAttack);
+                Util.LogWarning("{0} totalForce is NaN (altitude={1}, airVelocity={2}, angleOfAttack={3}", AeroDynamicModelName, altitude, airVelocity.magnitude, angleOfAttack);
                 return Vector3d.zero; // Don't send NaN into the simulation as it would cause bad things (infinite loops, crash, etc.). I think this case only happens at the atmosphere edge, so the total force should be 0 anyway.
             }
 
@@ -226,7 +226,7 @@ namespace Trajectories
             Vector3d res = predictedVesselRight * localForce.x + predictedVesselUp * localForce.y + predictedVesselBackward * localForce.z;
             if (double.IsNaN(res.x) || double.IsNaN(res.y) || double.IsNaN(res.z))
             {
-                Util.LogWarning("{0} res is NaN (altitude={1}, airVelocity={2}, angleOfAttack={3}", AerodynamicModelName, altitude, airVelocity.magnitude, angleOfAttack);
+                Util.LogWarning("{0} res is NaN (altitude={1}, airVelocity={2}, angleOfAttack={3}", AeroDynamicModelName, altitude, airVelocity.magnitude, angleOfAttack);
                 return new Vector3d(0, 0, 0); // Don't send NaN into the simulation as it would cause bad things (infinite loops, crash, etc.). I think this case only happens at the atmosphere edge, so the total force should be 0 anyway.
             }
 

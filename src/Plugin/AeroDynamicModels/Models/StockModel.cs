@@ -25,9 +25,9 @@ using UnityEngine;
 
 namespace Trajectories
 {
-    class StockModel: VesselAerodynamicModel
+    class StockModel: AeroDynamicModel
     {
-        public override string AerodynamicModelName { get { return Localizer.Format("#autoLOC_Trajectories_Stock"); } }
+        public override string AeroDynamicModelName { get { return Localizer.Format("#autoLOC_Trajectories_Stock"); } }
 
         public StockModel(CelestialBody body) : base( body) { }
 
