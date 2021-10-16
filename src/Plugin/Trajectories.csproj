@@ -126,6 +126,7 @@
     <Compile Include="Display\FlightOverlay.cs" />
     <Compile Include="3rdParty\GLUtils.cs" />
     <Compile Include="Cache\GameDataCache.cs" />
+    <Compile Include="Display\GfxUtil.cs" />
     <Compile Include="Predictor\TargetProfile.cs" />
     <Compile Include="Cache\CelestialBodyMaps.cs" />
     <Compile Include="Trajectories.cs" />

@@ -20,9 +20,10 @@ namespace Trajectories
         {
             get
             {
-                if (_material == null) _material = new Material(Shader.Find("KSP/Particles/Additive"));
-                if (_material == null) _material = new Material(Shader.Find("Particles/Additive"));
-                if (_material == null) Util.LogError("GLUtils material is null");
+                _material ??= new Material(Shader.Find("KSP/Orbit Line"));
+                _material ??= new Material(Shader.Find("KSP/Particles/Additive"));       // fallback shader
+                if (!_material)
+                    Util.LogError("GLUtils material is null");
                 return _material;
             }
         }

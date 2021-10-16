@@ -18,7 +18,9 @@
 
 ### Changes since the last release
 
-  - Try to mitigate issues as described in issue #183 - Trajectories acting as if it isn't installed when
+ - Fix a potential bug if other mods add renderer's to the cameras.
+ - Rendering uses the newer KSP shaders. 
+ - Try to mitigate issues as described in issue #183 - Trajectories acting as if it isn't installed when
     a mod fails to load. Trajectories will now warn the user with an on screen message that there was a
     problem loading a mod prior to Trajectories loading rather than silently failing. This problem is a
     KSP bug and can't be fixed in Trajectories. 
