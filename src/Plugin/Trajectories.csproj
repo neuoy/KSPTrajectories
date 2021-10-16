@@ -130,6 +130,7 @@
     <Compile Include="Cache\CelestialBodyMaps.cs" />
     <Compile Include="Trajectories.cs" />
     <Compile Include="Utilities\DebugFastStart.cs" />
+    <Compile Include="Utilities\DebugLines.cs" />
     <Compile Include="Utilities\Watcher.cs" />
     <Compile Include="Utilities\Profiler.cs" />
     <Compile Include="Utilities\TelemetryWrapper.cs" />

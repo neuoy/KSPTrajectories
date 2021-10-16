@@ -64,7 +64,6 @@ namespace Trajectories
 
         private class Entry
         {
-            public bool in_gui;             // if true the entry has been added to the Gui
             public Type type;               // used to store last value type
             public double value;            // used to store last value
             public Vector3d vector;         // used to store last value
