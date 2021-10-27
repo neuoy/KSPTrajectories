@@ -13,6 +13,19 @@
 
 ------------------------------------------------------------------------------------------------------
 
+## v2.4.4 for KSP 1.8 to 1.12.x
+ - 2021-xx-xx
+
+### Changes since the last release
+
+
+### For Developers
+
+
+### Known Issues
+
+------------------------------------------------------------------------------------------------------
+
 ## v2.4.3 for KSP 1.8 to 1.12.x
  - 2021-10-27
 
@@ -30,8 +43,6 @@
  - Added string and Vector3d types to the Watcher utility.
  - Added a line drawing debug class useful for debugging vectors etc.
  - API method `SetTarget` now correctly targets the active vessels body rather than only the home world.
- 
-### Known Issues
 
 ------------------------------------------------------------------------------------------------------
 
