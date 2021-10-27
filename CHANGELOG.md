@@ -1,6 +1,6 @@
 
 ## v2.4.3 for KSP 1.8 to 1.12.x
- - 2021-xx-xx
+ - 2021-10-27
 
 ### Changes since the last release
  
