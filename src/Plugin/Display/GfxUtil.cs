@@ -86,9 +86,6 @@ namespace Trajectories
 
             private bool InScene()
             {
-                if (Util.IsPaused)
-                    return false;
-
                 switch (Scene)
                 {
                     case GameScenes.FLIGHT:
@@ -100,16 +97,13 @@ namespace Trajectories
             internal void Update()
             {
                 if (!Ready)
-                {
                     Awake();
-                    if (!Ready)
-                        return;
-                }
+            }
 
-                if (!InScene())
-                    return;
-
-                ref_camera = CameraManager.GetCurrentCamera();
+            internal void SetStart(Vector3 start)
+            {
+                if (Ready && line_renderer.positionCount > 0 && line_renderer.enabled)
+                    line_renderer.SetPosition(0, start);
             }
 
             internal void OnPreRender()
@@ -120,8 +114,8 @@ namespace Trajectories
                 // adjust line width according to its distance from the camera
                 if (line_renderer.positionCount > 0 && line_renderer.enabled)
                 {
+                    ref_camera = CameraManager.GetCurrentCamera();
                     cam_pos = ref_camera ? ref_camera.transform.position : Vector3.zero;
-
                     line_renderer.startWidth = Mathf.Clamp(Vector3.Distance(cam_pos, line_renderer.GetPosition(0)) / DIST_DIV, MIN_WIDTH, MAX_WIDTH);
                     line_renderer.endWidth = Mathf.Clamp(Vector3.Distance(cam_pos, line_renderer.GetPosition(line_renderer.positionCount - 1)) / DIST_DIV, MIN_WIDTH, MAX_WIDTH);
                 }

@@ -42,28 +42,36 @@ namespace Trajectories
         internal static void Start()
         {
             Util.DebugLog("Constructing");
+
             line = FlightCamera.fetch.mainCamera.gameObject.AddComponent<GfxUtil.TrajectoryLine>();
             line.Scene = GameScenes.FLIGHT;
             impact_cross = FlightCamera.fetch.mainCamera.gameObject.AddComponent<GfxUtil.TargetingCross>();
             target_cross = FlightCamera.fetch.mainCamera.gameObject.AddComponent<GfxUtil.TargetingCross>();
+            impact_cross.Color = XKCDColors.FireEngineRed;
             target_cross.Color = XKCDColors.AcidGreen;
         }
 
         internal static void Destroy()
         {
             Util.DebugLog("");
-            if (line != null)
+            if (line)
                 Object.Destroy(line);
 
-            if (impact_cross != null)
+            if (impact_cross)
                 Object.Destroy(impact_cross);
 
-            if (target_cross != null)
+            if (target_cross)
                 Object.Destroy(target_cross);
 
             line = null;
             impact_cross = null;
             target_cross = null;
+        }
+
+        internal static void FixedUpdate()
+        {
+            if (Trajectories.AttachedVessel)
+                line?.SetStart(Trajectories.AttachedVessel.transform.TransformPoint(Vector3.zero));
         }
 
         internal static void Update()
@@ -79,7 +87,7 @@ namespace Trajectories
                 return;
 
             line.Clear();
-            line.Add(Trajectories.AttachedVessel.GetWorldPos3D());
+            line.Add(Trajectories.AttachedVessel.transform.TransformPoint(Vector3.zero));
 
             lastPatch = Trajectory.Patches[Trajectory.Patches.Count - 1];
             bodyPosition = lastPatch.StartingState.ReferenceBody.position;

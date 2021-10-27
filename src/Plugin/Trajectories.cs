@@ -109,9 +109,13 @@ namespace Trajectories
             MainGUI.Update();
         }
 
+        internal void FixedUpdate()
+        {
 #if DEBUG_TELEMETRY
-        internal void FixedUpdate() => Trajectory.DebugTelemetry();
+            Trajectory.DebugTelemetry();
 #endif
+            FlightOverlay.FixedUpdate();
+        }
 
         internal void OnDestroy()
         {
