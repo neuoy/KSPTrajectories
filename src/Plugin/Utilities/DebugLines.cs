@@ -38,6 +38,22 @@ namespace Trajectories
         private const float DIST_DIV = 1e3f;
         private const int MAX_LINES = 100;
 
+        internal struct AddItem
+        {
+            internal Vector3 start;
+            internal Vector3 end;
+            internal Color color;
+            internal double seconds;
+
+            internal AddItem(Vector3 start, Vector3 end, Color color, double seconds)
+            {
+                this.start = start;
+                this.end = end;
+                this.color = color;
+                this.seconds = seconds;
+            }
+        }
+
         internal class DebugLineRenderer
         {
             private Vector3 start;
@@ -92,6 +108,8 @@ namespace Trajectories
                 end = Vector3.zero;
                 Clocks = 0d;
             }
+
+            internal void Set(AddItem item) => Set(item.start, item.end, item.color, item.seconds);
 
             internal void Set(Vector3 start, Vector3 end, Color color, double seconds = 3d)
             {
@@ -154,8 +172,8 @@ namespace Trajectories
         }
 
         private static GameObject root_go;
-        private static bool locked = true;
         private static List<DebugLineRenderer> line_renderers;
+        private static List<AddItem> add_list;
         private static int active_count;
         private static Material material;
         private static Camera ref_camera;
@@ -170,6 +188,7 @@ namespace Trajectories
         //  constructor
         static DebugLines()
         {
+            add_list ??= new(MAX_LINES);
             active_count = 0;
             Camera.onPreRender += PreRender;
         }
@@ -215,20 +234,16 @@ namespace Trajectories
         // Awake is called only once when the script instance is being loaded. Used in place of the constructor for initialization.
         internal void Awake()
         {
-            locked = true;
-
             root_go = gameObject;
 
             CheckNaterial();
             CreateRenderers();
             line_renderers?.Reset();
             active_count = 0;
-            locked = false;
         }
 
         internal void Update()
         {
-            locked = true;
             if (!Ready)
             {
                 Awake();
@@ -237,13 +252,11 @@ namespace Trajectories
                     return;
             }
 
-            locked = true;
-
             ref_camera = CameraManager.GetCurrentCamera();
             root_go.transform.parent = Transform;
             current_clock = Util.Clocks;
             line_renderers.Update();
-            locked = false;
+            ParseAddItemList();
         }
 
         internal static void PreRender(Camera cam)
@@ -251,38 +264,28 @@ namespace Trajectories
             if (!Ready || (ref_camera && ref_camera != cam))
                 return;
 
-            locked = true;
             cam_pos = ref_camera ? ref_camera.transform.position : Vector3.zero;
             line_renderers.PreRender();
-            locked = false;
         }
 
         internal static void OnEnable()
         {
-            if (!Ready)
-                return;
-
-            locked = true;
+            if (Ready)
             line_renderers.Enable();
-            locked = false;
         }
 
         internal static void OnDisable()
         {
-            if (!Ready)
-                return;
-
-            locked = true;
+            if (Ready)
             line_renderers.Disable();
-            locked = false;
         }
 
         internal static void OnDestroy()
         {
             Util.DebugLog("");
-            locked = true;
             Camera.onPreRender -= PreRender;
             root_go = null;
+            add_list = null;
 
             if (line_renderers != null)
             {
@@ -297,23 +300,33 @@ namespace Trajectories
             }
         }
 
+        private static void ParseAddItemList()
+        {
+            foreach (AddItem item in add_list)
+            {
+                if (active_count >= MAX_LINES)
+                    break;
+
+                foreach (DebugLineRenderer line in line_renderers)
+                {
+                    if (line.Renderer.enabled)
+                        continue;
+
+                    line.Set(item);
+                    break;
+                }
+            }
+            add_list.Clear();
+        }
+
 #endif
         ///<summary> Draws a colored debug line that lasts for time in seconds, time defaults to 3 seconds </summary>
         [Conditional("DEBUG")]
         internal static void Add(Vector3 start, Vector3 end, Color color, double seconds = 3d)
         {
 #if DEBUG
-            if (!Ready || locked || active_count >= MAX_LINES)
-                return;
-
-            foreach (DebugLineRenderer line in line_renderers)
-            {
-                if (line.Renderer.enabled)
-                    continue;
-
-                line.Set(start, end, color, seconds);
-                break;
-            }
+            if (add_list.Count < MAX_LINES)
+                add_list.Add(new(start, end, color, seconds));
 #endif
         }
 
@@ -322,17 +335,8 @@ namespace Trajectories
         internal static void Add(Vector3 start, Vector3 end, double seconds = 3d)
         {
 #if DEBUG
-            if (!Ready || locked || active_count >= MAX_LINES)
-                return;
-
-            foreach (DebugLineRenderer line in line_renderers)
-            {
-                if (line.Renderer.enabled)
-                    continue;
-
-                line.Set(start, end, XKCDColors.FireEngineRed, seconds);
-                break;
-            }
+            if (add_list.Count < MAX_LINES)
+                add_list.Add(new(start, end, XKCDColors.FireEngineRed, seconds));
 #endif
         }
     }
