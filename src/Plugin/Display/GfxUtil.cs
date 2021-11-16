@@ -102,23 +102,20 @@ namespace Trajectories
 
             internal void SetStart(Vector3 start)
             {
-                if (Ready && line_renderer.positionCount > 0 && line_renderer.enabled)
+                if (Ready && line_renderer.positionCount > 0)
                     line_renderer.SetPosition(0, start);
             }
 
             internal void OnPreRender()
             {
-                if (!Ready || !InScene())
+                if (!Ready || !InScene() || !line_renderer.enabled || line_renderer.positionCount == 0)
                     return;
 
                 // adjust line width according to its distance from the camera
-                if (line_renderer.positionCount > 0 && line_renderer.enabled)
-                {
-                    ref_camera = CameraManager.GetCurrentCamera();
-                    cam_pos = ref_camera ? ref_camera.transform.position : Vector3.zero;
-                    line_renderer.startWidth = Mathf.Clamp(Vector3.Distance(cam_pos, line_renderer.GetPosition(0)) / DIST_DIV, MIN_WIDTH, MAX_WIDTH);
-                    line_renderer.endWidth = Mathf.Clamp(Vector3.Distance(cam_pos, line_renderer.GetPosition(line_renderer.positionCount - 1)) / DIST_DIV, MIN_WIDTH, MAX_WIDTH);
-                }
+                ref_camera = CameraManager.GetCurrentCamera();
+                cam_pos = ref_camera ? ref_camera.transform.position : Vector3.zero;
+                line_renderer.startWidth = Mathf.Clamp(Vector3.Distance(cam_pos, line_renderer.GetPosition(0)) / DIST_DIV, MIN_WIDTH, MAX_WIDTH);
+                line_renderer.endWidth = Mathf.Clamp(Vector3.Distance(cam_pos, line_renderer.GetPosition(line_renderer.positionCount - 1)) / DIST_DIV, MIN_WIDTH, MAX_WIDTH);
             }
 
             internal void OnEnable()
@@ -191,13 +188,14 @@ namespace Trajectories
                 // get impact position, translate to latitude and longitude
                 Body.GetLatLonAlt(Position.Value, out latitude, out longitude, out altitude);
                 // only draw if visible on the camera
-                screen_point = FlightCamera.fetch.mainCamera.WorldToViewportPoint(Position.Value);
+                Camera ref_camera = CameraManager.GetCurrentCamera();
+                screen_point = ref_camera?.WorldToViewportPoint(Position.Value)?? Vector3.zero;
                 if (!(screen_point.z >= 0f && screen_point.x >= 0f && screen_point.x <= 1f && screen_point.y >= 0f && screen_point.y <= 1f))
                     return;
                 // resize marker in respect to distance from camera.
-                size = Mathf.Clamp(Vector3.Distance(FlightCamera.fetch.mainCamera.transform.position, Position.Value) / DIST_DIV, MIN_SIZE, MAX_SIZE);
+                size = Mathf.Clamp(Vector3.Distance(ref_camera?.transform.position?? Vector3.zero, Position.Value) / DIST_DIV, MIN_SIZE, MAX_SIZE);
                 // draw ground marker at this position
-                GLUtils.DrawGroundMarker(Body, latitude, longitude, Color, false, 0d, size);
+                GLUtils.DrawGroundMarker(Body, latitude, longitude, altitude, Color, false, 0d, size);
             }
         }
 
