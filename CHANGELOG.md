@@ -3,7 +3,8 @@
  - 2021-xx-xx
 
 ### Changes since the last release
- 
+
+ - Prevent GUI click-through as described in issue #137
 
 ### For Developers
 

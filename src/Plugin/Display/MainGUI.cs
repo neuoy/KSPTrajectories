@@ -35,6 +35,8 @@ namespace Trajectories
         // constants
         private const float WIDTH = 370.0f;
         private const float HEIGHT = 285.0f;
+        private const float HALF_WIDTH = WIDTH * 0.5f;
+        private const float HALF_HEIGHT = HEIGHT * 0.5f;
         private const float BUTTON_WIDTH = 75.0f;
         private const float BUTTON_HEIGHT = 25.0f;
         private const float TARGET_BUTTON_WIDTH = 120.0f;
@@ -60,6 +62,13 @@ namespace Trajectories
         // spawned and visible flags
         private static int spawned = 0;
         private static bool visible = false;
+        private static float screen_width = 0;
+        private static float screen_height = 0;
+        private static float screen_half_width = 0;
+        private static float screen_half_height = 0;
+        private static Rect gui_rect = new(0, 0, WIDTH, HEIGHT);
+        private static ControlTypes gui_control_type = ControlTypes.GUI | ControlTypes.MANNODE_ADDEDIT |
+                                                        ControlTypes.MANNODE_DELETE | ControlTypes.MAP_UI;
 
         // popup window, page box and pages
         private static MultiOptionDialog multi_dialog;
@@ -150,7 +159,7 @@ namespace Trajectories
 
                 // round off step;
                 if (stepsize < 0.25)
-                    Settings.IntegrationStepSize = Math.Round(stepsize * 100, MidpointRounding.AwayFromZero) / 100;    // 0.01
+                    Settings.IntegrationStepSize = Math.Round(stepsize * 100, MidpointRounding.AwayFromZero) / 100;   // 0.01
                 else if (stepsize < 0.5)
                     Settings.IntegrationStepSize = Math.Round(stepsize * 20, MidpointRounding.AwayFromZero) / 20;     // 0.05
                 else if (stepsize < 1)
@@ -167,6 +176,23 @@ namespace Trajectories
             }
         }
 
+        /// <returns> true if the mouse cursor is over the Trajectories MainGUI window </returns>
+        private static bool MouseOver
+        {
+            get
+            {
+                if (popup_dialog != null)
+                {
+                    gui_rect.x = screen_half_width + (popup_dialog.RTrf.position.x * GameSettings.UI_SCALE) - HALF_WIDTH;
+                    gui_rect.y = screen_half_height + (popup_dialog.RTrf.position.y * GameSettings.UI_SCALE) - HALF_HEIGHT;
+
+                    return gui_rect.Contains(Input.mousePosition);
+                }
+
+                return false;
+            }
+        }
+
         // display update timer
         private static double update_timer = Util.Clocks;
         private const double update_fps = 10;  // Frames per second the data values displayed in the Gui will update.
@@ -179,6 +205,12 @@ namespace Trajectories
         internal static void Start()
         {
             Util.DebugLog(multi_dialog != null ? "Resetting" : "Constructing");
+
+            screen_width = Screen.width;
+            screen_height = Screen.height;
+            screen_half_width = Screen.width * 0.5f;
+            screen_half_height = Screen.height * 0.5f;
+
             // allocate and define window for use in the popup dialog
             if (multi_dialog == null)
                 Allocate();
@@ -231,7 +263,7 @@ namespace Trajectories
             // keyboard unlock for manual target edit box
             if ((Input.GetKey(KeyCode.Return) || Input.GetKey(KeyCode.KeypadEnter)) &&
                 (InputLockManager.GetControlLock("TrajectoriesKeyboardLockout") == ControlTypes.KEYBOARDINPUT))
-                KeyboardUnlock("");
+                KeyboardUnlock();
 
             // show trajectory hotkey
             if ((Settings.EnableDisplayTrajectoryHotKeyMod ? Input.GetKey(Settings.DisplayTrajectoryHotKeyMod) : true)
@@ -246,11 +278,23 @@ namespace Trajectories
             if ((!Settings.MainGUIEnabled || PlanetariumCamera.Camera == null) && visible)
             {
                 Hide();
+                KeyboardUnlock();
+                GUIUnlock();
                 return;
             }
             else if (Settings.MainGUIEnabled && (!visible || popup_dialog == null))
             {
                 Show();
+            }
+
+            if (InputLockManager.GetControlLock("TrajectoriesGUILockout") == ControlTypes.None)
+            {
+                if (MouseOver)
+                    GUILockout();
+            }
+            else if (!MouseOver)
+            {
+                GUIUnlock();
             }
 
             UpdatePages();
@@ -260,7 +304,8 @@ namespace Trajectories
         {
             Util.DebugLog("");
 
-            KeyboardUnlock("");
+            KeyboardUnlock();
+            GUIUnlock();
 
             if (popup_dialog != null)
                 popup_dialog.Dismiss();
@@ -301,36 +346,36 @@ namespace Trajectories
             else
             {
                 // ensure window remains within the screen bounds
-                Vector2 pos = new Vector2(((Settings.MainGUIWindowPos.x * Screen.width) - (Screen.width / 2)) * GameSettings.UI_SCALE,
-                                          ((Settings.MainGUIWindowPos.y * Screen.height) - (Screen.height / 2)) * GameSettings.UI_SCALE);
+                Vector2 pos = new Vector2(((Settings.MainGUIWindowPos.x * screen_width) - screen_half_width) * GameSettings.UI_SCALE,
+                                          ((Settings.MainGUIWindowPos.y * screen_height) - screen_half_height) * GameSettings.UI_SCALE);
 
-                if (pos.x > (Screen.width / 2) - border)
+                if (pos.x > screen_half_width - border)
                 {
-                    pos.x = (Screen.width / 2) - (border + (WIDTH / 2));
+                    pos.x = screen_half_width - (border + HALF_WIDTH);
                     adjusted = true;
                 }
-                else if (pos.x < ((Screen.width / 2) - border) * -1f)
+                else if (pos.x < (screen_half_width - border) * -1f)
                 {
-                    pos.x = ((Screen.width / 2) - (border + (WIDTH / 2))) * -1f;
+                    pos.x = (screen_half_width - (border + HALF_WIDTH)) * -1f;
                     adjusted = true;
                 }
 
-                if (pos.y > (Screen.height / 2) - border)
+                if (pos.y > screen_half_height - border)
                 {
-                    pos.y = (Screen.height / 2) - (border + (HEIGHT / 2));
+                    pos.y = screen_half_height - (border + HALF_HEIGHT);
                     adjusted = true;
                 }
-                else if (pos.y < ((Screen.height / 2) - border) * -1f)
+                else if (pos.y < (screen_half_height - border) * -1f)
                 {
-                    pos.y = ((Screen.height / 2) - (border + (HEIGHT / 2))) * -1f;
+                    pos.y = (screen_half_height - (border + HALF_HEIGHT)) * -1f;
                     adjusted = true;
                 }
 
                 if (adjusted)
                 {
                     Settings.MainGUIWindowPos = new Vector2(
-                        ((Screen.width / 2) + (pos.x / GameSettings.UI_SCALE)) / Screen.width,
-                        ((Screen.height / 2) + (pos.y / GameSettings.UI_SCALE)) / Screen.height);
+                        (screen_half_width + (pos.x / GameSettings.UI_SCALE)) / screen_width,
+                        (screen_half_height + (pos.y / GameSettings.UI_SCALE)) / screen_height);
                 }
             }
             return adjusted;
@@ -595,8 +640,8 @@ namespace Trajectories
             if (popup_dialog != null)
             {
                 Settings.MainGUIWindowPos = new Vector2(
-                    ((Screen.width / 2) + (popup_dialog.RTrf.position.x / GameSettings.UI_SCALE)) / Screen.width,
-                    ((Screen.height / 2) + (popup_dialog.RTrf.position.y / GameSettings.UI_SCALE)) / Screen.height);
+                    (screen_half_width + (popup_dialog.RTrf.position.x / GameSettings.UI_SCALE)) / screen_width,
+                    (screen_half_height + (popup_dialog.RTrf.position.y / GameSettings.UI_SCALE)) / screen_height);
                 //Util.DebugLog("Saving MainGUI window position as {0}", Settings.MainGUIWindowPos.ToString("F4"));
                 multi_dialog.dialogRect.Set(Settings.MainGUIWindowPos.x, Settings.MainGUIWindowPos.y, WIDTH, HEIGHT);
             }
@@ -629,6 +674,13 @@ namespace Trajectories
             }
         }
 
+        private static void AddListener(TMP_InputField input)
+        {
+            input.onSelect.AddListener(keyboard_lockout_action);
+            input.onDeselect.AddListener(keyboard_unlock_action);
+            input.onEndEdit.AddListener(keyboard_unlock_action);
+        }
+
         /// <summary>
         /// Creates the event listeners for the text input boxes
         /// </summary>
@@ -641,50 +693,42 @@ namespace Trajectories
             if (manual_target_textinput?.uiItem != null)
             {
                 tmpro_manual_target_textinput = manual_target_textinput.uiItem.GetComponent<TMP_InputField>();
-                tmpro_manual_target_textinput.onSelect.AddListener(keyboard_lockout_action);
-                tmpro_manual_target_textinput.onDeselect.AddListener(keyboard_unlock_action);
-                tmpro_manual_target_textinput.onEndEdit.AddListener(keyboard_unlock_action);
+                AddListener(tmpro_manual_target_textinput);
             }
             // descent profile text inputs
             if (descent_entry_textinput?.uiItem != null)
             {
                 tmpro_descent_entry_textinput = descent_entry_textinput.uiItem.GetComponent<TMP_InputField>();
-                tmpro_descent_entry_textinput.onSelect.AddListener(keyboard_lockout_action);
-                tmpro_descent_entry_textinput.onDeselect.AddListener(keyboard_unlock_action);
-                tmpro_descent_entry_textinput.onEndEdit.AddListener(keyboard_unlock_action);
+                AddListener(tmpro_descent_entry_textinput);
             }
             if (descent_high_textinput?.uiItem != null)
             {
                 tmpro_descent_high_textinput = descent_high_textinput.uiItem.GetComponent<TMP_InputField>();
-                tmpro_descent_high_textinput.onSelect.AddListener(keyboard_lockout_action);
-                tmpro_descent_high_textinput.onDeselect.AddListener(keyboard_unlock_action);
-                tmpro_descent_high_textinput.onEndEdit.AddListener(keyboard_unlock_action);
+                AddListener(tmpro_descent_high_textinput);
             }
             if (descent_low_textinput?.uiItem != null)
             {
                 tmpro_descent_low_textinput = descent_low_textinput.uiItem.GetComponent<TMP_InputField>();
-                tmpro_descent_low_textinput.onSelect.AddListener(keyboard_lockout_action);
-                tmpro_descent_low_textinput.onDeselect.AddListener(keyboard_unlock_action);
-                tmpro_descent_low_textinput.onEndEdit.AddListener(keyboard_unlock_action);
+                AddListener(tmpro_descent_low_textinput);
             }
             if (descent_final_textinput?.uiItem != null)
             {
                 tmpro_descent_ground_textinput = descent_final_textinput.uiItem.GetComponent<TMP_InputField>();
-                tmpro_descent_ground_textinput.onSelect.AddListener(keyboard_lockout_action);
-                tmpro_descent_ground_textinput.onDeselect.AddListener(keyboard_unlock_action);
-                tmpro_descent_ground_textinput.onEndEdit.AddListener(keyboard_unlock_action);
+                AddListener(tmpro_descent_ground_textinput);
             }
         }
 
-        /// <summary>
-        /// Locks out the keyboards input
-        /// </summary>
-        private static void KeyboardLockout(string inString) => InputLockManager.SetControlLock(ControlTypes.KEYBOARDINPUT, "TrajectoriesKeyboardLockout");
+        /// <summary> Locks out the keyboards input </summary>
+        private static void KeyboardLockout(string inString = "") => InputLockManager.SetControlLock(ControlTypes.KEYBOARDINPUT, "TrajectoriesKeyboardLockout");
 
-        /// <summary>
-        /// Removes the keyboard lockout
-        /// </summary>
-        private static void KeyboardUnlock(string inString) => InputLockManager.RemoveControlLock("TrajectoriesKeyboardLockout");
+        /// <summary> Removes the keyboard lockout </summary>
+        private static void KeyboardUnlock(string inString = "") => InputLockManager.RemoveControlLock("TrajectoriesKeyboardLockout");
+
+        /// <summary> Locks out mouse clicks from passing through the GUI /summary>
+        private static void GUILockout() => InputLockManager.SetControlLock(gui_control_type, "TrajectoriesGUILockout");
+
+        /// <summary> Removes the GUI lockout </summary>
+        private static void GUIUnlock() => InputLockManager.RemoveControlLock("TrajectoriesGUILockout");
 
         /// <summary>
         /// Sets the logarithmic slider position for the plug-in setting IntegrationStepSize
