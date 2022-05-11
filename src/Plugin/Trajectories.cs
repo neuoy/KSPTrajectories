@@ -44,6 +44,8 @@ namespace Trajectories
         /// <returns> True if trajectories is attached to a vessel and that the vessel also has parts </returns>
         internal static bool VesselHasParts => IsVesselAttached ? AttachedVessel.Parts.Count != 0 : false;
 
+        private static bool init_aerodynamic_model = true;
+
         //  constructor
         static Trajectories()
         {
@@ -62,6 +64,8 @@ namespace Trajectories
                 return;
 
             Util.DebugLog("");
+
+            GameEvents.onTimeWarpRateChanged.Add(WarpChanged);
 
             //version = Util.ConfigValue(node, "version", Version);     // get saved version, defaults to current version if none
 
@@ -102,6 +106,12 @@ namespace Trajectories
             if (AttachedVessel != FlightGlobals.ActiveVessel)
                 AttachVessel();
 
+            if (init_aerodynamic_model && TimeWarp.CurrentRate == 1f)
+            {
+                Trajectory.InvalidateAerodynamicModel();
+                init_aerodynamic_model = false;
+            }
+
             Trajectory.Update();
             MapOverlay.Update();
             FlightOverlay.Update();
@@ -121,6 +131,7 @@ namespace Trajectories
         {
             Util.DebugLog("");
             AttachedVessel = null;
+            GameEvents.onTimeWarpRateChanged.Remove(WarpChanged);
             AppLauncherButton.DestroyToolbarButton();
             MainGUI.DeSpawn();
             NavBallOverlay.DestroyTransforms();
@@ -212,5 +223,7 @@ namespace Trajectories
 #endif
             }
         }
+
+        private void WarpChanged() => init_aerodynamic_model = TimeWarp.CurrentRate != 1f ;
     }
 }

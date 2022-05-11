@@ -36,7 +36,7 @@ namespace Trajectories
         public abstract string AeroDynamicModelName { get; }
 
         protected CelestialBody body_;
-        private bool isValid;
+        private bool isValid = false;
         private double referenceDrag = 0;
         private int referencePartCount = 0;
         private DateTime nextAllowedAutomaticUpdate = DateTime.Now;

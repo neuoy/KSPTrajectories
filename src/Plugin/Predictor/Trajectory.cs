@@ -329,7 +329,7 @@ namespace Trajectories
         }
 #endif
 
-        internal static void InvalidateAerodynamicModel() => aerodynamicModel_.Invalidate();
+        internal static void InvalidateAerodynamicModel() => aerodynamicModel_?.Invalidate();
 
         internal static void ComputeTrajectory()
         {
@@ -347,9 +347,13 @@ namespace Trajectories
 
                 // create or update aerodynamic model
                 if (aerodynamicModel_ == null || !aerodynamicModel_.IsValidFor(Trajectories.AttachedVessel.mainBody))
+                {
                     aerodynamicModel_ = AeroDynamicModelFactory.GetModel(Trajectories.AttachedVessel.mainBody);
+                }
                 else
+                {
                     aerodynamicModel_.UpdateVesselMass();
+                }
 
                 // if there is no ongoing partial computation, start a new one
                 if (partialComputation_ == null)
