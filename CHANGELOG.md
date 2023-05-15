@@ -4,6 +4,7 @@
 
 ### Changes since the last release
 
+ - Fixed trajectory not updating after loading a save with a vessel in atmosphere (issue #189).
  - Fixed trajectory not updating after time warp (issue #186).
  - Prevent GUI click-through as described in issue #137.
 

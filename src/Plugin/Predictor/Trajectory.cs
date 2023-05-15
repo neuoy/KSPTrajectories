@@ -142,6 +142,11 @@ namespace Trajectories
         internal static void Start()
         {
             Util.DebugLog("Constructing");
+            aerodynamicModel_ = null;
+            partialComputation_ = null;
+            Patches.Clear();
+            patchesBackBuffer_.Clear();
+            maxAccelBackBuffer_ = 0f;
 #if DEBUG_TELEMETRY
             ConstructTelemetry();
 #endif

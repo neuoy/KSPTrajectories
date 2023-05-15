@@ -45,6 +45,7 @@ namespace Trajectories
         internal static bool VesselHasParts => IsVesselAttached ? AttachedVessel.Parts.Count != 0 : false;
 
         private static bool init_aerodynamic_model = true;
+        private static bool vessel_unpacked = false;
 
         //  constructor
         static Trajectories()
@@ -57,15 +58,20 @@ namespace Trajectories
 
         public override void OnLoad(ConfigNode node)
         {
+            Util.DebugLog("");
+
 #if DEBUG
             DebugLines.Transform = null;
 #endif
             if (node == null)
                 return;
 
-            Util.DebugLog("");
-
             GameEvents.onTimeWarpRateChanged.Add(WarpChanged);
+            GameEvents.onVesselLoaded.Add(VesselLoaded);
+
+            AttachedVessel = null;
+            init_aerodynamic_model = true;
+            vessel_unpacked = false;
 
             //version = Util.ConfigValue(node, "version", Version);     // get saved version, defaults to current version if none
 
@@ -112,6 +118,14 @@ namespace Trajectories
                 init_aerodynamic_model = false;
             }
 
+            if (IsVesselAttached && !AttachedVessel.packed && !vessel_unpacked)
+            {
+                Util.DebugLog("Vessel unpacked");
+                Trajectory.InvalidateAerodynamicModel();
+                init_aerodynamic_model = false;
+                vessel_unpacked = true;
+            }
+
             Trajectory.Update();
             MapOverlay.Update();
             FlightOverlay.Update();
@@ -131,6 +145,7 @@ namespace Trajectories
         {
             Util.DebugLog("");
             AttachedVessel = null;
+            GameEvents.onVesselLoaded.Remove(VesselLoaded);
             GameEvents.onTimeWarpRateChanged.Remove(WarpChanged);
             AppLauncherButton.DestroyToolbarButton();
             MainGUI.DeSpawn();
@@ -224,6 +239,8 @@ namespace Trajectories
             }
         }
 
-        private void WarpChanged() => init_aerodynamic_model = TimeWarp.CurrentRate != 1f ;
+        private void WarpChanged() => init_aerodynamic_model = TimeWarp.CurrentRate != 1f;
+
+        private void VesselLoaded(Vessel vessel) => init_aerodynamic_model = true;
     }
 }
